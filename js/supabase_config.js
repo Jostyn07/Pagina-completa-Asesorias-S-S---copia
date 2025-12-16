@@ -1,11 +1,24 @@
 const SUPABASE_URL = 'https://ycpdwjbfhktjrsroojtz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljcGR3amJmaGt0anJzcm9vanR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4MzY1MjMsImV4cCI6MjA4MTQxMjUyM30.SxCcaUJ5wejZ-TiSvsTTV-mTm0DKBKODfIdxNqKR-0Q';
 
-// Crear cliente de Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// =============================================
+// CLIENTE DE SUPABASE (Variable segura)
+// =============================================
+let supabaseClient = null;
 
-// Verificar conexión
-console.log('🔌 Supabase conectado:', SUPABASE_URL);
+// Función de inicialización auto-ejecutable
+(function initSupabase() {
+    try {
+        if (typeof window.supabase === 'undefined') {
+            console.error('❌ CDN de Supabase no está cargado');
+            return;
+        }
+        
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (error) {
+        console.error('❌ Error al inicializar Supabase:', error);
+    }
+})();
 
 // =============================================
 // HELPER: Manejar errores
@@ -21,7 +34,7 @@ function handleSupabaseError(error) {
 // =============================================
 async function getCurrentUser() {
     try {
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
         if (error) return handleSupabaseError(error);
         return user;
     } catch (error) {
@@ -44,10 +57,9 @@ function formatDateForSQL(fecha) {
 // =============================================
 async function guardarClienteEnSupabase(formData) {
     try {
-        console.log('📝 Guardando cliente...', formData);
 
         // 1. Insertar cliente
-        const { data: cliente, error: errorCliente } = await supabase
+        const { data: cliente, error: errorCliente } = await supabaseClient
             .from('clientes')
             .insert({
                 tipo_registro: formData.tipoRegistro,
@@ -79,12 +91,11 @@ async function guardarClienteEnSupabase(formData) {
 
         if (errorCliente) throw errorCliente;
 
-        console.log('✅ Cliente guardado:', cliente);
 
         // 2. Insertar póliza
         const numeroPoliza = await generarNumeroPoliza();
         
-        const { data: poliza, error: errorPoliza } = await supabase
+        const { data: poliza, error: errorPoliza } = await supabaseClient
             .from('polizas')
             .insert({
                 cliente_id: cliente.id,
@@ -109,7 +120,6 @@ async function guardarClienteEnSupabase(formData) {
 
         if (errorPoliza) throw errorPoliza;
 
-        console.log('✅ Póliza guardada:', poliza);
 
         return { cliente, poliza };
 
@@ -124,7 +134,7 @@ async function guardarClienteEnSupabase(formData) {
 // =============================================
 async function obtenerCliente(clienteId) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('clientes')
             .select(`
                 *,
@@ -142,7 +152,6 @@ async function obtenerCliente(clienteId) {
 
         if (error) throw error;
 
-        console.log('✅ Cliente obtenido:', data);
         return data;
 
     } catch (error) {
@@ -156,7 +165,7 @@ async function obtenerCliente(clienteId) {
 // =============================================
 async function actualizarCliente(clienteId, datosActualizados) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('clientes')
             .update(datosActualizados)
             .eq('id', clienteId)
@@ -165,7 +174,6 @@ async function actualizarCliente(clienteId, datosActualizados) {
 
         if (error) throw error;
 
-        console.log('✅ Cliente actualizado:', data);
         return data;
 
     } catch (error) {
@@ -181,7 +189,7 @@ async function generarNumeroPoliza() {
     const año = new Date().getFullYear();
     
     // Contar pólizas del año
-    const { count } = await supabase
+    const { count } = await supabaseClient
         .from('polizas')
         .select('*', { count: 'exact', head: true })
         .like('numero_poliza', `POL-${año}-%`);
@@ -195,7 +203,7 @@ async function generarNumeroPoliza() {
 // =============================================
 async function listarPolizas(filtros = {}) {
     try {
-        let query = supabase
+        let query = supabaseClient
             .from('polizas')
             .select(`
                 *,
@@ -219,7 +227,6 @@ async function listarPolizas(filtros = {}) {
 
         if (error) throw error;
 
-        console.log(`✅ ${data.length} pólizas obtenidas`);
         return data;
 
     } catch (error) {
@@ -233,7 +240,7 @@ async function listarPolizas(filtros = {}) {
 // =============================================
 async function agregarDependiente(clienteId, dependienteData) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('dependientes')
             .insert({
                 cliente_id: clienteId,
@@ -250,7 +257,6 @@ async function agregarDependiente(clienteId, dependienteData) {
 
         if (error) throw error;
 
-        console.log('✅ Dependiente agregado:', data);
         return data;
 
     } catch (error) {
@@ -291,7 +297,7 @@ async function guardarDependientes(clienteId) {
 // =============================================
 async function guardarMetodoPago(clienteId, metodoPago) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('metodos_pago')
             .insert({
                 cliente_id: clienteId,
@@ -312,7 +318,6 @@ async function guardarMetodoPago(clienteId, metodoPago) {
 
         if (error) throw error;
 
-        console.log('✅ Método de pago guardado:', data);
         return data;
 
     } catch (error) {
@@ -332,17 +337,16 @@ async function subirDocumento(clienteId, archivo, nombrePersonalizado) {
         const nombreArchivo = `${timestamp}.${extension}`;
         const rutaStorage = `clientes/${clienteId}/${nombreArchivo}`;
 
-        console.log('📤 Subiendo documento:', rutaStorage);
 
         // 2. Subir archivo a Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await supabaseClient.storage
             .from('documentos-clientes')
             .upload(rutaStorage, archivo);
 
         if (uploadError) throw uploadError;
 
         // 3. Guardar referencia en tabla documentos
-        const { data: documento, error: docError } = await supabase
+        const { data: documento, error: docError } = await supabaseClient
             .from('documentos')
             .insert({
                 cliente_id: clienteId,
@@ -357,7 +361,6 @@ async function subirDocumento(clienteId, archivo, nombrePersonalizado) {
 
         if (docError) throw docError;
 
-        console.log('✅ Documento subido:', documento);
         return documento;
 
     } catch (error) {
@@ -371,7 +374,7 @@ async function subirDocumento(clienteId, archivo, nombrePersonalizado) {
 // =============================================
 async function obtenerUrlDocumento(rutaStorage) {
     try {
-        const { data, error } = await supabase.storage
+        const { data, error } = await supabaseClient.storage
             .from('documentos-clientes')
             .createSignedUrl(rutaStorage, 3600); // URL válida por 1 hora
 
@@ -398,7 +401,7 @@ async function agregarNota(clienteId, contenido, imagenes = []) {
             const nombreImagen = `${timestamp}_${Math.random().toString(36).substr(2, 9)}.${extension}`;
             const rutaImagen = `notas/${clienteId}/${nombreImagen}`;
 
-            const { error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabaseClient.storage
                 .from('documentos-clientes')
                 .upload(rutaImagen, imagen);
 
@@ -410,7 +413,7 @@ async function agregarNota(clienteId, contenido, imagenes = []) {
         // 2. Guardar nota
         const user = await getCurrentUser();
         
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('notas')
             .insert({
                 cliente_id: clienteId,
@@ -426,7 +429,6 @@ async function agregarNota(clienteId, contenido, imagenes = []) {
 
         if (error) throw error;
 
-        console.log('✅ Nota agregada:', data);
         return data;
 
     } catch (error) {
@@ -440,7 +442,7 @@ async function agregarNota(clienteId, contenido, imagenes = []) {
 // =============================================
 async function buscarClientes(termino) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('clientes')
             .select(`
                 *,
@@ -452,7 +454,6 @@ async function buscarClientes(termino) {
 
         if (error) throw error;
 
-        console.log(`✅ Encontrados ${data.length} clientes`);
         return data;
 
     } catch (error) {
@@ -464,6 +465,3 @@ async function buscarClientes(termino) {
 // =============================================
 // Log de inicio
 // =============================================
-console.log('%c🗄️ Supabase Config Cargado', 'color: #00ff00; font-size: 16px; font-weight: bold');
-console.log('📍 URL:', SUPABASE_URL);
-console.log('🔑 Anon Key configurada:', SUPABASE_ANON_KEY ? '✅' : '❌');

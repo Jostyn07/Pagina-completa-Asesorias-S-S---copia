@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Supabase - S&S Asesorías</title>
+    <title>Test Conexión Supabase - S&S Asesorías</title>
     <style>
         * {
             margin: 0;
@@ -115,21 +115,21 @@
         }
         
         .debug-info {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+            background: #d1fae5;
+            border: 1px solid #10b981;
             border-radius: 8px;
             padding: 15px;
             margin-top: 20px;
         }
         
         .debug-info h4 {
-            color: #856404;
+            color: #065f46;
             margin-bottom: 10px;
         }
         
         .debug-info ul {
             margin-left: 20px;
-            color: #856404;
+            color: #065f46;
         }
     </style>
 </head>
@@ -140,37 +140,37 @@
         
         <!-- Test 1: Conexión -->
         <div class="test-section">
-            <h2><span class="icon">🔌</span> Test 1: Verificar Conexión</h2>
-            <button onclick="testConexion()">Probar Conexión</button>
-            <button onclick="verCredenciales()">Ver Credenciales</button>
+            <h2>🔌 Test 1: Verificar Conexión</h2>
+            <button onclick="app.testConexion()">Probar Conexión</button>
+            <button onclick="app.verCredenciales()">Ver Credenciales</button>
         </div>
         
         <!-- Test 2: Usuarios -->
         <div class="test-section">
-            <h2><span class="icon">👥</span> Test 2: Listar Usuarios</h2>
-            <button onclick="listarUsuarios()">Ver Usuarios</button>
-            <button onclick="crearUsuarioPrueba()">Crear Usuario de Prueba</button>
+            <h2>👥 Test 2: Listar Usuarios</h2>
+            <button onclick="app.listarUsuarios()">Ver Usuarios</button>
+            <button onclick="app.crearUsuarioPrueba()">Crear Usuario de Prueba</button>
         </div>
         
         <!-- Test 3: Clientes -->
         <div class="test-section">
-            <h2><span class="icon">📋</span> Test 3: Operaciones con Clientes</h2>
-            <button onclick="listarClientes()">Listar Clientes</button>
-            <button onclick="crearClientePrueba()">Crear Cliente de Prueba</button>
+            <h2>📋 Test 3: Operaciones con Clientes</h2>
+            <button onclick="app.listarClientes()">Listar Clientes</button>
+            <button onclick="app.crearClientePrueba()">Crear Cliente de Prueba</button>
         </div>
         
         <!-- Test 4: Pólizas -->
         <div class="test-section">
-            <h2><span class="icon">📄</span> Test 4: Pólizas</h2>
-            <button onclick="listarTodasPolizas()">Listar Pólizas</button>
-            <button onclick="generarNumero()">Generar Número de Póliza</button>
+            <h2>📄 Test 4: Pólizas</h2>
+            <button onclick="app.listarTodasPolizas()">Listar Pólizas</button>
+            <button onclick="app.generarNumero()">Generar Número de Póliza</button>
         </div>
         
         <!-- Test 5: Storage -->
         <div class="test-section">
-            <h2><span class="icon">📁</span> Test 5: Storage</h2>
-            <button onclick="testStorage()">Verificar Storage</button>
-            <input type="file" id="fileInput" style="display: none" onchange="subirArchivoPrueba(this.files[0])">
+            <h2>📁 Test 5: Storage</h2>
+            <button onclick="app.testStorage()">Verificar Storage</button>
+            <input type="file" id="fileInput" style="display: none" onchange="app.subirArchivoPrueba(this.files[0])">
             <button onclick="document.getElementById('fileInput').click()">Subir Archivo de Prueba</button>
         </div>
         
@@ -182,279 +182,311 @@
 
         <!-- Debug Info -->
         <div class="debug-info">
-            <h4>🔍 Información de Debug</h4>
+            <h4>✅ Sistema Inicializado Correctamente</h4>
             <ul>
-                <li>CDN Supabase: <span id="cdnStatus">Verificando...</span></li>
-                <li>Config cargado: <span id="configStatus">Verificando...</span></li>
-                <li>Cliente creado: <span id="clientStatus">Verificando...</span></li>
+                <li id="cdnStatus">CDN Supabase: Verificando...</li>
+                <li id="clientStatus">Cliente: Verificando...</li>
+                <li id="urlStatus">URL: Verificando...</li>
             </ul>
         </div>
     </div>
 
-    <!-- Scripts - ORDEN CRÍTICO -->
+    <!-- SOLO UN SCRIPT: CDN de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./js/supabase_config.js"></script>
     
+    <!-- TODO EL CÓDIGO EN UN NAMESPACE ÚNICO -->
     <script>
         // =============================================
-        // VERIFICACIÓN DE CARGA
+        // NAMESPACE ÚNICO PARA EVITAR CONFLICTOS
         // =============================================
-        window.addEventListener('load', () => {
-            // Verificar CDN
-            if (typeof window.supabase !== 'undefined') {
-                document.getElementById('cdnStatus').textContent = '✅ Cargado';
-                document.getElementById('cdnStatus').style.color = 'green';
-            } else {
-                document.getElementById('cdnStatus').textContent = '❌ No cargado';
-                document.getElementById('cdnStatus').style.color = 'red';
-            }
+        const app = (function() {
+            // Configuración
+            const CONFIG = {
+                url: 'https://ycpdwjbfhktjrsroojtz.supabase.co',
+                key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljcGR3amJmaGt0anJzcm9vanR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4MzY1MjMsImV4cCI6MjA4MTQxMjUyM30.SxCcaUJ5wejZ-TiSvsTTV-mTm0DKBKODfIdxNqKR-0Q'
+            };
 
-            // Verificar Config
-            if (typeof SUPABASE_URL !== 'undefined' && typeof SUPABASE_ANON_KEY !== 'undefined') {
-                document.getElementById('configStatus').textContent = '✅ Cargado';
-                document.getElementById('configStatus').style.color = 'green';
-            } else {
-                document.getElementById('configStatus').textContent = '❌ No cargado';
-                document.getElementById('configStatus').style.color = 'red';
-            }
+            let client = null;
 
-            // Verificar Cliente
-            if (typeof supabase !== 'undefined' && supabase.from) {
-                document.getElementById('clientStatus').textContent = '✅ Creado correctamente';
-                document.getElementById('clientStatus').style.color = 'green';
-            } else {
-                document.getElementById('clientStatus').textContent = '❌ No creado';
-                document.getElementById('clientStatus').style.color = 'red';
-            }
-
-            // Test automático
-            setTimeout(testConexion, 1000);
-        });
-
-        // =============================================
-        // FUNCIONES DE TEST
-        // =============================================
-        
-        function mostrarResultado(titulo, contenido, tipo = 'success') {
-            const resultado = document.getElementById('resultado');
-            resultado.className = tipo;
-            resultado.innerHTML = `
-                <h3>${tipo === 'success' ? '✅' : '❌'} ${titulo}</h3>
-                <pre>${typeof contenido === 'object' ? JSON.stringify(contenido, null, 2) : contenido}</pre>
-            `;
-        }
-        
-        async function testConexion() {
-            try {
-                // Verificar que supabase existe
-                if (typeof supabase === 'undefined') {
-                    throw new Error('El cliente de Supabase no está definido. Verifica que supabase_config.js se haya cargado correctamente.');
+            // Inicializar
+            function init() {
+                console.log('🚀 Inicializando aplicación...');
+                
+                // Verificar CDN
+                if (typeof window.supabase === 'undefined') {
+                    mostrarError('CDN de Supabase no cargado');
+                    document.getElementById('cdnStatus').textContent = '❌ CDN Supabase: No cargado';
+                    document.getElementById('cdnStatus').style.color = 'red';
+                    return;
                 }
-
-                // Verificar que tiene el método from
-                if (!supabase.from) {
-                    throw new Error('supabase.from no es una función. El cliente no se creó correctamente.');
+                document.getElementById('cdnStatus').textContent = '✅ CDN Supabase: Cargado correctamente';
+                
+                // Crear cliente
+                try {
+                    client = window.supabase.createClient(CONFIG.url, CONFIG.key);
+                    
+                    if (!client || typeof client.from !== 'function') {
+                        throw new Error('Cliente no se creó correctamente');
+                    }
+                    
+                    console.log('✅ Cliente de Supabase creado correctamente');
+                    document.getElementById('clientStatus').textContent = '✅ Cliente: Creado y funcional';
+                    document.getElementById('urlStatus').textContent = `✅ URL: ${CONFIG.url}`;
+                    
+                    // Test automático
+                    setTimeout(() => {
+                        testConexion();
+                    }, 1000);
+                    
+                } catch (error) {
+                    console.error('❌ Error al crear cliente:', error);
+                    mostrarError('Error al crear cliente: ' + error.message);
+                    document.getElementById('clientStatus').textContent = '❌ Cliente: Error al crear';
+                    document.getElementById('clientStatus').style.color = 'red';
                 }
-
-                const { data, error } = await supabase
-                    .from('usuarios')
-                    .select('count')
-                    .limit(1);
-                
-                if (error) throw error;
-                
-                mostrarResultado(
-                    'Conexión Exitosa',
-                    `✅ Conectado a Supabase correctamente\n📍 URL: ${SUPABASE_URL}\n🔑 Clave configurada correctamente`,
-                    'success'
-                );
-            } catch (error) {
-                mostrarResultado('Error de Conexión', error.message, 'error');
-            }
-        }
-        
-        function verCredenciales() {
-            if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON_KEY === 'undefined') {
-                mostrarResultado('Error', 'Las credenciales no están definidas. Verifica supabase_config.js', 'error');
-                return;
             }
 
-            mostrarResultado(
-                'Credenciales Configuradas',
-                `URL: ${SUPABASE_URL}\n\nAnon Key: ${SUPABASE_ANON_KEY.substring(0, 50)}...`,
-                'success'
-            );
-        }
-        
-        async function listarUsuarios() {
-            try {
-                if (typeof supabase === 'undefined' || !supabase.from) {
-                    throw new Error('Cliente de Supabase no disponible');
+            // Mostrar resultado
+            function mostrarResultado(titulo, contenido, tipo = 'success') {
+                const resultado = document.getElementById('resultado');
+                resultado.className = tipo;
+                resultado.innerHTML = `
+                    <h3>${tipo === 'success' ? '✅' : '❌'} ${titulo}</h3>
+                    <pre>${typeof contenido === 'object' ? JSON.stringify(contenido, null, 2) : contenido}</pre>
+                `;
+            }
+
+            function mostrarError(mensaje) {
+                mostrarResultado('Error', mensaje, 'error');
+            }
+
+            // Tests
+            async function testConexion() {
+                try {
+                    console.log('🔍 Probando conexión...');
+                    
+                    if (!client) {
+                        throw new Error('Cliente no inicializado');
+                    }
+
+                    const { data, error } = await client
+                        .from('usuarios')
+                        .select('count')
+                        .limit(1);
+                    
+                    if (error) throw error;
+                    
+                    mostrarResultado(
+                        'Conexión Exitosa',
+                        `✅ Conectado a Supabase correctamente\n📍 URL: ${CONFIG.url}\n🔑 Anon Key configurada\n\n¡Todo funciona perfectamente!`,
+                        'success'
+                    );
+                } catch (error) {
+                    console.error('❌ Error:', error);
+                    mostrarError(error.message);
                 }
+            }
 
-                const { data, error } = await supabase
-                    .from('usuarios')
-                    .select('*');
-                
-                if (error) throw error;
-                
+            function verCredenciales() {
                 mostrarResultado(
-                    `${data.length} Usuarios Encontrados`,
-                    data,
+                    'Credenciales Configuradas',
+                    `URL: ${CONFIG.url}\n\nAnon Key: ${CONFIG.key.substring(0, 50)}...`,
                     'success'
                 );
-            } catch (error) {
-                mostrarResultado('Error al Listar Usuarios', error.message, 'error');
             }
-        }
-        
-        async function crearUsuarioPrueba() {
-            try {
-                const { data, error } = await supabase
-                    .from('usuarios')
-                    .insert({
-                        email: `test_${Date.now()}@prueba.com`,
-                        nombre: 'Usuario de Prueba',
-                        rol: 'operador'
-                    })
-                    .select()
-                    .single();
-                
-                if (error) throw error;
-                
-                mostrarResultado('Usuario Creado', data, 'success');
-            } catch (error) {
-                mostrarResultado('Error al Crear Usuario', error.message, 'error');
+
+            async function listarUsuarios() {
+                try {
+                    console.log('📋 Listando usuarios...');
+
+                    const { data, error } = await client
+                        .from('usuarios')
+                        .select('*');
+                    
+                    if (error) throw error;
+                    
+                    mostrarResultado(
+                        `${data.length} Usuarios Encontrados`,
+                        data,
+                        'success'
+                    );
+                } catch (error) {
+                    mostrarError(error.message);
+                }
             }
-        }
-        
-        async function listarClientes() {
-            try {
-                const { data, error } = await supabase
-                    .from('clientes')
-                    .select('*')
-                    .limit(10);
-                
-                if (error) throw error;
-                
-                mostrarResultado(
-                    `${data.length} Clientes Encontrados`,
-                    data.length > 0 ? data : 'No hay clientes aún. Crea uno de prueba.',
-                    'success'
-                );
-            } catch (error) {
-                mostrarResultado('Error al Listar Clientes', error.message, 'error');
+
+            async function crearUsuarioPrueba() {
+                try {
+                    const { data, error } = await client
+                        .from('usuarios')
+                        .insert({
+                            email: `test_${Date.now()}@prueba.com`,
+                            nombre: 'Usuario de Prueba',
+                            rol: 'operador'
+                        })
+                        .select()
+                        .single();
+                    
+                    if (error) throw error;
+                    
+                    mostrarResultado('Usuario Creado', data, 'success');
+                } catch (error) {
+                    mostrarError(error.message);
+                }
             }
-        }
-        
-        async function crearClientePrueba() {
-            try {
-                const timestamp = Date.now();
-                const { data, error } = await supabase
-                    .from('clientes')
-                    .insert({
-                        tipo_registro: 'nuevo',
-                        nombres: 'Juan',
-                        apellidos: 'Pérez',
-                        sexo: 'masculino',
-                        fecha_nacimiento: '1985-01-15',
-                        email: `juan.perez.${timestamp}@prueba.com`,
-                        telefono1: '3051234567',
-                        estado_migratorio: 'ciudadano',
-                        nacionalidad: 'Estadounidense',
-                        ingresos: 45000,
-                        aplica: true,
-                        direccion: '123 Main Street',
-                        ciudad: 'Miami',
-                        estado: 'FL',
-                        condado: 'Broward',
-                        codigo_postal: '33101'
-                    })
-                    .select()
-                    .single();
-                
-                if (error) throw error;
-                
-                mostrarResultado('Cliente de Prueba Creado', data, 'success');
-            } catch (error) {
-                mostrarResultado('Error al Crear Cliente', error.message, 'error');
+
+            async function listarClientes() {
+                try {
+                    const { data, error } = await client
+                        .from('clientes')
+                        .select('*')
+                        .limit(10);
+                    
+                    if (error) throw error;
+                    
+                    mostrarResultado(
+                        `${data.length} Clientes Encontrados`,
+                        data.length > 0 ? data : 'No hay clientes aún. Crea uno de prueba.',
+                        'success'
+                    );
+                } catch (error) {
+                    mostrarError(error.message);
+                }
             }
-        }
-        
-        async function listarTodasPolizas() {
-            try {
-                const { data, error } = await supabase
-                    .from('polizas')
-                    .select(`
-                        *,
-                        cliente:clientes(nombres, apellidos)
-                    `)
-                    .limit(10);
-                
-                if (error) throw error;
-                
-                mostrarResultado(
-                    `${data.length} Pólizas Encontradas`,
-                    data.length > 0 ? data : 'No hay pólizas aún.',
-                    'success'
-                );
-            } catch (error) {
-                mostrarResultado('Error al Listar Pólizas', error.message, 'error');
+
+            async function crearClientePrueba() {
+                try {
+                    const timestamp = Date.now();
+                    const { data, error } = await client
+                        .from('clientes')
+                        .insert({
+                            tipo_registro: 'nuevo',
+                            nombres: 'Juan',
+                            apellidos: 'Pérez',
+                            sexo: 'masculino',
+                            fecha_nacimiento: '1985-01-15',
+                            email: `juan.perez.${timestamp}@prueba.com`,
+                            telefono1: '3051234567',
+                            estado_migratorio: 'ciudadano',
+                            nacionalidad: 'Estadounidense',
+                            ingresos: 45000,
+                            aplica: true,
+                            direccion: '123 Main Street',
+                            ciudad: 'Miami',
+                            estado: 'FL',
+                            condado: 'Broward',
+                            codigo_postal: '33101'
+                        })
+                        .select()
+                        .single();
+                    
+                    if (error) throw error;
+                    
+                    mostrarResultado('Cliente de Prueba Creado', data, 'success');
+                } catch (error) {
+                    mostrarError(error.message);
+                }
             }
-        }
-        
-        async function generarNumero() {
-            try {
-                const numero = await generarNumeroPoliza();
-                mostrarResultado(
-                    'Número de Póliza Generado',
-                    `Próximo número disponible: ${numero}`,
-                    'success'
-                );
-            } catch (error) {
-                mostrarResultado('Error al Generar Número', error.message, 'error');
+
+            async function listarTodasPolizas() {
+                try {
+                    const { data, error } = await client
+                        .from('polizas')
+                        .select(`
+                            *,
+                            cliente:clientes(nombres, apellidos)
+                        `)
+                        .limit(10);
+                    
+                    if (error) throw error;
+                    
+                    mostrarResultado(
+                        `${data.length} Pólizas Encontradas`,
+                        data.length > 0 ? data : 'No hay pólizas aún.',
+                        'success'
+                    );
+                } catch (error) {
+                    mostrarError(error.message);
+                }
             }
-        }
-        
-        async function testStorage() {
-            try {
-                const { data, error } = await supabase.storage
-                    .listBuckets();
-                
-                if (error) throw error;
-                
-                mostrarResultado(
-                    'Buckets de Storage',
-                    data,
-                    'success'
-                );
-            } catch (error) {
-                mostrarResultado('Error en Storage', error.message, 'error');
+
+            async function generarNumero() {
+                try {
+                    const año = new Date().getFullYear();
+                    
+                    const { count } = await client
+                        .from('polizas')
+                        .select('*', { count: 'exact', head: true })
+                        .like('numero_poliza', `POL-${año}-%`);
+                    
+                    const siguiente = (count || 0) + 1;
+                    const numero = `POL-${año}-${String(siguiente).padStart(3, '0')}`;
+                    
+                    mostrarResultado(
+                        'Número de Póliza Generado',
+                        `Próximo número disponible: ${numero}`,
+                        'success'
+                    );
+                } catch (error) {
+                    mostrarError(error.message);
+                }
             }
-        }
-        
-        async function subirArchivoPrueba(archivo) {
-            if (!archivo) return;
-            
-            try {
-                const timestamp = Date.now();
-                const ruta = `pruebas/${timestamp}_${archivo.name}`;
-                
-                const { data, error } = await supabase.storage
-                    .from('documentos-clientes')
-                    .upload(ruta, archivo);
-                
-                if (error) throw error;
-                
-                mostrarResultado(
-                    'Archivo Subido',
-                    `Archivo: ${archivo.name}\nRuta: ${ruta}\nTamaño: ${(archivo.size / 1024).toFixed(2)} KB`,
-                    'success'
-                );
-            } catch (error) {
-                mostrarResultado('Error al Subir Archivo', error.message, 'error');
+
+            async function testStorage() {
+                try {
+                    const { data, error } = await client.storage.listBuckets();
+                    
+                    if (error) throw error;
+                    
+                    mostrarResultado('Buckets de Storage', data, 'success');
+                } catch (error) {
+                    mostrarError(error.message);
+                }
             }
-        }
+
+            async function subirArchivoPrueba(archivo) {
+                if (!archivo) return;
+                
+                try {
+                    const timestamp = Date.now();
+                    const ruta = `pruebas/${timestamp}_${archivo.name}`;
+                    
+                    const { data, error } = await client.storage
+                        .from('documentos-clientes')
+                        .upload(ruta, archivo);
+                    
+                    if (error) throw error;
+                    
+                    mostrarResultado(
+                        'Archivo Subido',
+                        `Archivo: ${archivo.name}\nRuta: ${ruta}\nTamaño: ${(archivo.size / 1024).toFixed(2)} KB`,
+                        'success'
+                    );
+                } catch (error) {
+                    mostrarError(error.message);
+                }
+            }
+
+            // Inicializar cuando la página cargue
+            window.addEventListener('load', init);
+
+            // Exponer funciones públicas
+            return {
+                testConexion,
+                verCredenciales,
+                listarUsuarios,
+                crearUsuarioPrueba,
+                listarClientes,
+                crearClientePrueba,
+                listarTodasPolizas,
+                generarNumero,
+                testStorage,
+                subirArchivoPrueba
+            };
+        })();
+
+        console.log('%c🗄️ Test Supabase Cargado', 'color: #10b981; font-size: 20px; font-weight: bold');
+        console.log('%c✅ Sin conflictos - Listo para usar', 'color: #10b981; font-size: 14px');
     </script>
 </body>
 </html>

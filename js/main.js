@@ -205,16 +205,13 @@ function aplicarFiltros() {
     const year2025 = document.getElementById('2025');
     const year2026 = document.getElementById('2026');
     
-    console.log('Filtros aplicados:');
-    console.log('2025:', year2025 ? year2025.checked : false);
-    console.log('2026:', year2026 ? year2026.checked : false);
+
     
     // Aquí irá la lógica de filtrado por año
     alert('Filtros aplicados correctamente');
 }
 
 function filtrarPorEstado(estado) {
-    console.log('Filtrando por estado:', estado);
     const table = document.getElementById('tabla-polizas');
     if (!table) return;
     
@@ -239,7 +236,6 @@ function filtrarPorEstado(estado) {
 }
 
 function filtrarPorTipo(tipo) {
-    console.log('Filtrando por tipo:', tipo);
     // Lógica específica para para-revisar.html
     alert(`Mostrando pólizas: ${tipo}`);
 }
@@ -247,7 +243,6 @@ function filtrarPorTipo(tipo) {
 function applyFilters() {
     const filterType = document.getElementById('filterType');
     if (filterType) {
-        console.log('Aplicando filtro:', filterType.value);
         alert(`Filtro aplicado: ${filterType.value}`);
     }
 }
@@ -294,7 +289,6 @@ function formatearMoneda(cantidad) {
 
 function mostrarNotificacion(mensaje, tipo = 'info') {
     // tipo puede ser: 'success', 'error', 'warning', 'info'
-    console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
     
     // Por ahora usamos alert, luego se implementará un sistema de notificaciones propio
     if (tipo === 'error') {
@@ -337,17 +331,3 @@ if (window.location.pathname.includes('home.html')) {
 // LOG DE DESARROLLO
 // ============================================
 
-console.log('%c🚀 Sistema S&S Asesorías cargado correctamente', 'color: #00a76f; font-size: 14px; font-weight: bold');
-console.log('%c📋 Funcionalidades activas:', 'color: #0066cc; font-weight: bold');
-console.log('  ✓ Autenticación');
-console.log('  ✓ Búsqueda en tablas');
-console.log('  ✓ Filtros básicos');
-console.log('  ✓ Navegación entre páginas');
-console.log('  ✓ Sidebar colapsable');
-console.log('  ✓ Modo oscuro (UI solamente)');
-console.log('%c⚙️ En desarrollo:', 'color: #ff9800; font-weight: bold');
-console.log('  → CRUD completo de pólizas');
-console.log('  → Conexión con base de datos');
-console.log('  → Gráficos interactivos');
-console.log('  → Sistema de notificaciones');
-console.log('  → Exportar a Excel/PDF');

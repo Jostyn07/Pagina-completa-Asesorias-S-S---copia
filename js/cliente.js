@@ -71,7 +71,6 @@ function mostrarTabsEdicion() {
 
 function cargarDatosCliente(clienteId) {
     // TODO: Aquí iría la lógica para cargar datos desde la base de datos
-    console.log('Cargando datos del cliente:', clienteId);
     
     // Por ahora, datos de ejemplo
     // En producción, esto vendría de una API
@@ -889,7 +888,6 @@ function guardarBorradorAutomatico() {
         const ahora = new Date();
         text.textContent = `Borrador guardado (${ahora.toLocaleTimeString()})`;
         
-        console.log('Borrador guardado automáticamente');
     }, 1000);
 }
 
@@ -1042,16 +1040,3 @@ function cancelarFormulario() {
 // ============================================
 // LOG DE DESARROLLO
 // ============================================
-console.log('%c📋 Sistema de Cliente S&S Asesorías', 'color: #00a8e8; font-size: 16px; font-weight: bold');
-console.log('%c✅ Módulo cargado correctamente', 'color: #4caf50; font-weight: bold');
-console.log('Funcionalidades activas:');
-console.log('  ✓ Tabs funcionales');
-console.log('  ✓ Fechas automáticas');
-console.log('  ✓ Validación en tiempo real');
-console.log('  ✓ Agregar/eliminar dependientes');
-console.log('  ✓ Método de pago');
-console.log('  ✓ Comisiones (admin)');
-console.log('  ✓ Documentos');
-console.log('  ✓ Sistema de notas con imágenes');
-console.log('  ✓ Autoguardado');
-console.log('  ✓ Secciones colapsables');
