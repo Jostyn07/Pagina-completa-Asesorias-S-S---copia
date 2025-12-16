@@ -1,0 +1,355 @@
+/* ============================================
+   VARIABLES CSS
+   ============================================ */
+:root {
+    /* Colores principales */
+    --azul-primario: #0066cc;
+    --verde-salud: #00a76f;
+    --azul-oscuro: #003d7a;
+    --gris-claro: #f5f7fa;
+    --blanco: #fff;
+    --naranja-acento: #ff9800;
+    
+    /* Gradientes */
+    --header-gradiente: linear-gradient(to right, #0066cc, #00a76f);
+    
+    /* Sombras */
+    --sombra-suave: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    --sombra-media: 0px 0px 15px rgba(0, 0, 0, 0.3);
+    --sombra-fuerte: 0 0 55px 0 #000;
+}
+
+/* ============================================
+   RESET Y BASE
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url("../images/Montañas2.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: #000;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================
+   CONTENEDOR PRINCIPAL
+   ============================================ */
+.contenido-principal {
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================
+   CAJA DE LOGIN
+   ============================================ */
+.cuerpo-login {
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    max-width: 500px;
+    width: 100%;
+    padding: 3rem;
+    border-radius: 20px;
+    text-align: left;
+    box-shadow: var(--sombra-media);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.cuerpo-login:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 15px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* ============================================
+   LOGO
+   ============================================ */
+.logo-container {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logo-container img {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.logo-container img:hover {
+    transform: scale(1.05) rotate(2deg);
+}
+
+/* ============================================
+   CONTENIDO DEL FORMULARIO
+   ============================================ */
+.cuerpo-input {
+    width: 100%;
+}
+
+/* ============================================
+   TÍTULO
+   ============================================ */
+.titulo-encabezado {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.titulo-encabezado h2 {
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    font-size: 1.8rem;
+    line-height: 1.4;
+}
+
+/* ============================================
+   INPUTS
+   ============================================ */
+.datos-ingreso {
+    margin-bottom: 1.5rem;
+}
+
+.datos-ingreso label {
+    display: block;
+    font-weight: 600;
+    color: var(--azul-oscuro);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.input-general {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid transparent;
+    border-bottom: 2px solid var(--azul-primario);
+    background: rgba(245, 247, 250, 0.9);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    outline: none;
+    color: #333;
+}
+
+.input-general:focus {
+    background: rgba(255, 255, 255, 1);
+    border: 2px solid var(--azul-primario);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    transform: translateY(-2px);
+}
+
+.input-general::placeholder {
+    color: #999;
+}
+
+/* ============================================
+   BOTÓN
+   ============================================ */
+.btn-login {
+    width: 100%;
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 12px;
+    border: none;
+    background: var(--header-gradiente);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--sombra-suave);
+}
+
+.btn-login:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 102, 204, 0.4);
+}
+
+.btn-login:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+}
+
+/* ============================================
+   ENLACES ADICIONALES
+   ============================================ */
+.enlaces-adicionales {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.enlaces-adicionales a {
+    color: var(--azul-primario);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+    font-weight: 500;
+}
+
+.enlaces-adicionales a:hover {
+    color: var(--verde-salud);
+    text-decoration: underline;
+}
+
+/* ============================================
+   ANIMACIÓN DE ENTRADA
+   ============================================ */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cuerpo-login {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .cuerpo-login {
+        padding: 2rem;
+        margin: 10px;
+        max-width: 450px;
+    }
+    
+    .titulo-encabezado h2 {
+        font-size: 1.5rem;
+    }
+    
+    .logo-container img {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .input-general {
+        padding: 0.9rem;
+        font-size: 0.95rem;
+    }
+    
+    .btn-login {
+        padding: 0.9rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .contenido-principal {
+        padding: 15px;
+    }
+    
+    .cuerpo-login {
+        padding: 1.5rem;
+        border-radius: 16px;
+    }
+    
+    .titulo-encabezado {
+        margin-bottom: 1.5rem;
+    }
+    
+    .titulo-encabezado h2 {
+        font-size: 1.3rem;
+    }
+    
+    .logo-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .logo-container img {
+        width: 90px;
+        height: 90px;
+    }
+    
+    .datos-ingreso {
+        margin-bottom: 1.2rem;
+    }
+    
+    .datos-ingreso label {
+        font-size: 0.9rem;
+    }
+    
+    .input-general {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    .btn-login {
+        padding: 0.85rem;
+        font-size: 0.95rem;
+    }
+    
+    .enlaces-adicionales {
+        margin-top: 1.2rem;
+    }
+    
+    .enlaces-adicionales a {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .cuerpo-login {
+        padding: 1.2rem;
+    }
+    
+    .titulo-encabezado h2 {
+        font-size: 1.2rem;
+    }
+    
+    .logo-container img {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+/* ============================================
+   ESTADOS DE CARGA
+   ============================================ */
+.btn-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-login:disabled:hover {
+    box-shadow: var(--sombra-suave);
+}
+
+/* ============================================
+   MENSAJES DE ERROR
+   ============================================ */
+.error-message {
+    color: #dc2626;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    display: none;
+}
+
+.datos-ingreso.error .input-general {
+    border-color: #dc2626;
+}
+
+.datos-ingreso.error .error-message {
+    display: block;
+}

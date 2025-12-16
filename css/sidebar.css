@@ -1,0 +1,337 @@
+/* ============================================
+   SIDEBAR UNIFICADO
+   ============================================ */
+.sidebar-unified {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 260px;
+    background-color: #fff;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: width 0.3s ease;
+}
+
+.sidebar-unified.collapsed {
+    width: 80px;
+}
+
+/* Header del Sidebar */
+.sidebar-header {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e5e7eb;
+    min-height: 90px;
+}
+
+.sidebar-logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: opacity 0.3s;
+}
+
+.sidebar-logo-link:hover {
+    opacity: 0.8;
+}
+
+.sidebar-logo-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: contain;
+    transition: transform 0.3s;
+}
+
+.sidebar-logo-link:hover .sidebar-logo-img {
+    transform: scale(1.05);
+}
+
+.sidebar-toggle-btn {
+    width: 36px;
+    height: 36px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sidebar-toggle-btn:hover {
+    background: #e5e7eb;
+}
+
+.sidebar-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.sidebar-unified.collapsed .sidebar-toggle-btn .material-symbols-rounded {
+    transform: rotate(180deg);
+}
+
+.sidebar-toggle-btn .material-symbols-rounded {
+    transition: transform 0.3s;
+}
+
+/* Búsqueda */
+.sidebar-search {
+    padding: 15px 20px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f3f4f6;
+    padding: 10px 15px;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.search-box:focus-within {
+    background: #e5e7eb;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.search-box .material-symbols-rounded {
+    color: #9ca3af;
+    font-size: 20px;
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.9rem;
+    color: #374151;
+    min-width: 0;
+}
+
+.search-box input::placeholder {
+    color: #9ca3af;
+}
+
+.sidebar-unified.collapsed .search-box input {
+    display: none;
+}
+
+.sidebar-unified.collapsed .search-box {
+    padding: 10px;
+    justify-content: center;
+}
+
+/* Navegación */
+.sidebar-nav {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Scrollbar personalizado para el sidebar */
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: #d1d5db;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    color: #374151;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.menu-item:hover {
+    background: #f3f4f6;
+    transform: translateX(2px);
+}
+
+.menu-item.active {
+    background: #6366f1;
+    color: white;
+}
+
+.menu-item.active:hover {
+    background: #5558e3;
+}
+
+.menu-item .material-symbols-rounded {
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.menu-item span:last-child {
+    transition: opacity 0.3s;
+    overflow: hidden;
+}
+
+.sidebar-unified.collapsed .menu-item span:last-child {
+    opacity: 0;
+    width: 0;
+}
+
+.sidebar-unified.collapsed .menu-item {
+    justify-content: center;
+    padding: 12px;
+}
+
+/* Modo Oscuro */
+.sidebar-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.dark-mode-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background: #f3f4f6;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dark-mode-toggle:hover {
+    background: #e5e7eb;
+}
+
+.dark-mode-toggle:active {
+    transform: scale(0.98);
+}
+
+.dark-mode-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.dark-mode-label .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.toggle-switch {
+    width: 44px;
+    height: 24px;
+    background: #d1d5db;
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.3s;
+    flex-shrink: 0;
+}
+
+.toggle-switch.active {
+    background: #6366f1;
+}
+
+.toggle-circle {
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch.active .toggle-circle {
+    transform: translateX(20px);
+}
+
+.sidebar-unified.collapsed .dark-mode-label span {
+    display: none;
+}
+
+/* Ajustar contenedor principal */
+.main-content,
+.container__flex {
+    margin-left: 260px;
+    transition: margin-left 0.3s ease;
+}
+
+.sidebar-unified.collapsed ~ .main-content,
+.sidebar-unified.collapsed ~ .container__flex {
+    margin-left: 80px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .sidebar-unified {
+        width: 260px;
+    }
+    
+    .main-content,
+    .container__flex {
+        margin-left: 260px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar-unified {
+        transform: translateX(-100%);
+        width: 260px;
+    }
+    
+    .sidebar-unified.active {
+        transform: translateX(0);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .main-content,
+    .container__flex {
+        margin-left: 0 !important;
+    }
+    
+    .sidebar-unified.collapsed {
+        width: 260px;
+    }
+}
+
+/* Overlay para móvil cuando el sidebar está abierto */
+@media (max-width: 768px) {
+    .sidebar-unified.active::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 260px;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+    }
+}

@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cliente - S&S Asesorías</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="../css/cliente.css">
+</head>
+<body>
+    <!-- SIDEBAR UNIFICADO -->
+    <aside class="sidebar-unified" id="sidebar">
+        <div class="sidebar-header">
+            <a href="./home.html" class="sidebar-logo-link">
+                <img src="../images/Logo.png" alt="S&S Asesorías" class="sidebar-logo-img">
+            </a>
+            <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+                <span class="material-symbols-rounded">chevron_left</span>
+            </button>
+        </div>
+
+        <div class="sidebar-search">
+            <div class="search-box">
+                <span class="material-symbols-rounded">search</span>
+                <input type="text" placeholder="Buscar...">
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="./home.html" class="menu-item">
+                <span class="material-symbols-rounded">home</span>
+                <span>Inicio</span>
+            </a>
+
+            <a href="./polizas.html" class="menu-item active">
+                <span class="material-symbols-rounded">description</span>
+                <span>Pólizas</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span class="material-symbols-rounded">bar_chart</span>
+                <span>Gráficos</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span class="material-symbols-rounded">folder</span>
+                <span>Gestiones</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span class="material-symbols-rounded">trending_up</span>
+                <span>Seguimiento</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span class="material-symbols-rounded">rate_review</span>
+                <span>Solicitud de revisión mercado</span>
+            </a>
+
+            <a href="./para-revisar.html" class="menu-item">
+                <span class="material-symbols-rounded">fact_check</span>
+                <span>Para revisar</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="dark-mode-toggle" onclick="toggleDarkMode()">
+                <div class="dark-mode-label">
+                    <span class="material-symbols-rounded">dark_mode</span>
+                    <span>Modo Oscuro</span>
+                </div>
+                <div class="toggle-switch" id="darkModeSwitch">
+                    <div class="toggle-circle"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="main-container">
+        <!-- HEADER -->
+        <header class="page-header">
+            <div class="header-left">
+                <button class="btn-back" onclick="window.location.href='./polizas.html'">
+                    <span class="material-symbols-rounded">arrow_back</span>
+                    Volver a Pólizas
+                </button>
+                <h1 id="pageTitle">Nueva Póliza</h1>
+            </div>
+            <div class="header-right">
+                <div class="autosave-indicator" id="autosaveIndicator">
+                    <span class="material-symbols-rounded">cloud_done</span>
+                    <span id="autosaveText">Todos los cambios guardados</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- TABS NAVEGACIÓN -->
+        <div class="tabs-container">
+            <div class="tabs-nav" id="tabsNav">
+                <button class="tab-btn active" data-tab="info-general">
+                    <span class="material-symbols-rounded">person</span>
+                    Información General
+                </button>
+                <button class="tab-btn" data-tab="dependientes">
+                    <span class="material-symbols-rounded">family_restroom</span>
+                    Dependientes
+                </button>
+                <button class="tab-btn tab-estado" data-tab="estado" style="display: none;">
+                    <span class="material-symbols-rounded">verified</span>
+                    Estado y Seguimiento
+                </button>
+                <button class="tab-btn" data-tab="pago">
+                    <span class="material-symbols-rounded">payment</span>
+                    Método de Pago
+                </button>
+                <button class="tab-btn tab-comisiones" data-tab="comisiones" style="display: none;">
+                    <span class="material-symbols-rounded">payments</span>
+                    💰 Comisiones
+                </button>
+                <button class="tab-btn" data-tab="documentos">
+                    <span class="material-symbols-rounded">attach_file</span>
+                    Documentos
+                </button>
+                <button class="tab-btn" data-tab="notas">
+                    <span class="material-symbols-rounded">chat</span>
+                    💬 Notas
+                </button>
+            </div>
+        </div>
+
+        <!-- FORMULARIO -->
+        <form id="clienteForm" class="cliente-form">
+            
+            <!-- TAB 1: INFORMACIÓN GENERAL -->
+            <div class="tab-content active" id="tab-info-general">
+                
+                <!-- DATOS PERSONALES -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">person</span>
+                            <h2>Datos Personales</h2>
+                        </div>
+                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tipo de registro <span class="required">*</span></label>
+                                <select id="tipoRegistro" name="tipoRegistro" required>
+                                    <option value="">Selecciona...</option>
+                                    <option value="nuevo">Nuevo</option>
+                                    <option value="renovacion">Renovación</option>
+                                    <option value="cambio">Cambio de plan</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha de registro</label>
+                                <input type="text" id="fechaRegistro" name="fechaRegistro" readonly value="">
+                                <span class="input-icon">🔒</span>
+                                <small class="helper-text">Generada automáticamente</small>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nombres <span class="required">*</span></label>
+                                <input type="text" id="nombres" name="nombres" placeholder="Nombres del titular" required>
+                                <span class="validation-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Apellidos <span class="required">*</span></label>
+                                <input type="text" id="apellidos" name="apellidos" placeholder="Apellidos del titular" required>
+                                <span class="validation-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Sexo <span class="required">*</span></label>
+                                <select id="sexo" name="sexo" required>
+                                    <option value="">Selecciona...</option>
+                                    <option value="masculino">Masculino</option>
+                                    <option value="femenino">Femenino</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Correo electrónico <span class="required">*</span></label>
+                                <input type="email" id="email" name="email" placeholder="correo@ejemplo.com" required>
+                                <span class="validation-message"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Teléfono 1 <span class="required">*</span></label>
+                                <input type="tel" id="telefono1" name="telefono1" placeholder="(305) 123-4567" required>
+                                <span class="validation-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Teléfono 2</label>
+                                <input type="tel" id="telefono2" name="telefono2" placeholder="(305) 123-4567">
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha de nacimiento <span class="required">*</span></label>
+                                <input type="date" id="fechaNacimiento" name="fechaNacimiento" required>
+                                <span class="validation-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Estado migratorio <span class="required">*</span></label>
+                                <select id="estadoMigratorio" name="estadoMigratorio" required>
+                                    <option value="">Selecciona...</option>
+                                    <option value="ciudadano">Ciudadano</option>
+                                    <option value="residente">Residente Permanente</option>
+                                    <option value="visa">Visa de trabajo</option>
+                                    <option value="asilo">Asilo</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>SSN</label>
+                                <input type="text" id="ssn" name="ssn" placeholder="XXX-XX-XXXX" maxlength="11">
+                                <span class="validation-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Ingresos anuales</label>
+                                <input type="number" id="ingresos" name="ingresos" placeholder="0" value="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Ocupación</label>
+                                <input type="text" id="ocupacion" name="ocupacion" placeholder="Ocupación del titular">
+                            </div>
+                            <div class="form-group">
+                                <label>Nacionalidad <span class="required">*</span></label>
+                                <input type="text" id="nacionalidad" name="nacionalidad" placeholder="Ej: Estadounidense" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>¿Aplica para el seguro? <span class="required">*</span></label>
+                                <select id="aplica" name="aplica" required>
+                                    <option value="">Selecciona...</option>
+                                    <option value="si">Sí</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DIRECCIÓN -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">home</span>
+                            <h2>Dirección</h2>
+                        </div>
+                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Dirección <span class="required">*</span></label>
+                                <input type="text" id="direccion" name="direccion" placeholder="Dirección del titular" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Casa/Apartamento</label>
+                                <input type="text" id="casaApartamento" name="casaApartamento" placeholder="Ej: Apt 4B">
+                            </div>
+                            <div class="form-group">
+                                <label>Condado <span class="required">*</span></label>
+                                <input type="text" id="condado" name="condado" placeholder="Condado del titular" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Ciudad <span class="required">*</span></label>
+                                <input type="text" id="ciudad" name="ciudad" placeholder="Ciudad del titular" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Estado <span class="required">*</span></label>
+                                <select id="estado" name="estado" required>
+                                    <option value="">Selecciona...</option>
+                                    <option value="FL">Florida</option>
+                                    <option value="TX">Texas</option>
+                                    <option value="CA">California</option>
+                                    <option value="NY">New York</option>
+                                    <!-- Agregar más estados según necesidad -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Código Postal <span class="required">*</span></label>
+                                <input type="text" id="codigoPostal" name="codigoPostal" placeholder="33101" maxlength="5" required>
+                                <span class="validation-message"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="tienePOBox" name="tienePOBox" onchange="togglePOBox()">
+                                    ¿Tiene PO Box?
+                                </label>
+                            </div>
+                            <div class="form-group" id="poBoxGroup" style="display: none;">
+                                <label>PO Box</label>
+                                <input type="text" id="poBox" name="poBox" placeholder="PO Box 12345">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INFORMACIÓN DE LA PÓLIZA -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">description</span>
+                            <h2>Información de la Póliza</h2>
+                        </div>
+                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Compañía Aseguradora <span class="required">*</span></label>
+                                <select id="compania" name="compania" required>
+                                    <option value="">Selecciona...</option>
+                                    <option value="florida-blue">Florida Blue</option>
+                                    <option value="oscar">Oscar Health</option>
+                                    <option value="ambetter">Ambetter</option>
+                                    <option value="molina">Molina Healthcare</option>
+                                    <option value="cigna">Cigna</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Plan <span class="required">*</span></label>
+                                <input type="text" id="plan" name="plan" placeholder="Ej: Bronze 2219" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Prima <span class="required">*</span></label>
+                                <input type="number" id="prima" name="prima" placeholder="0.00" step="0.01" min="0" required>
+                                <span class="validation-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Crédito Fiscal</label>
+                                <input type="number" id="creditoFiscal" name="creditoFiscal" placeholder="0.00" step="0.01" min="0" value="0">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tipo de venta <span class="required">*</span></label>
+                                <select id="tipoVenta" name="tipoVenta" required>
+                                    <option value="">Selecciona...</option>
+                                    <option value="nueva">Nueva venta</option>
+                                    <option value="renovacion">Renovación</option>
+                                    <option value="cambio">Cambio de plan</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Operador <span class="required">*</span></label>
+                                <select id="operador" name="operador" required>
+                                    <option value="">Selecciona...</option>
+                                    <option value="jostyn">Jostyn Aragón</option>
+                                    <option value="ana">Ana Martínez</option>
+                                    <option value="joel">Joel Nieves</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label>Enlace de la Póliza</label>
+                                <input type="url" id="enlacePoliza" name="enlacePoliza" placeholder="https://portal.compania.com/...">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Member ID</label>
+                                <input type="text" id="memberId" name="memberId" placeholder="ID del miembro">
+                            </div>
+                            <div class="form-group">
+                                <label>Portal NPN</label>
+                                <input type="text" id="portalNPN" name="portalNPN" placeholder="12345678">
+                            </div>
+                            <div class="form-group">
+                                <label>Clave de Seguridad</label>
+                                <input type="text" id="claveSeguridad" name="claveSeguridad" placeholder="Ej: Azul">
+                            </div>
+                        </div>
+
+                        <!-- FECHAS AUTOMÁTICAS -->
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <div class="info-box">
+                                    <div class="info-box-header">
+                                        <span class="material-symbols-rounded">calendar_today</span>
+                                        <h3>Fechas de Cobertura (Calculadas automáticamente)</h3>
+                                        <span class="lock-icon">🔒</span>
+                                    </div>
+                                    <div class="info-box-content">
+                                        <div class="date-display">
+                                            <label>Fecha inicial cobertura:</label>
+                                            <span id="displayFechaInicial">--/--/----</span>
+                                        </div>
+                                        <div class="date-display">
+                                            <label>Fecha final cobertura:</label>
+                                            <span id="displayFechaFinal">--/--/----</span>
+                                        </div>
+                                        <div class="date-display">
+                                            <label>Fecha efectividad:</label>
+                                            <span id="displayFechaEfectividad">--/--/----</span>
+                                        </div>
+                                        <small class="helper-text">
+                                            <span class="material-symbols-rounded">info</span>
+                                            Estas fechas se calculan automáticamente para el próximo mes
+                                        </small>
+                                    </div>
+                                    <!-- Hidden inputs para enviar en el form -->
+                                    <input type="hidden" id="fechaInicialCobertura" name="fechaInicialCobertura">
+                                    <input type="hidden" id="fechaFinalCobertura" name="fechaFinalCobertura">
+                                    <input type="hidden" id="fechaEfectividad" name="fechaEfectividad">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label>Observaciones</label>
+                                <textarea id="observaciones" name="observaciones" rows="4" placeholder="Notas adicionales sobre la póliza..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: DEPENDIENTES -->
+            <div class="tab-content" id="tab-dependientes">
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">family_restroom</span>
+                            <h2>Dependientes</h2>
+                            <span class="counter" id="dependientesCounter">(0)</span>
+                        </div>
+                        <button type="button" class="btn-add" onclick="agregarDependiente()">
+                            <span class="material-symbols-rounded">add</span>
+                            Agregar Dependiente
+                        </button>
+                    </div>
+                    <div class="section-content">
+                        <div id="dependientesContainer">
+                            <div class="empty-state">
+                                <span class="material-symbols-rounded">family_restroom</span>
+                                <p>No hay dependientes agregados</p>
+                                <small>Haz clic en "Agregar Dependiente" para comenzar</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: ESTADO Y SEGUIMIENTO (Solo visible en modo EDITAR) -->
+            <div class="tab-content" id="tab-estado">
+                <div class="info-message">
+                    <span class="material-symbols-rounded">info</span>
+                    <p>Los estados de Compañía y Mercado estarán disponibles después de guardar la póliza.</p>
+                </div>
+
+                <!-- ESTADO EN COMPAÑÍA -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">business</span>
+                            <h2>Estado en Compañía</h2>
+                        </div>
+                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
+                    </div>
+                    <div class="section-content">
+                        <!-- Contenido se habilitará en modo editar -->
+                        <p class="text-muted">Disponible después de procesar la póliza</p>
+                    </div>
+                </div>
+
+                <!-- ESTADO EN MERCADO -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">public</span>
+                            <h2>Estado en Mercado</h2>
+                        </div>
+                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
+                    </div>
+                    <div class="section-content">
+                        <!-- Contenido se habilitará en modo editar -->
+                        <p class="text-muted">Disponible después de procesar la póliza</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: MÉTODO DE PAGO -->
+            <div class="tab-content" id="tab-pago">
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">payment</span>
+                            <h2>Método de Pago</h2>
+                        </div>
+                        <button type="button" class="btn-secondary" onclick="limpiarMetodoPago()">
+                            <span class="material-symbols-rounded">delete</span>
+                            Limpiar
+                        </button>
+                    </div>
+                    <div class="section-content">
+                        <div class="payment-methods">
+                            <div class="payment-option">
+                                <label class="radio-label">
+                                    <input type="radio" name="metodoPago" value="banco" onchange="mostrarFormularioPago('banco')">
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <span class="material-symbols-rounded">account_balance</span>
+                                        Cuenta de banco
+                                    </span>
+                                </label>
+                                
+                                <div id="formBanco" class="payment-form" style="display: none;">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Nombre del banco</label>
+                                            <input type="text" id="nombreBanco" name="nombreBanco" placeholder="Bank of America">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Número de cuenta</label>
+                                            <input type="text" id="numeroCuenta" name="numeroCuenta" placeholder="****1234">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Routing number</label>
+                                            <input type="text" id="routingNumber" name="routingNumber" placeholder="021000021">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Nombre en la cuenta</label>
+                                            <input type="text" id="nombreCuenta" name="nombreCuenta" placeholder="Juan Pérez">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="payment-option">
+                                <label class="radio-label">
+                                    <input type="radio" name="metodoPago" value="tarjeta" onchange="mostrarFormularioPago('tarjeta')">
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <span class="material-symbols-rounded">credit_card</span>
+                                        Tarjeta de crédito/débito
+                                    </span>
+                                </label>
+                                
+                                <div id="formTarjeta" class="payment-form" style="display: none;">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Número de tarjeta</label>
+                                            <input type="text" id="numeroTarjeta" name="numeroTarjeta" placeholder="**** **** **** 1234" maxlength="19">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Nombre en la tarjeta</label>
+                                            <input type="text" id="nombreTarjeta" name="nombreTarjeta" placeholder="Juan Pérez">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Fecha de expiración</label>
+                                            <input type="text" id="fechaExpiracion" name="fechaExpiracion" placeholder="MM/YY" maxlength="5">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>CVV</label>
+                                            <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Tipo de tarjeta</label>
+                                            <select id="tipoTarjeta" name="tipoTarjeta">
+                                                <option value="">Selecciona...</option>
+                                                <option value="visa">Visa</option>
+                                                <option value="mastercard">Mastercard</option>
+                                                <option value="amex">American Express</option>
+                                                <option value="discover">Discover</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row mt-3">
+                            <div class="form-group checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="usarMismaDireccion" name="usarMismaDireccion" checked>
+                                    Usar la misma dirección del cliente
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: COMISIONES (Solo Admin) -->
+            <div class="tab-content" id="tab-comisiones">
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">payments</span>
+                            <h2>Comisiones Mensuales</h2>
+                            <span class="badge-admin">Solo Admin</span>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="comisiones-grid">
+                            <div class="form-group">
+                                <label>Enero</label>
+                                <input type="number" id="comisionEnero" name="comisionEnero" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Febrero</label>
+                                <input type="number" id="comisionFebrero" name="comisionFebrero" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Marzo</label>
+                                <input type="number" id="comisionMarzo" name="comisionMarzo" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Abril</label>
+                                <input type="number" id="comisionAbril" name="comisionAbril" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Mayo</label>
+                                <input type="number" id="comisionMayo" name="comisionMayo" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Junio</label>
+                                <input type="number" id="comisionJunio" name="comisionJunio" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Julio</label>
+                                <input type="number" id="comisionJulio" name="comisionJulio" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Agosto</label>
+                                <input type="number" id="comisionAgosto" name="comisionAgosto" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Septiembre</label>
+                                <input type="number" id="comisionSeptiembre" name="comisionSeptiembre" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Octubre</label>
+                                <input type="number" id="comisionOctubre" name="comisionOctubre" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Noviembre</label>
+                                <input type="number" id="comisionNoviembre" name="comisionNoviembre" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Diciembre</label>
+                                <input type="number" id="comisionDiciembre" name="comisionDiciembre" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                        </div>
+
+                        <div class="comisiones-summary">
+                            <div class="summary-item">
+                                <span>Total anual:</span>
+                                <strong id="totalAnual">$0.00</strong>
+                            </div>
+                            <div class="summary-item">
+                                <span>Promedio mensual:</span>
+                                <strong id="promedioMensual">$0.00</strong>
+                            </div>
+                            <div class="summary-item">
+                                <span>Meses con comisión:</span>
+                                <strong id="mesesConComision">0/12</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: DOCUMENTOS -->
+            <div class="tab-content" id="tab-documentos">
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">attach_file</span>
+                            <h2>Documentos y Archivos</h2>
+                            <span class="counter" id="documentosCounter">(0)</span>
+                        </div>
+                        <button type="button" class="btn-add" onclick="agregarDocumento()">
+                            <span class="material-symbols-rounded">add</span>
+                            Agregar Archivo
+                        </button>
+                    </div>
+                    <div class="section-content">
+                        <div id="documentosContainer">
+                            <div class="empty-state">
+                                <span class="material-symbols-rounded">upload_file</span>
+                                <p>No hay documentos cargados</p>
+                                <small>Haz clic en "Agregar Archivo" para comenzar</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: NOTAS -->
+            <div class="tab-content" id="tab-notas">
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">chat</span>
+                            <h2>Notas y Comunicación</h2>
+                            <span class="counter" id="notasCounter">(0)</span>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <!-- Thread de notas -->
+                        <div class="notas-thread" id="notasThread">
+                            <div class="empty-state">
+                                <span class="material-symbols-rounded">chat_bubble</span>
+                                <p>No hay notas aún</p>
+                                <small>Escribe la primera nota para este cliente</small>
+                            </div>
+                        </div>
+
+                        <!-- Formulario nueva nota -->
+                        <div class="nueva-nota">
+                            <h3>Nueva Nota</h3>
+                            <textarea id="nuevaNota" placeholder="Escribe tu mensaje aquí..." rows="4"></textarea>
+                            
+                            <div class="nota-attachments">
+                                <label class="btn-attach">
+                                    <span class="material-symbols-rounded">attach_file</span>
+                                    Adjuntar imagen
+                                    <input type="file" id="notaImagen" accept="image/*" multiple onchange="previsualizarImagenesNota()" style="display: none;">
+                                </label>
+                                <span id="archivosSeleccionados">Ningún archivo seleccionado</span>
+                            </div>
+
+                            <div id="imagenesPreview" class="imagenes-preview"></div>
+
+                            <div class="nota-actions">
+                                <button type="button" class="btn-secondary" onclick="cancelarNota()">Cancelar</button>
+                                <button type="button" class="btn-primary" onclick="enviarNota()">
+                                    <span class="material-symbols-rounded">send</span>
+                                    Enviar nota
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN -->
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="cancelarFormulario()">
+                    <span class="material-symbols-rounded">close</span>
+                    Cancelar
+                </button>
+                <button type="button" class="btn-draft" onclick="guardarBorrador()" id="btnBorrador">
+                    <span class="material-symbols-rounded">save</span>
+                    Guardar Borrador
+                </button>
+                <button type="submit" class="btn-submit">
+                    <span class="material-symbols-rounded">check_circle</span>
+                    Guardar Cliente
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/cliente.js"></script>
+    <script src="../js/supabase_config.js"></script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase - S&S Asesorías</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        
+        p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .test-section h2 {
+            color: #333;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        #resultado {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            min-height: 100px;
+        }
+        
+        #resultado h3 {
+            margin-bottom: 10px;
+        }
+        
+        #resultado.success {
+            border-color: #4caf50;
+            background: #f1f8f4;
+        }
+        
+        #resultado.error {
+            border-color: #f44336;
+            background: #fef1f0;
+        }
+        
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .status.connected {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .status.disconnected {
+            background: #f44336;
+            color: white;
+        }
+        
+        .icon {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Test de Conexión Supabase</h1>
+        <p>S&S Asesorías - Sistema de Gestión de Pólizas</p>
+        
+        <!-- Test 1: Conexión -->
+        <div class="test-section">
+            <h2><span class="icon">🔌</span> Test 1: Verificar Conexión</h2>
+            <button onclick="testConexion()">Probar Conexión</button>
+            <button onclick="verCredenciales()">Ver Credenciales</button>
+        </div>
+        
+        <!-- Test 2: Usuarios -->
+        <div class="test-section">
+            <h2><span class="icon">👥</span> Test 2: Listar Usuarios</h2>
+            <button onclick="listarUsuarios()">Ver Usuarios</button>
+            <button onclick="crearUsuarioPrueba()">Crear Usuario de Prueba</button>
+        </div>
+        
+        <!-- Test 3: Clientes -->
+        <div class="test-section">
+            <h2><span class="icon">📋</span> Test 3: Operaciones con Clientes</h2>
+            <button onclick="listarClientes()">Listar Clientes</button>
+            <button onclick="crearClientePrueba()">Crear Cliente de Prueba</button>
+        </div>
+        
+        <!-- Test 4: Pólizas -->
+        <div class="test-section">
+            <h2><span class="icon">📄</span> Test 4: Pólizas</h2>
+            <button onclick="listarTodasPolizas()">Listar Pólizas</button>
+            <button onclick="generarNumero()">Generar Número de Póliza</button>
+        </div>
+        
+        <!-- Test 5: Storage -->
+        <div class="test-section">
+            <h2><span class="icon">📁</span> Test 5: Storage</h2>
+            <button onclick="testStorage()">Verificar Storage</button>
+            <input type="file" id="fileInput" style="display: none" onchange="subirArchivoPrueba(this.files[0])">
+            <button onclick="document.getElementById('fileInput').click()">Subir Archivo de Prueba</button>
+        </div>
+        
+        <!-- Resultado -->
+        <div id="resultado">
+            <h3>🎯 Resultado</h3>
+            <p style="color: #999;">Haz clic en un botón para ejecutar un test...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./js/supabase-config.js"></script>
+    
+    <script>
+        // =============================================
+        // FUNCIONES DE TEST
+        // =============================================
+        
+        function mostrarResultado(titulo, contenido, tipo = 'success') {
+            const resultado = document.getElementById('resultado');
+            resultado.className = tipo;
+            resultado.innerHTML = `
+                <h3>${tipo === 'success' ? '✅' : '❌'} ${titulo}</h3>
+                <pre>${typeof contenido === 'object' ? JSON.stringify(contenido, null, 2) : contenido}</pre>
+            `;
+        }
+        
+        async function testConexion() {
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) throw error;
+                
+                mostrarResultado(
+                    'Conexión Exitosa',
+                    `✅ Conectado a Supabase correctamente\n📍 URL: ${SUPABASE_URL}\n🔑 Clave configurada correctamente`,
+                    'success'
+                );
+            } catch (error) {
+                mostrarResultado('Error de Conexión', error.message, 'error');
+            }
+        }
+        
+        function verCredenciales() {
+            mostrarResultado(
+                'Credenciales Configuradas',
+                `URL: ${SUPABASE_URL}\n\nAnon Key: ${SUPABASE_ANON_KEY.substring(0, 50)}...`,
+                'success'
+            );
+        }
+        
+        async function listarUsuarios() {
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .select('*');
+                
+                if (error) throw error;
+                
+                mostrarResultado(
+                    `${data.length} Usuarios Encontrados`,
+                    data,
+                    'success'
+                );
+            } catch (error) {
+                mostrarResultado('Error al Listar Usuarios', error.message, 'error');
+            }
+        }
+        
+        async function crearUsuarioPrueba() {
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .insert({
+                        email: `test_${Date.now()}@prueba.com`,
+                        nombre: 'Usuario de Prueba',
+                        rol: 'operador'
+                    })
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                
+                mostrarResultado('Usuario Creado', data, 'success');
+            } catch (error) {
+                mostrarResultado('Error al Crear Usuario', error.message, 'error');
+            }
+        }
+        
+        async function listarClientes() {
+            try {
+                const { data, error } = await supabase
+                    .from('clientes')
+                    .select('*')
+                    .limit(10);
+                
+                if (error) throw error;
+                
+                mostrarResultado(
+                    `${data.length} Clientes Encontrados`,
+                    data.length > 0 ? data : 'No hay clientes aún. Crea uno de prueba.',
+                    'success'
+                );
+            } catch (error) {
+                mostrarResultado('Error al Listar Clientes', error.message, 'error');
+            }
+        }
+        
+        async function crearClientePrueba() {
+            try {
+                const timestamp = Date.now();
+                const { data, error } = await supabase
+                    .from('clientes')
+                    .insert({
+                        tipo_registro: 'nuevo',
+                        nombres: 'Juan',
+                        apellidos: 'Pérez',
+                        sexo: 'masculino',
+                        fecha_nacimiento: '1985-01-15',
+                        email: `juan.perez.${timestamp}@prueba.com`,
+                        telefono1: '3051234567',
+                        estado_migratorio: 'ciudadano',
+                        nacionalidad: 'Estadounidense',
+                        ingresos: 45000,
+                        aplica: true,
+                        direccion: '123 Main Street',
+                        ciudad: 'Miami',
+                        estado: 'FL',
+                        condado: 'Broward',
+                        codigo_postal: '33101'
+                    })
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                
+                mostrarResultado('Cliente de Prueba Creado', data, 'success');
+            } catch (error) {
+                mostrarResultado('Error al Crear Cliente', error.message, 'error');
+            }
+        }
+        
+        async function listarTodasPolizas() {
+            try {
+                const { data, error } = await supabase
+                    .from('polizas')
+                    .select(`
+                        *,
+                        cliente:clientes(nombres, apellidos)
+                    `)
+                    .limit(10);
+                
+                if (error) throw error;
+                
+                mostrarResultado(
+                    `${data.length} Pólizas Encontradas`,
+                    data.length > 0 ? data : 'No hay pólizas aún.',
+                    'success'
+                );
+            } catch (error) {
+                mostrarResultado('Error al Listar Pólizas', error.message, 'error');
+            }
+        }
+        
+        async function generarNumero() {
+            try {
+                const numero = await generarNumeroPoliza();
+                mostrarResultado(
+                    'Número de Póliza Generado',
+                    `Próximo número disponible: ${numero}`,
+                    'success'
+                );
+            } catch (error) {
+                mostrarResultado('Error al Generar Número', error.message, 'error');
+            }
+        }
+        
+        async function testStorage() {
+            try {
+                const { data, error } = await supabase.storage
+                    .listBuckets();
+                
+                if (error) throw error;
+                
+                mostrarResultado(
+                    'Buckets de Storage',
+                    data,
+                    'success'
+                );
+            } catch (error) {
+                mostrarResultado('Error en Storage', error.message, 'error');
+            }
+        }
+        
+        async function subirArchivoPrueba(archivo) {
+            if (!archivo) return;
+            
+            try {
+                const timestamp = Date.now();
+                const ruta = `pruebas/${timestamp}_${archivo.name}`;
+                
+                const { data, error } = await supabase.storage
+                    .from('documentos-clientes')
+                    .upload(ruta, archivo);
+                
+                if (error) throw error;
+                
+                mostrarResultado(
+                    'Archivo Subido',
+                    `Archivo: ${archivo.name}\nRuta: ${ruta}\nTamaño: ${(archivo.size / 1024).toFixed(2)} KB`,
+                    'success'
+                );
+            } catch (error) {
+                mostrarResultado('Error al Subir Archivo', error.message, 'error');
+            }
+        }
+        
+        // Ejecutar test de conexión al cargar
+        window.addEventListener('load', () => {
+            setTimeout(testConexion, 500);
+        });
+    </script>
+</body>
+</html>

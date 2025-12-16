@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">   
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" /> 
+    <title>Para Revisar - S&S Asesorías</title>
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="../css/polizas.css">
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR UNIFICADO -->
+        <aside class="sidebar-unified" id="sidebar">
+            <div class="sidebar-header">
+                <a href="./home.html" class="sidebar-logo-link">
+                    <img src="../images/Logo.png" alt="S&S Asesorías" class="sidebar-logo-img">
+                </a>
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+                    <span class="material-symbols-rounded">chevron_left</span>
+                </button>
+            </div>
+
+            <div class="sidebar-search">
+                <div class="search-box">
+                    <span class="material-symbols-rounded">search</span>
+                    <input type="text" placeholder="Buscar...">
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="./home.html" class="menu-item">
+                    <span class="material-symbols-rounded">home</span>
+                    <span>Inicio</span>
+                </a>
+
+                <a href="./polizas.html" class="menu-item">
+                    <span class="material-symbols-rounded">description</span>
+                    <span>Pólizas</span>
+                </a>
+
+                <a href="#" class="menu-item">
+                    <span class="material-symbols-rounded">bar_chart</span>
+                    <span>Gráficos</span>
+                </a>
+
+                <a href="#" class="menu-item">
+                    <span class="material-symbols-rounded">folder</span>
+                    <span>Gestiones</span>
+                </a>
+
+                <a href="#" class="menu-item">
+                    <span class="material-symbols-rounded">trending_up</span>
+                    <span>Seguimiento</span>
+                </a>
+
+                <a href="#" class="menu-item">
+                    <span class="material-symbols-rounded">rate_review</span>
+                    <span>Solicitud de revisión mercado</span>
+                </a>
+
+                <a href="./para-revisar.html" class="menu-item active">
+                    <span class="material-symbols-rounded">fact_check</span>
+                    <span>Para revisar</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="dark-mode-toggle" onclick="toggleDarkMode()">
+                    <div class="dark-mode-label">
+                        <span class="material-symbols-rounded">dark_mode</span>
+                        <span>Modo Oscuro</span>
+                    </div>
+                    <div class="toggle-switch" id="darkModeSwitch">
+                        <div class="toggle-circle"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="container__flex">
+            <!-- Header Superior -->
+            <header class="header">
+                <div class="header__welcome">
+                    <div class="header__welcome__new">
+                        <label>
+                            Pólizas para Revisar
+                        </label>
+                    </div>
+                    <div class="header__welcome__inf">
+                        <p>Hola, <span class="nombre-usuario">Usuario</span></p>
+                        <img src="../images/Montañas.jpg" alt="Foto de perfil" class="header__welcome__inf__foto-perfil">
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Main Content -->
+            <main class="main__container">
+                <!-- Tarjetas de Información (Clickeables) -->
+                <div class="container__general-inf">
+                    <div class="header__inf-polizas" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+                        <div class="inf__cuadro" onclick="filtrarPorTipo('robadas')">
+                            <h2>Robadas</h2>
+                            <p>Pólizas robadas por competencia</p>
+                            <span id="polizas-robadas">10</span>
+                        </div>
+                        <div class="inf__cuadro" onclick="filtrarPorTipo('canceladas')">
+                            <h2>Canceladas</h2>
+                            <p>Total de pólizas canceladas</p>
+                            <span id="polizas-canceladas-revision">3</span>
+                        </div>
+                        <div class="inf__cuadro" onclick="filtrarPorTipo('dobles')">
+                            <h2>Doble Pólizas</h2>
+                            <p>Cuentan con dos pólizas</p>
+                            <span id="polizas-dobles">8</span>
+                        </div>
+                        <div class="inf__cuadro" onclick="filtrarPorTipo('no-registran')">
+                            <h2>No registran</h2>
+                            <p>Pólizas no registran en mercado</p>
+                            <span id="polizas-no-registran">5</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Barra de Búsqueda -->
+                <div class="container__form">
+                    <form class="contents" onsubmit="return false;">
+                        <div class="contents__visualizacion">
+                            <div class="bar__search">
+                                <input 
+                                    type="text" 
+                                    name="search" 
+                                    id="searchInputRevisar" 
+                                    class="search" 
+                                    placeholder="Buscar por nombre, póliza, teléfono..."
+                                    onkeyup="buscarEnTablaRevisar()"
+                                >
+                                <button type="button" class="button__bar btn__buscar" onclick="buscarEnTablaRevisar()">
+                                    <span class="material-symbols-rounded">search</span>
+                                    Buscar
+                                </button>
+                                <button type="button" class="button__bar btn__filtrar" onclick="abrirModalFiltros()">
+                                    Filtrar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Tabla de Pólizas para Revisar -->
+                <table class="content__info-client">
+                    <thead class="thead">
+                        <tr>
+                            <th>Póliza</th>
+                            <th>Operador</th>
+                            <th>Cliente</th>
+                            <th>Número de teléfono</th>
+                            <th>Estado<br>(Mercado)</th>
+                            <th>Compañía</th>
+                            <th>Plan</th>
+                            <th>Prima</th>
+                            <th>Agente</th>
+                            <th>Efectividad</th>
+                            <th>Creación</th>
+                            <th>Modificación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-polizas-revisar">
+                        <tr>
+                            <td data-label="Póliza">POL-2025-001</td>
+                            <td data-label="Operador">Jostyn Aragón</td>
+                            <td class="td1" data-label="Cliente">
+                                <div class="td1__flex">
+                                    <a href="#">Juanito Pérez</a>
+                                </div>
+                            </td>
+                            <td data-label="Teléfono">6824142301</td>
+                            <td data-label="Estado"><span class="badge-estado activo">Activo</span></td>
+                            <td data-label="Compañía">Florida Blue</td>
+                            <td data-label="Plan">myBlue Bronze 2219</td>
+                            <td data-label="Prima">$0.00</td>
+                            <td data-label="Agente">Joel Nieves</td>
+                            <td data-label="Efectividad">01/01/2026</td>
+                            <td data-label="Creación">09/12/2025</td>
+                            <td data-label="Modificación">12/09/2025</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Póliza">POL-2025-002</td>
+                            <td data-label="Operador">Ana Martínez</td>
+                            <td class="td1" data-label="Cliente">
+                                <div class="td1__flex">
+                                    <a href="#">María González</a>
+                                </div>
+                            </td>
+                            <td data-label="Teléfono">3051234567</td>
+                            <td data-label="Estado"><span class="badge-estado cancelado">Cancelado</span></td>
+                            <td data-label="Compañía">Oscar Health</td>
+                            <td data-label="Plan">Silver Classic</td>
+                            <td data-label="Prima">$250.50</td>
+                            <td data-label="Agente">Joel Nieves</td>
+                            <td data-label="Efectividad">01/02/2025</td>
+                            <td data-label="Creación">08/12/2025</td>
+                            <td data-label="Modificación">12/09/2025</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </main>
+        </div>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/supabase_config.js"></script>
+</body>
+</html>
