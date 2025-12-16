@@ -1,4 +1,4 @@
-const SUPABASE_URL = 'https://tuproyecto.supabase.cohttps://ycpdwjbfhktjrsroojtz.supabase.co';
+const SUPABASE_URL = 'https://ycpdwjbfhktjrsroojtz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljcGR3amJmaGt0anJzcm9vanR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4MzY1MjMsImV4cCI6MjA4MTQxMjUyM30.SxCcaUJ5wejZ-TiSvsTTV-mTm0DKBKODfIdxNqKR-0Q';
 
 // Crear cliente de Supabase

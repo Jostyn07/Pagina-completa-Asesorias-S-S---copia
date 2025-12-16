@@ -913,6 +913,39 @@ function obtenerDatosFormulario() {
     return data;
 }
 
+// =============================================
+// FUNCIONES AUXILIARES PARA MÉTODO DE PAGO
+// =============================================
+function obtenerMetodoPago() {
+    const metodoSeleccionado = document.querySelector('input[name="metodoPago"]:checked');
+    if (!metodoSeleccionado) return null;
+    
+    const tipo = metodoSeleccionado.value;
+    
+    if (tipo === 'banco') {
+        return {
+            tipo: 'banco',
+            nombreBanco: document.getElementById('nombreBanco').value,
+            numeroCuenta: document.getElementById('numeroCuenta').value,
+            routingNumber: document.getElementById('routingNumber').value,
+            nombreCuenta: document.getElementById('nombreCuenta').value,
+            usarMismaDireccion: document.getElementById('usarMismaDireccion').checked
+        };
+    } else if (tipo === 'tarjeta') {
+        return {
+            tipo: 'tarjeta',
+            numeroTarjeta: document.getElementById('numeroTarjeta').value,
+            nombreTarjeta: document.getElementById('nombreTarjeta').value,
+            fechaExpiracion: document.getElementById('fechaExpiracion').value,
+            cvv: document.getElementById('cvv').value,
+            tipoTarjeta: document.getElementById('tipoTarjeta').value,
+            usarMismaDireccion: document.getElementById('usarMismaDireccion').checked
+        };
+    }
+    
+    return null;
+}
+
 // ============================================
 // SUBMIT DEL FORMULARIO
 // ============================================
