@@ -69,11 +69,200 @@ function mostrarTabsEdicion() {
     }
 }
 
-function cargarDatosCliente(clienteId) {
-    // TODO: Aquí iría la lógica para cargar datos desde la base de datos
+function obtenerUsuario() {
+    // TODO: En producción, esto vendría de la sesión del usuario autenticado
+    // Por ahora retornar usuario de ejemplo
+    return {
+        nombre: 'Jostyn',
+        rol: 'admin' // Opciones: 'admin', 'operador', 'soporte'
+    };
+}
+
+async function cargarDatosCliente(clienteId) {
+    try {
+        console.log('📡 Cargando datos del cliente:', clienteId);
+        
+        // Mostrar indicador de carga
+        mostrarIndicadorCarga(true);
+        
+        // Cargar datos del cliente desde Supabase
+        const { data: clienteData, error: clienteError } = await supabaseClient
+            .from('clientes')
+            .select('*')
+            .eq('id', clienteId)
+            .single();
+        
+        if (clienteError) throw clienteError;
+        
+        if (!clienteData) {
+            throw new Error('Cliente no encontrado');
+        }
+        
+        console.log('✅ Datos del cliente cargados:', clienteData);
+        
+        // Cargar pólizas asociadas
+        const { data: polizasData, error: polizasError } = await supabaseClient
+            .from('polizas')
+            .select('*')
+            .eq('cliente_id', clienteId);
+        
+        if (polizasError) {
+            console.warn('⚠️ Error al cargar pólizas:', polizasError);
+        }
+        
+        console.log(`✅ ${polizasData?.length || 0} pólizas encontradas`);
+        
+        // Rellenar formulario con los datos
+        rellenarFormulario(clienteData, polizasData);
+        
+        // Actualizar título con el nombre del cliente
+        const nombreCompleto = `${clienteData.nombres || ''} ${clienteData.apellidos || ''}`.trim();
+        document.getElementById('pageTitle').textContent = `Editando: ${nombreCompleto}`;
+        
+        // Guardar ID en el formulario (hidden input)
+        let idInput = document.getElementById('cliente_id');
+        if (!idInput) {
+            idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.id = 'cliente_id';
+            idInput.name = 'cliente_id';
+            document.getElementById('clienteForm').appendChild(idInput);
+        }
+        idInput.value = clienteId;
+        
+        mostrarIndicadorCarga(false);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar cliente:', error);
+        mostrarIndicadorCarga(false);
+        alert(`Error al cargar los datos del cliente: ${error.message}\n\n¿Desea volver a la lista de pólizas?`);
+        // Opcionalmente redirigir
+        // window.location.href = './polizas.html';
+    }
+}
+
+function rellenarFormulario(cliente, polizas = []) {
+    console.log('📝 Rellenando formulario con datos del cliente');
     
-    // Por ahora, datos de ejemplo
-    // En producción, esto vendría de una API
+    // ============================================
+    // INFORMACIÓN GENERAL
+    // ============================================
+    
+    // Nombres y apellidos
+    if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres;
+    if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos;
+    
+    // Contacto
+    if (cliente.email) document.getElementById('email').value = cliente.email;
+    if (cliente.telefono1) document.getElementById('telefono1').value = cliente.telefono1;
+    if (cliente.telefono2) document.getElementById('telefono2').value = cliente.telefono2;
+    
+    // Dirección
+    if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion;
+    if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad;
+    if (cliente.estado) document.getElementById('estado').value = cliente.estado;
+    if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal;
+    
+    // Información personal
+    if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = cliente.fecha_nacimiento;
+    if (cliente.genero) document.getElementById('genero').value = cliente.genero;
+    if (cliente.ssn) document.getElementById('ssn').value = cliente.ssn;
+    if (cliente.idioma_preferido) document.getElementById('idiomaPreferido').value = cliente.idioma_preferido;
+    
+    // Información adicional
+    if (cliente.ingresos) document.getElementById('ingresos').value = cliente.ingresos;
+    if (cliente.tamano_familia) document.getElementById('tamanoFamilia').value = cliente.tamano_familia;
+    if (cliente.numero_dependientes) document.getElementById('numeroDependientes').value = cliente.numero_dependientes;
+    
+    // Operador y agente
+    if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre;
+    if (cliente.agente_nombre) document.getElementById('agenteNombre').value = cliente.agente_nombre;
+    
+    // ============================================
+    // PÓLIZA (si existe al menos una)
+    // ============================================
+    if (polizas && polizas.length > 0) {
+        const poliza = polizas[0]; // Tomar la primera póliza
+        
+        if (poliza.compania) document.getElementById('compania').value = poliza.compania;
+        if (poliza.plan) document.getElementById('plan').value = poliza.plan;
+        if (poliza.numero_poliza) document.getElementById('numeroPoliza').value = poliza.numero_poliza;
+        if (poliza.prima) document.getElementById('prima').value = poliza.prima;
+        if (poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal;
+        
+        // Fechas de la póliza
+        if (poliza.fecha_efectividad) {
+            document.getElementById('fechaEfectividad').value = poliza.fecha_efectividad;
+            document.getElementById('displayFechaEfectividad').textContent = formatearFecha(new Date(poliza.fecha_efectividad));
+        }
+        if (poliza.fecha_inicial_cobertura) {
+            document.getElementById('fechaInicialCobertura').value = poliza.fecha_inicial_cobertura;
+            document.getElementById('displayFechaInicial').textContent = formatearFecha(new Date(poliza.fecha_inicial_cobertura));
+        }
+        if (poliza.fecha_final_cobertura) {
+            document.getElementById('fechaFinalCobertura').value = poliza.fecha_final_cobertura;
+            document.getElementById('displayFechaFinal').textContent = formatearFecha(new Date(poliza.fecha_final_cobertura));
+        }
+        
+        // Member ID y datos adicionales
+        if (poliza.member_id) document.getElementById('memberId').value = poliza.member_id;
+        if (poliza.portal_npn) document.getElementById('portalNpn').value = poliza.portal_npn;
+        if (poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad;
+        if (poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta;
+        if (poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza;
+        
+        // Estados (tab Estado y Seguimiento)
+        if (poliza.estado_compania) document.getElementById('estadoCompania')?.value = poliza.estado_compania;
+        if (poliza.estado_mercado) document.getElementById('estadoMercado')?.value = poliza.estado_mercado;
+        
+        // Observaciones
+        if (poliza.observaciones) document.getElementById('observaciones').value = poliza.observaciones;
+    }
+    
+    console.log('✅ Formulario rellenado correctamente');
+}
+
+function mostrarIndicadorCarga(mostrar) {
+    let indicador = document.getElementById('indicadorCarga');
+    
+    if (mostrar) {
+        if (!indicador) {
+            indicador = document.createElement('div');
+            indicador.id = 'indicadorCarga';
+            indicador.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            indicador.innerHTML = `
+                <div style="text-align: center; color: white;">
+                    <div style="width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                    <p style="margin-top: 20px; font-size: 1.2rem;">Cargando datos del cliente...</p>
+                </div>
+            `;
+            document.body.appendChild(indicador);
+            
+            // Agregar animación
+            if (!document.getElementById('spinAnimation')) {
+                const style = document.createElement('style');
+                style.id = 'spinAnimation';
+                style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+                document.head.appendChild(style);
+            }
+        }
+        indicador.style.display = 'flex';
+    } else {
+        if (indicador) {
+            indicador.style.display = 'none';
+        }
+    }
 }
 
 // ============================================
@@ -888,6 +1077,7 @@ function guardarBorradorAutomatico() {
         const ahora = new Date();
         text.textContent = `Borrador guardado (${ahora.toLocaleTimeString()})`;
         
+        console.log('Borrador guardado automáticamente');
     }, 1000);
 }
 
@@ -911,43 +1101,9 @@ function obtenerDatosFormulario() {
     return data;
 }
 
-// =============================================
-// FUNCIONES AUXILIARES PARA MÉTODO DE PAGO
-// =============================================
-function obtenerMetodoPago() {
-    const metodoSeleccionado = document.querySelector('input[name="metodoPago"]:checked');
-    if (!metodoSeleccionado) return null;
-    
-    const tipo = metodoSeleccionado.value;
-    
-    if (tipo === 'banco') {
-        return {
-            tipo: 'banco',
-            nombreBanco: document.getElementById('nombreBanco').value,
-            numeroCuenta: document.getElementById('numeroCuenta').value,
-            routingNumber: document.getElementById('routingNumber').value,
-            nombreCuenta: document.getElementById('nombreCuenta').value,
-            usarMismaDireccion: document.getElementById('usarMismaDireccion').checked
-        };
-    } else if (tipo === 'tarjeta') {
-        return {
-            tipo: 'tarjeta',
-            numeroTarjeta: document.getElementById('numeroTarjeta').value,
-            nombreTarjeta: document.getElementById('nombreTarjeta').value,
-            fechaExpiracion: document.getElementById('fechaExpiracion').value,
-            cvv: document.getElementById('cvv').value,
-            tipoTarjeta: document.getElementById('tipoTarjeta').value,
-            usarMismaDireccion: document.getElementById('usarMismaDireccion').checked
-        };
-    }
-    
-    return null;
-}
-
 // ============================================
 // SUBMIT DEL FORMULARIO
 // ============================================
-// Línea ~825 en cliente.js
 async function handleSubmit(event) {
     event.preventDefault();
     
@@ -957,61 +1113,205 @@ async function handleSubmit(event) {
         return;
     }
     
+    // Verificar si es modo crear o editar
+    const clienteId = document.getElementById('cliente_id')?.value;
+    const esEdicion = !!clienteId;
+    
     // Confirmar envío
-    const confirmacion = confirm('¿Guardar este cliente?\n\nSe procesará la información ingresada.');
+    const confirmacion = confirm(esEdicion ? 
+        '¿Actualizar la información de este cliente?' : 
+        '¿Guardar este nuevo cliente?\n\nSe procesará la información ingresada.');
     if (!confirmacion) return;
     
+    // Obtener datos
+    const formData = obtenerDatosFormulario();
+    
+    console.log('Datos del cliente:', formData);
+    
     try {
-        // Mostrar loading
-        mostrarIndicadorGuardando();
-        
-        // Obtener datos del formulario
-        const formData = obtenerDatosFormulario();
-        
-        // 🔥 GUARDAR EN SUPABASE
-        const resultado = await guardarClienteEnSupabase(formData);
-        
-        // Guardar dependientes si hay
-        if (dependientesCount > 0) {
-            await guardarDependientes(resultado.cliente.id);
+        if (esEdicion) {
+            // ACTUALIZAR CLIENTE EXISTENTE
+            await actualizarCliente(clienteId, formData);
+        } else {
+            // CREAR NUEVO CLIENTE
+            await crearCliente(formData);
         }
-        
-        // Guardar método de pago si hay
-        const metodoPago = obtenerMetodoPago();
-        if (metodoPago) {
-            await guardarMetodoPago(resultado.cliente.id, metodoPago);
-        }
-        
-        // Limpiar borrador
-        localStorage.removeItem('borrador_cliente');
-        
-        // Ocultar loading
-        ocultarIndicadorGuardando();
-        
-        // Mostrar éxito
-        alert('✅ Cliente guardado correctamente');
-        
-        // Redirigir
-        window.location.href = './polizas.html';
-        
     } catch (error) {
         console.error('❌ Error al guardar:', error);
-        ocultarIndicadorGuardando();
-        alert('❌ Error al guardar cliente: ' + error.message);
+        alert(`Error al guardar: ${error.message}`);
     }
 }
 
-function mostrarIndicadorGuardando() {
-    const indicator = document.getElementById('autosaveIndicator');
-    const text = document.getElementById('autosaveText');
-    indicator.classList.add('saving');
-    indicator.querySelector('.material-symbols-rounded').textContent = 'sync';
-    text.textContent = 'Guardando...';
+async function crearCliente(formData) {
+    console.log('📝 Creando nuevo cliente...');
+    
+    // Preparar datos del cliente
+    const clienteData = {
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        email: formData.email,
+        telefono1: formData.telefono1,
+        telefono2: formData.telefono2 || null,
+        direccion: formData.direccion,
+        ciudad: formData.ciudad,
+        estado: formData.estado,
+        codigo_postal: formData.codigoPostal,
+        fecha_nacimiento: formData.fechaNacimiento,
+        genero: formData.genero,
+        ssn: formData.ssn || null,
+        idioma_preferido: formData.idiomaPreferido || 'espanol',
+        ingresos: parseFloat(formData.ingresos) || 0,
+        tamano_familia: parseInt(formData.tamanoFamilia) || 1,
+        numero_dependientes: parseInt(formData.numeroDependientes) || 0,
+        operador_nombre: formData.operadorNombre || null,
+        agente_nombre: formData.agenteNombre || null
+    };
+    
+    // Insertar cliente en Supabase
+    const { data: cliente, error: clienteError } = await supabaseClient
+        .from('clientes')
+        .insert([clienteData])
+        .select()
+        .single();
+    
+    if (clienteError) throw clienteError;
+    
+    console.log('✅ Cliente creado:', cliente);
+    
+    // Preparar datos de la póliza
+    const polizaData = {
+        cliente_id: cliente.id,
+        compania: formData.compania,
+        plan: formData.plan,
+        numero_poliza: formData.numeroPoliza || null,
+        prima: parseFloat(formData.prima) || 0,
+        credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
+        fecha_efectividad: formData.fechaEfectividad,
+        fecha_inicial_cobertura: formData.fechaInicialCobertura,
+        fecha_final_cobertura: formData.fechaFinalCobertura,
+        member_id: formData.memberId || null,
+        portal_npn: formData.portalNpn || null,
+        clave_seguridad: formData.claveSeguridad || null,
+        tipo_venta: formData.tipoVenta || null,
+        enlace_poliza: formData.enlacePoliza || null,
+        operador_nombre: formData.operadorNombre || null,
+        agente_nombre: formData.agenteNombre || null,
+        estado_mercado: 'pendiente',
+        estado_compania: 'pendiente',
+        observaciones: formData.observaciones || null
+    };
+    
+    // Insertar póliza en Supabase
+    const { data: poliza, error: polizaError } = await supabaseClient
+        .from('polizas')
+        .insert([polizaData])
+        .select()
+        .single();
+    
+    if (polizaError) throw polizaError;
+    
+    console.log('✅ Póliza creada:', poliza);
+    
+    // Limpiar borrador
+    localStorage.removeItem('borrador_cliente');
+    
+    // Mostrar éxito y redirigir
+    alert('✅ Cliente y póliza guardados correctamente');
+    window.location.href = './polizas.html';
 }
 
-function ocultarIndicadorGuardando() {
-    const indicator = document.getElementById('autosaveIndicator');
-    indicator.classList.remove('saving');
+async function actualizarCliente(clienteId, formData) {
+    console.log('🔄 Actualizando cliente:', clienteId);
+    
+    // Preparar datos del cliente
+    const clienteData = {
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        email: formData.email,
+        telefono1: formData.telefono1,
+        telefono2: formData.telefono2 || null,
+        direccion: formData.direccion,
+        ciudad: formData.ciudad,
+        estado: formData.estado,
+        codigo_postal: formData.codigoPostal,
+        fecha_nacimiento: formData.fechaNacimiento,
+        genero: formData.genero,
+        ssn: formData.ssn || null,
+        idioma_preferido: formData.idiomaPreferido || 'espanol',
+        ingresos: parseFloat(formData.ingresos) || 0,
+        tamano_familia: parseInt(formData.tamanoFamilia) || 1,
+        numero_dependientes: parseInt(formData.numeroDependientes) || 0,
+        operador_nombre: formData.operadorNombre || null,
+        agente_nombre: formData.agenteNombre || null,
+        updated_at: new Date().toISOString()
+    };
+    
+    // Actualizar cliente en Supabase
+    const { error: clienteError } = await supabaseClient
+        .from('clientes')
+        .update(clienteData)
+        .eq('id', clienteId);
+    
+    if (clienteError) throw clienteError;
+    
+    console.log('✅ Cliente actualizado');
+    
+    // Buscar póliza asociada
+    const { data: polizasExistentes } = await supabaseClient
+        .from('polizas')
+        .select('id')
+        .eq('cliente_id', clienteId)
+        .limit(1);
+    
+    // Preparar datos de la póliza
+    const polizaData = {
+        compania: formData.compania,
+        plan: formData.plan,
+        numero_poliza: formData.numeroPoliza || null,
+        prima: parseFloat(formData.prima) || 0,
+        credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
+        fecha_efectividad: formData.fechaEfectividad,
+        fecha_inicial_cobertura: formData.fechaInicialCobertura,
+        fecha_final_cobertura: formData.fechaFinalCobertura,
+        member_id: formData.memberId || null,
+        portal_npn: formData.portalNpn || null,
+        clave_seguridad: formData.claveSeguridad || null,
+        tipo_venta: formData.tipoVenta || null,
+        enlace_poliza: formData.enlacePoliza || null,
+        operador_nombre: formData.operadorNombre || null,
+        agente_nombre: formData.agenteNombre || null,
+        estado_mercado: formData.estadoMercado || 'pendiente',
+        estado_compania: formData.estadoCompania || 'pendiente',
+        observaciones: formData.observaciones || null,
+        updated_at: new Date().toISOString()
+    };
+    
+    if (polizasExistentes && polizasExistentes.length > 0) {
+        // Actualizar póliza existente
+        const { error: polizaError } = await supabaseClient
+            .from('polizas')
+            .update(polizaData)
+            .eq('id', polizasExistentes[0].id);
+        
+        if (polizaError) throw polizaError;
+        console.log('✅ Póliza actualizada');
+    } else {
+        // Crear nueva póliza si no existe
+        polizaData.cliente_id = clienteId;
+        const { error: polizaError } = await supabaseClient
+            .from('polizas')
+            .insert([polizaData]);
+        
+        if (polizaError) throw polizaError;
+        console.log('✅ Póliza creada');
+    }
+    
+    // Limpiar borrador
+    localStorage.removeItem('borrador_cliente');
+    
+    // Mostrar éxito y redirigir
+    alert('✅ Cliente actualizado correctamente');
+    window.location.href = './polizas.html';
 }
 
 function validarFormularioCompleto() {
@@ -1040,3 +1340,16 @@ function cancelarFormulario() {
 // ============================================
 // LOG DE DESARROLLO
 // ============================================
+console.log('%c📋 Sistema de Cliente S&S Asesorías', 'color: #00a8e8; font-size: 16px; font-weight: bold');
+console.log('%c✅ Módulo cargado correctamente', 'color: #4caf50; font-weight: bold');
+console.log('Funcionalidades activas:');
+console.log('  ✓ Tabs funcionales');
+console.log('  ✓ Fechas automáticas');
+console.log('  ✓ Validación en tiempo real');
+console.log('  ✓ Agregar/eliminar dependientes');
+console.log('  ✓ Método de pago');
+console.log('  ✓ Comisiones (admin)');
+console.log('  ✓ Documentos');
+console.log('  ✓ Sistema de notas con imágenes');
+console.log('  ✓ Autoguardado');
+console.log('  ✓ Secciones colapsables');
