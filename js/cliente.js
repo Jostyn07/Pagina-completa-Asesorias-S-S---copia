@@ -1,6 +1,7 @@
 // ============================================
 // VARIABLES GLOBALES
 // ============================================
+
 let dependientesCount = 0;
 let documentosCount = 0;
 let notasCount = 0;
@@ -27,11 +28,11 @@ function inicializarFormulario() {
     // Establecer fecha de registro a hoy
     const hoy = new Date();
     document.getElementById('fechaRegistro').value = formatearFecha(hoy);
-    
     // Inicializar inputs numéricos en 0
     document.getElementById('ingresos').value = 0;
     document.getElementById('creditoFiscal').value = 0;
 }
+
 
 function verificarModoEdicion() {
     // Verificar si hay un ID en la URL (modo editar)
@@ -141,86 +142,86 @@ async function cargarDatosCliente(clienteId) {
     }
 }
 
-function rellenarFormulario(cliente, polizas = []) {
-    console.log('📝 Rellenando formulario con datos del cliente');
+// function rellenarFormulario(cliente, polizas = []) {
+//     console.log('📝 Rellenando formulario con datos del cliente');
     
-    // ============================================
-    // INFORMACIÓN GENERAL
-    // ============================================
+//     // ============================================
+//     // INFORMACIÓN GENERAL
+//     // ============================================
     
-    // Nombres y apellidos
-    if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres;
-    if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos;
+//     // Nombres y apellidos
+//     if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres;
+//     if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos;
     
-    // Contacto
-    if (cliente.email) document.getElementById('email').value = cliente.email;
-    if (cliente.telefono1) document.getElementById('telefono1').value = cliente.telefono1;
-    if (cliente.telefono2) document.getElementById('telefono2').value = cliente.telefono2;
+//     // Contacto
+//     if (cliente.email) document.getElementById('email').value = cliente.email;
+//     if (cliente.telefono1) document.getElementById('telefono1').value = cliente.telefono1;
+//     if (cliente.telefono2) document.getElementById('telefono2').value = cliente.telefono2;
     
-    // Dirección
-    if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion;
-    if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad;
-    if (cliente.estado) document.getElementById('estado').value = cliente.estado;
-    if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal;
+//     // Dirección
+//     if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion;
+//     if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad;
+//     if (cliente.estado) document.getElementById('estado').value = cliente.estado;
+//     if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal;
     
-    // Información personal
-    if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = cliente.fecha_nacimiento;
-    if (cliente.genero) document.getElementById('genero').value = cliente.genero;
-    if (cliente.ssn) document.getElementById('ssn').value = cliente.ssn;
-    if (cliente.idioma_preferido) document.getElementById('idiomaPreferido').value = cliente.idioma_preferido;
+//     // Información personal
+//     if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = cliente.fecha_nacimiento;
+//     if (cliente.genero) document.getElementById('genero').value = cliente.genero;
+//     if (cliente.ssn) document.getElementById('ssn').value = cliente.ssn;
+//     if (cliente.idioma_preferido) document.getElementById('idiomaPreferido').value = cliente.idioma_preferido;
     
-    // Información adicional
-    if (cliente.ingresos) document.getElementById('ingresos').value = cliente.ingresos;
-    if (cliente.tamano_familia) document.getElementById('tamanoFamilia').value = cliente.tamano_familia;
-    if (cliente.numero_dependientes) document.getElementById('numeroDependientes').value = cliente.numero_dependientes;
+//     // Información adicional
+//     if (cliente.ingresos) document.getElementById('ingresos').value = cliente.ingresos;
+//     if (cliente.tamano_familia) document.getElementById('tamanoFamilia').value = cliente.tamano_familia;
+//     if (cliente.numero_dependientes) document.getElementById('numeroDependientes').value = cliente.numero_dependientes;
     
-    // Operador y agente
-    if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre;
-    if (cliente.agente_nombre) document.getElementById('agenteNombre').value = cliente.agente_nombre;
+//     // Operador y agente
+//     if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre;
+//     if (cliente.agente_nombre) document.getElementById('agenteNombre').value = cliente.agente_nombre;
     
-    // ============================================
-    // PÓLIZA (si existe al menos una)
-    // ============================================
-    if (polizas && polizas.length > 0) {
-        const poliza = polizas[0]; // Tomar la primera póliza
+//     // ============================================
+//     // PÓLIZA (si existe al menos una)
+//     // ============================================
+//     if (polizas && polizas.length > 0) {
+//         const poliza = polizas[0]; // Tomar la primera póliza
         
-        if (poliza.compania) document.getElementById('compania').value = poliza.compania;
-        if (poliza.plan) document.getElementById('plan').value = poliza.plan;
-        if (poliza.numero_poliza) document.getElementById('numeroPoliza').value = poliza.numero_poliza;
-        if (poliza.prima) document.getElementById('prima').value = poliza.prima;
-        if (poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal;
+//         if (poliza.compania) document.getElementById('compania').value = poliza.compania;
+//         if (poliza.plan) document.getElementById('plan').value = poliza.plan;
+//         if (poliza.numero_poliza) document.getElementById('numeroPoliza').value = poliza.numero_poliza;
+//         if (poliza.prima) document.getElementById('prima').value = poliza.prima;
+//         if (poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal;
         
-        // Fechas de la póliza
-        if (poliza.fecha_efectividad) {
-            document.getElementById('fechaEfectividad').value = poliza.fecha_efectividad;
-            document.getElementById('displayFechaEfectividad').textContent = formatearFecha(new Date(poliza.fecha_efectividad));
-        }
-        if (poliza.fecha_inicial_cobertura) {
-            document.getElementById('fechaInicialCobertura').value = poliza.fecha_inicial_cobertura;
-            document.getElementById('displayFechaInicial').textContent = formatearFecha(new Date(poliza.fecha_inicial_cobertura));
-        }
-        if (poliza.fecha_final_cobertura) {
-            document.getElementById('fechaFinalCobertura').value = poliza.fecha_final_cobertura;
-            document.getElementById('displayFechaFinal').textContent = formatearFecha(new Date(poliza.fecha_final_cobertura));
-        }
+//         // Fechas de la póliza
+//         if (poliza.fecha_efectividad) {
+//             document.getElementById('fechaEfectividad').value = poliza.fecha_efectividad;
+//             document.getElementById('displayFechaEfectividad').textContent = formatearFecha(new Date(poliza.fecha_efectividad));
+//         }
+//         if (poliza.fecha_inicial_cobertura) {
+//             document.getElementById('fechaInicialCobertura').value = poliza.fecha_inicial_cobertura;
+//             document.getElementById('displayFechaInicial').textContent = formatearFecha(new Date(poliza.fecha_inicial_cobertura));
+//         }
+//         if (poliza.fecha_final_cobertura) {
+//             document.getElementById('fechaFinalCobertura').value = poliza.fecha_final_cobertura;
+//             document.getElementById('displayFechaFinal').textContent = formatearFecha(new Date(poliza.fecha_final_cobertura));
+//         }
         
-        // Member ID y datos adicionales
-        if (poliza.member_id) document.getElementById('memberId').value = poliza.member_id;
-        if (poliza.portal_npn) document.getElementById('portalNpn').value = poliza.portal_npn;
-        if (poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad;
-        if (poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta;
-        if (poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza;
+//         // Member ID y datos adicionales
+//         if (poliza.member_id) document.getElementById('memberId').value = poliza.member_id;
+//         if (poliza.portal_npn) document.getElementById('portalNpn').value = poliza.portal_npn;
+//         if (poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad;
+//         if (poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta;
+//         if (poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza;
         
-        // Estados (tab Estado y Seguimiento)
-        if (poliza.estado_compania) document.getElementById('estadoCompania')?.value = poliza.estado_compania;
-        if (poliza.estado_mercado) document.getElementById('estadoMercado')?.value = poliza.estado_mercado;
+//         // Estados (tab Estado y Seguimiento)
+//         if (poliza.estado_compania) document.getElementById('estadoCompania')?.value = poliza.estado_compania;
+//         if (poliza.estado_mercado) document.getElementById('estadoMercado')?.value = poliza.estado_mercado;
         
-        // Observaciones
-        if (poliza.observaciones) document.getElementById('observaciones').value = poliza.observaciones;
-    }
+//         // Observaciones
+//         if (poliza.observaciones) document.getElementById('observaciones').value = poliza.observaciones;
+//     }
     
-    console.log('✅ Formulario rellenado correctamente');
-}
+//     console.log('✅ Formulario rellenado correctamente');
+// }
 
 function mostrarIndicadorCarga(mostrar) {
     let indicador = document.getElementById('indicadorCarga');
