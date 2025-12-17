@@ -1,401 +1,482 @@
 // ============================================
-// QUALITY CONTROL - JAVASCRIPT
-// Control de Calidad para Evaluación de Ventas
+// VARIABLES GLOBALES
 // ============================================
+let usuarioActual = null;
+let autoguardadoTimer = null;
+const AUTOSAVE_DELAY = 30000; // 30 segundos
 
+// ============================================
+// INICIALIZACIÓN
+// ============================================
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎯 Iniciando Control de Calidad...');
     
-    // ============================================
-    // ELEMENTOS DEL DOM
-    // ============================================
+    // Obtener usuario actual
+    usuarioActual = obtenerUsuario();
     
-    const form = document.getElementById('evaluationForm');
-    const autosaveIndicator = document.getElementById('autosaveIndicator');
-    
-    // Textareas con contador
-    const observedFact = document.getElementById('observedFact');
-    const impact = document.getElementById('impact');
-    const expectedAction = document.getElementById('expectedAction');
-    const goodPractices = document.getElementById('goodPractices');
-    const conclusion = document.getElementById('conclusion');
-    
-    // Contadores
-    const factCounter = document.getElementById('factCounter');
-    const impactCounter = document.getElementById('impactCounter');
-    const actionCounter = document.getElementById('actionCounter');
-    const practicesCounter = document.getElementById('practicesCounter');
-    const conclusionCounter = document.getElementById('conclusionCounter');
-    
-    // Botones
-    const btnClear = document.getElementById('btnClear');
-    const btnSaveDraft = document.getElementById('btnSaveDraft');
-    const btnGenerateReport = document.getElementById('btnGenerateReport');
-    const btnNewEvaluation = document.getElementById('btnNewEvaluation');
-    const btnHistory = document.getElementById('btnHistory');
-    
-    // Sección de errores críticos
-    const criticalErrorsSection = document.getElementById('criticalErrorsSection');
-    const errorMinute = document.getElementById('errorMinute');
-    const errorDescription = document.getElementById('errorDescription');
-    
-    // ============================================
-    // CONFIGURACIÓN INICIAL
-    // ============================================
-    
-    // Establecer fecha actual
-    const evaluationDate = document.getElementById('evaluationDate');
-    evaluationDate.value = new Date().toISOString().split('T')[0];
-    
-    // ============================================
-    // CONTADORES DE CARACTERES
-    // ============================================
-    
-    function updateCharCounter(textarea, counter) {
-        const currentLength = textarea.value.length;
-        const maxLength = textarea.getAttribute('maxlength') || 500;
-        counter.textContent = `${currentLength} / ${maxLength}`;
-        
-        // Cambiar color según porcentaje
-        const percentage = (currentLength / maxLength) * 100;
-        if (percentage >= 90) {
-            counter.style.color = '#ef4444'; // Rojo
-        } else if (percentage >= 70) {
-            counter.style.color = '#f59e0b'; // Amarillo
-        } else {
-            counter.style.color = '#94a3b8'; // Gris
-        }
+    if (!usuarioActual) {
+        console.error('❌ No hay usuario autenticado');
+        window.location.href = './login.html';
+        return;
     }
     
-    // Inicializar contadores
-    observedFact.addEventListener('input', () => updateCharCounter(observedFact, factCounter));
-    impact.addEventListener('input', () => updateCharCounter(impact, impactCounter));
-    expectedAction.addEventListener('input', () => updateCharCounter(expectedAction, actionCounter));
-    goodPractices.addEventListener('input', () => updateCharCounter(goodPractices, practicesCounter));
-    conclusion.addEventListener('input', () => updateCharCounter(conclusion, conclusionCounter));
+    // Inicializar fecha actual
+    const fechaInput = document.getElementById('fechaEvaluacion');
+    if (fechaInput) {
+        fechaInput.value = new Date().toISOString().split('T')[0];
+    }
     
-    // ============================================
-    // VALIDACIÓN DE RESULTADO
-    // ============================================
+    // Cargar nombre del evaluador
+    const evaluadorInput = document.getElementById('evaluador');
+    if (evaluadorInput && usuarioActual.nombre) {
+        evaluadorInput.value = usuarioActual.nombre;
+    }
     
+    // Intentar cargar borrador guardado
+    cargarBorrador();
+    
+    // Configurar eventos del formulario
+    configurarEventos();
+    
+    // Iniciar autoguardado
+    iniciarAutoguardado();
+    
+    console.log('✅ Control de Calidad inicializado');
+});
+
+// ============================================
+// CONFIGURAR EVENTOS
+// ============================================
+function configurarEventos() {
+    const form = document.getElementById('formEvaluacion');
+    
+    // Evento de submit
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await enviarEvaluacion();
+    });
+    
+    // Validar resultado seleccionado y mostrar/ocultar errores críticos
     const resultRadios = document.querySelectorAll('input[name="result"]');
-    const criticalErrorCheckboxes = document.querySelectorAll('input[name="criticalError"]');
-    
     resultRadios.forEach(radio => {
         radio.addEventListener('change', function() {
-            if (this.value === 'rejected') {
-                // Si es rechazada, resaltar sección de errores críticos
-                criticalErrorsSection.style.borderLeft = '4px solid #ef4444';
-                criticalErrorsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            } else {
-                criticalErrorsSection.style.borderLeft = 'none';
-            }
+            validarErroresCriticos();
         });
     });
     
-    // ============================================
-    // VALIDACIÓN DE ERRORES CRÍTICOS
-    // ============================================
-    
-    criticalErrorCheckboxes.forEach(checkbox => {
+    // Validar cuando se marca/desmarca un error crítico
+    const errorCheckboxes = document.querySelectorAll('input[name="criticalError"]');
+    errorCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            const anyChecked = Array.from(criticalErrorCheckboxes).some(cb => cb.checked);
-            
-            if (anyChecked) {
-                // Requerir descripción si hay errores marcados
-                errorMinute.setAttribute('required', 'required');
-                errorDescription.setAttribute('required', 'required');
-                errorMinute.style.borderColor = '#ef4444';
-                errorDescription.style.borderColor = '#ef4444';
-            } else {
-                errorMinute.removeAttribute('required');
-                errorDescription.removeAttribute('required');
-                errorMinute.style.borderColor = '#e2e8f0';
-                errorDescription.style.borderColor = '#e2e8f0';
-            }
+            validarErroresCriticos();
         });
     });
+}
+
+// ============================================
+// VALIDAR ERRORES CRÍTICOS
+// ============================================
+function validarErroresCriticos() {
+    const resultadoSeleccionado = document.querySelector('input[name="result"]:checked');
+    const seccionErrores = document.getElementById('seccionErrores');
     
-    // ============================================
-    // AUTOSAVE
-    // ============================================
+    if (!seccionErrores) return;
     
-    let autosaveTimeout;
+    if (resultadoSeleccionado && resultadoSeleccionado.value === 'rejected') {
+        // Si es rechazada, resaltar la sección de errores
+        seccionErrores.style.borderColor = '#ef4444';
+        seccionErrores.style.background = '#fef2f2';
+    } else {
+        // Si es aprobada, volver al estilo normal
+        seccionErrores.style.borderColor = '#e2e8f0';
+        seccionErrores.style.background = '#ffffff';
+    }
+}
+
+// ============================================
+// ENVIAR EVALUACIÓN
+// ============================================
+async function enviarEvaluacion() {
+    const form = document.getElementById('formEvaluacion');
     
-    function showAutosaveIndicator() {
-        autosaveIndicator.classList.add('show');
-        setTimeout(() => {
-            autosaveIndicator.classList.remove('show');
-        }, 2000);
+    // Validar que el formulario esté completo
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
     }
     
-    function saveFormData() {
-        const formData = new FormData(form);
-        const data = {};
-        
-        // Convertir FormData a objeto
-        for (let [key, value] of formData.entries()) {
-            if (data[key]) {
-                // Si ya existe, convertir a array
-                if (Array.isArray(data[key])) {
-                    data[key].push(value);
-                } else {
-                    data[key] = [data[key], value];
-                }
-            } else {
-                data[key] = value;
-            }
-        }
-        
-        // Guardar en localStorage
-        localStorage.setItem('qualityControl_draft', JSON.stringify(data));
-        localStorage.setItem('qualityControl_lastSave', new Date().toISOString());
-        
-        showAutosaveIndicator();
-        console.log('Formulario guardado automáticamente:', data);
+    // Validar resultado seleccionado
+    const resultadoSeleccionado = document.querySelector('input[name="result"]:checked');
+    if (!resultadoSeleccionado) {
+        alert('⚠️ Por favor, seleccione un resultado de evaluación (Aprobada/Rechazada)');
+        document.querySelector('.result-options').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
     }
     
-    // Autosave cada vez que cambia un input
-    form.addEventListener('input', function() {
-        clearTimeout(autosaveTimeout);
-        autosaveTimeout = setTimeout(saveFormData, 2000); // Guardar después de 2 segundos sin cambios
-    });
-    
-    // Guardar también cuando cambian checkboxes o radios
-    form.addEventListener('change', function() {
-        clearTimeout(autosaveTimeout);
-        autosaveTimeout = setTimeout(saveFormData, 1000);
-    });
-    
-    // ============================================
-    // CARGAR BORRADOR AL INICIAR
-    // ============================================
-    
-    function loadDraft() {
-        const savedData = localStorage.getItem('qualityControl_draft');
-        if (savedData) {
-            const data = JSON.parse(savedData);
-            
-            // Preguntar si quiere cargar el borrador
-            if (confirm('Se encontró un borrador guardado. ¿Desea cargarlo?')) {
-                // Cargar datos en el formulario
-                for (let [key, value] of Object.entries(data)) {
-                    const input = form.elements[key];
-                    if (input) {
-                        if (input.type === 'checkbox' || input.type === 'radio') {
-                            if (Array.isArray(value)) {
-                                value.forEach(v => {
-                                    const element = form.querySelector(`input[name="${key}"][value="${v}"]`);
-                                    if (element) element.checked = true;
-                                });
-                            } else {
-                                const element = form.querySelector(`input[name="${key}"][value="${value}"]`);
-                                if (element) element.checked = true;
-                            }
-                        } else {
-                            input.value = value;
-                        }
-                    }
-                }
-                
-                // Actualizar contadores
-                updateCharCounter(observedFact, factCounter);
-                updateCharCounter(impact, impactCounter);
-                updateCharCounter(expectedAction, actionCounter);
-                updateCharCounter(goodPractices, practicesCounter);
-                updateCharCounter(conclusion, conclusionCounter);
-                
-                alert('Borrador cargado correctamente');
-            }
-        }
-    }
-    
-    // Cargar borrador al iniciar (después de 1 segundo)
-    setTimeout(loadDraft, 1000);
-    
-    // ============================================
-    // LIMPIAR FORMULARIO
-    // ============================================
-    
-    btnClear.addEventListener('click', function() {
-        if (confirm('¿Está seguro de que desea limpiar el formulario? Se perderán todos los datos no guardados.')) {
-            form.reset();
-            localStorage.removeItem('qualityControl_draft');
-            
-            // Restablecer fecha
-            evaluationDate.value = new Date().toISOString().split('T')[0];
-            
-            // Actualizar contadores
-            updateCharCounter(observedFact, factCounter);
-            updateCharCounter(impact, impactCounter);
-            updateCharCounter(expectedAction, actionCounter);
-            updateCharCounter(goodPractices, practicesCounter);
-            updateCharCounter(conclusion, conclusionCounter);
-            
-            // Scroll al inicio
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            
-            alert('Formulario limpiado correctamente');
-        }
-    });
-    
-    // ============================================
-    // GUARDAR BORRADOR MANUALMENTE
-    // ============================================
-    
-    btnSaveDraft.addEventListener('click', function() {
-        saveFormData();
-        alert('Borrador guardado correctamente');
-    });
-    
-    // ============================================
-    // GENERAR REPORTE
-    // ============================================
-    
-    btnGenerateReport.addEventListener('click', function() {
-        // Validar que el formulario esté completo
-        if (!form.checkValidity()) {
-            alert('Por favor, complete todos los campos requeridos antes de generar el reporte.');
-            form.reportValidity();
+    // Si es rechazada, verificar que haya al menos un error crítico
+    if (resultadoSeleccionado.value === 'rejected') {
+        const erroresSeleccionados = document.querySelectorAll('input[name="criticalError"]:checked');
+        if (erroresSeleccionados.length === 0) {
+            alert('⚠️ Si la venta es rechazada, debe marcar al menos un error crítico.');
+            document.getElementById('seccionErrores').scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
-        
-        // Aquí iría la lógica para generar el PDF
-        alert('Función de generación de reporte en desarrollo.\n\nSe generará un PDF con toda la información de la evaluación.');
-        console.log('Generar reporte PDF');
-    });
+    }
     
-    // ============================================
-    // ENVIAR EVALUACIÓN
-    // ============================================
+    // Recopilar datos del formulario
+    const formData = new FormData(form);
     
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
+    try {
+        // Mostrar indicador de carga
+        mostrarCargando(true);
         
-        // Validaciones adicionales
-        const selectedResult = document.querySelector('input[name="result"]:checked');
-        if (!selectedResult) {
-            alert('Por favor, seleccione un resultado de evaluación (Aprobada/Rechazada)');
-            return;
-        }
+        // Guardar en Supabase
+        await guardarEvaluacionEnSupabase(formData);
         
-        // Si es rechazada, verificar que haya al menos un error crítico
-        if (selectedResult.value === 'rejected') {
-            const anyErrorChecked = Array.from(criticalErrorCheckboxes).some(cb => cb.checked);
-            if (!anyErrorChecked) {
-                alert('Si la venta es rechazada, debe marcar al menos un error crítico.');
-                criticalErrorsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return;
-            }
-        }
+        // Ocultar indicador
+        mostrarCargando(false);
         
-        // Recopilar datos del formulario
-        const formData = new FormData(form);
-        const data = {};
-        
-        for (let [key, value] of formData.entries()) {
-            if (data[key]) {
-                if (Array.isArray(data[key])) {
-                    data[key].push(value);
-                } else {
-                    data[key] = [data[key], value];
-                }
-            } else {
-                data[key] = value;
-            }
-        }
-        
-        console.log('Datos de evaluación:', data);
-        
-        // Aquí iría la lógica para enviar al backend
-        alert('Evaluación enviada correctamente.\n\nLos datos se han guardado en la base de datos.');
+        // Mostrar mensaje de éxito
+        mostrarNotificacion('✅ Evaluación guardada correctamente', 'success');
         
         // Limpiar borrador
         localStorage.removeItem('qualityControl_draft');
         
-        // Preguntar si quiere crear otra evaluación
-        if (confirm('¿Desea crear una nueva evaluación?')) {
-            form.reset();
-            evaluationDate.value = new Date().toISOString().split('T')[0];
+        // Preguntar si quiere crear otra o ver historial
+        const respuesta = confirm('Evaluación guardada exitosamente.\n\n¿Desea crear una nueva evaluación?\n\n(Cancelar para ir al historial)');
+        
+        if (respuesta) {
+            limpiarFormulario();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            window.location.href = './historial_evaluaciones.html';
         }
+        
+    } catch (error) {
+        console.error('❌ Error al guardar evaluación:', error);
+        mostrarCargando(false);
+        mostrarNotificacion('❌ Error al guardar: ' + error.message, 'error');
+    }
+}
+
+// ============================================
+// GUARDAR EVALUACIÓN EN SUPABASE
+// ============================================
+async function guardarEvaluacionEnSupabase(formData) {
+    // Recopilar errores críticos
+    const erroresCriticos = [];
+    document.querySelectorAll('input[name="criticalError"]:checked').forEach(checkbox => {
+        erroresCriticos.push(checkbox.value);
     });
     
-    // ============================================
-    // NUEVA EVALUACIÓN
-    // ============================================
+    // Recopilar seguimiento
+    const seguimiento = [];
+    document.querySelectorAll('input[name="followUp"]:checked').forEach(checkbox => {
+        seguimiento.push(checkbox.value);
+    });
     
-    btnNewEvaluation.addEventListener('click', function() {
-        if (form.checkValidity() && !confirm('Hay datos en el formulario. ¿Desea crear una nueva evaluación sin guardar?')) {
+    // Preparar datos para Supabase
+    const evaluacionData = {
+        fecha_evaluacion: formData.get('evaluationDate'),
+        evaluador: formData.get('evaluator'),
+        asesor_nombre: formData.get('advisorName'),
+        asesor_id: formData.get('advisorId') ? parseInt(formData.get('advisorId')) : null,
+        cliente_id_venta: formData.get('clientSaleId') || null,
+        canal: formData.get('channel'),
+        duracion_audio: formData.get('audioDuration') || null,
+        resultado: formData.get('result'),
+        
+        // Checklist
+        checklist_presentacion: formData.get('item1') || null,
+        checklist_identificacion: formData.get('item2') || null,
+        checklist_explicacion: formData.get('item3') || null,
+        checklist_condiciones: formData.get('item4') || null,
+        checklist_consentimiento: formData.get('item5') || null,
+        checklist_cierre: formData.get('item6') || null,
+        checklist_lenguaje: formData.get('item7') || null,
+        
+        // Errores críticos
+        errores_criticos: erroresCriticos,
+        minuto_error: formData.get('errorMinute') || null,
+        descripcion_error: formData.get('errorDescription') || null,
+        
+        // Feedback
+        hecho_observado: formData.get('observedFact'),
+        impacto: formData.get('impact'),
+        accion_esperada: formData.get('expectedAction'),
+        buenas_practicas: formData.get('goodPractices') || null,
+        
+        // Seguimiento
+        seguimiento: seguimiento,
+        conclusion: formData.get('conclusion') || null,
+        
+        // Metadatos
+        autor_nombre: usuarioActual.nombre || 'Evaluador'
+    };
+    
+    console.log('💾 Guardando evaluación:', evaluacionData);
+    
+    const { data, error } = await supabaseClient
+        .from('evaluaciones_calidad')
+        .insert([evaluacionData])
+        .select()
+        .single();
+    
+    if (error) {
+        // Si la tabla no existe, mostrar mensaje específico
+        if (error.message && error.message.includes('relation')) {
+            throw new Error('La tabla de evaluaciones no existe. Por favor, ejecuta el script SQL primero.');
+        }
+        throw error;
+    }
+    
+    console.log('✅ Evaluación guardada:', data);
+    return data;
+}
+
+// ============================================
+// AUTOGUARDADO DE BORRADOR
+// ============================================
+function iniciarAutoguardado() {
+    const form = document.getElementById('formEvaluacion');
+    
+    // Guardar borrador cada vez que cambie el formulario
+    form.addEventListener('input', function() {
+        // Reiniciar timer
+        if (autoguardadoTimer) {
+            clearTimeout(autoguardadoTimer);
+        }
+        
+        // Programar autoguardado
+        autoguardadoTimer = setTimeout(() => {
+            guardarBorrador(true);
+        }, AUTOSAVE_DELAY);
+    });
+}
+
+function guardarBorrador(esAutomatico = false) {
+    const form = document.getElementById('formEvaluacion');
+    const formData = new FormData(form);
+    
+    // Convertir FormData a objeto
+    const borrador = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (borrador[key]) {
+            // Si ya existe, convertir a array
+            if (Array.isArray(borrador[key])) {
+                borrador[key].push(value);
+            } else {
+                borrador[key] = [borrador[key], value];
+            }
+        } else {
+            borrador[key] = value;
+        }
+    }
+    
+    // Guardar en localStorage
+    localStorage.setItem('qualityControl_draft', JSON.stringify(borrador));
+    
+    // Mostrar indicador
+    if (esAutomatico) {
+        mostrarIndicadorAutoguardado();
+    } else {
+        mostrarNotificacion('💾 Borrador guardado', 'success');
+    }
+    
+    console.log('💾 Borrador guardado');
+}
+
+function cargarBorrador() {
+    const borradorStr = localStorage.getItem('qualityControl_draft');
+    
+    if (!borradorStr) return;
+    
+    try {
+        const borrador = JSON.parse(borradorStr);
+        const form = document.getElementById('formEvaluacion');
+        
+        // Preguntar si quiere cargar el borrador
+        if (!confirm('📋 Se encontró un borrador guardado.\n\n¿Desea continuar con la evaluación anterior?')) {
+            localStorage.removeItem('qualityControl_draft');
             return;
         }
         
-        form.reset();
-        evaluationDate.value = new Date().toISOString().split('T')[0];
-        localStorage.removeItem('qualityControl_draft');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    
-    // ============================================
-    // HISTORIAL
-    // ============================================
-    
-    btnHistory.addEventListener('click', function() {
-        alert('Función de historial en desarrollo.\n\nAquí podrá ver todas las evaluaciones anteriores.');
-        console.log('Abrir historial de evaluaciones');
-    });
-    
-    // ============================================
-    // PREVENIR PÉRDIDA DE DATOS
-    // ============================================
-    
-    window.addEventListener('beforeunload', function(e) {
-        const formIsFilled = Array.from(form.elements).some(element => {
-            if (element.type === 'text' || element.type === 'textarea') {
-                return element.value.trim() !== '';
-            }
-            if (element.type === 'checkbox' || element.type === 'radio') {
-                return element.checked;
-            }
-            return false;
-        });
-        
-        if (formIsFilled) {
-            e.preventDefault();
-            e.returnValue = '¿Está seguro de que desea salir? Los cambios no guardados se perderán.';
-        }
-    });
-    
-    // ============================================
-    // ATAJOS DE TECLADO
-    // ============================================
-    
-    document.addEventListener('keydown', function(e) {
-        // Ctrl + S = Guardar borrador
-        if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            saveFormData();
-            alert('Borrador guardado');
-        }
-        
-        // Ctrl + Enter = Enviar formulario (si está en un textarea)
-        if (e.ctrlKey && e.key === 'Enter') {
-            if (document.activeElement.tagName === 'TEXTAREA') {
-                if (confirm('¿Desea enviar la evaluación?')) {
-                    form.dispatchEvent(new Event('submit'));
+        // Cargar datos en el formulario
+        for (let [name, value] of Object.entries(borrador)) {
+            const elements = form.elements[name];
+            
+            if (!elements) continue;
+            
+            if (elements.length) {
+                // Es un NodeList (radio buttons, checkboxes)
+                if (Array.isArray(value)) {
+                    // Múltiples valores (checkboxes)
+                    value.forEach(val => {
+                        const element = Array.from(elements).find(el => el.value === val);
+                        if (element) element.checked = true;
+                    });
+                } else {
+                    // Un solo valor (radio button)
+                    const element = Array.from(elements).find(el => el.value === value);
+                    if (element) element.checked = true;
                 }
+            } else {
+                // Es un solo elemento
+                elements.value = value;
             }
         }
-    });
+        
+        console.log('📋 Borrador cargado');
+        mostrarNotificacion('📋 Borrador cargado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('Error al cargar borrador:', error);
+        localStorage.removeItem('qualityControl_draft');
+    }
+}
+
+function mostrarIndicadorAutoguardado() {
+    const indicador = document.getElementById('autosaveIndicator');
+    if (!indicador) return;
     
-    // ============================================
-    // MENSAJES DE CONSOLE
-    // ============================================
+    indicador.classList.add('show');
     
-    console.log('%c✅ Quality Control System Loaded', 'color: #10b981; font-size: 16px; font-weight: bold;');
-    console.log('%cFuncionalidades activas:', 'color: #3b82f6; font-weight: bold;');
-    console.log('- Autosave cada 2 segundos');
-    console.log('- Validaciones en tiempo real');
-    console.log('- Contadores de caracteres');
-    console.log('- Atajos: Ctrl+S (guardar), Ctrl+Enter (enviar)');
+    setTimeout(() => {
+        indicador.classList.remove('show');
+    }, 3000);
+}
+
+// ============================================
+// LIMPIAR FORMULARIO
+// ============================================
+function limpiarFormulario() {
+    const form = document.getElementById('formEvaluacion');
+    form.reset();
     
+    // Restablecer fecha actual
+    const fechaInput = document.getElementById('fechaEvaluacion');
+    if (fechaInput) {
+        fechaInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Restablecer evaluador
+    const evaluadorInput = document.getElementById('evaluador');
+    if (evaluadorInput && usuarioActual.nombre) {
+        evaluadorInput.value = usuarioActual.nombre;
+    }
+    
+    // Limpiar borrador
+    localStorage.removeItem('qualityControl_draft');
+    
+    // Resetear estilos de sección de errores
+    const seccionErrores = document.getElementById('seccionErrores');
+    if (seccionErrores) {
+        seccionErrores.style.borderColor = '#e2e8f0';
+        seccionErrores.style.background = '#ffffff';
+    }
+    
+    mostrarNotificacion('🔄 Formulario limpiado', 'success');
+}
+
+// ============================================
+// UTILIDADES
+// ============================================
+function mostrarCargando(mostrar) {
+    const form = document.getElementById('formEvaluacion');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    if (mostrar) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        
+        // Deshabilitar todos los inputs
+        const inputs = form.querySelectorAll('input, select, textarea, button');
+        inputs.forEach(input => input.disabled = true);
+    } else {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Evaluación';
+        
+        // Habilitar todos los inputs
+        const inputs = form.querySelectorAll('input, select, textarea, button');
+        inputs.forEach(input => input.disabled = false);
+    }
+}
+
+function mostrarNotificacion(mensaje, tipo) {
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        background: ${tipo === 'success' ? '#10b981' : '#ef4444'};
+        color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        font-weight: 600;
+        max-width: 400px;
+    `;
+    notif.textContent = mensaje;
+    
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+        notif.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
+
+// Agregar estilos de animación
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// ============================================
+// PREVENIR PÉRDIDA DE DATOS
+// ============================================
+window.addEventListener('beforeunload', function(e) {
+    const form = document.getElementById('formEvaluacion');
+    const hayCambios = Array.from(new FormData(form)).some(([key, value]) => value !== '');
+    
+    if (hayCambios && !localStorage.getItem('qualityControl_draft')) {
+        // Guardar borrador automáticamente antes de salir
+        guardarBorrador(true);
+    }
 });
+
+// ============================================
+// LOG DE DESARROLLO
+// ============================================
+console.log('%c🎯 Control de Calidad Cargado', 'color: #2563eb; font-size: 14px; font-weight: bold');
+console.log('Funcionalidades activas:');
+console.log('  ✓ Formulario completo de evaluación');
+console.log('  ✓ Validaciones en tiempo real');
+console.log('  ✓ Autoguardado de borrador cada 30 segundos');
+console.log('  ✓ Integración con Supabase');
+console.log('  ✓ Prevención de pérdida de datos');
+console.log('  ✓ Feedback estructurado');

@@ -3,425 +3,520 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Calidad - Evaluación de Ventas</title>
-    <link rel="stylesheet" href="../css/control_calidad.css">
+    <title>Control de Calidad - S&S Asesorías</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="../css/control_calidad.css">
 </head>
 <body>
-    <div class="quality-control-container">
-        <!-- Header de la pestaña -->
-        <div class="page-header">
+    <!-- SIDEBAR UNIFICADO -->
+    <aside class="sidebar-unified" id="sidebar">
+        <div class="sidebar-header">
+            <a href="./home.html" class="sidebar-logo-link">
+                <img src="../images/Logo.png" alt="S&S Asesorías" class="sidebar-logo-img">
+            </a>
+            <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+                <span class="material-symbols-rounded">chevron_left</span>
+            </button>
+        </div>
+
+        <div class="sidebar-search">
+            <div class="search-box">
+                <span class="material-symbols-rounded">search</span>
+                <input type="text" placeholder="Buscar...">
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="./home.html" class="menu-item">
+                <span class="material-symbols-rounded">home</span>
+                <span>Inicio</span>
+            </a>
+
+            <a href="./polizas.html" class="menu-item">
+                <span class="material-symbols-rounded">description</span>
+                <span>Pólizas</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span class="material-symbols-rounded">bar_chart</span>
+                <span>Gráficos</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span class="material-symbols-rounded">folder</span>
+                <span>Gestiones</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span class="material-symbols-rounded">trending_up</span>
+                <span>Seguimiento</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span class="material-symbols-rounded">rate_review</span>
+                <span>Solicitud de revisión mercado</span>
+            </a>
+
+            <a href="./para-revisar.html" class="menu-item">
+                <span class="material-symbols-rounded">fact_check</span>
+                <span>Para revisar</span>
+            </a>
+
+            <a href="./control_calidad.html" class="menu-item active">
+                <span class="material-symbols-rounded">verified</span>
+                <span>Control de calidad</span>
+            </a>
+
+            <a href="./historial_evaluaciones.html" class="menu-item">
+                <span class="material-symbols-rounded">history</span>
+                <span>Mis Evaluaciones</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="dark-mode-toggle" onclick="toggleDarkMode()">
+                <div class="dark-mode-label">
+                    <span class="material-symbols-rounded">dark_mode</span>
+                    <span>Modo Oscuro</span>
+                </div>
+                <div class="toggle-switch" id="darkModeSwitch">
+                    <div class="toggle-circle"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="main-container">
+        <!-- HEADER -->
+        <header class="page-header">
             <div class="header-content">
                 <div class="header-icon">
                     <i class="fas fa-clipboard-check"></i>
                 </div>
                 <div class="header-text">
                     <h1>Control de Calidad</h1>
-                    <p>Evaluación de audios de ventas</p>
+                    <p>Evaluación de ventas y desempeño de asesores</p>
                 </div>
             </div>
             <div class="header-actions">
-                <button class="btn-secondary" id="btnHistory">
+                <button class="btn-secondary" onclick="window.location.href='./historial_evaluaciones.html'">
                     <i class="fas fa-history"></i>
-                    Historial
+                    Ver Historial
                 </button>
-                <button class="btn-primary" id="btnNewEvaluation">
-                    <i class="fas fa-plus"></i>
+                <button class="btn-secondary" onclick="limpiarFormulario()">
+                    <i class="fas fa-redo"></i>
                     Nueva Evaluación
                 </button>
             </div>
+        </header>
+
+        <!-- INDICADOR DE AUTOGUARDADO -->
+        <div class="autosave-indicator" id="autosaveIndicator">
+            <i class="fas fa-check-circle"></i>
+            <span>Borrador guardado automáticamente</span>
         </div>
 
-        <!-- Formulario de Evaluación -->
-        <form id="evaluationForm" class="evaluation-form">
+        <!-- FORMULARIO DE EVALUACIÓN -->
+        <form id="formEvaluacion" class="evaluation-form">
             
-            <!-- Sección 1: Datos Generales -->
-            <div class="form-section">
+            <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
+            <section class="form-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-info-circle"></i> Datos Generales</h2>
-                </div>
-                <div class="section-content">
-                    <div class="form-grid-3">
-                        <div class="form-group">
-                            <label for="evaluationDate">
-                                <i class="fas fa-calendar"></i> Fecha de Evaluación
-                            </label>
-                            <input type="date" id="evaluationDate" name="evaluationDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="evaluator">
-                                <i class="fas fa-user-check"></i> Evaluador/a
-                            </label>
-                            <input type="text" id="evaluator" name="evaluator" placeholder="Nombre del evaluador" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="advisorName">
-                                <i class="fas fa-user-tie"></i> Nombre del Asesor
-                            </label>
-                            <input type="text" id="advisorName" name="advisorName" placeholder="Nombre del asesor evaluado" required>
-                        </div>
+                    <div class="section-icon">
+                        <i class="fas fa-info-circle"></i>
                     </div>
-
-                    <div class="form-grid-3">
-                        <div class="form-group">
-                            <label for="advisorId">
-                                <i class="fas fa-id-card"></i> ID / Código del Asesor
-                            </label>
-                            <input type="text" id="advisorId" name="advisorId" placeholder="ID-12345">
-                        </div>
-                        <div class="form-group">
-                            <label for="clientSaleId">
-                                <i class="fas fa-receipt"></i> Cliente / ID de Venta
-                            </label>
-                            <input type="text" id="clientSaleId" name="clientSaleId" placeholder="Nombre o ID de venta">
-                        </div>
-                        <div class="form-group">
-                            <label for="channel">
-                                <i class="fas fa-phone-volume"></i> Canal
-                            </label>
-                            <select id="channel" name="channel" required>
-                                <option value="">Seleccionar canal...</option>
-                                <option value="llamada">📞 Llamada</option>
-                                <option value="audio">🎧 Audio</option>
-                                <option value="whatsapp">💬 WhatsApp</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-grid-3">
-                        <div class="form-group">
-                            <label for="audioDuration">
-                                <i class="fas fa-clock"></i> Duración del Audio
-                            </label>
-                            <input type="text" id="audioDuration" name="audioDuration" placeholder="05:30">
-                        </div>
+                    <div class="section-title">
+                        <h2>Información Básica</h2>
+                        <p>Datos generales de la evaluación</p>
                     </div>
                 </div>
-            </div>
 
-            <!-- Sección 2: Resultado de Evaluación -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-award"></i> Resultado de la Evaluación</h2>
-                </div>
-                <div class="section-content">
-                    <div class="result-options">
-                        <label class="result-card approved">
-                            <input type="radio" name="result" value="approved" required>
-                            <div class="card-content">
-                                <div class="card-icon">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <div class="card-text">
-                                    <h3>Venta Subida</h3>
-                                    <p>La venta cumple con todos los criterios</p>
-                                </div>
-                            </div>
-                        </label>
-                        
-                        <label class="result-card rejected">
-                            <input type="radio" name="result" value="rejected">
-                            <div class="card-content">
-                                <div class="card-icon">
-                                    <i class="fas fa-times-circle"></i>
-                                </div>
-                                <div class="card-text">
-                                    <h3>Venta Rechazada</h3>
-                                    <p>La venta no cumple los requisitos</p>
-                                </div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 3: Checklist de Calidad -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-tasks"></i> Checklist de Calidad</h2>
-                    <span class="section-subtitle">Marcar según corresponda</span>
-                </div>
-                <div class="section-content">
-                    <div class="checklist-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th class="item-column">Ítem Evaluado</th>
-                                    <th class="check-column">Cumple</th>
-                                    <th class="check-column">No Cumple</th>
-                                    <th class="check-column">N/A</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <i class="fas fa-user-circle"></i>
-                                        Presentación clara del asesor
-                                    </td>
-                                    <td><input type="radio" name="item1" value="cumple"></td>
-                                    <td><input type="radio" name="item1" value="no_cumple"></td>
-                                    <td><input type="radio" name="item1" value="na"></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <i class="fas fa-id-badge"></i>
-                                        Identificación correcta del cliente
-                                    </td>
-                                    <td><input type="radio" name="item2" value="cumple"></td>
-                                    <td><input type="radio" name="item2" value="no_cumple"></td>
-                                    <td><input type="radio" name="item2" value="na"></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <i class="fas fa-box-open"></i>
-                                        Explicación completa del producto
-                                    </td>
-                                    <td><input type="radio" name="item3" value="cumple"></td>
-                                    <td><input type="radio" name="item3" value="no_cumple"></td>
-                                    <td><input type="radio" name="item3" value="na"></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <i class="fas fa-file-contract"></i>
-                                        Condiciones claras (precio, plazos, restricciones)
-                                    </td>
-                                    <td><input type="radio" name="item4" value="cumple"></td>
-                                    <td><input type="radio" name="item4" value="no_cumple"></td>
-                                    <td><input type="radio" name="item4" value="na"></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <i class="fas fa-handshake"></i>
-                                        Consentimiento explícito del cliente
-                                    </td>
-                                    <td><input type="radio" name="item5" value="cumple"></td>
-                                    <td><input type="radio" name="item5" value="no_cumple"></td>
-                                    <td><input type="radio" name="item5" value="na"></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <i class="fas fa-check-double"></i>
-                                        Cierre correcto de la venta
-                                    </td>
-                                    <td><input type="radio" name="item6" value="cumple"></td>
-                                    <td><input type="radio" name="item6" value="no_cumple"></td>
-                                    <td><input type="radio" name="item6" value="na"></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <i class="fas fa-comments"></i>
-                                        Lenguaje claro y respetuoso
-                                    </td>
-                                    <td><input type="radio" name="item7" value="cumple"></td>
-                                    <td><input type="radio" name="item7" value="no_cumple"></td>
-                                    <td><input type="radio" name="item7" value="na"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 4: Errores Críticos -->
-            <div class="form-section critical-section" id="criticalErrorsSection">
-                <div class="section-header">
-                    <h2><i class="fas fa-exclamation-triangle"></i> Errores Críticos</h2>
-                    <span class="section-subtitle">Marcar solo si aplica</span>
-                </div>
-                <div class="section-content">
-                    <div class="critical-errors-grid">
-                        <label class="checkbox-item critical">
-                            <input type="checkbox" name="criticalError" value="falta_consentimiento">
-                            <span class="checkbox-label">
-                                <i class="fas fa-times-circle"></i>
-                                Falta de consentimiento del cliente
-                            </span>
-                        </label>
-                        <label class="checkbox-item critical">
-                            <input type="checkbox" name="criticalError" value="info_incorrecta">
-                            <span class="checkbox-label">
-                                <i class="fas fa-ban"></i>
-                                Información incorrecta o incompleta
-                            </span>
-                        </label>
-                        <label class="checkbox-item critical">
-                            <input type="checkbox" name="criticalError" value="omision_condiciones">
-                            <span class="checkbox-label">
-                                <i class="fas fa-exclamation"></i>
-                                Omisión de condiciones obligatorias
-                            </span>
-                        </label>
-                        <label class="checkbox-item critical">
-                            <input type="checkbox" name="criticalError" value="presion_indebida">
-                            <span class="checkbox-label">
-                                <i class="fas fa-hand-paper"></i>
-                                Presión indebida / mala práctica
-                            </span>
-                        </label>
-                        <label class="checkbox-item critical">
-                            <input type="checkbox" name="criticalError" value="audio_incompleto">
-                            <span class="checkbox-label">
-                                <i class="fas fa-volume-mute"></i>
-                                Audio incompleto o ininteligible
-                            </span>
-                        </label>
-                    </div>
-
-                    <div class="form-grid-2" style="margin-top: 20px;">
-                        <div class="form-group">
-                            <label for="errorMinute">
-                                <i class="fas fa-stopwatch"></i> Minuto Exacto del Error
-                            </label>
-                            <input type="text" id="errorMinute" name="errorMinute" placeholder="03:45">
-                        </div>
-                        <div class="form-group full-width">
-                            <label for="errorDescription">
-                                <i class="fas fa-edit"></i> Descripción Objetiva del Error
-                            </label>
-                            <textarea id="errorDescription" name="errorDescription" rows="3" placeholder="Describir el error detectado..."></textarea>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 5: Feedback al Asesor -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-comment-dots"></i> Feedback al Asesor</h2>
-                    <span class="section-subtitle">Información detallada y constructiva</span>
-                </div>
-                <div class="section-content">
+                <div class="form-grid">
                     <div class="form-group">
-                        <label for="observedFact">
-                            <i class="fas fa-eye"></i> Hecho Observado
-                            <span class="char-counter" id="factCounter">0 / 500</span>
+                        <label for="fechaEvaluacion">
+                            <i class="far fa-calendar"></i>
+                            Fecha de Evaluación
+                            <span class="required">*</span>
                         </label>
-                        <textarea id="observedFact" name="observedFact" rows="4" maxlength="500" placeholder="Describir lo que se escucha, sin juicios..." required></textarea>
-                        <small class="help-text">Ser objetivo y específico. Ejemplo: "En el minuto 2:35..."</small>
+                        <input type="date" id="fechaEvaluacion" name="evaluationDate" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="impact">
-                            <i class="fas fa-exclamation-circle"></i> Impacto en la Venta
-                            <span class="char-counter" id="impactCounter">0 / 500</span>
+                        <label for="evaluador">
+                            <i class="far fa-user"></i>
+                            Evaluador
+                            <span class="required">*</span>
                         </label>
-                        <textarea id="impact" name="impact" rows="4" maxlength="500" placeholder="Por qué afecta la calidad o validez..." required></textarea>
-                        <small class="help-text">Explicar la consecuencia del error u observación</small>
+                        <input type="text" id="evaluador" name="evaluator" placeholder="Nombre del evaluador" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="expectedAction">
-                            <i class="fas fa-lightbulb"></i> Acción Esperada / Recomendación
-                            <span class="char-counter" id="actionCounter">0 / 500</span>
+                        <label for="asesorNombre">
+                            <i class="fas fa-user-tie"></i>
+                            Nombre del Asesor
+                            <span class="required">*</span>
                         </label>
-                        <textarea id="expectedAction" name="expectedAction" rows="4" maxlength="500" placeholder="Qué debe hacer diferente la próxima vez..." required></textarea>
-                        <small class="help-text">Indicar pasos concretos para mejorar</small>
+                        <input type="text" id="asesorNombre" name="advisorName" placeholder="Nombre completo" required>
                     </div>
-                </div>
-            </div>
 
-            <!-- Sección 6: Buenas Prácticas -->
-            <div class="form-section positive-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-star"></i> Buenas Prácticas Observadas</h2>
-                    <span class="section-subtitle">Reconocer lo que se hizo bien (opcional)</span>
-                </div>
-                <div class="section-content">
                     <div class="form-group">
-                        <label for="goodPractices">
-                            <i class="fas fa-thumbs-up"></i> Aspectos Positivos
-                            <span class="char-counter" id="practicesCounter">0 / 500</span>
+                        <label for="asesorId">
+                            <i class="fas fa-id-card"></i>
+                            ID del Asesor
                         </label>
-                        <textarea id="goodPractices" name="goodPractices" rows="4" maxlength="500" placeholder="Ejemplos: Buen tono de voz, manejo de objeciones, claridad en la explicación..."></textarea>
-                        <small class="help-text">El feedback positivo refuerza buenos comportamientos</small>
+                        <input type="text" id="asesorId" name="advisorId" placeholder="ID o código">
                     </div>
-                </div>
-            </div>
 
-            <!-- Sección 7: Seguimiento -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-flag"></i> Seguimiento</h2>
-                </div>
-                <div class="section-content">
-                    <div class="follow-up-grid">
-                        <label class="checkbox-item">
-                            <input type="checkbox" name="followUp" value="reentrenamiento">
-                            <span class="checkbox-label">
-                                <i class="fas fa-graduation-cap"></i>
-                                Requiere reentrenamiento
-                            </span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" name="followUp" value="revision_supervisor">
-                            <span class="checkbox-label">
-                                <i class="fas fa-user-shield"></i>
-                                Revisión con supervisor
-                            </span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" name="followUp" value="informativo">
-                            <span class="checkbox-label">
-                                <i class="fas fa-info"></i>
-                                Solo informativo
-                            </span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" name="followUp" value="buen_ejemplo">
-                            <span class="checkbox-label">
-                                <i class="fas fa-trophy"></i>
-                                Buen ejemplo para compartir
-                            </span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 8: Conclusión -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-clipboard-list"></i> Conclusión del Evaluador</h2>
-                </div>
-                <div class="section-content">
                     <div class="form-group">
-                        <label for="conclusion">
-                            <i class="fas fa-file-alt"></i> Resumen
-                            <span class="char-counter" id="conclusionCounter">0 / 300</span>
+                        <label for="clienteIdVenta">
+                            <i class="fas fa-receipt"></i>
+                            ID Cliente/Venta
                         </label>
-                        <textarea id="conclusion" name="conclusion" rows="3" maxlength="300" placeholder="Resumen breve y claro del resultado de la evaluación..."></textarea>
+                        <input type="text" id="clienteIdVenta" name="clientSaleId" placeholder="Ej: CLI-12345">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="canal">
+                            <i class="fas fa-phone"></i>
+                            Canal
+                            <span class="required">*</span>
+                        </label>
+                        <select id="canal" name="channel" required>
+                            <option value="">Seleccionar canal...</option>
+                            <option value="Teléfono">Teléfono</option>
+                            <option value="Chat">Chat</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="duracionAudio">
+                            <i class="far fa-clock"></i>
+                            Duración del Audio
+                        </label>
+                        <input type="text" id="duracionAudio" name="audioDuration" placeholder="Ej: 05:30">
+                        <small>Formato: MM:SS</small>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- Botones de Acción -->
+            <!-- SECCIÓN 2: RESULTADO DE LA EVALUACIÓN -->
+            <section class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="section-title">
+                        <h2>Resultado de la Evaluación</h2>
+                        <p>Decisión sobre la venta evaluada</p>
+                    </div>
+                </div>
+
+                <div class="result-options">
+                    <label class="result-option approved">
+                        <input type="radio" name="result" value="approved" required>
+                        <div class="result-content">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Venta Aprobada</span>
+                            <small>La venta cumple con todos los requisitos</small>
+                        </div>
+                    </label>
+
+                    <label class="result-option rejected">
+                        <input type="radio" name="result" value="rejected">
+                        <div class="result-content">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Venta Rechazada</span>
+                            <small>La venta no cumple con los requisitos</small>
+                        </div>
+                    </label>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 3: CHECKLIST DE CUMPLIMIENTO -->
+            <section class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="section-title">
+                        <h2>Checklist de Cumplimiento</h2>
+                        <p>Evaluación de cada punto del proceso de venta</p>
+                    </div>
+                </div>
+
+                <div class="checklist-grid">
+                    <div class="checklist-item">
+                        <label>
+                            <i class="fas fa-handshake"></i>
+                            1. Presentación adecuada
+                        </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="item1" value="Sí"> Sí</label>
+                            <label><input type="radio" name="item1" value="No"> No</label>
+                            <label><input type="radio" name="item1" value="Parcial"> Parcial</label>
+                        </div>
+                    </div>
+
+                    <div class="checklist-item">
+                        <label>
+                            <i class="fas fa-id-badge"></i>
+                            2. Recolección adecuada de la información
+                        </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="item2" value="Sí"> Sí</label>
+                            <label><input type="radio" name="item2" value="No"> No</label>
+                            <label><input type="radio" name="item2" value="Parcial"> Parcial</label>
+                        </div>
+                    </div>
+
+                    <div class="checklist-item">
+                        <label>
+                            <i class="fas fa-box"></i>
+                            3. Explicación del producto
+                        </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="item3" value="Sí"> Sí</label>
+                            <label><input type="radio" name="item3" value="No"> No</label>
+                            <label><input type="radio" name="item3" value="Parcial"> Parcial</label>
+                        </div>
+                    </div>
+
+                    <div class="checklist-item">
+                        <label>
+                            <i class="fas fa-file-contract"></i>
+                            4. Condiciones claramente explicadas
+                        </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="item4" value="Sí"> Sí</label>
+                            <label><input type="radio" name="item4" value="No"> No</label>
+                            <label><input type="radio" name="item4" value="Parcial"> Parcial</label>
+                        </div>
+                    </div>
+
+                    <div class="checklist-item">
+                        <label>
+                            <i class="fas fa-signature"></i>
+                            5. Consentimiento verbal o escrito obtenido
+                        </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="item5" value="Sí"> Sí</label>
+                            <label><input type="radio" name="item5" value="No"> No</label>
+                            <label><input type="radio" name="item5" value="Parcial"> Parcial</label>
+                        </div>
+                    </div>
+
+                    <div class="checklist-item">
+                        <label>
+                            <i class="fas fa-check-double"></i>
+                            6. Cierre de venta correcto
+                        </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="item6" value="Sí"> Sí</label>
+                            <label><input type="radio" name="item6" value="No"> No</label>
+                            <label><input type="radio" name="item6" value="Parcial"> Parcial</label>
+                        </div>
+                    </div>
+
+                    <div class="checklist-item">
+                        <label>
+                            <i class="fas fa-comments"></i>
+                            7. Lenguaje apropiado
+                        </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="item7" value="Sí"> Sí</label>
+                            <label><input type="radio" name="item7" value="No"> No</label>
+                            <label><input type="radio" name="item7" value="Parcial"> Parcial</label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 4: ERRORES CRÍTICOS -->
+            <section class="form-section" id="seccionErrores">
+                <div class="section-header">
+                    <div class="section-icon error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="section-title">
+                        <h2>Errores Críticos</h2>
+                        <p>Marcar si se identificaron errores graves (requerido si la venta es rechazada)</p>
+                    </div>
+                </div>
+
+                <div class="error-list">
+                    <label class="error-item">
+                        <input type="checkbox" name="criticalError" value="No mencionó el período de prueba">
+                        <span>No mencionó la información del agente</span>
+                    </label>
+
+                    <label class="error-item">
+                        <input type="checkbox" name="criticalError" value="Omitió el precio total">
+                        <span>Omitió información de costos del plan</span>
+                    </label>
+
+                    <label class="error-item">
+                        <input type="checkbox" name="criticalError" value="Información engañosa sobre el producto">
+                        <span>Información engañosa sobre el producto</span>
+                    </label>
+
+                    <label class="error-item">
+                        <input type="checkbox" name="criticalError" value="No obtuvo consentimiento verbal claro">
+                        <span>No obtuvo consentimiento verbal o escrito claro</span>
+                    </label>
+
+                    <label class="error-item">
+                        <input type="checkbox" name="criticalError" value="Lenguaje inapropiado o agresivo">
+                        <span>Lenguaje inapropiado o agresivo</span>
+                    </label>
+                </div>
+
+                <div class="form-grid" style="margin-top: 20px;">
+                    <div class="form-group">
+                        <label for="minutoError">
+                            <i class="far fa-clock"></i>
+                            Minuto del Error
+                        </label>
+                        <input type="text" id="minutoError" name="errorMinute" placeholder="Ej: 03:45">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="descripcionError">
+                            <i class="fas fa-align-left"></i>
+                            Descripción Detallada del Error
+                        </label>
+                        <textarea id="descripcionError" name="errorDescription" rows="3" placeholder="Describe el error crítico identificado..."></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 5: FEEDBACK ESTRUCTURADO -->
+            <section class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="section-title">
+                        <h2>Feedback Estructurado</h2>
+                        <p>Retroalimentación constructiva para el asesor</p>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="hechoObservado">
+                        <i class="fas fa-eye"></i>
+                        Hecho Observado
+                        <span class="required">*</span>
+                    </label>
+                    <textarea id="hechoObservado" name="observedFact" rows="4" placeholder="Describe objetivamente lo que observaste en la llamada/interacción..." required></textarea>
+                    <small>Sé específico y objetivo. Ejemplo: "En el minuto 2:30, el asesor no mencionó el costo mensual del servicio."</small>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="impacto">
+                        <i class="fas fa-bolt"></i>
+                        Impacto
+                        <span class="required">*</span>
+                    </label>
+                    <textarea id="impacto" name="impact" rows="4" placeholder="¿Qué impacto tuvo esto en la venta o experiencia del cliente?" required></textarea>
+                    <small>Explica las consecuencias. Ejemplo: "Esto puede generar confusión y afectar la confianza del cliente."</small>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="accionEsperada">
+                        <i class="fas fa-tasks"></i>
+                        Acción Esperada
+                        <span class="required">*</span>
+                    </label>
+                    <textarea id="accionEsperada" name="expectedAction" rows="4" placeholder="¿Qué acción o comportamiento se espera del asesor?" required></textarea>
+                    <small>Sé claro y accionable. Ejemplo: "Mencionar siempre el precio completo antes de solicitar confirmación."</small>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="buenasPracticas">
+                        <i class="fas fa-star"></i>
+                        Buenas Prácticas Identificadas
+                    </label>
+                    <textarea id="buenasPracticas" name="goodPractices" rows="3" placeholder="Reconoce aspectos positivos de la interacción..."></textarea>
+                    <small>Opcional pero recomendado. Refuerza comportamientos positivos.</small>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 6: SEGUIMIENTO -->
+            <section class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="section-title">
+                        <h2>Seguimiento</h2>
+                        <p>Acciones y seguimiento requerido</p>
+                    </div>
+                </div>
+
+                <div class="followup-list">
+                    <label class="followup-item">
+                        <input type="checkbox" name="followUp" value="Capacitación">
+                        <div class="followup-content">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>Requiere capacitación adicional</span>
+                        </div>
+                    </label>
+
+                    <label class="followup-item">
+                        <input type="checkbox" name="followUp" value="Revisión en 1 semana">
+                        <div class="followup-content">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Revisión en 1 semana</span>
+                        </div>
+                    </label>
+
+                    <label class="followup-item">
+                        <input type="checkbox" name="followUp" value="Coaching individual">
+                        <div class="followup-content">
+                            <i class="fas fa-user-friends"></i>
+                            <span>Coaching individual</span>
+                        </div>
+                    </label>
+
+                    <label class="followup-item">
+                        <input type="checkbox" name="followUp" value="Reconocimiento público">
+                        <div class="followup-content">
+                            <i class="fas fa-trophy"></i>
+                            <span>Reconocimiento público</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-group full-width" style="margin-top: 20px;">
+                    <label for="conclusion">
+                        <i class="fas fa-flag-checkered"></i>
+                        Conclusión General
+                    </label>
+                    <textarea id="conclusion" name="conclusion" rows="4" placeholder="Resumen final de la evaluación y próximos pasos..."></textarea>
+                </div>
+            </section>
+
+            <!-- BOTONES DE ACCIÓN -->
             <div class="form-actions">
-                <button type="button" class="btn-secondary" id="btnClear">
-                    <i class="fas fa-eraser"></i>
-                    Limpiar Formulario
-                </button>
-                <button type="button" class="btn-secondary" id="btnSaveDraft">
+                <button type="button" class="btn-secondary" onclick="guardarBorrador()">
                     <i class="fas fa-save"></i>
                     Guardar Borrador
-                </button>
-                <button type="button" class="btn-accent" id="btnGenerateReport">
-                    <i class="fas fa-file-pdf"></i>
-                    Generar Reporte
                 </button>
                 <button type="submit" class="btn-primary">
                     <i class="fas fa-paper-plane"></i>
                     Enviar Evaluación
                 </button>
             </div>
-
         </form>
-
-        <!-- Indicador de Autosave -->
-        <div class="autosave-indicator" id="autosaveIndicator">
-            <i class="fas fa-check-circle"></i>
-            <span>Guardado automáticamente</span>
-        </div>
     </div>
 
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase_config.js"></script>
+    <script src="../js/main.js"></script>
     <script src="../js/control_calidad.js"></script>
 </body>
 </html>
