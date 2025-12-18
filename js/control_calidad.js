@@ -20,6 +20,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
+    // Verificar que sea admin o supervisor
+    if (usuarioActual.rol !== 'admin' && usuarioActual.rol !== 'supervisor') {
+        alert('⚠️ No tienes permisos para acceder a esta página');
+        window.location.href = './home.html';
+        return;
+    }
+    
     // Inicializar fecha actual
     const fechaInput = document.getElementById('fechaEvaluacion');
     if (fechaInput) {

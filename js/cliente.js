@@ -150,6 +150,10 @@ function rellenarFormulario(clientes, polizas = []) {
     // ============================================
     
     const cliente = clientes;
+    if (cliente.fecha_registro) {
+        document.getElementById('fechaRegistro').value = formatearFecha(new Date(cliente.fecha_registro));
+
+    }
 
     // Tipo de registro
     if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = cliente.tipo_registro;
@@ -165,7 +169,9 @@ function rellenarFormulario(clientes, polizas = []) {
     
     // Dirección
     if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion;
+    if (cliente.casa_apartamento) document.getElementById('casaApartamento').value = cliente.casa_apartamento;
     if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad;
+    if (cliente.condado) document.getElementById('condado').value = cliente.condado;
     if (cliente.estado) document.getElementById('estado').value = cliente.estado;
     if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal;
     
@@ -175,15 +181,18 @@ function rellenarFormulario(clientes, polizas = []) {
     if (cliente.ssn) document.getElementById('ssn').value = cliente.ssn;
     if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio;
     if (cliente.idioma_preferido) document.getElementById('idiomaPreferido').value = cliente.idioma_preferido;
+    if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad;
     
     // Información adicional
     if (cliente.ingresos) document.getElementById('ingresos').value = cliente.ingresos;
-    if (cliente.tamano_familia) document.getElementById('tamanoFamilia').value = cliente.tamano_familia;
+    if (cliente.ocupacion) document.getElementById('ocupacion').value = cliente.ocupacion;
     if (cliente.numero_dependientes) document.getElementById('numeroDependientes').value = cliente.numero_dependientes;
     
     // Operador y agente
     if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre;
     if (cliente.agente_nombre) document.getElementById('agenteNombre').value = cliente.agente_nombre;
+
+    
     
     // ============================================
     // PÓLIZA (si existe al menos una)
@@ -191,11 +200,15 @@ function rellenarFormulario(clientes, polizas = []) {
     if (polizas && polizas.length > 0) {
         const poliza = polizas[0]; // Tomar la primera póliza
         
+
         if (poliza.compania) document.getElementById('compania').value = poliza.compania;
         if (poliza.plan) document.getElementById('plan').value = poliza.plan;
-        if (poliza.numero_poliza) document.getElementById('numeroPoliza').value = poliza.numero_poliza;
         if (poliza.prima) document.getElementById('prima').value = poliza.prima;
         if (poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal;
+        if (poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta;
+        if (poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta;
+        if (poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza;
+        if (poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad;
         
         // Fechas de la póliza
         if (poliza.fecha_efectividad) {
@@ -211,14 +224,11 @@ function rellenarFormulario(clientes, polizas = []) {
             document.getElementById('displayFechaFinal').textContent = formatearFecha(new Date(poliza.fecha_final_cobertura));
         }
         
-        const estado_compania = estado_compania[0];
-        const estado_mercado = estado_mercado[0];
         // Member ID y datos adicionales
         if (estado_compania.poliza_id) document.getElementById('memberId').value = estado_compania.poliza_id;
         if (estado_mercado.npn) document.getElementById('portalNpn').value = estado_mercado.npn;
-        if (poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad;
-        if (poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta;
-        if (poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza;
+
+
         
         // Estados (tab Estado y Seguimiento)
         // if (estado_compania.estado) document.getElementById('estadoCompania')?.value = estado_compania.estado;
@@ -1166,14 +1176,10 @@ async function crearCliente(formData) {
         estado: formData.estado,
         codigo_postal: formData.codigoPostal,
         fecha_nacimiento: formData.fechaNacimiento,
-        genero: formData.genero,
+        sexo: formData.sexo,
         ssn: formData.ssn || null,
-        idioma_preferido: formData.idiomaPreferido || 'espanol',
         ingresos: parseFloat(formData.ingresos) || 0,
-        tamano_familia: parseInt(formData.tamanoFamilia) || 1,
-        numero_dependientes: parseInt(formData.numeroDependientes) || 0,
         operador_nombre: formData.operadorNombre || null,
-        agente_nombre: formData.agenteNombre || null
     };
     
     // Insertar cliente en Supabase
@@ -1248,7 +1254,6 @@ async function actualizarCliente(clienteId, formData) {
         ssn: formData.ssn || null,
         idioma_preferido: formData.idiomaPreferido || 'espanol',
         ingresos: parseFloat(formData.ingresos) || 0,
-        tamano_familia: parseInt(formData.tamanoFamilia) || 1,
         numero_dependientes: parseInt(formData.numeroDependientes) || 0,
         operador_nombre: formData.operadorNombre || null,
         agente_nombre: formData.agenteNombre || null,
