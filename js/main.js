@@ -1,5 +1,10 @@
 // ============================================
-// FUNCIONALIDAD DE LOGIN
+// SISTEMA DE AUTENTICACIÓN COMPLETO CON SUPABASE
+// Reemplaza las líneas 1-70 en main.js
+// ============================================
+
+// ============================================
+// LOGIN CON SUPABASE
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -7,13 +12,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
+    
+    // Verificar autenticación en páginas protegidas
+    verificarAutenticacion();
 });
 
-function handleLogin(event) {
+async function handleLogin(event) {
     event.preventDefault();
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const btnLogin = event.target.querySelector('button[type="submit"]');
     
     if (!email || !password) {
         alert('Por favor, completa todos los campos');
@@ -25,18 +34,82 @@ function handleLogin(event) {
         return;
     }
     
-    const usuario = {
-        nombre: 'Jostyn',
-        email: "prueba@asesoriasth.com",
-        password: 123456,
-        loginTime: new Date().toISOString()
-    };
+    // Deshabilitar botón mientras procesa
+    btnLogin.disabled = true;
+    btnLogin.textContent = 'Iniciando sesión...';
     
-    localStorage.setItem('usuario', JSON.stringify(usuario));
-    
-    setTimeout(() => {
-        window.location.href = './home.html';
-    }, 500);
+    try {
+        console.log('🔐 Intentando login con Supabase...');
+        
+        // ==========================================
+        // AUTENTICACIÓN REAL CON SUPABASE
+        // ==========================================
+        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (authError) {
+            console.error('❌ Error de autenticación:', authError);
+            throw new Error('Credenciales incorrectas');
+        }
+        
+        console.log('✅ Autenticación exitosa:', authData);
+        
+        // ==========================================
+        // OBTENER DATOS DEL USUARIO DE LA BD
+        // ==========================================
+        const { data: userData, error: userError } = await supabaseClient
+            .from('usuarios')
+            .select('*')
+            .eq('email', email)
+            .single();
+        
+        if (userError || !userData) {
+            console.error('❌ Usuario no encontrado en BD:', userError);
+            throw new Error('Usuario no encontrado en el sistema');
+        }
+        
+        console.log('✅ Datos del usuario obtenidos:', userData);
+        
+        // ==========================================
+        // GUARDAR SESIÓN EN LOCALSTORAGE
+        // ==========================================
+        const sessionData = {
+            id: userData.id,
+            nombre: userData.nombre,
+            email: userData.email,
+            rol: userData.rol,  // ⭐ IMPORTANTE: Guardamos el ROL
+            activo: userData.activo,
+            loginTime: new Date().toISOString(),
+            // También guardamos el token de Supabase
+            accessToken: authData.session.access_token,
+            refreshToken: authData.session.refresh_token,
+            expiresAt: authData.session.expires_at
+        };
+        
+        localStorage.setItem('usuario', JSON.stringify(sessionData));
+        localStorage.setItem('supabase.auth.token', JSON.stringify(authData.session));
+        
+        console.log('✅ Sesión guardada en localStorage');
+        console.log('👤 Usuario:', sessionData.nombre);
+        console.log('🎭 Rol:', sessionData.rol);
+        
+        // ==========================================
+        // REDIRIGIR AL HOME
+        // ==========================================
+        setTimeout(() => {
+            window.location.href = './home.html';
+        }, 500);
+        
+    } catch (error) {
+        console.error('❌ Error en login:', error);
+        alert(`Error al iniciar sesión: ${error.message}`);
+        
+        // Rehabilitar botón
+        btnLogin.disabled = false;
+        btnLogin.textContent = 'Iniciar Sesión';
+    }
 }
 
 function validarEmail(email) {
@@ -45,28 +118,151 @@ function validarEmail(email) {
 }
 
 // ============================================
-// AUTENTICACIÓN
+// VERIFICAR AUTENTICACIÓN
 // ============================================
 
-function verificarAutenticacion() {
-    const usuario = localStorage.getItem('usuario');
-    const paginasProtegidas = ['polizas.html', 'home.html', 'para-revisar.html'];
+async function verificarAutenticacion() {
+    const paginasProtegidas = [
+        'polizas.html', 
+        'home.html', 
+        'para-revisar.html',
+        'cliente.html',
+        'control_calidad.html',
+        'historial_evaluacion.html'
+    ];
+    
     const paginaActual = window.location.pathname.split('/').pop();
     
-    if (paginasProtegidas.includes(paginaActual) && !usuario) {
+    // Si no es una página protegida, no hacer nada
+    if (!paginasProtegidas.includes(paginaActual)) {
+        return;
+    }
+    
+    try {
+        // Verificar sesión en localStorage
+        const usuarioData = localStorage.getItem('usuario');
+        
+        if (!usuarioData) {
+            console.log('❌ No hay sesión en localStorage');
+            redirigirALogin();
+            return;
+        }
+        
+        const usuario = JSON.parse(usuarioData);
+        
+        // Verificar sesión en Supabase
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        
+        if (error || !session) {
+            console.log('❌ Sesión de Supabase expirada o inválida');
+            redirigirALogin();
+            return;
+        }
+        
+        // Verificar si el token está por expirar (menos de 5 minutos)
+        const ahora = Math.floor(Date.now() / 1000);
+        const expiraEn = session.expires_at - ahora;
+        
+        if (expiraEn < 300) { // 5 minutos
+            console.log('⚠️ Token por expirar, refrescando...');
+            await refrescarToken();
+        }
+        
+        console.log('✅ Sesión válida');
+        console.log('👤 Usuario:', usuario.nombre);
+        console.log('🎭 Rol:', usuario.rol);
+        
+    } catch (error) {
+        console.error('❌ Error al verificar autenticación:', error);
+        redirigirALogin();
+    }
+}
+
+function redirigirALogin() {
+    localStorage.removeItem('usuario');
+    localStorage.removeItem('supabase.auth.token');
+    window.location.href = './login.html';
+}
+
+// ============================================
+// REFRESCAR TOKEN
+// ============================================
+
+async function refrescarToken() {
+    try {
+        const { data, error } = await supabaseClient.auth.refreshSession();
+        
+        if (error) throw error;
+        
+        if (data.session) {
+            // Actualizar localStorage con nuevo token
+            const usuarioActual = JSON.parse(localStorage.getItem('usuario'));
+            usuarioActual.accessToken = data.session.access_token;
+            usuarioActual.refreshToken = data.session.refresh_token;
+            usuarioActual.expiresAt = data.session.expires_at;
+            
+            localStorage.setItem('usuario', JSON.stringify(usuarioActual));
+            localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
+            
+            console.log('✅ Token refrescado exitosamente');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al refrescar token:', error);
+        redirigirALogin();
+    }
+}
+
+// ============================================
+// CERRAR SESIÓN
+// ============================================
+
+async function cerrarSesion() {
+    try {
+        // Cerrar sesión en Supabase
+        await supabaseClient.auth.signOut();
+        
+        // Limpiar localStorage
+        localStorage.removeItem('usuario');
+        localStorage.removeItem('supabase.auth.token');
+        
+        console.log('✅ Sesión cerrada');
+        
+        // Redirigir a login
+        window.location.href = './login.html';
+        
+    } catch (error) {
+        console.error('❌ Error al cerrar sesión:', error);
+        // Limpiar de todas formas
+        localStorage.clear();
         window.location.href = './login.html';
     }
 }
 
-function cerrarSesion() {
-    localStorage.removeItem('usuario');
-    window.location.href = './login.html';
-}
+// ============================================
+// OBTENER USUARIO ACTUAL
+// ============================================
 
 function obtenerUsuario() {
     const usuarioData = localStorage.getItem('usuario');
     return usuarioData ? JSON.parse(usuarioData) : null;
 }
+
+function obtenerRolUsuario() {
+    const usuario = obtenerUsuario();
+    return usuario ? usuario.rol : null;
+}
+
+function esAdmin() {
+    const rol = obtenerRolUsuario();
+    return rol === 'admin' || rol === 'administrador';
+}
+
+function esEvaluador() {
+    const rol = obtenerRolUsuario();
+    return rol === 'evaluador' || rol === 'admin' || rol === 'administrador';
+}
+
 
 function mostrarNombreUsuario() {
     const usuario = obtenerUsuario();

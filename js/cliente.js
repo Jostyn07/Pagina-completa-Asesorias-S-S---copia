@@ -148,12 +148,15 @@ function rellenarFormulario(clientes, polizas = []) {
     // ============================================
     // INFORMACIÓN GENERAL
     // ============================================
-    
+  
+
     const cliente = clientes;
     if (cliente.fecha_registro) {
         document.getElementById('fechaRegistro').value = formatearFecha(new Date(cliente.fecha_registro));
 
     }
+
+    if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = cliente.tipo_registro;
 
     // Nombres y apellidos
     if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres;
@@ -179,6 +182,8 @@ function rellenarFormulario(clientes, polizas = []) {
     if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio;
     if (cliente.idioma_preferido) document.getElementById('idiomaPreferido').value = cliente.idioma_preferido;
     if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad;
+    if (cliente.hola)
+    
     
     // Información adicional
     if (cliente.ingresos) document.getElementById('ingresos').value = cliente.ingresos;
@@ -222,8 +227,8 @@ function rellenarFormulario(clientes, polizas = []) {
         }
         
         // Member ID y datos adicionales
-        if (estado_compania.poliza_id) document.getElementById('memberId').value = estado_compania.poliza_id;
-        if (estado_mercado.npn) document.getElementById('portalNpn').value = estado_mercado.npn;
+        // if (estado_compania.poliza_id) document.getElementById('memberId').value = estado_compania.poliza_id;
+        // if (estado_mercado.npn) document.getElementById('portalNpn').value = estado_mercado.npn;
 
 
         
@@ -1160,24 +1165,47 @@ async function handleSubmit(event) {
 
 async function crearCliente(formData) {
     console.log('📝 Creando nuevo cliente...');
+    console.log('📋 FormData recibido:', formData);
     
-    // Preparar datos del cliente
     const clienteData = {
+        // Campos básicos obligatorios
+        tipo_registro: formData.tipoRegistro,
+        fecha_registro: new Date().toISOString().split('T')[0],
         nombres: formData.nombres,
         apellidos: formData.apellidos,
         email: formData.email,
         telefono1: formData.telefono1,
         telefono2: formData.telefono2 || null,
+        
+        // Información personal obligatoria
+        sexo: formData.sexo,
+        fecha_nacimiento: formData.fechaNacimiento,
+        estado_migratorio: formData.estadoMigratorio,
+        nacionalidad: formData.nacionalidad || 'No especificada',
+        
+        // Información adicional
+        ssn: formData.ssn || null,
+        ocupacion: formData.ocupacion || null,
+        ingresos: parseFloat(formData.ingresos) || 0,
+        aplica: formData.aplica === 'true' || formData.aplica === true,
+        
+        // Dirección obligatoria
         direccion: formData.direccion,
+        casa_apartamento: formData.casaApartamento || null,
         ciudad: formData.ciudad,
         estado: formData.estado,
+        condado: formData.condado || 'No especificado',
         codigo_postal: formData.codigoPostal,
-        fecha_nacimiento: formData.fechaNacimiento,
-        sexo: formData.sexo,
-        ssn: formData.ssn || null,
-        ingresos: parseFloat(formData.ingresos) || 0,
+        
+        // PO Box (opcional)
+        tiene_po_box: formData.tienePoBox === 'true' || formData.tienePoBox === true || false,
+        po_box: formData.poBox || null,
+        
+        // Operador
         operador_nombre: formData.operadorNombre || null,
     };
+    
+    console.log('📤 Datos a enviar a Supabase:', clienteData);
     
     // Insertar cliente en Supabase
     const { data: cliente, error: clienteError } = await supabaseClient
@@ -1186,16 +1214,23 @@ async function crearCliente(formData) {
         .select()
         .single();
     
-    if (clienteError) throw clienteError;
+    if (clienteError) {
+        console.error('❌ Error al crear cliente:', clienteError);
+        throw clienteError;
+    }
     
     console.log('✅ Cliente creado:', cliente);
+    
+    // Generar número de póliza automáticamente
+    const numeroPolizaGenerado = await generarNumeroPoliza();
+    console.log('🔢 Número de póliza generado:', numeroPolizaGenerado);
     
     // Preparar datos de la póliza
     const polizaData = {
         cliente_id: cliente.id,
         compania: formData.compania,
         plan: formData.plan,
-        numero_poliza: formData.numeroPoliza || null,
+        numero_poliza: formData.numeroPoliza || numeroPolizaGenerado,
         prima: parseFloat(formData.prima) || 0,
         credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
         fecha_efectividad: formData.fechaEfectividad,
@@ -1209,7 +1244,6 @@ async function crearCliente(formData) {
         operador_nombre: formData.operadorNombre || null,
         agente_nombre: formData.agenteNombre || null,
         estado_mercado: 'pendiente',
-        estado_compania: 'pendiente',
         observaciones: formData.observaciones || null
     };
     
@@ -1220,7 +1254,10 @@ async function crearCliente(formData) {
         .select()
         .single();
     
-    if (polizaError) throw polizaError;
+    if (polizaError) {
+        console.error('❌ Error al crear póliza:', polizaError);
+        throw polizaError;
+    }
     
     console.log('✅ Póliza creada:', poliza);
     
@@ -1234,28 +1271,50 @@ async function crearCliente(formData) {
 
 async function actualizarCliente(clienteId, formData) {
     console.log('🔄 Actualizando cliente:', clienteId);
+    console.log('📋 FormData recibido:', formData);
     
-    // Preparar datos del cliente
+    // Preparar datos del cliente - VERSIÓN CORREGIDA
     const clienteData = {
+        tipo_registro: formData.tipoRegistro,
+        // Campos básicos
         nombres: formData.nombres,
         apellidos: formData.apellidos,
         email: formData.email,
         telefono1: formData.telefono1,
         telefono2: formData.telefono2 || null,
+        
+        // Información personal
+        sexo: formData.sexo,
+        fecha_nacimiento: formData.fechaNacimiento,
+        estado_migratorio: formData.estadoMigratorio,
+        nacionalidad: formData.nacionalidad || 'No especificada',
+        
+        // Información adicional
+        ssn: formData.ssn || null,
+        ocupacion: formData.ocupacion || null,
+        ingresos: parseFloat(formData.ingresos) || 0,
+        aplica: formData.aplica === 'true' || formData.aplica === true,
+        
+        // Dirección
         direccion: formData.direccion,
+        casa_apartamento: formData.casaApartamento || null,
         ciudad: formData.ciudad,
         estado: formData.estado,
+        condado: formData.condado || 'No especificado',
         codigo_postal: formData.codigoPostal,
-        fecha_nacimiento: formData.fechaNacimiento,
-        genero: formData.genero,
-        ssn: formData.ssn || null,
-        idioma_preferido: formData.idiomaPreferido || 'espanol',
-        ingresos: parseFloat(formData.ingresos) || 0,
-        numero_dependientes: parseInt(formData.numeroDependientes) || 0,
+        
+        // PO Box
+        tiene_po_box: formData.tienePoBox === 'true' || formData.tienePoBox === true || false,
+        po_box: formData.poBox || null,
+        
+        // Operador
         operador_nombre: formData.operadorNombre || null,
-        agente_nombre: formData.agenteNombre || null,
+        
+        // Timestamp de actualización
         updated_at: new Date().toISOString()
     };
+    
+    console.log('📤 Datos a actualizar en Supabase:', clienteData);
     
     // Actualizar cliente en Supabase
     const { error: clienteError } = await supabaseClient
@@ -1263,22 +1322,27 @@ async function actualizarCliente(clienteId, formData) {
         .update(clienteData)
         .eq('id', clienteId);
     
-    if (clienteError) throw clienteError;
-    
+    if (clienteError) {
+        console.error('❌ Error al actualizar cliente:', clienteError);
+        throw clienteError;
+    }
+
     console.log('✅ Cliente actualizado');
     
     // Buscar póliza asociada
     const { data: polizasExistentes } = await supabaseClient
         .from('polizas')
-        .select('id')
+        .select('id, numero_poliza, telefono1')
         .eq('cliente_id', clienteId)
         .limit(1);
+    
+    // Generar número de póliza si no existe
+    const numeroPolizaGenerado = await generarNumeroPoliza();
     
     // Preparar datos de la póliza
     const polizaData = {
         compania: formData.compania,
         plan: formData.plan,
-        numero_poliza: formData.numeroPoliza || null,
         prima: parseFloat(formData.prima) || 0,
         credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
         fecha_efectividad: formData.fechaEfectividad,
@@ -1291,8 +1355,7 @@ async function actualizarCliente(clienteId, formData) {
         enlace_poliza: formData.enlacePoliza || null,
         operador_nombre: formData.operadorNombre || null,
         agente_nombre: formData.agenteNombre || null,
-        estado_mercado: formData.estadoMercado || 'pendiente',
-        estado_compania: formData.estadoCompania || 'pendiente',
+        estado_mercado: 'pendiente',
         observaciones: formData.observaciones || null,
         updated_at: new Date().toISOString()
     };
@@ -1304,16 +1367,24 @@ async function actualizarCliente(clienteId, formData) {
             .update(polizaData)
             .eq('id', polizasExistentes[0].id);
         
-        if (polizaError) throw polizaError;
+        if (polizaError) {
+            console.error('❌ Error al actualizar póliza:', polizaError);
+            throw polizaError;
+        }
+        
         console.log('✅ Póliza actualizada');
     } else {
-        // Crear nueva póliza si no existe
+        // Crear nueva póliza
         polizaData.cliente_id = clienteId;
         const { error: polizaError } = await supabaseClient
             .from('polizas')
             .insert([polizaData]);
         
-        if (polizaError) throw polizaError;
+        if (polizaError) {
+            console.error('❌ Error al crear póliza:', polizaError);
+            throw polizaError;
+        }
+        
         console.log('✅ Póliza creada');
     }
     
@@ -1321,9 +1392,10 @@ async function actualizarCliente(clienteId, formData) {
     localStorage.removeItem('borrador_cliente');
     
     // Mostrar éxito y redirigir
-    alert('✅ Cliente actualizado correctamente');
+    alert('✅ Cliente y póliza actualizados correctamente');
     window.location.href = './polizas.html';
 }
+
 
 function validarFormularioCompleto() {
     const camposRequeridos = document.querySelectorAll('[required]');

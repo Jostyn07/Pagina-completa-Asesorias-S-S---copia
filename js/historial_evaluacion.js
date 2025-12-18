@@ -299,7 +299,7 @@ function crearEvaluacionHTML(evaluacion) {
     const total = checklistItems.length;
     
     return `
-        <div class="evaluacion-card ${claseResultado}" onclick="verDetalleEvaluacion(${evaluacion.id})">
+        <div class="evaluacion-card ${claseResultado}" onclick="verDetalleEvaluacion('${evaluacion.id}')">
             <div class="evaluacion-header">
                 <div class="evaluacion-info">
                     <h3>${evaluacion.asesor_nombre}</h3>

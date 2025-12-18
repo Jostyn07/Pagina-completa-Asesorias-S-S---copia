@@ -62,6 +62,7 @@ async function guardarClienteEnSupabase(formData) {
         const { data: cliente, error: errorCliente } = await supabaseClient
             .from('clientes')
             .insert({
+                tipo_registro: formData.tipoRegistro,
                 fecha_registro: formatDateForSQL(formData.fechaRegistro),
                 nombres: formData.nombres,
                 apellidos: formData.apellidos,
