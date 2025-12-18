@@ -155,9 +155,6 @@ function rellenarFormulario(clientes, polizas = []) {
 
     }
 
-    // Tipo de registro
-    if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = cliente.tipo_registro;
-
     // Nombres y apellidos
     if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres;
     if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos;
