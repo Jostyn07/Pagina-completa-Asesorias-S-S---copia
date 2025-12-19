@@ -159,7 +159,7 @@ function crearFilaPoliza(poliza) {
             <td data-label="Operador">${poliza.operador_nombre || 'N/A'}</td>
             <td class="td1" data-label="Cliente">
                 <div class="td1__flex">
-                    <a href="./cliente.html?id=${cliente.id || ''}" onclick="event.stopPropagation();" style="color: #6366f1; text-decoration: none; font-weight: 500;">
+                    <a href="./cliente_editar.html?id=${cliente.id || ''}" onclick="event.stopPropagation();" style="color: #6366f1; text-decoration: none; font-weight: 500;">
                         ${nombreCompleto || 'Sin nombre'}
                     </a>
                 </div>
@@ -333,7 +333,7 @@ async function abrirDetalles(polizaId) {
             
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="cerrarModal()">Cerrar</button>
-                <button class="btn-primary" onclick="window.location.href='./cliente.html?id=${cliente.id}'">
+                <button class="btn-primary" onclick="window.location.href='./cliente_editar.html?id=${cliente.id}'">
                     <span class="material-symbols-rounded">edit</span>
                     Editar Cliente
                 </button>
@@ -972,7 +972,7 @@ console.log('  ✓ Exportar a Excel');
 // NAVEGACIÓN
 // ============================================
 function crearNuevaPoliza() {
-    window.location.href = './cliente.html';
+    window.location.href = './cliente_crear.html';
 }
 
 function abrirModalFiltros() {
