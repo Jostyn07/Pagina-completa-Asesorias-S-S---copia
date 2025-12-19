@@ -84,6 +84,9 @@ async function cargarDatosCliente(clienteId) {
         if (polizas && polizas.length > 0) {
        await cargarHistorialPoliza(polizas[0].id);
         }
+
+        await cargarNotas(clienteId);
+        
         mostrarIndicadorCarga(false);
         
         await cargarDependientes(clienteId);
@@ -1335,3 +1338,277 @@ async function exportarHistorialCSV(polizaId) {
     }
 }
 
+let imagenesNotaSeleccionadas = [];
+
+// =====================================================
+// CARGAR NOTAS
+// =====================================================
+
+async function cargarNotas(clienteId) {
+    console.log('💬 Cargando notas...');
+    
+    try {
+        const { data: notas, error } = await supabaseClient
+            .from('notas')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error('Error:', error);
+            return;
+        }
+        
+        mostrarNotas(notas);
+        
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// =====================================================
+// MOSTRAR NOTAS
+// =====================================================
+
+function mostrarNotas(notas) {
+    const thread = document.getElementById('notasThread');
+    const contador = document.getElementById('notasCounter');
+    
+    if (!thread) return;
+    
+    // Actualizar contador
+    if (contador) {
+        contador.textContent = `(${notas.length})`;
+    }
+    
+    // Limpiar
+    thread.innerHTML = '';
+    
+    // Si no hay notas
+    if (!notas || notas.length === 0) {
+        thread.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-rounded">chat_bubble</span>
+                <p>No hay notas aún</p>
+                <small>Escribe la primera nota para este cliente</small>
+            </div>
+        `;
+        return;
+    }
+    
+    // Crear cards de notas
+    notas.forEach(nota => {
+        const card = crearCardNota(nota);
+        thread.appendChild(card);
+    });
+}
+
+// =====================================================
+// CREAR CARD DE NOTA
+// =====================================================
+
+function crearCardNota(nota) {
+    const card = document.createElement('div');
+    card.className = 'nota-card';
+    
+    const fecha = new Date(nota.created_at);
+    const fechaTexto = formatearFecha(fecha);
+    const hora = formatearHora(fecha);
+    
+    card.innerHTML = `
+        <div class="nota-header">
+            <div class="nota-info">
+                <span class="nota-usuario">${nota.usuario_nombre || nota.usuario_email}</span>
+                <span class="nota-fecha">${fechaTexto} • ${hora}</span>
+            </div>
+            ${esNotaPropia(nota) ? `
+                <button type="button" class="btn-eliminar-nota" onclick="eliminarNota('${nota.id}')" title="Eliminar">
+                    <span class="material-symbols-rounded">delete</span>
+                </button>
+            ` : ''}
+        </div>
+        
+        <div class="nota-mensaje">
+            ${nota.mensaje}
+        </div>
+        
+        ${nota.imagenes && nota.imagenes.length > 0 ? `
+            <div class="nota-imagenes">
+                ${nota.imagenes.map(url => `
+                    <img src="${url}" alt="Imagen" onclick="verImagenCompleta('${url}')">
+                `).join('')}
+            </div>
+        ` : ''}
+    `;
+    
+    return card;
+}
+
+// =====================================================
+// ENVIAR NOTA
+// =====================================================
+
+async function enviarNota() {
+    const textarea = document.getElementById('nuevaNota');
+    const mensaje = textarea.value.trim();
+    
+    if (!mensaje) {
+        alert('Escribe un mensaje');
+        return;
+    }
+    
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        
+        const notaData = {
+            cliente_id: clienteIdActual,
+            mensaje: mensaje,
+            usuario_email: user.email,
+            usuario_nombre: user.user_metadata?.nombre || user.email,
+            imagenes: imagenesNotaSeleccionadas.length > 0 ? imagenesNotaSeleccionadas : null
+        };
+        
+        const { error } = await supabaseClient
+            .from('notas')
+            .insert([notaData]);
+        
+        if (error) {
+            alert('Error al guardar: ' + error.message);
+            return;
+        }
+        
+        // Limpiar
+        textarea.value = '';
+        imagenesNotaSeleccionadas = [];
+        document.getElementById('imagenesPreview').innerHTML = '';
+        document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
+        
+        // Recargar
+        await cargarNotas(clienteIdActual);
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// =====================================================
+// CANCELAR NOTA
+// =====================================================
+
+function cancelarNota() {
+    document.getElementById('nuevaNota').value = '';
+    imagenesNotaSeleccionadas = [];
+    document.getElementById('imagenesPreview').innerHTML = '';
+    document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
+}
+
+// =====================================================
+// ELIMINAR NOTA
+// =====================================================
+
+async function eliminarNota(notaId) {
+    if (!confirm('¿Eliminar esta nota?')) return;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('notas')
+            .delete()
+            .eq('id', notaId);
+        
+        if (error) {
+            alert('Error al eliminar');
+            return;
+        }
+        
+        await cargarNotas(clienteIdActual);
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// =====================================================
+// IMÁGENES
+// =====================================================
+
+function previsualizarImagenesNota() {
+    const fileInput = document.getElementById('notaImagen');
+    const preview = document.getElementById('imagenesPreview');
+    const label = document.getElementById('archivosSeleccionados');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        preview.innerHTML = '';
+        label.textContent = 'Ningún archivo seleccionado';
+        return;
+    }
+    
+    const archivos = Array.from(fileInput.files);
+    label.textContent = `${archivos.length} imagen(es)`;
+    
+    preview.innerHTML = '';
+    imagenesNotaSeleccionadas = [];
+    
+    archivos.forEach(archivo => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagenesNotaSeleccionadas.push(e.target.result);
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'preview-imagen';
+            preview.appendChild(img);
+        };
+        reader.readAsDataURL(archivo);
+    });
+}
+
+function verImagenCompleta(url) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-imagen';
+    modal.onclick = () => modal.remove();
+    modal.innerHTML = `
+        <div class="modal-imagen-contenido">
+            <img src="${url}" alt="Imagen">
+            <button class="btn-cerrar" onclick="this.parentElement.parentElement.remove()">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// =====================================================
+// AUXILIARES
+// =====================================================
+
+function esNotaPropia(nota) {
+    // Simplificado - verifica en el futuro con auth
+    return true; // Por ahora permite eliminar todas
+}
+
+function formatearFecha(fecha) {
+    const hoy = new Date();
+    const ayer = new Date(hoy);
+    ayer.setDate(ayer.getDate() - 1);
+    
+    if (esMismoDia(fecha, hoy)) return 'Hoy';
+    if (esMismoDia(fecha, ayer)) return 'Ayer';
+    
+    return fecha.toLocaleDateString('es-ES', { 
+        day: 'numeric', 
+        month: 'short',
+        year: fecha.getFullYear() !== hoy.getFullYear() ? 'numeric' : undefined
+    });
+}
+
+function formatearHora(fecha) {
+    return fecha.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit'
+    });
+}
+
+function esMismoDia(fecha1, fecha2) {
+    return fecha1.getDate() === fecha2.getDate() &&
+           fecha1.getMonth() === fecha2.getMonth() &&
+           fecha1.getFullYear() === fecha2.getFullYear();
+}

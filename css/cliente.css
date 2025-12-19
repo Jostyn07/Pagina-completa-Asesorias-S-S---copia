@@ -2024,3 +2024,333 @@ body {
 .historial-compacto .historial-usuario {
     display: none;
 }
+
+/* =====================================================
+   CSS SIMPLE PARA NOTAS
+   Agregar al final de cliente.css
+   ===================================================== */
+
+/* ============================================
+   THREAD DE NOTAS
+   ============================================ */
+.notas-thread {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 20px;
+    background: var(--color-bg-primary);
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+/* ============================================
+   CARD DE NOTA
+   ============================================ */
+.nota-card {
+    background: var(--color-bg-white);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.nota-card:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.nota-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.nota-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nota-usuario {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-size: 0.95rem;
+}
+
+.nota-fecha {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+
+.btn-eliminar-nota {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: all 0.2s;
+}
+
+.btn-eliminar-nota:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.btn-eliminar-nota .material-symbols-rounded {
+    font-size: 18px;
+}
+
+/* ============================================
+   MENSAJE
+   ============================================ */
+.nota-mensaje {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-text-primary);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* ============================================
+   IMÁGENES EN NOTA
+   ============================================ */
+.nota-imagenes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.nota-imagenes img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid var(--color-border);
+    transition: all 0.2s;
+}
+
+.nota-imagenes img:hover {
+    transform: scale(1.05);
+    border-color: var(--color-hover-primary);
+}
+
+/* ============================================
+   FORMULARIO NUEVA NOTA
+   ============================================ */
+.nueva-nota {
+    background: var(--color-bg-white);
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.nueva-nota h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.nueva-nota textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+}
+
+.nueva-nota textarea:focus {
+    outline: none;
+    border-color: var(--color-hover-primary);
+}
+
+/* ============================================
+   ATTACHMENTS
+   ============================================ */
+.nota-attachments {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.btn-attach {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--color-bg-white);
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.btn-attach:hover {
+    border-color: var(--color-hover-primary);
+    color: var(--color-hover-primary);
+}
+
+.btn-attach .material-symbols-rounded {
+    font-size: 18px;
+}
+
+#archivosSeleccionados {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+/* ============================================
+   PREVIEW DE IMÁGENES
+   ============================================ */
+.imagenes-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.preview-imagen {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--color-border);
+}
+
+/* ============================================
+   ACCIONES
+   ============================================ */
+.nota-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* ============================================
+   MODAL IMAGEN
+   ============================================ */
+.modal-imagen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    cursor: pointer;
+}
+
+.modal-imagen-contenido {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.modal-imagen-contenido img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 8px;
+}
+
+.modal-imagen .btn-cerrar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-imagen .btn-cerrar:hover {
+    background: #f3f4f6;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.notas-thread .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.notas-thread .empty-state .material-symbols-rounded {
+    font-size: 48px;
+    color: var(--color-text-secondary);
+    margin-bottom: 12px;
+}
+
+.notas-thread .empty-state p {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+}
+
+.notas-thread .empty-state small {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .notas-thread {
+        max-height: 400px;
+        padding: 15px;
+    }
+    
+    .nota-card {
+        padding: 14px;
+    }
+    
+    .nueva-nota {
+        padding: 16px;
+    }
+    
+    .nota-imagenes,
+    .imagenes-preview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .notas-thread {
+        padding: 12px;
+    }
+    
+    .nota-card {
+        padding: 12px;
+    }
+    
+    .nueva-nota textarea {
+        min-height: 80px;
+    }
+    
+    .nota-imagenes,
+    .imagenes-preview {
+        grid-template-columns: 1fr;
+    }
+}
