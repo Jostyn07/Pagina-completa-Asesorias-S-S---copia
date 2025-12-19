@@ -148,10 +148,6 @@ function rellenarFormulario(cliente, polizas = []) {
             document.getElementById('operadorNombre').value = poliza.operador_nombre;
             console.log('👤 Operador cargado:', poliza.operador_nombre);
         }
-        if (poliza.agente_nombre) {
-            document.getElementById('portaNPN').value = poliza.agente_nombre;
-        }
-        
         if (poliza.observaciones) document.getElementById('observaciones').value = poliza.observaciones;
     }
     
