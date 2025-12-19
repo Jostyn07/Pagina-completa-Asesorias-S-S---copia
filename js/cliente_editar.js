@@ -132,7 +132,6 @@ function rellenarFormulario(cliente, polizas = []) {
         
         if (poliza.compania) document.getElementById('compania').value = poliza.compania;
         if (poliza.plan) document.getElementById('plan').value = poliza.plan;
-        if (poliza.numero_poliza) document.getElementById('numeroPoliza').value = poliza.numero_poliza;
         if (poliza.prima) document.getElementById('prima').value = poliza.prima;
         if (poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal;
         if (poliza.fecha_efectividad) document.getElementById('fechaEfectividad').value = poliza.fecha_efectividad;
@@ -150,8 +149,7 @@ function rellenarFormulario(cliente, polizas = []) {
             console.log('👤 Operador cargado:', poliza.operador_nombre);
         }
         if (poliza.agente_nombre) {
-            document.getElementById('agenteNombre').value = poliza.agente_nombre;
-            console.log('👤 Agente cargado:', poliza.agente_nombre);
+            document.getElementById('portaNPN').value = poliza.agente_nombre;
         }
         
         if (poliza.observaciones) document.getElementById('observaciones').value = poliza.observaciones;
