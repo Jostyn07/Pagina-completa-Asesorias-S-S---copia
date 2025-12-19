@@ -1,7 +1,6 @@
 // ============================================
 // CLIENTE_EDITAR.JS - SOLO EDICIÓN DE CLIENTES
 // ============================================
-
 let clienteIdActual = null;
 
 // ============================================
@@ -79,8 +78,17 @@ async function cargarDatosCliente(clienteId) {
         
         // Rellenar formulario
         rellenarFormulario(clientes, polizas || []);
-        
+        await cargarDependientes(clienteId);
+        await cargarEstadoSeguimiento(clienteId);
+
+        if (polizas && polizas.length > 0) {
+       await cargarHistorialPoliza(polizas[0].id);
+        }
         mostrarIndicadorCarga(false);
+        
+        await cargarDependientes(clienteId);
+        
+        mostrarIndicadorCarga(false)
         
     } catch (error) {
         console.error('❌ Error al cargar datos:', error);
@@ -104,7 +112,7 @@ function rellenarFormulario(cliente, polizas = []) {
     if (cliente.telefono1) document.getElementById('telefono1').value = cliente.telefono1;
     if (cliente.telefono2) document.getElementById('telefono2').value = cliente.telefono2;
     if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = cliente.fecha_nacimiento;
-    if (cliente.sexo) document.getElementById('sexo').value = cliente.sexo;
+    if (cliente.genero) document.getElementById('genero').value = cliente.genero;
     if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio;
     if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad;
     if (cliente.ssn) document.getElementById('ssn').value = cliente.ssn;
@@ -198,7 +206,7 @@ async function actualizarCliente(clienteId, formData) {
         email: formData.email,
         telefono1: formData.telefono1,
         telefono2: formData.telefono2 || null,
-        sexo: formData.sexo,
+        genero: formData.genero,
         fecha_nacimiento: formData.fechaNacimiento,
         estado_migratorio: formData.estadoMigratorio,
         nacionalidad: formData.nacionalidad || 'No especificada',
@@ -248,10 +256,9 @@ async function actualizarCliente(clienteId, formData) {
         
         // Preparar datos SIN numero_poliza (mantener el que ya tiene)
         const polizaData = {
-            // ⭐ NO incluir numero_poliza aquí - mantiene el actual
             compania: formData.compania,
             plan: formData.plan,
-            prima: parseFloat(formData.prima) || 0,
+            prima: parseFloat(formData.prima)  || 0,
             credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
             fecha_efectividad: formData.fechaEfectividad,
             fecha_inicial_cobertura: formData.fechaInicialCobertura,
@@ -378,7 +385,7 @@ function obtenerDatosFormulario() {
         telefono1: formData.get('telefono1'),
         telefono2: formData.get('telefono2') || null,
         fechaNacimiento: formData.get('fechaNacimiento'),
-        sexo: formData.get('sexo'),
+        genero: formData.get('genero'),
         estadoMigratorio: formData.get('estadoMigratorio'),
         nacionalidad: formData.get('nacionalidad'),
         ssn: formData.get('ssn') || null,
@@ -422,7 +429,7 @@ function obtenerDatosFormulario() {
 function validarFormularioCompleto() {
     const camposRequeridos = [
         'nombres', 'apellidos', 'email', 'telefono1',
-        'fechaNacimiento', 'sexo', 'estadoMigratorio',
+        'fechaNacimiento', 'genero', 'estadoMigratorio',
         'direccion', 'ciudad', 'estado', 'codigoPostal',
         'compania', 'plan', 'fechaEfectividad'
     ];
@@ -507,24 +514,43 @@ function validarCodigoPostal(input) {
 // ============================================
 
 function inicializarTabs() {
-    const tabs = document.querySelectorAll('.tab');
+    // ✅ CORRECCIÓN: Usar '.tab-btn' en lugar de '.tab'
+    const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => cambiarTab(tab.dataset.tab));
     });
+    
+    console.log('✅ Tabs inicializados:', tabs.length);
 }
 
 function cambiarTab(tabName) {
+    console.log('📑 Cambiando a tab:', tabName);
+    
+    // Ocultar todos los contenidos
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
     });
     
-    document.querySelectorAll('.tab').forEach(tab => {
+    // Desactivar todos los botones
+    document.querySelectorAll('.tab-btn').forEach(tab => {
         tab.classList.remove('active');
     });
     
-    document.getElementById(`${tabName}-tab`)?.classList.add('active');
-    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+    // Activar el contenido seleccionado
+    const contenido = document.getElementById(`tab-${tabName}`);
+    if (contenido) {
+        contenido.classList.add('active');
+    } else {
+        console.error('❌ No se encontró tab:', `tab-${tabName}`);
+    }
+    
+    // Activar el botón seleccionado
+    const boton = document.querySelector(`[data-tab="${tabName}"]`);
+    if (boton) {
+        boton.classList.add('active');
+    }
 }
+
 
 // ============================================
 // INDICADOR DE CARGA
@@ -572,3 +598,740 @@ function togglePOBox() {
         poBoxContainer.style.display = checkbox.checked ? 'block' : 'none';
     }
 }
+
+let dependienteEditandoId = null;
+
+async function cargarDependientes(clienteId) {
+    console.log('👨‍👩‍👧‍👦 Cargando dependientes del cliente:', clienteId);
+    
+    try {
+        const { data: dependientes, error } = await supabaseClient
+            .from('dependientes')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .order('created_at', { ascending: true });
+        
+        if (error) {
+            console.error('❌ Error al cargar dependientes:', error);
+            return;
+        }
+        
+        console.log('✅ Dependientes cargados:', dependientes);
+        mostrarDependientes(dependientes);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar dependientes:', error);
+    }
+}
+
+function mostrarDependientes(dependientes) {
+    const container = document.getElementById('dependientesContainer');
+    const contador = document.getElementById('dependientesCounter');
+    
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (contador) {
+        contador.textContent = `(${dependientes.length})`;
+    }
+    
+    if (!dependientes || dependientes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-rounded">family_restroom</span>
+                <p>No hay dependientes agregados</p>
+                <small>Haz clic en "Agregar Dependiente" para comenzar</small>
+            </div>
+        `;
+        return;
+    }
+    
+    dependientes.forEach((dep, index) => {
+        const card = crearCardDependiente(dep, index + 1);
+        container.appendChild(card);
+    });
+}
+
+function crearCardDependiente(dependiente, numero) {
+    const card = document.createElement('div');
+    card.className = 'dependiente-card';
+    card.dataset.dependienteId = dependiente.id;
+    
+    const edad = calcularEdad(dependiente.fecha_nacimiento);
+    
+    card.innerHTML = `
+        <div class="dependiente-header">
+            <div class="dependiente-info">
+                <span class="dependiente-numero">Dependiente #${numero}</span>
+                <h3 class="dependiente-nombre">${dependiente.nombres} ${dependiente.apellidos}</h3>
+                <div class="dependiente-meta">
+                    <span class="meta-item">
+                        <span class="material-symbols-rounded">cake</span>
+                        ${edad} años
+                    </span>
+                    <span class="meta-item">
+                        <span class="material-symbols-rounded">${dependiente.genero === 'masculino' ? 'male' : 'female'}</span>
+                        ${dependiente.genero}
+                    </span>
+                    ${dependiente.relacion ? `
+                    <span class="meta-item">
+                        <span class="material-symbols-rounded">family_restroom</span>
+                        ${dependiente.relacion}
+                    </span>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="dependiente-actions">
+                <button type="button" class="btn-icon-action" onclick="editarDependiente('${dependiente.id}')" title="Editar">
+                    <span class="material-symbols-rounded">edit</span>
+                </button>
+                <button type="button" class="btn-icon-action btn-delete" onclick="eliminarDependiente('${dependiente.id}')" title="Eliminar">
+                    <span class="material-symbols-rounded">delete</span>
+                </button>
+            </div>
+        </div>
+        <div class="dependiente-body">
+            <div class="dependiente-detail">
+                <span class="detail-label">Fecha de nacimiento</span>
+                <span class="detail-value">${formatearFechaLegible(dependiente.fecha_nacimiento)}</span>
+            </div>
+            ${dependiente.estado_migratorio ? `
+            <div class="dependiente-detail">
+                <span class="detail-label">Estado migratorio</span>
+                <span class="detail-value">${dependiente.estado_migratorio}</span>
+            </div>
+            ` : ''}
+            ${dependiente.ssn ? `
+            <div class="dependiente-detail">
+                <span class="detail-label">SSN</span>
+                <span class="detail-value">${dependiente.ssn}</span>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    return card;
+}
+
+function agregarDependiente() {
+    dependienteEditandoId = null;
+    mostrarModalDependiente();
+}
+
+async function editarDependiente(dependienteId) {
+    try {
+        const { data: dependiente, error } = await supabaseClient
+            .from('dependientes')
+            .select('*')
+            .eq('id', dependienteId)
+            .single();
+        
+        if (error) {
+            alert('Error al cargar dependiente');
+            return;
+        }
+        
+        dependienteEditandoId = dependienteId;
+        mostrarModalDependiente(dependiente);
+        
+    } catch (error) {
+        alert('Error al cargar dependiente');
+    }
+}
+
+async function eliminarDependiente(dependienteId) {
+    if (!confirm('¿Eliminar este dependiente?')) return;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('dependientes')
+            .delete()
+            .eq('id', dependienteId);
+        
+        if (error) {
+            alert('Error al eliminar');
+            return;
+        }
+        
+        await cargarDependientes(clienteIdActual);
+        
+    } catch (error) {
+        alert('Error al eliminar');
+    }
+}
+
+function mostrarModalDependiente(dependiente = null) {
+    const esEdicion = dependiente !== null;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'modalDependiente';
+    
+    modal.innerHTML = `
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>
+                    <span class="material-symbols-rounded">${esEdicion ? 'edit' : 'add'}</span>
+                    ${esEdicion ? 'Editar Dependiente' : 'Agregar Dependiente'}
+                </h2>
+                <button type="button" class="btn-close-modal" onclick="cerrarModalDependiente()">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formDependiente">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nombres <span class="required">*</span></label>
+                            <input type="text" id="depNombres" required value="${dependiente?.nombres || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Apellidos <span class="required">*</span></label>
+                            <input type="text" id="depApellidos" required value="${dependiente?.apellidos || ''}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha de nacimiento <span class="required">*</span></label>
+                            <input type="date" id="depFechaNacimiento" required value="${dependiente?.fecha_nacimiento || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>genero <span class="required">*</span></label>
+                            <select id="depGenero" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="masculino" ${dependiente?.genero === 'masculino' ? 'selected' : ''}>Masculino</option>
+                                <option value="femenino" ${dependiente?.genero === 'femenino' ? 'selected' : ''}>Femenino</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Estado migratorio</label>
+                            <select id="depEstadoMigratorio">
+                                <option value="">Seleccionar...</option>
+                                <option value="ciudadano" ${dependiente?.estado_migratorio === 'ciudadano' ? 'selected' : ''}>Ciudadano</option>
+                                <option value="residente" ${dependiente?.estado_migratorio === 'residente' ? 'selected' : ''}>Residente</option>
+                                <option value="visa" ${dependiente?.estado_migratorio === 'visa' ? 'selected' : ''}>Visa</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>SSN</label>
+                            <input type="text" id="depSSN" value="${dependiente?.ssn || ''}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Relación</label>
+                            <select id="depRelacion">
+                                <option value="">Seleccionar...</option>
+                                <option value="conyuge" ${dependiente?.relacion === 'conyuge' ? 'selected' : ''}>Cónyuge</option>
+                                <option value="hijo" ${dependiente?.relacion === 'hijo' ? 'selected' : ''}>Hijo/a</option>
+                                <option value="padre" ${dependiente?.relacion === 'padre' ? 'selected' : ''}>Padre/Madre</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="cerrarModalDependiente()">Cancelar</button>
+                <button type="button" class="btn-submit" onclick="guardarDependiente()">
+                    <span class="material-symbols-rounded">save</span>
+                    ${esEdicion ? 'Actualizar' : 'Guardar'}
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+    setTimeout(() => document.getElementById('depNombres')?.focus(), 300);
+}
+
+function cerrarModalDependiente() {
+    const modal = document.getElementById('modalDependiente');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    }
+    dependienteEditandoId = null;
+}
+
+async function guardarDependiente() {
+    const nombres = document.getElementById('depNombres').value.trim();
+    const apellidos = document.getElementById('depApellidos').value.trim();
+    const fechaNacimiento = document.getElementById('depFechaNacimiento').value;
+    const genero = document.getElementById('depGenero').value;
+    
+    if (!nombres || !apellidos || !fechaNacimiento || !genero) {
+        alert('Completa todos los campos obligatorios');
+        return;
+    }
+    
+    const dependienteData = {
+        cliente_id: clienteIdActual,
+        nombres,
+        apellidos,
+        fecha_nacimiento: fechaNacimiento,
+        genero,
+        estado_migratorio: document.getElementById('depEstadoMigratorio').value || null,
+        ssn: document.getElementById('depSSN').value || null,
+        relacion: document.getElementById('depRelacion').value || null
+    };
+    
+    try {
+        if (dependienteEditandoId) {
+            const { error } = await supabaseClient
+                .from('dependientes')
+                .update(dependienteData)
+                .eq('id', dependienteEditandoId);
+            
+            if (error) throw error;
+        } else {
+            const { error } = await supabaseClient
+                .from('dependientes')
+                .insert([dependienteData]);
+            
+            if (error) throw error;
+        }
+        
+        cerrarModalDependiente();
+        await cargarDependientes(clienteIdActual);
+        
+    } catch (error) {
+        alert(`Error: ${error.message}`);
+    }
+}
+
+function calcularEdad(fechaNacimiento) {
+    if (!fechaNacimiento) return 0;
+    const hoy = new Date();
+    const nacimiento = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+        edad--;
+    }
+    return edad;
+}
+
+function formatearFechaLegible(fecha) {
+    if (!fecha) return 'No especificada';
+    const date = new Date(fecha);
+    const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('es-ES', opciones);
+}
+
+// =====================================================
+// ESTADO Y SEGUIMIENTO
+// =====================================================
+
+async function cargarEstadoSeguimiento(clienteId) {
+    console.log('📊 Cargando estado y seguimiento...');
+    
+    try {
+        const { data: polizas, error } = await supabaseClient
+            .from('polizas')
+            .select('*')
+            .eq('cliente_id', clienteId);
+        
+        if (error || !polizas || polizas.length === 0) {
+            console.log('⚠️ No hay póliza para estado');
+            return;
+        }
+        
+        const poliza = polizas[0];
+        console.log('✅ Estado de póliza:', poliza);
+        
+        mostrarTabEstado();
+        rellenarEstadoCompania(poliza);
+        rellenarEstadoMercado(poliza);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar estado:', error);
+    }
+}
+
+function mostrarTabEstado() {
+    const tabEstado = document.querySelector('.tab-estado');
+    if (tabEstado) {
+        tabEstado.style.display = 'flex';
+        console.log('✅ Tab de estado visible');
+    }
+}
+
+function rellenarEstadoCompania(poliza) {
+    const seccion = document.querySelector('#tab-estado .form-section:nth-child(2) .section-content');
+    
+    if (!seccion) {
+        console.error('❌ No se encontró sección de estado en compañía');
+        return;
+    }
+    
+    seccion.innerHTML = `
+        <div class="estado-grid">
+            <div class="estado-item">
+                <span class="estado-label">Estado actual</span>
+                <span class="estado-badge estado-${poliza.estado_compania || 'pendiente'}">
+                    ${poliza.estado_compania || 'Pendiente'}
+                </span>
+            </div>
+            
+            ${poliza.fecha_envio_compania ? `
+            <div class="estado-item">
+                <span class="estado-label">Fecha de envío</span>
+                <span class="estado-value">${formatearFechaLegible(poliza.fecha_envio_compania)}</span>
+            </div>
+            ` : ''}
+            
+            ${poliza.numero_confirmacion ? `
+            <div class="estado-item">
+                <span class="estado-label">Número de confirmación</span>
+                <span class="estado-value">${poliza.numero_confirmacion}</span>
+            </div>
+            ` : ''}
+        </div>
+        
+        ${!poliza.estado_compania ? `
+        <div class="info-message" style="margin-top: 20px;">
+            <span class="material-symbols-rounded">info</span>
+            <p>La información de estado en compañía estará disponible después de procesar la póliza.</p>
+        </div>
+        ` : ''}
+    `;
+}
+
+function rellenarEstadoMercado(poliza) {
+    const seccion = document.querySelector('#tab-estado .form-section:nth-child(3) .section-content');
+    
+    if (!seccion) {
+        console.error('❌ No se encontró sección de estado en mercado');
+        return;
+    }
+    
+    seccion.innerHTML = `
+        <div class="estado-grid">
+            <div class="estado-item">
+                <span class="estado-label">Estado actual</span>
+                <span class="estado-badge estado-${poliza.estado_mercado || 'pendiente'}">
+                    ${poliza.estado_mercado || 'Pendiente'}
+                </span>
+            </div>
+            
+            ${poliza.fecha_revision_mercado ? `
+            <div class="estado-item">
+                <span class="estado-label">Fecha de revisión</span>
+                <span class="estado-value">${formatearFechaLegible(poliza.fecha_revision_mercado)}</span>
+            </div>
+            ` : ''}
+        </div>
+        
+        ${!poliza.estado_mercado ? `
+        <div class="info-message" style="margin-top: 20px;">
+            <span class="material-symbols-rounded">info</span>
+            <p>La información de estado en mercado estará disponible después de procesar la póliza.</p>
+        </div>
+        ` : ''}
+    `;
+}
+
+// =====================================================
+// CARGAR HISTORIAL DE AUDITORÍA
+// =====================================================
+
+async function cargarHistorialPoliza(polizaId) {
+    console.log('📜 Cargando historial de auditoría para póliza:', polizaId);
+    
+    try {
+        const { data: historial, error } = await supabaseClient
+            .from('auditoria_polizas')
+            .select('*')
+            .eq('poliza_id', polizaId)
+            .order('timestamp', { ascending: false });
+        
+        if (error) {
+            console.error('❌ Error al cargar historial:', error);
+            return;
+        }
+        
+        console.log('✅ Historial cargado:', historial);
+        
+        // Encontrar el tab de historial y mostrar
+        mostrarHistorialUI(historial);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar historial:', error);
+    }
+}
+
+/**
+ * Mostrar historial en el tab de Estado (o crear uno nuevo)
+ */
+function mostrarHistorialUI(historial) {
+    // Buscar el contenedor del historial
+    let container = document.getElementById('historialContainer');
+    
+    // Si no existe, crearlo en el tab de estado
+    if (!container) {
+        const tabEstado = document.getElementById('tab-estado');
+        if (!tabEstado) {
+            console.warn('⚠️ No se encontró tab de estado para mostrar historial');
+            return;
+        }
+        
+        // Crear sección de historial
+        const seccionHistorial = document.createElement('div');
+        seccionHistorial.className = 'form-section';
+        seccionHistorial.innerHTML = `
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="material-symbols-rounded">history</span>
+                    <h2>Historial de Cambios</h2>
+                    <span class="counter" id="historialCounter">(${historial.length})</span>
+                </div>
+            </div>
+            <div class="section-content" id="historialContainer"></div>
+        `;
+        
+        tabEstado.appendChild(seccionHistorial);
+        container = document.getElementById('historialContainer');
+    }
+    
+    // Limpiar contenedor
+    container.innerHTML = '';
+    
+    // Actualizar contador
+    const contador = document.getElementById('historialCounter');
+    if (contador) {
+        contador.textContent = `(${historial.length})`;
+    }
+    
+    // Si no hay historial
+    if (!historial || historial.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-rounded">history</span>
+                <p>No hay cambios registrados</p>
+                <small>Los cambios aparecerán aquí automáticamente</small>
+            </div>
+        `;
+        return;
+    }
+    
+    // Crear timeline de cambios
+    const timeline = document.createElement('div');
+    timeline.className = 'historial-timeline';
+    
+    historial.forEach((cambio, index) => {
+        const item = crearItemHistorial(cambio, index === 0);
+        timeline.appendChild(item);
+    });
+    
+    container.appendChild(timeline);
+}
+
+/**
+ * Crear un item del historial
+ */
+function crearItemHistorial(cambio, esReciente) {
+    const item = document.createElement('div');
+    item.className = `historial-item ${esReciente ? 'reciente' : ''}`;
+    
+    // Determinar icono y color según acción
+    const iconos = {
+        'crear': { icon: 'add_circle', color: 'success' },
+        'actualizar': { icon: 'edit', color: 'info' },
+        'eliminar': { icon: 'delete', color: 'danger' }
+    };
+    
+    const { icon, color } = iconos[cambio.accion] || { icon: 'change_circle', color: 'info' };
+    
+    // Formatear fecha
+    const fecha = new Date(cambio.timestamp);
+    const fechaFormateada = formatearFechaCompleta(fecha);
+    const horaFormateada = formatearHora(fecha);
+    const tiempoRelativo = obtenerTiempoRelativo(fecha);
+    
+    // Formatear campo modificado
+    const campoLegible = formatearNombreCampo(cambio.campo_modificado);
+    
+    // Determinar mensaje según acción
+    let mensaje = '';
+    if (cambio.accion === 'crear') {
+        mensaje = `<strong>Póliza creada</strong>`;
+    } else if (cambio.accion === 'actualizar') {
+        mensaje = `
+            <strong>${campoLegible}</strong> cambió de 
+            <code class="valor-anterior">${cambio.valor_anterior || '(vacío)'}</code> 
+            a 
+            <code class="valor-nuevo">${cambio.valor_nuevo || '(vacío)'}</code>
+        `;
+    } else if (cambio.accion === 'eliminar') {
+        mensaje = `<strong>Póliza eliminada</strong>`;
+    }
+    
+    item.innerHTML = `
+        <div class="historial-dot historial-dot-${color}">
+            <span class="material-symbols-rounded">${icon}</span>
+        </div>
+        <div class="historial-content">
+            <div class="historial-header">
+                <div class="historial-accion">
+                    <span class="accion-badge accion-${cambio.accion}">${cambio.accion}</span>
+                    ${esReciente ? '<span class="badge-nuevo">Nuevo</span>' : ''}
+                </div>
+                <div class="historial-tiempo">
+                    <span class="tiempo-relativo">${tiempoRelativo}</span>
+                    <span class="tiempo-exacto">${fechaFormateada} • ${horaFormateada}</span>
+                </div>
+            </div>
+            
+            <div class="historial-mensaje">
+                ${mensaje}
+            </div>
+            
+            <div class="historial-usuario">
+                <span class="material-symbols-rounded">person</span>
+                <span class="usuario-nombre">${cambio.usuario_nombre || cambio.usuario_email || 'Usuario desconocido'}</span>
+            </div>
+        </div>
+    `;
+    
+    return item;
+}
+
+/**
+ * Formatear nombre de campo de forma legible
+ */
+function formatearNombreCampo(campo) {
+    if (!campo) return 'Campo';
+    
+    const nombres = {
+        'numero_poliza': 'Número de póliza',
+        'compania': 'Compañía',
+        'plan': 'Plan',
+        'prima': 'Prima',
+        'credito_fiscal': 'Crédito fiscal',
+        'fecha_efectividad': 'Fecha de efectividad',
+        'fecha_inicial_cobertura': 'Fecha inicial de cobertura',
+        'fecha_final_cobertura': 'Fecha final de cobertura',
+        'estado_compania': 'Estado en compañía',
+        'estado_mercado': 'Estado en mercado',
+        'tipo_venta': 'Tipo de venta',
+        'operador_nombre': 'Operador',
+        'agente_nombre': 'Agente',
+        'member_id': 'Member ID',
+        'portal_npn': 'Portal NPN',
+        'clave_seguridad': 'Clave de seguridad',
+        'enlace_poliza': 'Enlace de póliza',
+        'observaciones': 'Observaciones',
+        'notas_compania': 'Notas de compañía',
+        'notas_mercado': 'Notas de mercado'
+    };
+    
+    return nombres[campo] || campo.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+/**
+ * Formatear fecha completa
+ */
+function formatearFechaCompleta(fecha) {
+    const opciones = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+    return fecha.toLocaleDateString('es-ES', opciones);
+}
+
+/**
+ * Formatear hora
+ */
+function formatearHora(fecha) {
+    const opciones = { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true
+    };
+    return fecha.toLocaleTimeString('es-ES', opciones);
+}
+
+/**
+ * Obtener tiempo relativo (hace X minutos/horas/días)
+ */
+function obtenerTiempoRelativo(fecha) {
+    const ahora = new Date();
+    const diferencia = ahora - fecha;
+    
+    const segundos = Math.floor(diferencia / 1000);
+    const minutos = Math.floor(segundos / 60);
+    const horas = Math.floor(minutos / 60);
+    const dias = Math.floor(horas / 24);
+    
+    if (segundos < 60) {
+        return 'Ahora mismo';
+    } else if (minutos < 60) {
+        return `Hace ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}`;
+    } else if (horas < 24) {
+        return `Hace ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
+    } else if (dias < 30) {
+        return `Hace ${dias} ${dias === 1 ? 'día' : 'días'}`;
+    } else {
+        return formatearFechaCompleta(fecha);
+    }
+}
+
+
+async function recargarHistorialDespuesDeGuardar(polizaId) {
+    // Esperar un momento para que el trigger termine
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Recargar historial
+    await cargarHistorialPoliza(polizaId);
+    
+    console.log('✅ Historial actualizado después de guardar');
+}
+
+// =====================================================
+// EXPORTAR HISTORIAL A CSV (OPCIONAL)
+// =====================================================
+
+async function exportarHistorialCSV(polizaId) {
+    try {
+        const { data: historial, error } = await supabaseClient
+            .from('auditoria_polizas')
+            .select('*')
+            .eq('poliza_id', polizaId)
+            .order('timestamp', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Crear CSV
+        let csv = 'Fecha,Hora,Usuario,Acción,Campo,Valor Anterior,Valor Nuevo\n';
+        
+        historial.forEach(item => {
+            const fecha = new Date(item.timestamp);
+            const fechaStr = fecha.toLocaleDateString('es-ES');
+            const horaStr = fecha.toLocaleTimeString('es-ES');
+            
+            csv += `"${fechaStr}","${horaStr}","${item.usuario_nombre || item.usuario_email}","${item.accion}","${formatearNombreCampo(item.campo_modificado)}","${item.valor_anterior || ''}","${item.valor_nuevo || ''}"\n`;
+        });
+        
+        // Descargar
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `historial_poliza_${polizaId}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        
+        console.log('✅ Historial exportado a CSV');
+        
+    } catch (error) {
+        console.error('Error al exportar:', error);
+        alert('Error al exportar historial');
+    }
+}
+

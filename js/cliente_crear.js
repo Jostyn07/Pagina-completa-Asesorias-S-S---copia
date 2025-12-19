@@ -72,7 +72,7 @@ async function crearCliente(formData) {
         email: formData.email,
         telefono1: formData.telefono1,
         telefono2: formData.telefono2 || null,
-        sexo: formData.sexo,
+        genero: formData.genero,
         fecha_nacimiento: formData.fechaNacimiento,
         estado_migratorio: formData.estadoMigratorio,
         nacionalidad: formData.nacionalidad || 'No especificada',
@@ -204,7 +204,7 @@ function obtenerDatosFormulario() {
         telefono1: formData.get('telefono1'),
         telefono2: formData.get('telefono2') || null,
         fechaNacimiento: formData.get('fechaNacimiento'),
-        sexo: formData.get('sexo'),
+        genero: formData.get('genero'),
         estadoMigratorio: formData.get('estadoMigratorio'),
         nacionalidad: formData.get('nacionalidad'),
         ssn: formData.get('ssn') || null,
@@ -251,7 +251,7 @@ function obtenerDatosFormulario() {
 function validarFormularioCompleto() {
     const camposRequeridos = [
         'nombres', 'apellidos', 'email', 'telefono1',
-        'fechaNacimiento', 'sexo', 'estadoMigratorio',
+        'fechaNacimiento', 'genero', 'estadoMigratorio',
         'direccion', 'ciudad', 'estado', 'codigoPostal',
         'compania', 'plan', 'fechaEfectividad'
     ];

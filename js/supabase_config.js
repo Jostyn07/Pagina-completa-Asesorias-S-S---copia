@@ -66,7 +66,7 @@ async function guardarClienteEnSupabase(formData) {
                 fecha_registro: formatDateForSQL(formData.fechaRegistro),
                 nombres: formData.nombres,
                 apellidos: formData.apellidos,
-                sexo: formData.sexo,
+                genero: formData.genero,
                 fecha_nacimiento: formatDateForSQL(formData.fechaNacimiento),
                 email: formData.email,
                 telefono1: formData.telefono1,
