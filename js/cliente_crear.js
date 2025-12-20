@@ -1,6 +1,9 @@
 // ============================================
-// CLIENTE_CREAR.JS - SOLO CREACIÓN DE CLIENTES
+// CLIENTE_CREAR.JS - VERSIÓN COMPLETA
 // ============================================
+
+// Variables globales
+let imagenesNotaSeleccionadas = [];
 
 // ============================================
 // INICIALIZACIÓN
@@ -17,6 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Cargar borrador si existe
     cargarBorradorAutomatico();
+    
+    console.log('✅ Formulario inicializado');
 });
 
 function inicializarFormulario() {
@@ -28,11 +33,60 @@ function inicializarFormulario() {
 }
 
 // ============================================
+// TABS NAVEGACIÓN
+// ============================================
+
+function inicializarTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    console.log('📑 Tabs encontrados:', tabs.length);
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => cambiarTab(tab.dataset.tab));
+    });
+}
+
+function cambiarTab(tabName) {
+    console.log('🔄 Cambiando a tab:', tabName);
+    
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Desactivar todos los botones de tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Activar el tab seleccionado
+    const tabContent = document.getElementById(`tab-${tabName}`);
+    const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
+    
+    if (tabContent) {
+        tabContent.classList.add('active');
+    }
+    if (tabButton) {
+        tabButton.classList.add('active');
+    }
+}
+
+// ============================================
+// SECCIONES COLAPSABLES
+// ============================================
+
+function toggleSection(header) {
+    const section = header.parentElement;
+    section.classList.toggle('collapsed');
+}
+
+// ============================================
 // MANEJO DEL FORMULARIO - SUBMIT
 // ============================================
 
 async function handleSubmit(event) {
     event.preventDefault();
+    
+    console.log('📤 Iniciando proceso de guardado...');
     
     // Validar formulario
     if (!validarFormularioCompleto()) {
@@ -44,6 +98,12 @@ async function handleSubmit(event) {
     const confirmacion = confirm('¿Guardar este nuevo cliente?\n\nSe procesará la información ingresada.');
     if (!confirmacion) return;
     
+    // Mostrar indicador de carga
+    const btnSubmit = document.querySelector('.btn-submit');
+    const textoOriginal = btnSubmit.innerHTML;
+    btnSubmit.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span> Guardando...';
+    btnSubmit.disabled = true;
+    
     // Obtener datos
     const formData = obtenerDatosFormulario();
     
@@ -54,6 +114,10 @@ async function handleSubmit(event) {
     } catch (error) {
         console.error('❌ Error al crear:', error);
         alert(`Error al crear cliente: ${error.message}`);
+        
+        // Restaurar botón
+        btnSubmit.innerHTML = textoOriginal;
+        btnSubmit.disabled = false;
     }
 }
 
@@ -65,33 +129,34 @@ async function crearCliente(formData) {
     console.log('📝 Creando nuevo cliente...');
     
     const clienteData = {
-        tipo_registro: formData.tipoRegistro,
-        fecha_registro: new Date().toISOString().split('T')[0],
+        // Información personal
         nombres: formData.nombres,
         apellidos: formData.apellidos,
         email: formData.email,
-        telefono1: formData.telefono1,
-        telefono2: formData.telefono2 || null,
-        genero: formData.genero,
+        telefono: formData.telefono,
+        telefono_secundario: formData.telefono_secundario || null,
         fecha_nacimiento: formData.fechaNacimiento,
-        estado_migratorio: formData.estadoMigratorio,
-        nacionalidad: formData.nacionalidad || 'No especificada',
+        sexo: formData.genero,
         ssn: formData.ssn || null,
-        ocupacion: formData.ocupacion || null,
-        ingresos: parseFloat(formData.ingresos) || 0,
-        aplica: formData.aplica === 'true' || formData.aplica === true,
+        estado_migratorio: formData.estadoMigratorio,
+        
+        // Dirección
         direccion: formData.direccion,
-        casa_apartamento: formData.casaApartamento || null,
         ciudad: formData.ciudad,
         estado: formData.estado,
-        condado: formData.condado || 'No especificado',
         codigo_postal: formData.codigoPostal,
-        tiene_po_box: formData.tienePoBox === 'true' || formData.tienePoBox === true || false,
-        po_box: formData.poBox || null,
+        
+        // Información laboral
+        empleador: formData.ocupacion || null,
+        ingreso_anual: parseFloat(formData.ingresos) || 0,
+        
+        // Sistema
         operador_nombre: formData.operadorNombre || null,
+        agente_nombre: formData.agenteNombre || null,
+        observaciones: formData.observaciones || null
     };
     
-    console.log('📤 Datos a enviar a Supabase:', clienteData);
+    console.log('📤 Datos cliente a enviar:', clienteData);
     
     // Insertar cliente
     const { data: cliente, error: clienteError } = await supabaseClient
@@ -105,7 +170,7 @@ async function crearCliente(formData) {
         throw clienteError;
     }
     
-    console.log('✅ Cliente creado:', cliente);
+    console.log('✅ Cliente creado con ID:', cliente.id);
     
     // Generar número de póliza
     const numeroPolizaGenerado = await generarNumeroPoliza();
@@ -114,24 +179,42 @@ async function crearCliente(formData) {
     // Crear póliza
     const polizaData = {
         cliente_id: cliente.id,
+        
+        // Información básica
+        numero_poliza: formData.numeroPoliza || numeroPolizaGenerado,
         compania: formData.compania,
         plan: formData.plan,
-        numero_poliza: formData.numeroPoliza || numeroPolizaGenerado,
+        tipo_plan: formData.tipoPlan || null,
+        
+        // Costos
         prima: parseFloat(formData.prima) || 0,
         credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
+        
+        // Fechas
         fecha_efectividad: formData.fechaEfectividad,
         fecha_inicial_cobertura: formData.fechaInicialCobertura,
         fecha_final_cobertura: formData.fechaFinalCobertura,
+        
+        // Acceso
         member_id: formData.memberId || null,
         portal_npn: formData.portalNpn || null,
         clave_seguridad: formData.claveSeguridad || null,
-        tipo_venta: formData.tipoVenta || null,
         enlace_poliza: formData.enlacePoliza || null,
+        
+        // Información de venta
+        tipo_venta: formData.tipoVenta || null,
         operador_nombre: formData.operadorNombre || null,
         agente_nombre: formData.agenteNombre || null,
+        
+        // Estados iniciales
+        estado_compania: 'pendiente',
         estado_mercado: 'pendiente',
+        
+        // Observaciones
         observaciones: formData.observaciones || null
     };
+    
+    console.log('📤 Datos póliza a enviar:', polizaData);
     
     const { data: poliza, error: polizaError } = await supabaseClient
         .from('polizas')
@@ -144,11 +227,14 @@ async function crearCliente(formData) {
         throw polizaError;
     }
     
-    console.log('✅ Póliza creada:', poliza);
+    console.log('✅ Póliza creada con ID:', poliza.id);
     
     // Limpiar borrador y redirigir
     localStorage.removeItem('borrador_cliente');
-    alert('✅ Cliente y póliza guardados correctamente');
+    
+    alert(`✅ Cliente y póliza guardados correctamente\n\nCliente: ${cliente.nombres} ${cliente.apellidos}\nPóliza: ${poliza.numero_poliza}`);
+    
+    // Redirigir a la lista de pólizas
     window.location.href = './polizas.html';
 }
 
@@ -162,7 +248,7 @@ async function generarNumeroPoliza() {
     try {
         const { data, error } = await supabaseClient
             .from('polizas')
-            .select('numero_poliza', { count: 'exact' })
+            .select('numero_poliza')
             .like('numero_poliza', `POL-${anioActual}-%`)
             .order('numero_poliza', { ascending: false })
             .limit(1);
@@ -201,8 +287,8 @@ function obtenerDatosFormulario() {
         nombres: formData.get('nombres'),
         apellidos: formData.get('apellidos'),
         email: formData.get('email'),
-        telefono1: formData.get('telefono1'),
-        telefono2: formData.get('telefono2') || null,
+        telefono: formData.get('telefono'),
+        telefonoSecundario: formData.get('telefono') || null,
         fechaNacimiento: formData.get('fechaNacimiento'),
         genero: formData.get('genero'),
         estadoMigratorio: formData.get('estadoMigratorio'),
@@ -225,6 +311,7 @@ function obtenerDatosFormulario() {
         // Póliza
         compania: formData.get('compania'),
         plan: formData.get('plan'),
+        tipoPlan: formData.get('tipoPlan') || null,
         numeroPoliza: formData.get('numeroPoliza') || null,
         prima: formData.get('prima') || 0,
         creditoFiscal: formData.get('creditoFiscal') || 0,
@@ -250,17 +337,36 @@ function obtenerDatosFormulario() {
 
 function validarFormularioCompleto() {
     const camposRequeridos = [
-        'nombres', 'apellidos', 'email', 'telefono1',
-        'fechaNacimiento', 'genero', 'estadoMigratorio',
-        'direccion', 'ciudad', 'estado', 'codigoPostal',
-        'compania', 'plan', 'fechaEfectividad'
+        { id: 'nombres', nombre: 'Nombres' },
+        { id: 'apellidos', nombre: 'Apellidos' },
+        { id: 'email', nombre: 'Email' },
+        { id: 'telefono', nombre: 'Teléfono' },
+        { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
+        { id: 'genero', nombre: 'Género' },
+        { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'direccion', nombre: 'Dirección' },
+        { id: 'ciudad', nombre: 'Ciudad' },
+        { id: 'estado', nombre: 'Estado' },
+        { id: 'codigoPostal', nombre: 'Código postal' },
+        { id: 'compania', nombre: 'Compañía' },
+        { id: 'plan', nombre: 'Plan' },
+        { id: 'fechaEfectividad', nombre: 'Fecha de efectividad' }
     ];
     
     for (const campo of camposRequeridos) {
-        const elemento = document.getElementById(campo) || document.querySelector(`[name="${campo}"]`);
+        const elemento = document.getElementById(campo.id) || document.querySelector(`[name="${campo.id}"]`);
         if (!elemento || !elemento.value || elemento.value.trim() === '') {
-            console.error(`Campo requerido vacío: ${campo}`);
+            console.error(`Campo requerido vacío: ${campo.nombre}`);
+            alert(`El campo "${campo.nombre}" es requerido`);
             elemento?.focus();
+            
+            // Cambiar al tab correspondiente
+            if (['nombres', 'apellidos', 'email', 'telefono', 'fechaNacimiento', 'genero', 'estadoMigratorio'].includes(campo.id)) {
+                cambiarTab('info-general');
+            } else if (['compania', 'plan', 'fechaEfectividad'].includes(campo.id)) {
+                cambiarTab('info-general');
+            }
+            
             return false;
         }
     }
@@ -278,8 +384,8 @@ function inicializarValidacionTiempoReal() {
     }
     
     // Teléfonos
-    const tel1 = document.getElementById('telefono1');
-    const tel2 = document.getElementById('telefono2');
+    const tel1 = document.getElementById('telefono');
+    const tel2 = document.getElementById('telefonoSecundario');
     if (tel1) tel1.addEventListener('blur', function() { validarTelefono(this); });
     if (tel2) tel2.addEventListener('blur', function() { validarTelefono(this); });
     
@@ -338,33 +444,6 @@ function validarCodigoPostal(input) {
 }
 
 // ============================================
-// TABS
-// ============================================
-
-function inicializarTabs() {
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => cambiarTab(tab.dataset.tab));
-    });
-}
-
-function cambiarTab(tabName) {
-    // Ocultar todos los contenidos
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    // Desactivar todos los tabs
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Activar tab y contenido seleccionados
-    document.getElementById(`${tabName}-tab`)?.classList.add('active');
-    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
-}
-
-// ============================================
 // FECHAS AUTOMÁTICAS
 // ============================================
 
@@ -376,7 +455,7 @@ function calcularFechasAutomaticas() {
     if (fechaEfectividad) {
         fechaEfectividad.addEventListener('change', function() {
             if (this.value) {
-                const fecha = new Date(this.value);
+                const fecha = new Date(this.value + 'T00:00:00');
                 
                 // Fecha inicial = mismo día
                 if (fechaInicial) {
@@ -411,6 +490,7 @@ function cargarBorradorAutomatico() {
                     elemento.value = datos[key];
                 }
             });
+            console.log('✅ Borrador cargado');
         } catch (error) {
             console.error('Error al cargar borrador:', error);
         }
@@ -431,6 +511,17 @@ setInterval(() => {
 }, 120000);
 
 // ============================================
+// CANCELAR FORMULARIO
+// ============================================
+
+function cancelarFormulario() {
+    if (confirm('¿Seguro que deseas cancelar? Se perderán los cambios no guardados.')) {
+        localStorage.removeItem('borrador_cliente');
+        window.location.href = './polizas.html';
+    }
+}
+
+// ============================================
 // PO BOX
 // ============================================
 
@@ -442,3 +533,67 @@ function togglePOBox() {
         poBoxContainer.style.display = checkbox.checked ? 'block' : 'none';
     }
 }
+
+// ============================================
+// FUNCIONES DE NOTAS (Placeholders)
+// ============================================
+
+function enviarNota() {
+    alert('Las notas se pueden agregar después de crear el cliente');
+}
+
+function cancelarNota() {
+    document.getElementById('nuevaNota').value = '';
+    imagenesNotaSeleccionadas = [];
+    document.getElementById('imagenesPreview').innerHTML = '';
+    document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
+}
+
+function previsualizarImagenesNota() {
+    const fileInput = document.getElementById('notaImagen');
+    const preview = document.getElementById('imagenesPreview');
+    const label = document.getElementById('archivosSeleccionados');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        preview.innerHTML = '';
+        label.textContent = 'Ningún archivo seleccionado';
+        return;
+    }
+    
+    const archivos = Array.from(fileInput.files);
+    label.textContent = `${archivos.length} imagen(es) seleccionada(s)`;
+    
+    preview.innerHTML = '';
+    imagenesNotaSeleccionadas = [];
+    
+    archivos.forEach(archivo => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagenesNotaSeleccionadas.push(e.target.result);
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'preview-imagen';
+            img.style.width = '100px';
+            img.style.height = '100px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '8px';
+            img.style.marginRight = '10px';
+            preview.appendChild(img);
+        };
+        reader.readAsDataURL(archivo);
+    });
+}
+
+// ============================================
+// FUNCIONES DE DOCUMENTOS (Placeholders)
+// ============================================
+
+function agregarDocumento() {
+    alert('Los documentos se pueden agregar después de crear el cliente');
+}
+
+// ============================================
+// LOG INICIAL
+// ============================================
+
+console.log('✅ cliente_crear.js cargado completamente');

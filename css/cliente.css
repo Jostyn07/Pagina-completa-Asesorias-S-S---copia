@@ -2026,7 +2026,7 @@ body {
 }
 
 /* =====================================================
-   CSS SIMPLE PARA NOTAS
+   CSS PARA SISTEMA DE NOTAS
    Agregar al final de cliente.css
    ===================================================== */
 
@@ -2034,12 +2034,62 @@ body {
    THREAD DE NOTAS
    ============================================ */
 .notas-thread {
-    max-height: 500px;
+    max-height: 600px;
     overflow-y: auto;
     padding: 20px;
     background: var(--color-bg-primary);
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.notas-thread::-webkit-scrollbar {
+    width: 8px;
+}
+
+.notas-thread::-webkit-scrollbar-track {
+    background: var(--color-bg-primary);
+    border-radius: 4px;
+}
+
+.notas-thread::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+}
+
+.notas-thread::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+}
+
+/* ============================================
+   SEPARADOR DE FECHA
+   ============================================ */
+.nota-fecha-separador {
+    text-align: center;
+    margin: 30px 0 20px 0;
+    position: relative;
+}
+
+.nota-fecha-separador::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--color-border);
+}
+
+.fecha-label {
+    display: inline-block;
+    padding: 6px 16px;
+    background: var(--color-bg-white);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    position: relative;
+    z-index: 1;
 }
 
 /* ============================================
@@ -2049,16 +2099,24 @@ body {
     background: var(--color-bg-white);
     border: 1px solid var(--color-border);
     border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+    animation: slideInUp 0.3s ease;
 }
 
 .nota-card:hover {
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.nota-card.nota-importante {
+    border-left: 4px solid #f59e0b;
+    background: linear-gradient(90deg, #fffbeb 0%, var(--color-bg-white) 20%);
 }
 
 /* ============================================
-   HEADER
+   HEADER DE LA NOTA
    ============================================ */
 .nota-header {
     display: flex;
@@ -2071,8 +2129,13 @@ body {
 
 .nota-info {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 10px;
+}
+
+.nota-tipo-icon {
+    font-size: 20px;
+    color: var(--color-hover-primary);
 }
 
 .nota-usuario {
@@ -2081,65 +2144,115 @@ body {
     font-size: 0.95rem;
 }
 
-.nota-fecha {
+.nota-hora {
     font-size: 0.8rem;
     color: var(--color-text-secondary);
 }
 
-.btn-eliminar-nota {
+.nota-estrella {
+    font-size: 18px;
+    color: #f59e0b;
+    animation: starPulse 2s infinite;
+}
+
+@keyframes starPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.nota-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-nota-action {
     width: 32px;
     height: 32px;
     border: none;
-    background: transparent;
+    background: var(--color-bg-primary);
     border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    color: var(--color-text-secondary);
     transition: all 0.2s;
+    color: var(--color-text-secondary);
 }
 
-.btn-eliminar-nota:hover {
+.btn-nota-action:hover {
+    background: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.btn-nota-action.btn-eliminar:hover {
     background: #fee2e2;
     color: #dc2626;
 }
 
-.btn-eliminar-nota .material-symbols-rounded {
+.btn-nota-action .material-symbols-rounded {
     font-size: 18px;
 }
 
 /* ============================================
-   MENSAJE
+   MENSAJE DE LA NOTA
    ============================================ */
 .nota-mensaje {
     font-size: 0.95rem;
     line-height: 1.6;
     color: var(--color-text-primary);
-    white-space: pre-wrap;
     word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.nota-mensaje a {
+    color: var(--color-hover-primary);
+    text-decoration: underline;
+}
+
+.nota-mensaje a:hover {
+    text-decoration: none;
+}
+
+.nota-mensaje .mencion {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #dbeafe;
+    color: #1e40af;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 /* ============================================
-   IMÁGENES EN NOTA
+   IMÁGENES ADJUNTAS EN NOTAS
    ============================================ */
 .nota-imagenes {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
-    margin-top: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
 }
 
-.nota-imagenes img {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
+.nota-imagen-wrapper {
+    position: relative;
     border-radius: 8px;
+    overflow: hidden;
     cursor: pointer;
-    border: 2px solid var(--color-border);
     transition: all 0.2s;
+    border: 2px solid var(--color-border);
 }
 
-.nota-imagenes img:hover {
+.nota-imagen-wrapper:hover {
     transform: scale(1.05);
     border-color: var(--color-hover-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.nota-imagen-wrapper img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    display: block;
 }
 
 /* ============================================
@@ -2149,29 +2262,35 @@ body {
     background: var(--color-bg-white);
     border: 2px solid var(--color-border);
     border-radius: 12px;
-    padding: 20px;
+    padding: 25px;
 }
 
 .nueva-nota h3 {
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 12px;
+    color: var(--color-text-primary);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .nueva-nota textarea {
     width: 100%;
-    min-height: 100px;
-    padding: 12px;
+    min-height: 120px;
+    padding: 15px;
     border: 2px solid var(--color-border);
     border-radius: 8px;
     font-family: inherit;
     font-size: 0.95rem;
     resize: vertical;
+    transition: all 0.2s;
 }
 
 .nueva-nota textarea:focus {
     outline: none;
     border-color: var(--color-hover-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 /* ============================================
@@ -2181,29 +2300,35 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 12px 0;
+    margin-top: 15px;
+    padding: 12px;
+    background: var(--color-bg-primary);
+    border-radius: 8px;
 }
 
 .btn-attach {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
+    gap: 8px;
+    padding: 10px 16px;
     background: var(--color-bg-white);
     border: 2px solid var(--color-border);
     border-radius: 8px;
     cursor: pointer;
-    font-size: 0.9rem;
+    transition: all 0.2s;
     font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
 }
 
 .btn-attach:hover {
     border-color: var(--color-hover-primary);
+    background: var(--color-hover-light);
     color: var(--color-hover-primary);
 }
 
 .btn-attach .material-symbols-rounded {
-    font-size: 18px;
+    font-size: 20px;
 }
 
 #archivosSeleccionados {
@@ -2216,101 +2341,241 @@ body {
    ============================================ */
 .imagenes-preview {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
-    margin: 12px 0;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
 }
 
-.preview-imagen {
-    width: 100%;
-    height: 100px;
-    object-fit: cover;
+.preview-imagen-wrapper {
+    position: relative;
     border-radius: 8px;
+    overflow: hidden;
     border: 2px solid var(--color-border);
 }
 
+.preview-imagen-wrapper img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+}
+
+.btn-quitar-imagen {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    background: rgba(220, 38, 38, 0.9);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+}
+
+.btn-quitar-imagen:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+.btn-quitar-imagen .material-symbols-rounded {
+    font-size: 18px;
+}
+
 /* ============================================
-   ACCIONES
+   ACCIONES DE LA NOTA
    ============================================ */
 .nota-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 15px;
+    gap: 12px;
+    margin-top: 20px;
 }
 
 /* ============================================
-   MODAL IMAGEN
+   MODAL IMAGEN COMPLETA
    ============================================ */
-.modal-imagen {
+.modal-imagen-completa {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-imagen-completa.show {
+    opacity: 1;
+}
+
+.modal-imagen-overlay {
+    width: 100%;
+    height: 100%;
     background: rgba(0, 0, 0, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10000;
+    padding: 20px;
     cursor: pointer;
 }
 
-.modal-imagen-contenido {
-    position: relative;
+.modal-imagen-container {
     max-width: 90%;
     max-height: 90%;
+    position: relative;
+    cursor: default;
 }
 
-.modal-imagen-contenido img {
+.modal-imagen-container img {
     max-width: 100%;
     max-height: 90vh;
+    object-fit: contain;
     border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
-.modal-imagen .btn-cerrar {
+.btn-cerrar-imagen {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 36px;
-    height: 36px;
+    top: -15px;
+    right: -15px;
+    width: 40px;
+    height: 40px;
     background: white;
     border: none;
     border-radius: 50%;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.2s;
 }
 
-.modal-imagen .btn-cerrar:hover {
+.btn-cerrar-imagen:hover {
     background: #f3f4f6;
+    transform: scale(1.1);
+}
+
+.btn-cerrar-imagen .material-symbols-rounded {
+    font-size: 24px;
+    color: #374151;
 }
 
 /* ============================================
-   EMPTY STATE
+   FILTROS Y BÚSQUEDA (Opcional)
    ============================================ */
-.notas-thread .empty-state {
-    text-align: center;
-    padding: 60px 20px;
+.notas-controles {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: var(--color-bg-primary);
+    border-radius: 8px;
 }
 
-.notas-thread .empty-state .material-symbols-rounded {
-    font-size: 48px;
-    color: var(--color-text-secondary);
-    margin-bottom: 12px;
-}
-
-.notas-thread .empty-state p {
-    font-size: 1rem;
+.nota-filtro-btn {
+    padding: 8px 16px;
+    background: var(--color-bg-white);
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
     font-weight: 600;
-    color: var(--color-text-primary);
-    margin-bottom: 4px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.notas-thread .empty-state small {
+.nota-filtro-btn:hover {
+    border-color: var(--color-hover-primary);
+}
+
+.nota-filtro-btn.active {
+    background: var(--color-hover-primary);
+    border-color: var(--color-hover-primary);
+    color: white;
+}
+
+.nota-search {
+    flex: 1;
+    padding: 10px 16px;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.nota-search:focus {
+    outline: none;
+    border-color: var(--color-hover-primary);
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   BADGES DE TIPO DE NOTA
+   ============================================ */
+.nota-tipo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.nota-tipo-badge.tipo-llamada {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.nota-tipo-badge.tipo-email {
+    background: #f3e8ff;
+    color: #6b21a8;
+}
+
+.nota-tipo-badge.tipo-reunion {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.nota-tipo-badge.tipo-seguimiento {
+    background: #fce7f3;
+    color: #9f1239;
+}
+
+/* ============================================
+   CONTADOR EN HEADER
+   ============================================ */
+.counter {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--color-hover-light);
+    color: var(--color-hover-primary);
+    border-radius: 12px;
     font-size: 0.85rem;
-    color: var(--color-text-secondary);
+    font-weight: 600;
+    margin-left: 8px;
 }
 
 /* ============================================
@@ -2323,34 +2588,121 @@ body {
     }
     
     .nota-card {
-        padding: 14px;
+        padding: 14px 16px;
+    }
+    
+    .nota-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .nota-info {
+        flex-wrap: wrap;
+    }
+    
+    .nota-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
     
     .nueva-nota {
-        padding: 16px;
+        padding: 20px;
     }
     
-    .nota-imagenes,
+    .nueva-nota textarea {
+        min-height: 100px;
+    }
+    
+    .nota-attachments {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
     .imagenes-preview {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+    
+    .nota-imagenes {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .notas-controles {
+        flex-direction: column;
     }
 }
 
 @media (max-width: 480px) {
     .notas-thread {
+        max-height: 300px;
         padding: 12px;
     }
     
     .nota-card {
         padding: 12px;
+        margin-bottom: 12px;
     }
     
-    .nueva-nota textarea {
-        min-height: 80px;
+    .nota-usuario {
+        font-size: 0.85rem;
     }
     
-    .nota-imagenes,
+    .nota-hora {
+        font-size: 0.75rem;
+    }
+    
+    .nota-mensaje {
+        font-size: 0.9rem;
+    }
+    
+    .nueva-nota {
+        padding: 15px;
+    }
+    
+    .btn-attach {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    
     .imagenes-preview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .nota-imagenes {
         grid-template-columns: 1fr;
     }
+}
+
+/* ============================================
+   ESTADO VACÍO MEJORADO
+   ============================================ */
+.notas-thread .empty-state {
+    padding: 60px 20px;
+}
+
+/* ============================================
+   SCROLL TO BOTTOM BUTTON (Opcional)
+   ============================================ */
+.btn-scroll-notas {
+    position: sticky;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    background: var(--color-hover-primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.btn-scroll-notas:hover {
+    transform: translateX(-50%) scale(1.1);
 }

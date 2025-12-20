@@ -55,8 +55,8 @@ async function cargarPolizas() {
                     id,
                     nombres,
                     apellidos,
-                    telefono1,
-                    telefono2,
+                    telefono,
+                    telefono_secundario,
                     email,
                     direccion,
                     ciudad,
@@ -164,7 +164,7 @@ function crearFilaPoliza(poliza) {
                     </a>
                 </div>
             </td>
-            <td data-label="Teléfono">${cliente.telefono1 || 'N/A'}</td>
+            <td data-label="Teléfono">${cliente.telefono || 'N/A'}</td>
             <td data-label="Estado">${estadoBadge}</td>
             <td data-label="Compañía">${poliza.compania || 'N/A'}</td>
             <td data-label="Plan">${poliza.plan || 'N/A'}</td>
@@ -228,11 +228,11 @@ async function abrirDetalles(polizaId) {
                         </div>
                         <div class="detalle-item">
                             <label>Teléfono 1</label>
-                            <p>${cliente.telefono1 || 'N/A'}</p>
+                            <p>${cliente.telefono || 'N/A'}</p>
                         </div>
                         <div class="detalle-item">
                             <label>Teléfono 2</label>
-                            <p>${cliente.telefono2 || 'N/A'}</p>
+                            <p>${cliente.telefono_secundario || 'N/A'}</p>
                         </div>
                         <div class="detalle-item full-width">
                             <label>Dirección</label>
@@ -503,7 +503,7 @@ async function exportarExcel() {
             return {
                 'Número Póliza': poliza.numero_poliza || '',
                 'Cliente': `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim(),
-                'Teléfono': cliente.telefono1 || '',
+                'Teléfono': cliente.telefono || '',
                 'Email': cliente.email || '',
                 'Estado': poliza.estado_mercado || '',
                 'Compañía': poliza.compania || '',
@@ -580,7 +580,7 @@ function buscarPolizas(termino) {
         polizasFiltradas = todasLasPolizas.filter(poliza => {
             const cliente = poliza.cliente || {};
             const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.toLowerCase();
-            const telefono = cliente.telefono1 || '';
+            const telefono = cliente.telefono || '';
             const numeroPoliza = poliza.numero_poliza || '';
             const compania = poliza.compania || '';
             const plan = poliza.plan || '';

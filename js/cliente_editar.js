@@ -84,9 +84,9 @@ async function cargarDatosCliente(clienteId) {
         if (polizas && polizas.length > 0) {
        await cargarHistorialPoliza(polizas[0].id);
         }
-
-        await cargarNotas(clienteId);
         
+        await cargarNotas(clienteId);
+
         mostrarIndicadorCarga(false);
         
         await cargarDependientes(clienteId);
@@ -112,8 +112,8 @@ function rellenarFormulario(cliente, polizas = []) {
     if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres;
     if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos;
     if (cliente.email) document.getElementById('email').value = cliente.email;
-    if (cliente.telefono1) document.getElementById('telefono1').value = cliente.telefono1;
-    if (cliente.telefono2) document.getElementById('telefono2').value = cliente.telefono2;
+    if (cliente.telefono) document.getElementById('telefono').value = cliente.telefono;
+    if (cliente.telefono_secundario) document.getElementById('telefonoSecundario').value = cliente.telefono_secundario;
     if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = cliente.fecha_nacimiento;
     if (cliente.genero) document.getElementById('genero').value = cliente.genero;
     if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio;
@@ -207,8 +207,8 @@ async function actualizarCliente(clienteId, formData) {
         nombres: formData.nombres,
         apellidos: formData.apellidos,
         email: formData.email,
-        telefono1: formData.telefono1,
-        telefono2: formData.telefono2 || null,
+        telefono: formData.telefono,
+        telefono_secundario: formData.telefono_secundario || null,
         genero: formData.genero,
         fecha_nacimiento: formData.fechaNacimiento,
         estado_migratorio: formData.estadoMigratorio,
@@ -385,8 +385,8 @@ function obtenerDatosFormulario() {
         nombres: formData.get('nombres'),
         apellidos: formData.get('apellidos'),
         email: formData.get('email'),
-        telefono1: formData.get('telefono1'),
-        telefono2: formData.get('telefono2') || null,
+        telefono: formData.get('telefono'),
+        telefono_secundario: formData.get('telefonoSecundario') || null,
         fechaNacimiento: formData.get('fechaNacimiento'),
         genero: formData.get('genero'),
         estadoMigratorio: formData.get('estadoMigratorio'),
@@ -431,7 +431,7 @@ function obtenerDatosFormulario() {
 
 function validarFormularioCompleto() {
     const camposRequeridos = [
-        'nombres', 'apellidos', 'email', 'telefono1',
+        'nombres', 'apellidos', 'email', 'telefono',
         'fechaNacimiento', 'genero', 'estadoMigratorio',
         'direccion', 'ciudad', 'estado', 'codigoPostal',
         'compania', 'plan', 'fechaEfectividad'
@@ -455,8 +455,8 @@ function inicializarValidacionTiempoReal() {
         emailInput.addEventListener('blur', function() { validarEmail(this); });
     }
     
-    const tel1 = document.getElementById('telefono1');
-    const tel2 = document.getElementById('telefono2');
+    const tel1 = document.getElementById('telefono');
+    const tel2 = document.getElementById('telefonoSecundario');
     if (tel1) tel1.addEventListener('blur', function() { validarTelefono(this); });
     if (tel2) tel2.addEventListener('blur', function() { validarTelefono(this); });
     
@@ -1338,14 +1338,15 @@ async function exportarHistorialCSV(polizaId) {
     }
 }
 
+
 let imagenesNotaSeleccionadas = [];
 
 // =====================================================
-// CARGAR NOTAS
+// CARGAR NOTAS DEL CLIENTE
 // =====================================================
 
 async function cargarNotas(clienteId) {
-    console.log('💬 Cargando notas...');
+    console.log('💬 Cargando notas del cliente:', clienteId);
     
     try {
         const { data: notas, error } = await supabaseClient
@@ -1355,33 +1356,36 @@ async function cargarNotas(clienteId) {
             .order('created_at', { ascending: false });
         
         if (error) {
-            console.error('Error:', error);
+            console.error('❌ Error al cargar notas:', error);
             return;
         }
         
+        console.log('✅ Notas cargadas:', notas);
         mostrarNotas(notas);
         
     } catch (error) {
-        console.error('Error:', error);
+        console.error('❌ Error al cargar notas:', error);
     }
 }
 
-// =====================================================
-// MOSTRAR NOTAS
-// =====================================================
-
+/**
+ * Mostrar notas en el thread
+ */
 function mostrarNotas(notas) {
     const thread = document.getElementById('notasThread');
     const contador = document.getElementById('notasCounter');
     
-    if (!thread) return;
+    if (!thread) {
+        console.error('❌ No se encontró notasThread');
+        return;
+    }
     
     // Actualizar contador
     if (contador) {
         contador.textContent = `(${notas.length})`;
     }
     
-    // Limpiar
+    // Limpiar thread
     thread.innerHTML = '';
     
     // Si no hay notas
@@ -1396,46 +1400,127 @@ function mostrarNotas(notas) {
         return;
     }
     
+    // Agrupar notas por fecha
+    const notasAgrupadas = agruparNotasPorFecha(notas);
+    
     // Crear cards de notas
-    notas.forEach(nota => {
-        const card = crearCardNota(nota);
-        thread.appendChild(card);
+    Object.keys(notasAgrupadas).forEach(fecha => {
+        // Separador de fecha
+        const separador = document.createElement('div');
+        separador.className = 'nota-fecha-separador';
+        separador.innerHTML = `
+            <span class="fecha-label">${fecha}</span>
+        `;
+        thread.appendChild(separador);
+        
+        // Notas de esa fecha
+        notasAgrupadas[fecha].forEach(nota => {
+            const card = crearCardNota(nota);
+            thread.appendChild(card);
+        });
     });
 }
 
-// =====================================================
-// CREAR CARD DE NOTA
-// =====================================================
+/**
+ * Agrupar notas por fecha para mejor visualización
+ */
+function agruparNotasPorFecha(notas) {
+    const grupos = {};
+    
+    notas.forEach(nota => {
+        const fecha = new Date(nota.created_at);
+        const hoy = new Date();
+        const ayer = new Date(hoy);
+        ayer.setDate(ayer.getDate() - 1);
+        
+        let etiqueta;
+        
+        if (esMismaFecha(fecha, hoy)) {
+            etiqueta = 'Hoy';
+        } else if (esMismaFecha(fecha, ayer)) {
+            etiqueta = 'Ayer';
+        } else {
+            etiqueta = formatearFechaCompleta(fecha);
+        }
+        
+        if (!grupos[etiqueta]) {
+            grupos[etiqueta] = [];
+        }
+        
+        grupos[etiqueta].push(nota);
+    });
+    
+    return grupos;
+}
 
+/**
+ * Verificar si dos fechas son el mismo día
+ */
+function esMismaFecha(fecha1, fecha2) {
+    return fecha1.getFullYear() === fecha2.getFullYear() &&
+           fecha1.getMonth() === fecha2.getMonth() &&
+           fecha1.getDate() === fecha2.getDate();
+}
+
+/**
+ * Crear card individual de nota
+ */
 function crearCardNota(nota) {
     const card = document.createElement('div');
     card.className = 'nota-card';
+    card.dataset.notaId = nota.id;
     
+    // Si es nota importante
+    if (nota.es_importante) {
+        card.classList.add('nota-importante');
+    }
+    
+    // Determinar ícono según tipo
+    const iconos = {
+        'nota': 'chat_bubble',
+        'llamada': 'call',
+        'email': 'email',
+        'reunion': 'event',
+        'seguimiento': 'flag'
+    };
+    
+    const icono = iconos[nota.tipo] || 'chat_bubble';
+    
+    // Formatear hora
     const fecha = new Date(nota.created_at);
-    const fechaTexto = formatearFecha(fecha);
     const hora = formatearHora(fecha);
     
+    // HTML de la nota
     card.innerHTML = `
         <div class="nota-header">
             <div class="nota-info">
+                <span class="nota-tipo-icon material-symbols-rounded" title="${nota.tipo}">${icono}</span>
                 <span class="nota-usuario">${nota.usuario_nombre || nota.usuario_email}</span>
-                <span class="nota-fecha">${fechaTexto} • ${hora}</span>
+                <span class="nota-hora">${hora}</span>
+                ${nota.es_importante ? '<span class="nota-estrella material-symbols-rounded">star</span>' : ''}
             </div>
-            ${esNotaPropia(nota) ? `
-                <button type="button" class="btn-eliminar-nota" onclick="eliminarNota('${nota.id}')" title="Eliminar">
-                    <span class="material-symbols-rounded">delete</span>
-                </button>
-            ` : ''}
+            <div class="nota-actions">
+                ${esNotaPropia(nota) ? `
+                    <button type="button" class="btn-nota-action" onclick="toggleImportanteNota('${nota.id}', ${!nota.es_importante})" title="${nota.es_importante ? 'Quitar importancia' : 'Marcar importante'}">
+                        <span class="material-symbols-rounded">${nota.es_importante ? 'star' : 'star_outline'}</span>
+                    </button>
+                    <button type="button" class="btn-nota-action btn-eliminar" onclick="eliminarNota('${nota.id}')" title="Eliminar">
+                        <span class="material-symbols-rounded">delete</span>
+                    </button>
+                ` : ''}
+            </div>
         </div>
         
         <div class="nota-mensaje">
-            ${nota.mensaje}
+            ${formatearMensajeNota(nota.mensaje)}
         </div>
         
         ${nota.imagenes && nota.imagenes.length > 0 ? `
             <div class="nota-imagenes">
                 ${nota.imagenes.map(url => `
-                    <img src="${url}" alt="Imagen" onclick="verImagenCompleta('${url}')">
+                    <div class="nota-imagen-wrapper">
+                        <img src="${url}" alt="Imagen adjunta" onclick="verImagenCompleta('${url}')">
+                    </div>
                 `).join('')}
             </div>
         ` : ''}
@@ -1444,8 +1529,65 @@ function crearCardNota(nota) {
     return card;
 }
 
+/**
+ * Verificar si la nota es del usuario actual
+ */
+function esNotaPropia(nota) {
+    // Obtener email del usuario actual desde Supabase
+    const user = supabaseClient.auth.getUser();
+    return nota.usuario_email === user?.email;
+}
+
+/**
+ * Formatear mensaje (detectar URLs, menciones, etc.)
+ */
+function formatearMensajeNota(mensaje) {
+    if (!mensaje) return '';
+    
+    // Convertir URLs a links
+    let formatted = mensaje.replace(
+        /(https?:\/\/[^\s]+)/g,
+        '<a href="$1" target="_blank" rel="noopener">$1</a>'
+    );
+    
+    // Convertir menciones @usuario
+    formatted = formatted.replace(
+        /@(\w+)/g,
+        '<span class="mencion">@$1</span>'
+    );
+    
+    // Convertir saltos de línea
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
+}
+
+/**
+ * Formatear hora en formato legible
+ */
+function formatearHora(fecha) {
+    const opciones = { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true
+    };
+    return fecha.toLocaleTimeString('es-ES', opciones);
+}
+
+/**
+ * Formatear fecha completa
+ */
+function formatearFechaCompleta(fecha) {
+    const opciones = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+    return fecha.toLocaleDateString('es-ES', opciones);
+}
+
 // =====================================================
-// ENVIAR NOTA
+// ENVIAR NUEVA NOTA
 // =====================================================
 
 async function enviarNota() {
@@ -1453,61 +1595,223 @@ async function enviarNota() {
     const mensaje = textarea.value.trim();
     
     if (!mensaje) {
-        alert('Escribe un mensaje');
+        alert('Escribe un mensaje antes de enviar');
+        textarea.focus();
         return;
     }
     
+    console.log('📤 Enviando nota...');
+    
     try {
+        // Obtener info del usuario actual
         const { data: { user } } = await supabaseClient.auth.getUser();
         
+        if (!user) {
+            alert('Error: No hay usuario autenticado');
+            return;
+        }
+        
+        // Preparar datos de la nota
         const notaData = {
             cliente_id: clienteIdActual,
             mensaje: mensaje,
+            tipo: 'nota', // Por defecto
             usuario_email: user.email,
             usuario_nombre: user.user_metadata?.nombre || user.email,
             imagenes: imagenesNotaSeleccionadas.length > 0 ? imagenesNotaSeleccionadas : null
         };
         
-        const { error } = await supabaseClient
+        // Insertar en base de datos
+        const { data, error } = await supabaseClient
             .from('notas')
-            .insert([notaData]);
+            .insert([notaData])
+            .select();
         
         if (error) {
-            alert('Error al guardar: ' + error.message);
+            console.error('Error al guardar nota:', error);
+            alert('Error al guardar nota: ' + error.message);
             return;
         }
         
-        // Limpiar
+        console.log('✅ Nota guardada:', data);
+        
+        // Limpiar formulario
         textarea.value = '';
         imagenesNotaSeleccionadas = [];
         document.getElementById('imagenesPreview').innerHTML = '';
         document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
         
-        // Recargar
+        // Recargar notas
         await cargarNotas(clienteIdActual);
         
+        // Scroll al inicio del thread
+        const thread = document.getElementById('notasThread');
+        if (thread) {
+            thread.scrollTop = 0;
+        }
+        
     } catch (error) {
-        alert('Error: ' + error.message);
+        console.error('Error al enviar nota:', error);
+        alert('Error al enviar nota: ' + error.message);
+    }
+}
+
+/**
+ * Cancelar nota (limpiar formulario)
+ */
+function cancelarNota() {
+    const textarea = document.getElementById('nuevaNota');
+    textarea.value = '';
+    
+    imagenesNotaSeleccionadas = [];
+    document.getElementById('imagenesPreview').innerHTML = '';
+    document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
+    
+    // Limpiar input de archivos
+    const fileInput = document.getElementById('notaImagen');
+    if (fileInput) {
+        fileInput.value = '';
     }
 }
 
 // =====================================================
-// CANCELAR NOTA
+// MANEJO DE IMÁGENES
 // =====================================================
 
-function cancelarNota() {
-    document.getElementById('nuevaNota').value = '';
+/**
+ * Previsualizar imágenes seleccionadas
+ */
+function previsualizarImagenesNota() {
+    const fileInput = document.getElementById('notaImagen');
+    const preview = document.getElementById('imagenesPreview');
+    const archivosLabel = document.getElementById('archivosSeleccionados');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        preview.innerHTML = '';
+        archivosLabel.textContent = 'Ningún archivo seleccionado';
+        return;
+    }
+    
+    const archivos = Array.from(fileInput.files);
+    archivosLabel.textContent = `${archivos.length} ${archivos.length === 1 ? 'archivo' : 'archivos'} seleccionado(s)`;
+    
+    preview.innerHTML = '';
     imagenesNotaSeleccionadas = [];
-    document.getElementById('imagenesPreview').innerHTML = '';
-    document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
+    
+    archivos.forEach((archivo, index) => {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            imagenesNotaSeleccionadas.push(e.target.result);
+            
+            const imgWrapper = document.createElement('div');
+            imgWrapper.className = 'preview-imagen-wrapper';
+            imgWrapper.innerHTML = `
+                <img src="${e.target.result}" alt="Preview">
+                <button type="button" class="btn-quitar-imagen" onclick="quitarImagenNota(${index})" title="Quitar">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            `;
+            preview.appendChild(imgWrapper);
+        };
+        
+        reader.readAsDataURL(archivo);
+    });
+}
+
+/**
+ * Quitar imagen de la previsualización
+ */
+function quitarImagenNota(index) {
+    imagenesNotaSeleccionadas.splice(index, 1);
+    
+    // Rehacer preview
+    const fileInput = document.getElementById('notaImagen');
+    const dt = new DataTransfer();
+    
+    const archivos = Array.from(fileInput.files);
+    archivos.forEach((file, i) => {
+        if (i !== index) {
+            dt.items.add(file);
+        }
+    });
+    
+    fileInput.files = dt.files;
+    previsualizarImagenesNota();
+}
+
+/**
+ * Ver imagen en tamaño completo (modal)
+ */
+function verImagenCompleta(url) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-imagen-completa';
+    modal.innerHTML = `
+        <div class="modal-imagen-overlay" onclick="cerrarModalImagen()">
+            <div class="modal-imagen-container">
+                <button class="btn-cerrar-imagen" onclick="cerrarModalImagen()">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+                <img src="${url}" alt="Imagen completa">
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+/**
+ * Cerrar modal de imagen
+ */
+function cerrarModalImagen() {
+    const modal = document.querySelector('.modal-imagen-completa');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    }
 }
 
 // =====================================================
-// ELIMINAR NOTA
+// ACCIONES DE NOTAS
 // =====================================================
 
+/**
+ * Marcar/desmarcar nota como importante
+ */
+async function toggleImportanteNota(notaId, esImportante) {
+    console.log('⭐ Cambiando importancia de nota:', notaId, esImportante);
+    
+    try {
+        const { error } = await supabaseClient
+            .from('notas')
+            .update({ es_importante: esImportante })
+            .eq('id', notaId);
+        
+        if (error) {
+            console.error('Error al actualizar:', error);
+            alert('Error al actualizar nota');
+            return;
+        }
+        
+        console.log('✅ Nota actualizada');
+        await cargarNotas(clienteIdActual);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al actualizar nota');
+    }
+}
+
+/**
+ * Eliminar nota
+ */
 async function eliminarNota(notaId) {
-    if (!confirm('¿Eliminar esta nota?')) return;
+    if (!confirm('¿Eliminar esta nota? Esta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    console.log('🗑️ Eliminando nota:', notaId);
     
     try {
         const { error } = await supabaseClient
@@ -1516,99 +1820,118 @@ async function eliminarNota(notaId) {
             .eq('id', notaId);
         
         if (error) {
-            alert('Error al eliminar');
+            console.error('Error al eliminar:', error);
+            alert('Error al eliminar nota');
             return;
         }
         
+        console.log('✅ Nota eliminada');
         await cargarNotas(clienteIdActual);
         
     } catch (error) {
-        alert('Error: ' + error.message);
+        console.error('Error:', error);
+        alert('Error al eliminar nota');
     }
 }
 
 // =====================================================
-// IMÁGENES
+// ATAJOS DE TECLADO (Opcional)
 // =====================================================
 
-function previsualizarImagenesNota() {
-    const fileInput = document.getElementById('notaImagen');
-    const preview = document.getElementById('imagenesPreview');
-    const label = document.getElementById('archivosSeleccionados');
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('nuevaNota');
     
-    if (!fileInput.files || fileInput.files.length === 0) {
-        preview.innerHTML = '';
-        label.textContent = 'Ningún archivo seleccionado';
-        return;
+    if (textarea) {
+        // Enviar con Ctrl+Enter
+        textarea.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                enviarNota();
+            }
+        });
     }
-    
-    const archivos = Array.from(fileInput.files);
-    label.textContent = `${archivos.length} imagen(es)`;
-    
-    preview.innerHTML = '';
-    imagenesNotaSeleccionadas = [];
-    
-    archivos.forEach(archivo => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imagenesNotaSeleccionadas.push(e.target.result);
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.className = 'preview-imagen';
-            preview.appendChild(img);
-        };
-        reader.readAsDataURL(archivo);
-    });
-}
-
-function verImagenCompleta(url) {
-    const modal = document.createElement('div');
-    modal.className = 'modal-imagen';
-    modal.onclick = () => modal.remove();
-    modal.innerHTML = `
-        <div class="modal-imagen-contenido">
-            <img src="${url}" alt="Imagen">
-            <button class="btn-cerrar" onclick="this.parentElement.parentElement.remove()">
-                <span class="material-symbols-rounded">close</span>
-            </button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
+});
 
 // =====================================================
-// AUXILIARES
+// FUNCIONES AUXILIARES
 // =====================================================
 
-function esNotaPropia(nota) {
-    // Simplificado - verifica en el futuro con auth
-    return true; // Por ahora permite eliminar todas
-}
-
-function formatearFecha(fecha) {
-    const hoy = new Date();
-    const ayer = new Date(hoy);
-    ayer.setDate(ayer.getDate() - 1);
+/**
+ * Buscar notas por texto
+ */
+function buscarNotas(texto) {
+    const cards = document.querySelectorAll('.nota-card');
+    const textoBusqueda = texto.toLowerCase();
     
-    if (esMismoDia(fecha, hoy)) return 'Hoy';
-    if (esMismoDia(fecha, ayer)) return 'Ayer';
-    
-    return fecha.toLocaleDateString('es-ES', { 
-        day: 'numeric', 
-        month: 'short',
-        year: fecha.getFullYear() !== hoy.getFullYear() ? 'numeric' : undefined
+    cards.forEach(card => {
+        const mensaje = card.querySelector('.nota-mensaje').textContent.toLowerCase();
+        const usuario = card.querySelector('.nota-usuario').textContent.toLowerCase();
+        
+        if (mensaje.includes(textoBusqueda) || usuario.includes(textoBusqueda)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
     });
 }
 
-function formatearHora(fecha) {
-    return fecha.toLocaleTimeString('es-ES', { 
-        hour: '2-digit', 
-        minute: '2-digit'
+/**
+ * Filtrar notas por tipo
+ */
+function filtrarNotasPorTipo(tipo) {
+    const cards = document.querySelectorAll('.nota-card');
+    
+    cards.forEach(card => {
+        if (tipo === 'todas') {
+            card.style.display = 'block';
+        } else {
+            const iconElement = card.querySelector('.nota-tipo-icon');
+            const notaTipo = iconElement?.getAttribute('title');
+            
+            if (notaTipo === tipo) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
     });
 }
 
-function esMismoDia(fecha1, fecha2) {
-    return fecha1.getDate() === fecha2.getDate() &&
-           fecha1.getMonth() === fecha2.getMonth() &&
-           fecha1.getFullYear() === fecha2.getFullYear();
+/**
+ * Exportar notas a texto
+ */
+async function exportarNotasTexto(clienteId) {
+    try {
+        const { data: notas, error } = await supabaseClient
+            .from('notas')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        
+        let texto = '=== HISTORIAL DE NOTAS ===\n\n';
+        
+        notas.forEach(nota => {
+            const fecha = new Date(nota.created_at);
+            texto += `[${formatearFechaCompleta(fecha)} ${formatearHora(fecha)}]\n`;
+            texto += `Usuario: ${nota.usuario_nombre || nota.usuario_email}\n`;
+            texto += `Tipo: ${nota.tipo}\n`;
+            texto += `Mensaje: ${nota.mensaje}\n`;
+            texto += '\n---\n\n';
+        });
+        
+        // Descargar
+        const blob = new Blob([texto], { type: 'text/plain;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `notas_cliente_${clienteId}_${new Date().toISOString().split('T')[0]}.txt`;
+        link.click();
+        
+        console.log('✅ Notas exportadas');
+        
+    } catch (error) {
+        console.error('Error al exportar:', error);
+        alert('Error al exportar notas');
+    }
 }

@@ -69,8 +69,8 @@ async function guardarClienteEnSupabase(formData) {
                 genero: formData.genero,
                 fecha_nacimiento: formatDateForSQL(formData.fechaNacimiento),
                 email: formData.email,
-                telefono1: formData.telefono1,
-                telefono2: formData.telefono2,
+                telefono: formData.telefono,
+                telefono_secundario: formData.telefono_secundario,
                 ssn: formData.ssn,
                 estado_migratorio: formData.estadoMigratorio,
                 nacionalidad: formData.nacionalidad,
@@ -207,7 +207,7 @@ async function listarPolizas(filtros = {}) {
             .from('polizas')
             .select(`
                 *,
-                cliente:clientes(nombres, apellidos, telefono1, email),
+                cliente:clientes(nombres, apellidos, telefono, email),
                 operador:usuarios(nombre)
             `)
             .order('created_at', { ascending: false });
