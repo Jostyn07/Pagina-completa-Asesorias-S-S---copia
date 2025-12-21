@@ -1,470 +1,500 @@
 // ============================================
-// CLIENTE_EDITAR.JS - SOLO EDICIÓN DE CLIENTES
+// VARIABLES GLOBALES
 // ============================================
-let clienteIdActual = null;
+let clienteId = null;
+let polizaId = null;
+let dependientesCount = 0;
+let documentosCount = 0;
+let notasCount = 0;
+let imagenesNotaSeleccionadas = [];
+let autosaveTimer = null;
+const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 
 // ============================================
 // INICIALIZACIÓN
 // ============================================
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('✏️ Modo: EDITAR CLIENTE EXISTENTE');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✏️ Modo: EDITAR CLIENTE');
     
-    // Obtener ID del cliente desde URL
+    // Obtener ID de la URL
     const urlParams = new URLSearchParams(window.location.search);
-    clienteIdActual = urlParams.get('id');
+    clienteId = urlParams.get('id');
     
-    if (!clienteIdActual) {
-        alert('❌ No se especificó ID de cliente');
+    if (!clienteId) {
+        alert('Error: No se especificó ID de cliente');
         window.location.href = './polizas.html';
         return;
     }
     
-    console.log('📋 Cliente ID:', clienteIdActual);
+    console.log('📋 Cliente ID:', clienteId);
     
-    // Inicializar formulario
     inicializarFormulario();
     inicializarTabs();
     inicializarValidacionTiempoReal();
+    inicializarAutoguardado();
     
     // Cargar datos del cliente
-    await cargarDatosCliente(clienteIdActual);
+    cargarDatosCliente(clienteId);
     
-    // Configurar submit
     document.getElementById('clienteForm').addEventListener('submit', handleSubmit);
+    
+    console.log('✅ Formulario de edición inicializado');
 });
 
 function inicializarFormulario() {
-    // Configurar fecha de registro
-    const hoy = new Date().toISOString().split('T')[0];
-    if (document.getElementById('fechaRegistro')) {
-        document.getElementById('fechaRegistro').value = hoy;
+    // Cambiar botón de submit
+    const btnSubmit = document.querySelector('.btn-submit');
+    if (btnSubmit) {
+        btnSubmit.innerHTML = '<span class="material-symbols-rounded">check_circle</span> Actualizar Cliente';
     }
+    
+    // Mostrar tabs de estado y comisiones
+    const tabEstado = document.querySelector('.tab-estado');
+    const tabComisiones = document.querySelector('.tab-comisiones');
+    if (tabEstado) tabEstado.style.display = 'flex';
+    if (tabComisiones) tabComisiones.style.display = 'flex';
+}
+
+// ============================================
+// FORMATEADORES DE FECHA
+// ============================================
+
+function formatearFechaUS(fecha) {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    const anio = d.getFullYear();
+    return `${mes}/${dia}/${anio}`;
+}
+
+function convertirAFormatoUS(fechaISO) {
+    if (!fechaISO) return '';
+    const partes = fechaISO.split('-');
+    if (partes.length !== 3) return '';
+    return `${partes[1]}/${partes[2]}/${partes[0]}`;
+}
+
+function convertirAFormatoISO(fechaUS) {
+    if (!fechaUS) return '';
+    const partes = fechaUS.split('/');
+    if (partes.length !== 3) return '';
+    return `${partes[2]}-${partes[0]}-${partes[1]}`;
 }
 
 // ============================================
 // CARGAR DATOS DEL CLIENTE
 // ============================================
 
-async function cargarDatosCliente(clienteId) {
+async function cargarDatosCliente(id) {
     try {
-        mostrarIndicadorCarga(true);
+        console.log('📡 Cargando datos del cliente:', id);
         
-        console.log('📡 Cargando datos del cliente...');
+        // Mostrar indicador de carga
+        const btnSubmit = document.querySelector('.btn-submit');
+        const textoOriginal = btnSubmit?.innerHTML;
+        if (btnSubmit) {
+            btnSubmit.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span> Cargando...';
+            btnSubmit.disabled = true;
+        }
         
         // Cargar cliente
-        const { data: clientes, error: clienteError } = await supabaseClient
+        const { data: clienteData, error: clienteError } = await supabaseClient
             .from('clientes')
             .select('*')
-            .eq('id', clienteId)
+            .eq('id', id)
             .single();
         
-        if (clienteError || !clientes) {
-            throw new Error('Cliente no encontrado');
-        }
+        if (clienteError) throw clienteError;
+        if (!clienteData) throw new Error('Cliente no encontrado');
         
-        console.log('✅ Cliente cargado:', clientes);
+        console.log('✅ Cliente cargado:', clienteData);
         
-        // Cargar póliza asociada
-        const { data: polizas, error: polizaError } = await supabaseClient
+        // Cargar póliza
+        const { data: polizasData, error: polizasError } = await supabaseClient
             .from('polizas')
             .select('*')
-            .eq('cliente_id', clienteId);
+            .eq('cliente_id', id);
         
-        if (polizaError) {
-            console.error('⚠️ Error al cargar póliza:', polizaError);
+        if (polizasError) console.warn('⚠️ Error al cargar pólizas:', polizasError);
+        
+        const polizaData = polizasData && polizasData.length > 0 ? polizasData[0] : null;
+        if (polizaData) {
+            polizaId = polizaData.id;
+            console.log('✅ Póliza cargada:', polizaId);
         }
         
-        console.log('✅ Póliza cargada:', polizas);
+        // Cargar dependientes
+        const { data: dependientesData, error: dependientesError } = await supabaseClient
+            .from('dependientes')
+            .select('*')
+            .eq('cliente_id', id);
+        
+        if (dependientesError) console.warn('⚠️ Error al cargar dependientes:', dependientesError);
+        console.log(`✅ ${dependientesData?.length || 0} dependientes cargados`);
+        
+        // Cargar notas
+        const { data: notasData, error: notasError } = await supabaseClient
+            .from('notas')
+            .select('*')
+            .eq('cliente_id', id)
+            .order('created_at', { ascending: false });
+        
+        if (notasError) console.warn('⚠️ Error al cargar notas:', notasError);
+        console.log(`✅ ${notasData?.length || 0} notas cargadas`);
         
         // Rellenar formulario
-        rellenarFormulario(clientes, polizas || []);
-        await cargarDependientes(clienteId);
-        await cargarEstadoSeguimiento(clienteId);
-
-        if (polizas && polizas.length > 0) {
-       await cargarHistorialPoliza(polizas[0].id);
+        rellenarFormulario(clienteData, polizaData, dependientesData, notasData);
+        
+        // Actualizar título
+        const nombreCompleto = `${clienteData.nombres} ${clienteData.apellidos}`;
+        document.getElementById('pageTitle').textContent = `✏️ Editando: ${nombreCompleto}`;
+        
+        // Restaurar botón
+        if (btnSubmit) {
+            btnSubmit.innerHTML = textoOriginal;
+            btnSubmit.disabled = false;
         }
         
-        await cargarNotas(clienteId);
-
-        mostrarIndicadorCarga(false);
-        
-        await cargarDependientes(clienteId);
-        
-        mostrarIndicadorCarga(false)
-        
     } catch (error) {
-        console.error('❌ Error al cargar datos:', error);
-        alert(`Error al cargar datos: ${error.message}`);
+        console.error('❌ Error al cargar cliente:', error);
+        alert(`Error al cargar los datos: ${error.message}`);
         window.location.href = './polizas.html';
     }
 }
 
 // ============================================
-// RELLENAR FORMULARIO CON DATOS EXISTENTES
+// RELLENAR FORMULARIO
 // ============================================
 
-function rellenarFormulario(cliente, polizas = []) {
+function rellenarFormulario(cliente, poliza, dependientes, notas) {
     console.log('📝 Rellenando formulario...');
     
-    // Información general del cliente
-    if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = cliente.tipo_registro;
+    // CLIENTE - Datos personales
     if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres;
     if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos;
     if (cliente.email) document.getElementById('email').value = cliente.email;
-    if (cliente.telefono) document.getElementById('telefono').value = cliente.telefono;
-    if (cliente.telefono_secundario) document.getElementById('telefonoSecundario').value = cliente.telefono_secundario;
-    if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = cliente.fecha_nacimiento;
-    if (cliente.genero) document.getElementById('genero').value = cliente.genero;
+    if (cliente.telefono) {
+        document.getElementById('telefono1').value = formatearTelefono(cliente.telefono);
+    }
+    if (cliente.telefono2) {
+        document.getElementById('telefono2').value = formatearTelefono(cliente.telefono2);
+    }
+    
+    // Fecha de nacimiento en formato mm/dd/aaaa
+    if (cliente.fecha_nacimiento) {
+        const fechaNacInput = document.getElementById('fechaNacimiento');
+        fechaNacInput.value = cliente.fecha_nacimiento; // ISO para input type="date"
+        // Opcional: mostrar en formato US en un display si existe
+    }
+    
+    if (cliente.sexo) document.getElementById('genero').value = cliente.sexo;
+    if (cliente.ssn) document.getElementById('ssn').value = formatearSSN(cliente.ssn);
     if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio;
     if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad;
-    if (cliente.ssn) document.getElementById('ssn').value = cliente.ssn;
-    if (cliente.ocupacion) document.getElementById('ocupacion').value = cliente.ocupacion;
-    if (cliente.ingresos) document.getElementById('ingresos').value = cliente.ingresos;
-    if (cliente.aplica !== null && cliente.aplica !== undefined) {
-        document.getElementById('aplica').value = cliente.aplica ? 'true' : 'false';
-    }
+    if (cliente.empleador) document.getElementById('ocupacion').value = cliente.empleador;
+    if (cliente.ingreso_anual) document.getElementById('ingresos').value = cliente.ingreso_anual;
     
     // Dirección
     if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion;
-    if (cliente.casa_apartamento) document.getElementById('casaApartamento').value = cliente.casa_apartamento;
     if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad;
     if (cliente.estado) document.getElementById('estado').value = cliente.estado;
-    if (cliente.condado) document.getElementById('condado').value = cliente.condado;
     if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal;
-    if (cliente.tiene_po_box) document.getElementById('tienePoBox').checked = cliente.tiene_po_box;
-    if (cliente.po_box) document.getElementById('poBox').value = cliente.po_box;
     
-    // Póliza (si existe)
-    if (polizas && polizas.length > 0) {
-        const poliza = polizas[0];
-        
-        console.log('📋 Cargando datos de póliza:', poliza);
-        
+    // PÓLIZA
+    if (poliza) {
         if (poliza.compania) document.getElementById('compania').value = poliza.compania;
         if (poliza.plan) document.getElementById('plan').value = poliza.plan;
         if (poliza.prima) document.getElementById('prima').value = poliza.prima;
         if (poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal;
-        if (poliza.fecha_efectividad) document.getElementById('fechaEfectividad').value = poliza.fecha_efectividad;
-        if (poliza.fecha_inicial_cobertura) document.getElementById('fechaInicialCobertura').value = poliza.fecha_inicial_cobertura;
-        if (poliza.fecha_final_cobertura) document.getElementById('fechaFinalCobertura').value = poliza.fecha_final_cobertura;
-        if (poliza.member_id) document.getElementById('memberId').value = poliza.member_id;
-        if (poliza.portal_npn) document.getElementById('portalNpn').value = poliza.portal_npn;
-        if (poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad;
         if (poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta;
+        if (poliza.operador_nombre) document.getElementById('operadorNombre').value = poliza.operador_nombre;
         if (poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza;
-        
-        // ⭐ OPERADOR Y AGENTE desde póliza
-        if (poliza.operador_nombre) {
-            document.getElementById('operadorNombre').value = poliza.operador_nombre;
-            console.log('👤 Operador cargado:', poliza.operador_nombre);
-        }
+        if (poliza.member_id) document.getElementById('memberId').value = poliza.member_id;
+        if (poliza.portal_npn) document.getElementById('portalNPN').value = poliza.portal_npn;
+        if (poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad;
         if (poliza.observaciones) document.getElementById('observaciones').value = poliza.observaciones;
-    }
-    
-    console.log('✅ Formulario rellenado correctamente');
-}
-
-// ============================================
-// MANEJO DEL FORMULARIO - SUBMIT
-// ============================================
-
-async function handleSubmit(event) {
-    event.preventDefault();
-    
-    // Validar formulario
-    if (!validarFormularioCompleto()) {
-        alert('Por favor, completa todos los campos requeridos correctamente.');
-        return;
-    }
-    
-    // Confirmar actualización
-    const confirmacion = confirm('¿Actualizar la información de este cliente?');
-    if (!confirmacion) return;
-    
-    // Obtener datos
-    const formData = obtenerDatosFormulario();
-    
-    console.log('📋 Datos a actualizar:', formData);
-    
-    try {
-        await actualizarCliente(clienteIdActual, formData);
-    } catch (error) {
-        console.error('❌ Error al actualizar:', error);
-        alert(`Error al actualizar: ${error.message}`);
-    }
-}
-
-// ============================================
-// ACTUALIZAR CLIENTE Y PÓLIZA
-// ============================================
-
-async function actualizarCliente(clienteId, formData) {
-    console.log('🔄 Actualizando cliente:', clienteId);
-    
-    const clienteData = {
-        tipo_registro: formData.tipoRegistro,
-        nombres: formData.nombres,
-        apellidos: formData.apellidos,
-        email: formData.email,
-        telefono: formData.telefono,
-        telefono_secundario: formData.telefono_secundario || null,
-        genero: formData.genero,
-        fecha_nacimiento: formData.fechaNacimiento,
-        estado_migratorio: formData.estadoMigratorio,
-        nacionalidad: formData.nacionalidad || 'No especificada',
-        ssn: formData.ssn || null,
-        ocupacion: formData.ocupacion || null,
-        ingresos: parseFloat(formData.ingresos) || 0,
-        aplica: formData.aplica === 'true' || formData.aplica === true,
-        direccion: formData.direccion,
-        casa_apartamento: formData.casaApartamento || null,
-        ciudad: formData.ciudad,
-        estado: formData.estado,
-        condado: formData.condado || 'No especificado',
-        codigo_postal: formData.codigoPostal,
-        tiene_po_box: formData.tienePoBox === 'true' || formData.tienePoBox === true || false,
-        po_box: formData.poBox || null,
-        operador_nombre: formData.operadorNombre || null,
-        updated_at: new Date().toISOString()
-    };
-    
-    console.log('📤 Datos del cliente a actualizar:', clienteData);
-    
-    // Actualizar cliente
-    const { error: clienteError } = await supabaseClient
-        .from('clientes')
-        .update(clienteData)
-        .eq('id', clienteId);
-    
-    if (clienteError) {
-        console.error('❌ Error al actualizar cliente:', clienteError);
-        throw clienteError;
-    }
-    
-    console.log('✅ Cliente actualizado');
-    
-    // Buscar póliza asociada
-    const { data: polizasExistentes } = await supabaseClient
-        .from('polizas')
-        .select('id, numero_poliza')
-        .eq('cliente_id', clienteId)
-        .limit(1);
-    
-    if (polizasExistentes && polizasExistentes.length > 0) {
-        // ==========================================
-        // ACTUALIZAR PÓLIZA EXISTENTE
-        // ==========================================
-        console.log('🔄 Actualizando póliza existente');
         
-        // Preparar datos SIN numero_poliza (mantener el que ya tiene)
-        const polizaData = {
-            compania: formData.compania,
-            plan: formData.plan,
-            prima: parseFloat(formData.prima)  || 0,
-            credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
-            fecha_efectividad: formData.fechaEfectividad,
-            fecha_inicial_cobertura: formData.fechaInicialCobertura,
-            fecha_final_cobertura: formData.fechaFinalCobertura,
-            member_id: formData.memberId || null,
-            portal_npn: formData.portalNpn || null,
-            clave_seguridad: formData.claveSeguridad || null,
-            tipo_venta: formData.tipoVenta || null,
-            enlace_poliza: formData.enlacePoliza || null,
-            operador_nombre: formData.operadorNombre || null,
-            agente_nombre: formData.agenteNombre || null,
-            estado_mercado: formData.estadoMercado || 'pendiente',
-            observaciones: formData.observaciones || null,
-            updated_at: new Date().toISOString()
-        };
-        
-        const { error: polizaError } = await supabaseClient
-            .from('polizas')
-            .update(polizaData)
-            .eq('id', polizasExistentes[0].id);
-        
-        if (polizaError) {
-            console.error('❌ Error al actualizar póliza:', polizaError);
-            throw polizaError;
+        // Fechas de cobertura en formato mm/dd/aaaa
+        if (poliza.fecha_inicial_cobertura) {
+            const fechaInicialUS = convertirAFormatoUS(poliza.fecha_inicial_cobertura);
+            const displayInicial = document.getElementById('displayFechaInicial');
+            const inputInicial = document.getElementById('fechaInicialCobertura');
+            if (displayInicial) displayInicial.textContent = fechaInicialUS;
+            if (inputInicial) inputInicial.value = poliza.fecha_inicial_cobertura;
         }
         
-        console.log('✅ Póliza actualizada (número:', polizasExistentes[0].numero_poliza, ')');
-        
-    } else {
-        // ==========================================
-        // CREAR NUEVA PÓLIZA (si no existe)
-        // ==========================================
-        console.log('📝 Creando nueva póliza para este cliente');
-        
-        const numeroPolizaGenerado = await generarNumeroPoliza();
-        console.log('🔢 Número generado:', numeroPolizaGenerado);
-        
-        const polizaData = {
-            cliente_id: clienteId,
-            compania: formData.compania,
-            plan: formData.plan,
-            numero_poliza: formData.numeroPoliza || numeroPolizaGenerado,
-            prima: parseFloat(formData.prima) || 0,
-            credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
-            fecha_efectividad: formData.fechaEfectividad,
-            fecha_inicial_cobertura: formData.fechaInicialCobertura,
-            fecha_final_cobertura: formData.fechaFinalCobertura,
-            member_id: formData.memberId || null,
-            portal_npn: formData.portalNpn || null,
-            clave_seguridad: formData.claveSeguridad || null,
-            tipo_venta: formData.tipoVenta || null,
-            enlace_poliza: formData.enlacePoliza || null,
-            operador_nombre: formData.operadorNombre || null,
-            agente_nombre: formData.agenteNombre || null,
-            estado_mercado: 'pendiente',
-            observaciones: formData.observaciones || null
-        };
-        
-        const { error: polizaError } = await supabaseClient
-            .from('polizas')
-            .insert([polizaData]);
-        
-        if (polizaError) {
-            console.error('❌ Error al crear póliza:', polizaError);
-            throw polizaError;
+        if (poliza.fecha_final_cobertura) {
+            const fechaFinalUS = convertirAFormatoUS(poliza.fecha_final_cobertura);
+            const displayFinal = document.getElementById('displayFechaFinal');
+            const inputFinal = document.getElementById('fechaFinalCobertura');
+            if (displayFinal) displayFinal.textContent = fechaFinalUS;
+            if (inputFinal) inputFinal.value = poliza.fecha_final_cobertura;
         }
         
-        console.log('✅ Póliza creada con número:', numeroPolizaGenerado);
-    }
-    
-    // Redirigir
-    alert('✅ Cliente y póliza actualizados correctamente');
-    window.location.href = './polizas.html';
-}
-
-// ============================================
-// GENERAR NÚMERO DE PÓLIZA
-// ============================================
-
-async function generarNumeroPoliza() {
-    const anioActual = new Date().getFullYear();
-    
-    try {
-        const { data, error } = await supabaseClient
-            .from('polizas')
-            .select('numero_poliza', { count: 'exact' })
-            .like('numero_poliza', `POL-${anioActual}-%`)
-            .order('numero_poliza', { ascending: false })
-            .limit(1);
-        
-        if (error) throw error;
-        
-        let siguiente = 1;
-        if (data && data.length > 0) {
-            const ultimoNumero = data[0].numero_poliza;
-            const match = ultimoNumero.match(/POL-\d{4}-(\d+)/);
-            if (match) {
-                siguiente = parseInt(match[1]) + 1;
-            }
-        }
-        
-        return `POL-${anioActual}-${String(siguiente).padStart(4, '0')}`;
-        
-    } catch (error) {
-        console.error('Error al generar número de póliza:', error);
-        const timestamp = Date.now().toString().slice(-6);
-        return `POL-${anioActual}-${timestamp}`;
-    }
-}
-
-// ============================================
-// OBTENER DATOS DEL FORMULARIO
-// ============================================
-
-function obtenerDatosFormulario() {
-    const form = document.getElementById('clienteForm');
-    const formData = new FormData(form);
-    
-    const datos = {
-        tipoRegistro: formData.get('tipoRegistro') || 'individual',
-        nombres: formData.get('nombres'),
-        apellidos: formData.get('apellidos'),
-        email: formData.get('email'),
-        telefono: formData.get('telefono'),
-        telefono_secundario: formData.get('telefonoSecundario') || null,
-        fechaNacimiento: formData.get('fechaNacimiento'),
-        genero: formData.get('genero'),
-        estadoMigratorio: formData.get('estadoMigratorio'),
-        nacionalidad: formData.get('nacionalidad'),
-        ssn: formData.get('ssn') || null,
-        ocupacion: formData.get('ocupacion') || null,
-        ingresos: formData.get('ingresos') || 0,
-        aplica: formData.get('aplica'),
-        direccion: formData.get('direccion'),
-        casaApartamento: formData.get('casaApartamento') || null,
-        ciudad: formData.get('ciudad'),
-        estado: formData.get('estado'),
-        condado: formData.get('condado'),
-        codigoPostal: formData.get('codigoPostal'),
-        tienePoBox: formData.get('tienePoBox') === 'on',
-        poBox: formData.get('poBox') || null,
-        compania: formData.get('compania'),
-        plan: formData.get('plan'),
-        numeroPoliza: formData.get('numeroPoliza') || null,
-        prima: formData.get('prima') || 0,
-        creditoFiscal: formData.get('creditoFiscal') || 0,
-        fechaEfectividad: formData.get('fechaEfectividad'),
-        fechaInicialCobertura: formData.get('fechaInicialCobertura'),
-        fechaFinalCobertura: formData.get('fechaFinalCobertura'),
-        memberId: formData.get('memberId') || null,
-        portalNpn: formData.get('portalNpn') || null,
-        claveSeguridad: formData.get('claveSeguridad') || null,
-        tipoVenta: formData.get('tipoVenta') || null,
-        enlacePoliza: formData.get('enlacePoliza') || null,
-        operadorNombre: formData.get('operadorNombre') || null,
-        agenteNombre: formData.get('agenteNombre') || null,
-        estadoMercado: formData.get('estadoMercado') || null,
-        observaciones: formData.get('observaciones') || null
-    };
-    
-    return datos;
-}
-
-// ============================================
-// VALIDACIÓN
-// ============================================
-
-function validarFormularioCompleto() {
-    const camposRequeridos = [
-        'nombres', 'apellidos', 'email', 'telefono',
-        'fechaNacimiento', 'genero', 'estadoMigratorio',
-        'direccion', 'ciudad', 'estado', 'codigoPostal',
-        'compania', 'plan', 'fechaEfectividad'
-    ];
-    
-    for (const campo of camposRequeridos) {
-        const elemento = document.getElementById(campo) || document.querySelector(`[name="${campo}"]`);
-        if (!elemento || !elemento.value || elemento.value.trim() === '') {
-            console.error(`Campo requerido vacío: ${campo}`);
-            elemento?.focus();
-            return false;
+        if (poliza.fecha_efectividad) {
+            const fechaEfectividadUS = convertirAFormatoUS(poliza.fecha_efectividad);
+            const displayEfectividad = document.getElementById('displayFechaEfectividad');
+            const inputEfectividad = document.getElementById('fechaEfectividad');
+            if (displayEfectividad) displayEfectividad.textContent = fechaEfectividadUS;
+            if (inputEfectividad) inputEfectividad.value = poliza.fecha_efectividad;
         }
     }
     
-    return true;
+    // DEPENDIENTES
+    if (dependientes && dependientes.length > 0) {
+        dependientes.forEach(dep => {
+            agregarDependienteExistente(dep);
+        });
+    }
+    
+    // NOTAS
+    if (notas && notas.length > 0) {
+        mostrarNotasExistentes(notas);
+    }
+    
+    console.log('✅ Formulario rellenado');
 }
+
+function agregarDependienteExistente(dep) {
+    dependientesCount++;
+    const container = document.getElementById('dependientesContainer');
+    
+    // Quitar empty state
+    const emptyState = container.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+    
+    const dependienteHTML = `
+        <div class="dependiente-item" id="dependiente-${dependientesCount}" data-id="${dep.id}">
+            <div class="dependiente-header">
+                <h4>Dependiente #${dependientesCount}</h4>
+                <button type="button" class="btn-remove" onclick="eliminarDependiente(${dependientesCount})">
+                    <span class="material-symbols-rounded">delete</span>
+                </button>
+            </div>
+            <div class="dependiente-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombres <span class="required">*</span></label>
+                        <input type="text" name="dep_nombres_${dependientesCount}" value="${dep.nombres || ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Apellidos <span class="required">*</span></label>
+                        <input type="text" name="dep_apellidos_${dependientesCount}" value="${dep.apellidos || ''}" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha de Nacimiento <span class="required">*</span></label>
+                        <input type="date" name="dep_fecha_nacimiento_${dependientesCount}" value="${dep.fecha_nacimiento || ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Género <span class="required">*</span></label>
+                        <select name="dep_genero_${dependientesCount}" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="masculino" ${dep.sexo === 'masculino' ? 'selected' : ''}>Masculino</option>
+                            <option value="femenino" ${dep.sexo === 'femenino' ? 'selected' : ''}>Femenino</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>SSN</label>
+                        <input type="text" name="dep_ssn_${dependientesCount}" 
+                               value="${dep.ssn ? formatearSSN(dep.ssn) : ''}"
+                               placeholder="###-##-####" 
+                               oninput="this.value = formatearSSN(this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Estado Migratorio</label>
+                        <select name="dep_estado_migratorio_${dependientesCount}">
+                            <option value="">Seleccionar...</option>
+                            <option value="ciudadano" ${dep.estado_migratorio === 'ciudadano' ? 'selected' : ''}>Ciudadano</option>
+                            <option value="residente" ${dep.estado_migratorio === 'residente' ? 'selected' : ''}>Residente Permanente</option>
+                            <option value="visa" ${dep.estado_migratorio === 'visa' ? 'selected' : ''}>Visa</option>
+                            <option value="otro" ${dep.estado_migratorio === 'otro' ? 'selected' : ''}>Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Relación</label>
+                        <select name="dep_relacion_${dependientesCount}">
+                            <option value="">Seleccionar...</option>
+                            <option value="hijo/a" ${dep.relacion === 'hijo/a' ? 'selected' : ''}>Hijo/a</option>
+                            <option value="conyuge" ${dep.relacion === 'conyuge' ? 'selected' : ''}>Cónyuge</option>
+                            <option value="padre/madre" ${dep.relacion === 'padre/madre' ? 'selected' : ''}>Padre/Madre</option>
+                            <option value="otro" ${dep.relacion === 'otro' ? 'selected' : ''}>Otro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', dependienteHTML);
+    actualizarContadorDependientes();
+}
+
+function mostrarNotasExistentes(notas) {
+    const thread = document.getElementById('notasThread');
+    const emptyState = thread.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+    
+    notas.forEach(nota => {
+        const notaHTML = `
+            <div class="nota-card" data-id="${nota.id}">
+                <div class="nota-header">
+                    <div class="nota-info">
+                        <span class="nota-usuario">${nota.usuario_nombre || nota.usuario_email}</span>
+                        <span class="nota-fecha">${formatearFechaUS(nota.created_at)}</span>
+                    </div>
+                    <button type="button" class="btn-remove-nota" onclick="eliminarNota('${nota.id}')">
+                        <span class="material-symbols-rounded">delete</span>
+                    </button>
+                </div>
+                <div class="nota-mensaje">${nota.mensaje || ''}</div>
+                ${nota.imagenes && nota.imagenes.length > 0 ? `
+                    <div class="nota-imagenes">
+                        ${nota.imagenes.map(img => `
+                            <img src="${img}" alt="Imagen adjunta" style="max-width: 150px; border-radius: 8px; margin: 5px; cursor: pointer;" onclick="verImagenCompleta('${img}')">
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        thread.insertAdjacentHTML('beforeend', notaHTML);
+    });
+    
+    actualizarContadorNotas();
+}
+
+// ============================================
+// TABS NAVEGACIÓN
+// ============================================
+
+function inicializarTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+            cambiarTab(tabName);
+        });
+    });
+}
+
+function cambiarTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    const tabContent = document.getElementById(`tab-${tabName}`);
+    const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
+    
+    if (tabContent) tabContent.classList.add('active');
+    if (tabButton) tabButton.classList.add('active');
+}
+
+// ============================================
+// SECCIONES COLAPSABLES
+// ============================================
+
+function toggleSection(header) {
+    const section = header.parentElement;
+    section.classList.toggle('collapsed');
+}
+
+// ============================================
+// VALIDACIÓN EN TIEMPO REAL
+// ============================================
 
 function inicializarValidacionTiempoReal() {
     const emailInput = document.getElementById('email');
     if (emailInput) {
-        emailInput.addEventListener('blur', function() { validarEmail(this); });
+        emailInput.addEventListener('blur', function() {
+            validarEmail(this);
+        });
     }
     
-    const tel1 = document.getElementById('telefono');
-    const tel2 = document.getElementById('telefonoSecundario');
-    if (tel1) tel1.addEventListener('blur', function() { validarTelefono(this); });
-    if (tel2) tel2.addEventListener('blur', function() { validarTelefono(this); });
+    const tel1 = document.getElementById('telefono1');
+    const tel2 = document.getElementById('telefono2');
+    
+    if (tel1) {
+        tel1.addEventListener('input', function() {
+            this.value = formatearTelefono(this.value);
+        });
+        tel1.addEventListener('blur', function() {
+            validarTelefono(this);
+        });
+    }
+    
+    if (tel2) {
+        tel2.addEventListener('input', function() {
+            this.value = formatearTelefono(this.value);
+        });
+        tel2.addEventListener('blur', function() {
+            validarTelefono(this);
+        });
+    }
     
     const ssn = document.getElementById('ssn');
-    if (ssn) ssn.addEventListener('blur', function() { validarSSN(this); });
+    if (ssn) {
+        ssn.addEventListener('input', function() {
+            this.value = formatearSSN(this.value);
+        });
+        ssn.addEventListener('blur', function() {
+            validarSSN(this);
+        });
+    }
     
     const cp = document.getElementById('codigoPostal');
-    if (cp) cp.addEventListener('blur', function() { validarCodigoPostal(this); });
+    if (cp) {
+        cp.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 5);
+        });
+        cp.addEventListener('blur', function() {
+            validarCodigoPostal(this);
+        });
+    }
+    
+    const prima = document.getElementById('prima');
+    const creditoFiscal = document.getElementById('creditoFiscal');
+    const ingresos = document.getElementById('ingresos');
+    
+    [prima, creditoFiscal, ingresos].forEach(input => {
+        if (input) {
+            input.addEventListener('blur', function() {
+                formatearMonto(this);
+            });
+        }
+    });
+}
+
+function formatearTelefono(valor) {
+    const numeros = valor.replace(/\D/g, '');
+    const limitado = numeros.slice(0, 10);
+    
+    if (limitado.length <= 3) return limitado;
+    if (limitado.length <= 6) return `(${limitado.slice(0, 3)}) ${limitado.slice(3)}`;
+    return `(${limitado.slice(0, 3)}) ${limitado.slice(3, 6)}-${limitado.slice(6, 10)}`;
+}
+
+function formatearSSN(valor) {
+    const numeros = valor.replace(/\D/g, '');
+    if (numeros.length <= 3) return numeros;
+    if (numeros.length <= 5) return `${numeros.slice(0, 3)}-${numeros.slice(3)}`;
+    return `${numeros.slice(0, 3)}-${numeros.slice(3, 5)}-${numeros.slice(5, 9)}`;
+}
+
+function formatearMonto(input) {
+    let valor = parseFloat(input.value.replace(/[^0-9.]/g, ''));
+    if (isNaN(valor)) valor = 0;
+    input.value = valor.toFixed(2);
 }
 
 function validarEmail(input) {
@@ -479,9 +509,8 @@ function validarEmail(input) {
 }
 
 function validarTelefono(input) {
-    const regex = /^\d{10}$/;
-    const valor = input.value.replace(/\D/g, '');
-    if (valor && !regex.test(valor)) {
+    const numeros = input.value.replace(/\D/g, '');
+    if (numeros && numeros.length !== 10) {
         input.setCustomValidity('Teléfono debe tener 10 dígitos');
         input.reportValidity();
         return false;
@@ -491,9 +520,9 @@ function validarTelefono(input) {
 }
 
 function validarSSN(input) {
-    const regex = /^\d{3}-?\d{2}-?\d{4}$/;
-    if (input.value && !regex.test(input.value)) {
-        input.setCustomValidity('SSN inválido (formato: 123-45-6789)');
+    const numeros = input.value.replace(/\D/g, '');
+    if (numeros && numeros.length !== 9) {
+        input.setCustomValidity('SSN debe tener 9 dígitos');
         input.reportValidity();
         return false;
     }
@@ -502,8 +531,7 @@ function validarSSN(input) {
 }
 
 function validarCodigoPostal(input) {
-    const regex = /^\d{5}$/;
-    if (input.value && !regex.test(input.value)) {
+    if (input.value && input.value.length !== 5) {
         input.setCustomValidity('Código postal debe tener 5 dígitos');
         input.reportValidity();
         return false;
@@ -513,79 +541,461 @@ function validarCodigoPostal(input) {
 }
 
 // ============================================
-// TABS
+// MÉTODO DE PAGO
 // ============================================
 
-function inicializarTabs() {
-    // ✅ CORRECCIÓN: Usar '.tab-btn' en lugar de '.tab'
-    const tabs = document.querySelectorAll('.tab-btn');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => cambiarTab(tab.dataset.tab));
-    });
+function mostrarFormularioPago(tipo) {
+    const formBanco = document.getElementById('formBanco');
+    const formTarjeta = document.getElementById('formTarjeta');
     
-    console.log('✅ Tabs inicializados:', tabs.length);
-}
-
-function cambiarTab(tabName) {
-    console.log('📑 Cambiando a tab:', tabName);
+    if (formBanco) formBanco.style.display = 'none';
+    if (formTarjeta) formTarjeta.style.display = 'none';
     
-    // Ocultar todos los contenidos
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    // Desactivar todos los botones
-    document.querySelectorAll('.tab-btn').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Activar el contenido seleccionado
-    const contenido = document.getElementById(`tab-${tabName}`);
-    if (contenido) {
-        contenido.classList.add('active');
-    } else {
-        console.error('❌ No se encontró tab:', `tab-${tabName}`);
-    }
-    
-    // Activar el botón seleccionado
-    const boton = document.querySelector(`[data-tab="${tabName}"]`);
-    if (boton) {
-        boton.classList.add('active');
+    if (tipo === 'banco' && formBanco) {
+        formBanco.style.display = 'block';
+    } else if (tipo === 'tarjeta' && formTarjeta) {
+        formTarjeta.style.display = 'block';
     }
 }
 
-
-// ============================================
-// INDICADOR DE CARGA
-// ============================================
-
-function mostrarIndicadorCarga(mostrar) {
-    let indicador = document.getElementById('indicadorCarga');
+function limpiarMetodoPago() {
+    document.querySelectorAll('[name="metodoPago"]').forEach(radio => {
+        radio.checked = false;
+    });
     
-    if (mostrar) {
-        if (!indicador) {
-            indicador = document.createElement('div');
-            indicador.id = 'indicadorCarga';
-            indicador.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                            background: rgba(0,0,0,0.5); z-index: 9999; 
-                            display: flex; align-items: center; justify-content: center;">
-                    <div style="background: white; padding: 30px; border-radius: 10px; 
-                                text-align: center;">
-                        <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; 
-                                    border-top: 5px solid #6366f1; border-radius: 50%; 
-                                    animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
-                        <p style="margin: 0; color: #333;">Cargando datos...</p>
+    const formBanco = document.getElementById('formBanco');
+    const formTarjeta = document.getElementById('formTarjeta');
+    
+    if (formBanco) formBanco.style.display = 'none';
+    if (formTarjeta) formTarjeta.style.display = 'none';
+    
+    document.querySelectorAll('#formBanco input, #formTarjeta input, #formTarjeta select').forEach(input => {
+        input.value = '';
+    });
+}
+
+// ============================================
+// DEPENDIENTES
+// ============================================
+
+function agregarDependiente() {
+    dependientesCount++;
+    const container = document.getElementById('dependientesContainer');
+    
+    const emptyState = container.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+    
+    const dependienteHTML = `
+        <div class="dependiente-item" id="dependiente-${dependientesCount}">
+            <div class="dependiente-header">
+                <h4>Dependiente #${dependientesCount}</h4>
+                <button type="button" class="btn-remove" onclick="eliminarDependiente(${dependientesCount})">
+                    <span class="material-symbols-rounded">delete</span>
+                </button>
+            </div>
+            <div class="dependiente-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombres <span class="required">*</span></label>
+                        <input type="text" name="dep_nombres_${dependientesCount}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Apellidos <span class="required">*</span></label>
+                        <input type="text" name="dep_apellidos_${dependientesCount}" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha de Nacimiento <span class="required">*</span></label>
+                        <input type="date" name="dep_fecha_nacimiento_${dependientesCount}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Género <span class="required">*</span></label>
+                        <select name="dep_genero_${dependientesCount}" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="masculino">Masculino</option>
+                            <option value="femenino">Femenino</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>SSN</label>
+                        <input type="text" name="dep_ssn_${dependientesCount}" 
+                               placeholder="###-##-####" 
+                               oninput="this.value = formatearSSN(this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Estado Migratorio</label>
+                        <select name="dep_estado_migratorio_${dependientesCount}">
+                            <option value="">Seleccionar...</option>
+                            <option value="ciudadano">Ciudadano</option>
+                            <option value="residente">Residente Permanente</option>
+                            <option value="visa">Visa</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Relación</label>
+                        <select name="dep_relacion_${dependientesCount}">
+                            <option value="">Seleccionar...</option>
+                            <option value="hijo/a">Hijo/a</option>
+                            <option value="conyuge">Cónyuge</option>
+                            <option value="padre/madre">Padre/Madre</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', dependienteHTML);
+    actualizarContadorDependientes();
+}
+
+function eliminarDependiente(id) {
+    if (confirm('¿Eliminar este dependiente?')) {
+        const elemento = document.getElementById(`dependiente-${id}`);
+        if (elemento) {
+            elemento.remove();
+            actualizarContadorDependientes();
+            
+            const container = document.getElementById('dependientesContainer');
+            if (container.querySelectorAll('.dependiente-item').length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-symbols-rounded">family_restroom</span>
+                        <p>No hay dependientes agregados</p>
+                        <small>Haz clic en "Agregar Dependiente" para comenzar</small>
+                    </div>
+                `;
+            }
+        }
+    }
+}
+
+function actualizarContadorDependientes() {
+    const total = document.querySelectorAll('.dependiente-item').length;
+    const contador = document.getElementById('dependientesCounter');
+    if (contador) {
+        contador.textContent = `(${total})`;
+    }
+}
+
+// ============================================
+// DOCUMENTOS
+// ============================================
+
+function agregarDocumento() {
+    documentosCount++;
+    const container = document.getElementById('documentosContainer');
+    
+    const emptyState = container.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+    
+    const documentoHTML = `
+        <div class="documento-item" id="documento-${documentosCount}">
+            <div class="documento-header">
+                <span class="material-symbols-rounded">description</span>
+                <span class="documento-nombre" id="nombre-doc-${documentosCount}">Documento #${documentosCount}</span>
+                <button type="button" class="btn-remove" onclick="eliminarDocumento(${documentosCount})">
+                    <span class="material-symbols-rounded">delete</span>
+                </button>
+            </div>
+            <div class="documento-body">
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label>Archivo</label>
+                        <input type="file" name="doc_archivo_${documentosCount}" 
+                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                               onchange="previsualizarDocumento(${documentosCount}, this)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notas</label>
+                    <textarea name="doc_notas_${documentosCount}" rows="3" 
+                              placeholder="Describe el documento, especifica qué tipo es (ID, Póliza, Comprobante, etc.)..."></textarea>
+                </div>
+                <div class="documento-preview" id="preview-doc-${documentosCount}"></div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', documentoHTML);
+    actualizarContadorDocumentos();
+}
+
+function eliminarDocumento(id) {
+    if (confirm('¿Eliminar este documento?')) {
+        const elemento = document.getElementById(`documento-${id}`);
+        if (elemento) {
+            elemento.remove();
+            actualizarContadorDocumentos();
+            
+            const container = document.getElementById('documentosContainer');
+            if (container.querySelectorAll('.documento-item').length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-symbols-rounded">upload_file</span>
+                        <p>No hay documentos cargados</p>
+                        <small>Haz clic en "Agregar Archivo" para comenzar</small>
+                    </div>
+                `;
+            }
+        }
+    }
+}
+
+function previsualizarDocumento(id, input) {
+    const preview = document.getElementById(`preview-doc-${id}`);
+    const file = input.files[0];
+    
+    if (!file) {
+        preview.innerHTML = '';
+        return;
+    }
+    
+    const fileName = file.name;
+    const fileSize = (file.size / 1024).toFixed(2);
+    const fileType = file.type;
+    
+    const nombreSpan = document.getElementById(`nombre-doc-${id}`);
+    if (nombreSpan) {
+        nombreSpan.textContent = fileName;
+    }
+    
+    let previewHTML = `
+        <div class="archivo-info">
+            <span class="material-symbols-rounded">insert_drive_file</span>
+            <div class="archivo-detalles">
+                <strong>${fileName}</strong>
+                <small>${fileSize} KB</small>
+            </div>
+        </div>
+    `;
+    
+    if (fileType.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewHTML = `
+                <div class="imagen-preview">
+                    <img src="${e.target.result}" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                </div>
+                <div class="archivo-info">
+                    <span class="material-symbols-rounded">image</span>
+                    <div class="archivo-detalles">
+                        <strong>${fileName}</strong>
+                        <small>${fileSize} KB</small>
                     </div>
                 </div>
             `;
-            document.body.appendChild(indicador);
-        }
-        indicador.style.display = 'block';
+            preview.innerHTML = previewHTML;
+        };
+        reader.readAsDataURL(file);
     } else {
-        if (indicador) {
-            indicador.style.display = 'none';
+        preview.innerHTML = previewHTML;
+    }
+}
+
+function actualizarContadorDocumentos() {
+    const total = document.querySelectorAll('.documento-item').length;
+    const contador = document.getElementById('documentosCounter');
+    if (contador) {
+        contador.textContent = `(${total})`;
+    }
+}
+
+// ============================================
+// NOTAS
+// ============================================
+
+async function enviarNota() {
+    const textarea = document.getElementById('nuevaNota');
+    const mensaje = textarea.value.trim();
+    
+    if (!mensaje && imagenesNotaSeleccionadas.length === 0) {
+        alert('Escribe un mensaje o adjunta una imagen');
+        return;
+    }
+    
+    try {
+        // Obtener usuario actual
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        
+        if (!user) {
+            alert('Debes estar autenticado para agregar notas');
+            return;
         }
+        
+        // Guardar nota en BD
+        const notaData = {
+            cliente_id: clienteId,
+            mensaje: mensaje,
+            imagenes: imagenesNotaSeleccionadas,
+            usuario_email: user.email,
+            usuario_nombre: user.user_metadata?.nombre || user.email
+        };
+        
+        const { data: nuevaNota, error } = await supabaseClient
+            .from('notas')
+            .insert([notaData])
+            .select()
+            .single();
+        
+        if (error) throw error;
+        
+        // Agregar visualmente
+        const notaHTML = `
+            <div class="nota-card" data-id="${nuevaNota.id}">
+                <div class="nota-header">
+                    <div class="nota-info">
+                        <span class="nota-usuario">${nuevaNota.usuario_nombre}</span>
+                        <span class="nota-fecha">Ahora</span>
+                    </div>
+                    <button type="button" class="btn-remove-nota" onclick="eliminarNota('${nuevaNota.id}')">
+                        <span class="material-symbols-rounded">delete</span>
+                    </button>
+                </div>
+                <div class="nota-mensaje">${mensaje}</div>
+                ${imagenesNotaSeleccionadas.length > 0 ? `
+                    <div class="nota-imagenes">
+                        ${imagenesNotaSeleccionadas.map(img => `
+                            <img src="${img}" alt="Imagen adjunta" style="max-width: 150px; border-radius: 8px; margin: 5px;">
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        const thread = document.getElementById('notasThread');
+        const emptyState = thread.querySelector('.empty-state');
+        if (emptyState) emptyState.remove();
+        
+        thread.insertAdjacentHTML('afterbegin', notaHTML);
+        
+        cancelarNota();
+        actualizarContadorNotas();
+        
+    } catch (error) {
+        console.error('Error al guardar nota:', error);
+        alert('Error al guardar la nota: ' + error.message);
+    }
+}
+
+async function eliminarNota(notaId) {
+    if (!confirm('¿Eliminar esta nota?')) return;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('notas')
+            .delete()
+            .eq('id', notaId);
+        
+        if (error) throw error;
+        
+        // Remover visualmente
+        const notaCard = document.querySelector(`[data-id="${notaId}"]`);
+        if (notaCard) notaCard.remove();
+        
+        actualizarContadorNotas();
+        
+        // Mostrar empty state si no hay notas
+        const thread = document.getElementById('notasThread');
+        if (thread.querySelectorAll('.nota-card').length === 0) {
+            thread.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-rounded">chat_bubble</span>
+                    <p>No hay notas aún</p>
+                    <small>Escribe la primera nota para este cliente</small>
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('Error al eliminar nota:', error);
+        alert('Error al eliminar la nota: ' + error.message);
+    }
+}
+
+function cancelarNota() {
+    document.getElementById('nuevaNota').value = '';
+    imagenesNotaSeleccionadas = [];
+    document.getElementById('imagenesPreview').innerHTML = '';
+    document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
+    
+    const fileInput = document.getElementById('notaImagen');
+    if (fileInput) fileInput.value = '';
+}
+
+function previsualizarImagenesNota() {
+    const fileInput = document.getElementById('notaImagen');
+    const preview = document.getElementById('imagenesPreview');
+    const label = document.getElementById('archivosSeleccionados');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        preview.innerHTML = '';
+        label.textContent = 'Ningún archivo seleccionado';
+        imagenesNotaSeleccionadas = [];
+        return;
+    }
+    
+    const archivos = Array.from(fileInput.files);
+    label.textContent = `${archivos.length} imagen(es) seleccionada(s)`;
+    
+    preview.innerHTML = '';
+    imagenesNotaSeleccionadas = [];
+    
+    archivos.forEach((archivo, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagenesNotaSeleccionadas.push(e.target.result);
+            
+            const imgWrapper = document.createElement('div');
+            imgWrapper.className = 'preview-imagen-wrapper';
+            imgWrapper.style.cssText = 'display: inline-block; position: relative; margin-right: 10px;';
+            imgWrapper.innerHTML = `
+                <img src="${e.target.result}" alt="Preview" 
+                     style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;">
+                <button type="button" onclick="quitarImagenNota(${index})" 
+                        style="position: absolute; top: -5px; right: -5px; width: 24px; height: 24px; 
+                               background: #ef4444; color: white; border: none; border-radius: 50%; 
+                               cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">close</span>
+                </button>
+            `;
+            preview.appendChild(imgWrapper);
+        };
+        reader.readAsDataURL(archivo);
+    });
+}
+
+function quitarImagenNota(index) {
+    imagenesNotaSeleccionadas.splice(index, 1);
+    
+    const fileInput = document.getElementById('notaImagen');
+    const dt = new DataTransfer();
+    const archivos = Array.from(fileInput.files);
+    
+    archivos.forEach((file, i) => {
+        if (i !== index) dt.items.add(file);
+    });
+    
+    fileInput.files = dt.files;
+    previsualizarImagenesNota();
+}
+
+function verImagenCompleta(url) {
+    window.open(url, '_blank');
+}
+
+function actualizarContadorNotas() {
+    const total = document.querySelectorAll('.nota-card').length;
+    const contador = document.getElementById('notasCounter');
+    if (contador) {
+        contador.textContent = `(${total})`;
     }
 }
 
@@ -594,1344 +1004,267 @@ function mostrarIndicadorCarga(mostrar) {
 // ============================================
 
 function togglePOBox() {
-    const checkbox = document.getElementById('tienePoBox');
-    const poBoxContainer = document.getElementById('poBoxContainer');
+    const checkbox = document.getElementById('tienePOBox');
+    const poBoxGroup = document.getElementById('poBoxGroup');
     
-    if (checkbox && poBoxContainer) {
-        poBoxContainer.style.display = checkbox.checked ? 'block' : 'none';
+    if (checkbox && poBoxGroup) {
+        poBoxGroup.style.display = checkbox.checked ? 'block' : 'none';
     }
 }
 
-let dependienteEditandoId = null;
+// ============================================
+// AUTOGUARDADO
+// ============================================
 
-async function cargarDependientes(clienteId) {
-    console.log('👨‍👩‍👧‍👦 Cargando dependientes del cliente:', clienteId);
+function inicializarAutoguardado() {
+    autosaveTimer = setInterval(() => {
+        guardarBorradorSilencioso();
+    }, AUTOSAVE_INTERVAL);
     
-    try {
-        const { data: dependientes, error } = await supabaseClient
-            .from('dependientes')
-            .select('*')
-            .eq('cliente_id', clienteId)
-            .order('created_at', { ascending: true });
-        
-        if (error) {
-            console.error('❌ Error al cargar dependientes:', error);
-            return;
-        }
-        
-        console.log('✅ Dependientes cargados:', dependientes);
-        mostrarDependientes(dependientes);
-        
-    } catch (error) {
-        console.error('❌ Error al cargar dependientes:', error);
-    }
+    console.log('💾 Autoguardado activado (cada 30 segundos)');
 }
 
-function mostrarDependientes(dependientes) {
-    const container = document.getElementById('dependientesContainer');
-    const contador = document.getElementById('dependientesCounter');
+function guardarBorradorSilencioso() {
+    const formData = obtenerDatosFormulario();
+    localStorage.setItem(`borrador_cliente_${clienteId}`, JSON.stringify(formData));
     
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    if (contador) {
-        contador.textContent = `(${dependientes.length})`;
+    const indicator = document.getElementById('autosaveIndicator');
+    if (indicator) {
+        indicator.style.opacity = '1';
+        setTimeout(() => {
+            indicator.style.opacity = '0.6';
+        }, 2000);
     }
     
-    if (!dependientes || dependientes.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <span class="material-symbols-rounded">family_restroom</span>
-                <p>No hay dependientes agregados</p>
-                <small>Haz clic en "Agregar Dependiente" para comenzar</small>
-            </div>
-        `;
+    console.log('💾 Borrador guardado automáticamente');
+}
+
+function guardarBorrador() {
+    const formData = obtenerDatosFormulario();
+    localStorage.setItem(`borrador_cliente_${clienteId}`, JSON.stringify(formData));
+    alert('✅ Borrador guardado manualmente');
+}
+
+// ============================================
+// SUBMIT - ACTUALIZAR CLIENTE
+// ============================================
+
+async function handleSubmit(event) {
+    event.preventDefault();
+    
+    console.log('📤 Iniciando actualización...');
+    
+    if (!validarFormularioCompleto()) {
+        alert('Por favor, completa todos los campos requeridos correctamente.');
         return;
     }
     
-    dependientes.forEach((dep, index) => {
-        const card = crearCardDependiente(dep, index + 1);
-        container.appendChild(card);
-    });
-}
-
-function crearCardDependiente(dependiente, numero) {
-    const card = document.createElement('div');
-    card.className = 'dependiente-card';
-    card.dataset.dependienteId = dependiente.id;
+    const confirmacion = confirm('¿Actualizar este cliente y póliza?');
+    if (!confirmacion) return;
     
-    const edad = calcularEdad(dependiente.fecha_nacimiento);
+    const btnSubmit = document.querySelector('.btn-submit');
+    const textoOriginal = btnSubmit.innerHTML;
+    btnSubmit.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span> Actualizando...';
+    btnSubmit.disabled = true;
     
-    card.innerHTML = `
-        <div class="dependiente-header">
-            <div class="dependiente-info">
-                <span class="dependiente-numero">Dependiente #${numero}</span>
-                <h3 class="dependiente-nombre">${dependiente.nombres} ${dependiente.apellidos}</h3>
-                <div class="dependiente-meta">
-                    <span class="meta-item">
-                        <span class="material-symbols-rounded">cake</span>
-                        ${edad} años
-                    </span>
-                    <span class="meta-item">
-                        <span class="material-symbols-rounded">${dependiente.genero === 'masculino' ? 'male' : 'female'}</span>
-                        ${dependiente.genero}
-                    </span>
-                    ${dependiente.relacion ? `
-                    <span class="meta-item">
-                        <span class="material-symbols-rounded">family_restroom</span>
-                        ${dependiente.relacion}
-                    </span>
-                    ` : ''}
-                </div>
-            </div>
-            <div class="dependiente-actions">
-                <button type="button" class="btn-icon-action" onclick="editarDependiente('${dependiente.id}')" title="Editar">
-                    <span class="material-symbols-rounded">edit</span>
-                </button>
-                <button type="button" class="btn-icon-action btn-delete" onclick="eliminarDependiente('${dependiente.id}')" title="Eliminar">
-                    <span class="material-symbols-rounded">delete</span>
-                </button>
-            </div>
-        </div>
-        <div class="dependiente-body">
-            <div class="dependiente-detail">
-                <span class="detail-label">Fecha de nacimiento</span>
-                <span class="detail-value">${formatearFechaLegible(dependiente.fecha_nacimiento)}</span>
-            </div>
-            ${dependiente.estado_migratorio ? `
-            <div class="dependiente-detail">
-                <span class="detail-label">Estado migratorio</span>
-                <span class="detail-value">${dependiente.estado_migratorio}</span>
-            </div>
-            ` : ''}
-            ${dependiente.ssn ? `
-            <div class="dependiente-detail">
-                <span class="detail-label">SSN</span>
-                <span class="detail-value">${dependiente.ssn}</span>
-            </div>
-            ` : ''}
-        </div>
-    `;
-    
-    return card;
-}
-
-function agregarDependiente() {
-    dependienteEditandoId = null;
-    mostrarModalDependiente();
-}
-
-async function editarDependiente(dependienteId) {
     try {
-        const { data: dependiente, error } = await supabaseClient
-            .from('dependientes')
-            .select('*')
-            .eq('id', dependienteId)
+        const formData = obtenerDatosFormulario();
+        await actualizarCliente(clienteId, formData);
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert(`Error al actualizar: ${error.message}`);
+        
+        btnSubmit.innerHTML = textoOriginal;
+        btnSubmit.disabled = false;
+    }
+}
+
+function validarFormularioCompleto() {
+    const camposRequeridos = [
+        { id: 'nombres', nombre: 'Nombres' },
+        { id: 'apellidos', nombre: 'Apellidos' },
+        { id: 'email', nombre: 'Email' },
+        { id: 'telefono1', nombre: 'Teléfono' },
+        { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
+        { id: 'genero', nombre: 'Género' },
+        { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'direccion', nombre: 'Dirección' },
+        { id: 'ciudad', nombre: 'Ciudad' },
+        { id: 'estado', nombre: 'Estado' },
+        { id: 'codigoPostal', nombre: 'Código postal' },
+        { id: 'compania', nombre: 'Compañía' },
+        { id: 'plan', nombre: 'Plan' }
+    ];
+    
+    for (const campo of camposRequeridos) {
+        const elemento = document.getElementById(campo.id);
+        if (!elemento || !elemento.value || elemento.value.trim() === '') {
+            console.error(`Campo requerido vacío: ${campo.nombre}`);
+            alert(`El campo "${campo.nombre}" es requerido`);
+            elemento?.focus();
+            cambiarTab('info-general');
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+async function actualizarCliente(id, formData) {
+    console.log('🔄 Actualizando cliente...');
+    
+    // Actualizar cliente
+    const clienteData = {
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        email: formData.email,
+        telefono: formData.telefono1.replace(/\D/g, ''),
+        telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : null,
+        fecha_nacimiento: formData.fechaNacimiento,
+        sexo: formData.genero,
+        ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
+        estado_migratorio: formData.estadoMigratorio,
+        direccion: formData.direccion,
+        ciudad: formData.ciudad,
+        estado: formData.estado,
+        codigo_postal: formData.codigoPostal,
+        empleador: formData.ocupacion || null,
+        ingreso_anual: parseFloat(formData.ingresos) || 0,
+        operador_nombre: formData.operadorNombre || null,
+        agente_nombre: formData.agenteNombre || null,
+        observaciones: formData.observaciones || null,
+        updated_at: new Date().toISOString()
+    };
+    
+    const { error: clienteError } = await supabaseClient
+        .from('clientes')
+        .update(clienteData)
+        .eq('id', id);
+    
+    if (clienteError) throw clienteError;
+    
+    console.log('✅ Cliente actualizado');
+    
+    // Actualizar o crear póliza
+    const polizaData = {
+        cliente_id: id,
+        compania: formData.compania,
+        plan: formData.plan,
+        tipo_plan: formData.tipoPlan || null,
+        prima: parseFloat(formData.prima) || 0,
+        credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
+        fecha_efectividad: formData.fechaEfectividad,
+        fecha_inicial_cobertura: formData.fechaInicialCobertura,
+        fecha_final_cobertura: formData.fechaFinalCobertura,
+        member_id: formData.memberId || null,
+        portal_npn: formData.portalNpn || null,
+        clave_seguridad: formData.claveSeguridad || null,
+        enlace_poliza: formData.enlacePoliza || null,
+        tipo_venta: formData.tipoVenta || null,
+        operador_nombre: formData.operadorNombre || null,
+        agente_nombre: formData.agenteNombre || null,
+        observaciones: formData.observaciones || null,
+        updated_at: new Date().toISOString()
+    };
+    
+    if (polizaId) {
+        // Actualizar póliza existente
+        const { error: polizaError } = await supabaseClient
+            .from('polizas')
+            .update(polizaData)
+            .eq('id', polizaId);
+        
+        if (polizaError) throw polizaError;
+        console.log('✅ Póliza actualizada');
+    } else {
+        // Crear nueva póliza
+        const numeroPoliza = await generarNumeroPoliza();
+        polizaData.numero_poliza = numeroPoliza;
+        
+        const { data: nuevaPoliza, error: polizaError } = await supabaseClient
+            .from('polizas')
+            .insert([polizaData])
+            .select()
             .single();
         
-        if (error) {
-            alert('Error al cargar dependiente');
-            return;
-        }
-        
-        dependienteEditandoId = dependienteId;
-        mostrarModalDependiente(dependiente);
-        
-    } catch (error) {
-        alert('Error al cargar dependiente');
+        if (polizaError) throw polizaError;
+        polizaId = nuevaPoliza.id;
+        console.log('✅ Póliza creada');
     }
+    
+    localStorage.removeItem(`borrador_cliente_${id}`);
+    clearInterval(autosaveTimer);
+    
+    alert('✅ Cliente y póliza actualizados correctamente');
+    window.location.href = './polizas.html';
 }
 
-async function eliminarDependiente(dependienteId) {
-    if (!confirm('¿Eliminar este dependiente?')) return;
+async function generarNumeroPoliza() {
+    const anio = new Date().getFullYear();
     
     try {
-        const { error } = await supabaseClient
-            .from('dependientes')
-            .delete()
-            .eq('id', dependienteId);
-        
-        if (error) {
-            alert('Error al eliminar');
-            return;
-        }
-        
-        await cargarDependientes(clienteIdActual);
-        
-    } catch (error) {
-        alert('Error al eliminar');
-    }
-}
-
-function mostrarModalDependiente(dependiente = null) {
-    const esEdicion = dependiente !== null;
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.id = 'modalDependiente';
-    
-    modal.innerHTML = `
-        <div class="modal-container">
-            <div class="modal-header">
-                <h2>
-                    <span class="material-symbols-rounded">${esEdicion ? 'edit' : 'add'}</span>
-                    ${esEdicion ? 'Editar Dependiente' : 'Agregar Dependiente'}
-                </h2>
-                <button type="button" class="btn-close-modal" onclick="cerrarModalDependiente()">
-                    <span class="material-symbols-rounded">close</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="formDependiente">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Nombres <span class="required">*</span></label>
-                            <input type="text" id="depNombres" required value="${dependiente?.nombres || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>Apellidos <span class="required">*</span></label>
-                            <input type="text" id="depApellidos" required value="${dependiente?.apellidos || ''}">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Fecha de nacimiento <span class="required">*</span></label>
-                            <input type="date" id="depFechaNacimiento" required value="${dependiente?.fecha_nacimiento || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>genero <span class="required">*</span></label>
-                            <select id="depGenero" required>
-                                <option value="">Seleccionar...</option>
-                                <option value="masculino" ${dependiente?.genero === 'masculino' ? 'selected' : ''}>Masculino</option>
-                                <option value="femenino" ${dependiente?.genero === 'femenino' ? 'selected' : ''}>Femenino</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Estado migratorio</label>
-                            <select id="depEstadoMigratorio">
-                                <option value="">Seleccionar...</option>
-                                <option value="ciudadano" ${dependiente?.estado_migratorio === 'ciudadano' ? 'selected' : ''}>Ciudadano</option>
-                                <option value="residente" ${dependiente?.estado_migratorio === 'residente' ? 'selected' : ''}>Residente</option>
-                                <option value="visa" ${dependiente?.estado_migratorio === 'visa' ? 'selected' : ''}>Visa</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>SSN</label>
-                            <input type="text" id="depSSN" value="${dependiente?.ssn || ''}">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Relación</label>
-                            <select id="depRelacion">
-                                <option value="">Seleccionar...</option>
-                                <option value="conyuge" ${dependiente?.relacion === 'conyuge' ? 'selected' : ''}>Cónyuge</option>
-                                <option value="hijo" ${dependiente?.relacion === 'hijo' ? 'selected' : ''}>Hijo/a</option>
-                                <option value="padre" ${dependiente?.relacion === 'padre' ? 'selected' : ''}>Padre/Madre</option>
-                            </select>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel" onclick="cerrarModalDependiente()">Cancelar</button>
-                <button type="button" class="btn-submit" onclick="guardarDependiente()">
-                    <span class="material-symbols-rounded">save</span>
-                    ${esEdicion ? 'Actualizar' : 'Guardar'}
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    setTimeout(() => modal.classList.add('show'), 10);
-    setTimeout(() => document.getElementById('depNombres')?.focus(), 300);
-}
-
-function cerrarModalDependiente() {
-    const modal = document.getElementById('modalDependiente');
-    if (modal) {
-        modal.classList.remove('show');
-        setTimeout(() => modal.remove(), 300);
-    }
-    dependienteEditandoId = null;
-}
-
-async function guardarDependiente() {
-    const nombres = document.getElementById('depNombres').value.trim();
-    const apellidos = document.getElementById('depApellidos').value.trim();
-    const fechaNacimiento = document.getElementById('depFechaNacimiento').value;
-    const genero = document.getElementById('depGenero').value;
-    
-    if (!nombres || !apellidos || !fechaNacimiento || !genero) {
-        alert('Completa todos los campos obligatorios');
-        return;
-    }
-    
-    const dependienteData = {
-        cliente_id: clienteIdActual,
-        nombres,
-        apellidos,
-        fecha_nacimiento: fechaNacimiento,
-        genero,
-        estado_migratorio: document.getElementById('depEstadoMigratorio').value || null,
-        ssn: document.getElementById('depSSN').value || null,
-        relacion: document.getElementById('depRelacion').value || null
-    };
-    
-    try {
-        if (dependienteEditandoId) {
-            const { error } = await supabaseClient
-                .from('dependientes')
-                .update(dependienteData)
-                .eq('id', dependienteEditandoId);
-            
-            if (error) throw error;
-        } else {
-            const { error } = await supabaseClient
-                .from('dependientes')
-                .insert([dependienteData]);
-            
-            if (error) throw error;
-        }
-        
-        cerrarModalDependiente();
-        await cargarDependientes(clienteIdActual);
-        
-    } catch (error) {
-        alert(`Error: ${error.message}`);
-    }
-}
-
-function calcularEdad(fechaNacimiento) {
-    if (!fechaNacimiento) return 0;
-    const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mes = hoy.getMonth() - nacimiento.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-        edad--;
-    }
-    return edad;
-}
-
-function formatearFechaLegible(fecha) {
-    if (!fecha) return 'No especificada';
-    const date = new Date(fecha);
-    const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('es-ES', opciones);
-}
-
-// =====================================================
-// ESTADO Y SEGUIMIENTO
-// =====================================================
-
-async function cargarEstadoSeguimiento(clienteId) {
-    console.log('📊 Cargando estado y seguimiento...');
-    
-    try {
-        const { data: polizas, error } = await supabaseClient
-            .from('polizas')
-            .select('*')
-            .eq('cliente_id', clienteId);
-        
-        if (error || !polizas || polizas.length === 0) {
-            console.log('⚠️ No hay póliza para estado');
-            return;
-        }
-        
-        const poliza = polizas[0];
-        console.log('✅ Estado de póliza:', poliza);
-        
-        mostrarTabEstado();
-        rellenarEstadoCompania(poliza);
-        rellenarEstadoMercado(poliza);
-        
-    } catch (error) {
-        console.error('❌ Error al cargar estado:', error);
-    }
-}
-
-function mostrarTabEstado() {
-    const tabEstado = document.querySelector('.tab-estado');
-    if (tabEstado) {
-        tabEstado.style.display = 'flex';
-        console.log('✅ Tab de estado visible');
-    }
-}
-
-function rellenarEstadoCompania(poliza) {
-    const seccion = document.querySelector('#tab-estado .form-section:nth-child(2) .section-content');
-    
-    if (!seccion) {
-        console.error('❌ No se encontró sección de estado en compañía');
-        return;
-    }
-    
-    seccion.innerHTML = `
-        <div class="estado-grid">
-            <div class="estado-item">
-                <span class="estado-label">Estado actual</span>
-                <span class="estado-badge estado-${poliza.estado_compania || 'pendiente'}">
-                    ${poliza.estado_compania || 'Pendiente'}
-                </span>
-            </div>
-            
-            ${poliza.fecha_envio_compania ? `
-            <div class="estado-item">
-                <span class="estado-label">Fecha de envío</span>
-                <span class="estado-value">${formatearFechaLegible(poliza.fecha_envio_compania)}</span>
-            </div>
-            ` : ''}
-            
-            ${poliza.numero_confirmacion ? `
-            <div class="estado-item">
-                <span class="estado-label">Número de confirmación</span>
-                <span class="estado-value">${poliza.numero_confirmacion}</span>
-            </div>
-            ` : ''}
-        </div>
-        
-        ${!poliza.estado_compania ? `
-        <div class="info-message" style="margin-top: 20px;">
-            <span class="material-symbols-rounded">info</span>
-            <p>La información de estado en compañía estará disponible después de procesar la póliza.</p>
-        </div>
-        ` : ''}
-    `;
-}
-
-function rellenarEstadoMercado(poliza) {
-    const seccion = document.querySelector('#tab-estado .form-section:nth-child(3) .section-content');
-    
-    if (!seccion) {
-        console.error('❌ No se encontró sección de estado en mercado');
-        return;
-    }
-    
-    seccion.innerHTML = `
-        <div class="estado-grid">
-            <div class="estado-item">
-                <span class="estado-label">Estado actual</span>
-                <span class="estado-badge estado-${poliza.estado_mercado || 'pendiente'}">
-                    ${poliza.estado_mercado || 'Pendiente'}
-                </span>
-            </div>
-            
-            ${poliza.fecha_revision_mercado ? `
-            <div class="estado-item">
-                <span class="estado-label">Fecha de revisión</span>
-                <span class="estado-value">${formatearFechaLegible(poliza.fecha_revision_mercado)}</span>
-            </div>
-            ` : ''}
-        </div>
-        
-        ${!poliza.estado_mercado ? `
-        <div class="info-message" style="margin-top: 20px;">
-            <span class="material-symbols-rounded">info</span>
-            <p>La información de estado en mercado estará disponible después de procesar la póliza.</p>
-        </div>
-        ` : ''}
-    `;
-}
-
-// =====================================================
-// CARGAR HISTORIAL DE AUDITORÍA
-// =====================================================
-
-async function cargarHistorialPoliza(polizaId) {
-    console.log('📜 Cargando historial de auditoría para póliza:', polizaId);
-    
-    try {
-        const { data: historial, error } = await supabaseClient
-            .from('auditoria_polizas')
-            .select('*')
-            .eq('poliza_id', polizaId)
-            .order('timestamp', { ascending: false });
-        
-        if (error) {
-            console.error('❌ Error al cargar historial:', error);
-            return;
-        }
-        
-        console.log('✅ Historial cargado:', historial);
-        
-        // Encontrar el tab de historial y mostrar
-        mostrarHistorialUI(historial);
-        
-    } catch (error) {
-        console.error('❌ Error al cargar historial:', error);
-    }
-}
-
-/**
- * Mostrar historial en el tab de Estado (o crear uno nuevo)
- */
-function mostrarHistorialUI(historial) {
-    // Buscar el contenedor del historial
-    let container = document.getElementById('historialContainer');
-    
-    // Si no existe, crearlo en el tab de estado
-    if (!container) {
-        const tabEstado = document.getElementById('tab-estado');
-        if (!tabEstado) {
-            console.warn('⚠️ No se encontró tab de estado para mostrar historial');
-            return;
-        }
-        
-        // Crear sección de historial
-        const seccionHistorial = document.createElement('div');
-        seccionHistorial.className = 'form-section';
-        seccionHistorial.innerHTML = `
-            <div class="section-header">
-                <div class="section-title">
-                    <span class="material-symbols-rounded">history</span>
-                    <h2>Historial de Cambios</h2>
-                    <span class="counter" id="historialCounter">(${historial.length})</span>
-                </div>
-            </div>
-            <div class="section-content" id="historialContainer"></div>
-        `;
-        
-        tabEstado.appendChild(seccionHistorial);
-        container = document.getElementById('historialContainer');
-    }
-    
-    // Limpiar contenedor
-    container.innerHTML = '';
-    
-    // Actualizar contador
-    const contador = document.getElementById('historialCounter');
-    if (contador) {
-        contador.textContent = `(${historial.length})`;
-    }
-    
-    // Si no hay historial
-    if (!historial || historial.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <span class="material-symbols-rounded">history</span>
-                <p>No hay cambios registrados</p>
-                <small>Los cambios aparecerán aquí automáticamente</small>
-            </div>
-        `;
-        return;
-    }
-    
-    // Crear timeline de cambios
-    const timeline = document.createElement('div');
-    timeline.className = 'historial-timeline';
-    
-    historial.forEach((cambio, index) => {
-        const item = crearItemHistorial(cambio, index === 0);
-        timeline.appendChild(item);
-    });
-    
-    container.appendChild(timeline);
-}
-
-/**
- * Crear un item del historial
- */
-function crearItemHistorial(cambio, esReciente) {
-    const item = document.createElement('div');
-    item.className = `historial-item ${esReciente ? 'reciente' : ''}`;
-    
-    // Determinar icono y color según acción
-    const iconos = {
-        'crear': { icon: 'add_circle', color: 'success' },
-        'actualizar': { icon: 'edit', color: 'info' },
-        'eliminar': { icon: 'delete', color: 'danger' }
-    };
-    
-    const { icon, color } = iconos[cambio.accion] || { icon: 'change_circle', color: 'info' };
-    
-    // Formatear fecha
-    const fecha = new Date(cambio.timestamp);
-    const fechaFormateada = formatearFechaCompleta(fecha);
-    const horaFormateada = formatearHora(fecha);
-    const tiempoRelativo = obtenerTiempoRelativo(fecha);
-    
-    // Formatear campo modificado
-    const campoLegible = formatearNombreCampo(cambio.campo_modificado);
-    
-    // Determinar mensaje según acción
-    let mensaje = '';
-    if (cambio.accion === 'crear') {
-        mensaje = `<strong>Póliza creada</strong>`;
-    } else if (cambio.accion === 'actualizar') {
-        mensaje = `
-            <strong>${campoLegible}</strong> cambió de 
-            <code class="valor-anterior">${cambio.valor_anterior || '(vacío)'}</code> 
-            a 
-            <code class="valor-nuevo">${cambio.valor_nuevo || '(vacío)'}</code>
-        `;
-    } else if (cambio.accion === 'eliminar') {
-        mensaje = `<strong>Póliza eliminada</strong>`;
-    }
-    
-    item.innerHTML = `
-        <div class="historial-dot historial-dot-${color}">
-            <span class="material-symbols-rounded">${icon}</span>
-        </div>
-        <div class="historial-content">
-            <div class="historial-header">
-                <div class="historial-accion">
-                    <span class="accion-badge accion-${cambio.accion}">${cambio.accion}</span>
-                    ${esReciente ? '<span class="badge-nuevo">Nuevo</span>' : ''}
-                </div>
-                <div class="historial-tiempo">
-                    <span class="tiempo-relativo">${tiempoRelativo}</span>
-                    <span class="tiempo-exacto">${fechaFormateada} • ${horaFormateada}</span>
-                </div>
-            </div>
-            
-            <div class="historial-mensaje">
-                ${mensaje}
-            </div>
-            
-            <div class="historial-usuario">
-                <span class="material-symbols-rounded">person</span>
-                <span class="usuario-nombre">${cambio.usuario_nombre || cambio.usuario_email || 'Usuario desconocido'}</span>
-            </div>
-        </div>
-    `;
-    
-    return item;
-}
-
-/**
- * Formatear nombre de campo de forma legible
- */
-function formatearNombreCampo(campo) {
-    if (!campo) return 'Campo';
-    
-    const nombres = {
-        'numero_poliza': 'Número de póliza',
-        'compania': 'Compañía',
-        'plan': 'Plan',
-        'prima': 'Prima',
-        'credito_fiscal': 'Crédito fiscal',
-        'fecha_efectividad': 'Fecha de efectividad',
-        'fecha_inicial_cobertura': 'Fecha inicial de cobertura',
-        'fecha_final_cobertura': 'Fecha final de cobertura',
-        'estado_compania': 'Estado en compañía',
-        'estado_mercado': 'Estado en mercado',
-        'tipo_venta': 'Tipo de venta',
-        'operador_nombre': 'Operador',
-        'agente_nombre': 'Agente',
-        'member_id': 'Member ID',
-        'portal_npn': 'Portal NPN',
-        'clave_seguridad': 'Clave de seguridad',
-        'enlace_poliza': 'Enlace de póliza',
-        'observaciones': 'Observaciones',
-        'notas_compania': 'Notas de compañía',
-        'notas_mercado': 'Notas de mercado'
-    };
-    
-    return nombres[campo] || campo.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
-/**
- * Formatear fecha completa
- */
-function formatearFechaCompleta(fecha) {
-    const opciones = { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    };
-    return fecha.toLocaleDateString('es-ES', opciones);
-}
-
-/**
- * Formatear hora
- */
-function formatearHora(fecha) {
-    const opciones = { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true
-    };
-    return fecha.toLocaleTimeString('es-ES', opciones);
-}
-
-/**
- * Obtener tiempo relativo (hace X minutos/horas/días)
- */
-function obtenerTiempoRelativo(fecha) {
-    const ahora = new Date();
-    const diferencia = ahora - fecha;
-    
-    const segundos = Math.floor(diferencia / 1000);
-    const minutos = Math.floor(segundos / 60);
-    const horas = Math.floor(minutos / 60);
-    const dias = Math.floor(horas / 24);
-    
-    if (segundos < 60) {
-        return 'Ahora mismo';
-    } else if (minutos < 60) {
-        return `Hace ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}`;
-    } else if (horas < 24) {
-        return `Hace ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
-    } else if (dias < 30) {
-        return `Hace ${dias} ${dias === 1 ? 'día' : 'días'}`;
-    } else {
-        return formatearFechaCompleta(fecha);
-    }
-}
-
-
-async function recargarHistorialDespuesDeGuardar(polizaId) {
-    // Esperar un momento para que el trigger termine
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Recargar historial
-    await cargarHistorialPoliza(polizaId);
-    
-    console.log('✅ Historial actualizado después de guardar');
-}
-
-// =====================================================
-// EXPORTAR HISTORIAL A CSV (OPCIONAL)
-// =====================================================
-
-async function exportarHistorialCSV(polizaId) {
-    try {
-        const { data: historial, error } = await supabaseClient
-            .from('auditoria_polizas')
-            .select('*')
-            .eq('poliza_id', polizaId)
-            .order('timestamp', { ascending: false });
-        
-        if (error) throw error;
-        
-        // Crear CSV
-        let csv = 'Fecha,Hora,Usuario,Acción,Campo,Valor Anterior,Valor Nuevo\n';
-        
-        historial.forEach(item => {
-            const fecha = new Date(item.timestamp);
-            const fechaStr = fecha.toLocaleDateString('es-ES');
-            const horaStr = fecha.toLocaleTimeString('es-ES');
-            
-            csv += `"${fechaStr}","${horaStr}","${item.usuario_nombre || item.usuario_email}","${item.accion}","${formatearNombreCampo(item.campo_modificado)}","${item.valor_anterior || ''}","${item.valor_nuevo || ''}"\n`;
-        });
-        
-        // Descargar
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `historial_poliza_${polizaId}_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        
-        console.log('✅ Historial exportado a CSV');
-        
-    } catch (error) {
-        console.error('Error al exportar:', error);
-        alert('Error al exportar historial');
-    }
-}
-
-
-let imagenesNotaSeleccionadas = [];
-
-// =====================================================
-// CARGAR NOTAS DEL CLIENTE
-// =====================================================
-
-async function cargarNotas(clienteId) {
-    console.log('💬 Cargando notas del cliente:', clienteId);
-    
-    try {
-        const { data: notas, error } = await supabaseClient
-            .from('notas')
-            .select('*')
-            .eq('cliente_id', clienteId)
-            .order('created_at', { ascending: false });
-        
-        if (error) {
-            console.error('❌ Error al cargar notas:', error);
-            return;
-        }
-        
-        console.log('✅ Notas cargadas:', notas);
-        mostrarNotas(notas);
-        
-    } catch (error) {
-        console.error('❌ Error al cargar notas:', error);
-    }
-}
-
-/**
- * Mostrar notas en el thread
- */
-function mostrarNotas(notas) {
-    const thread = document.getElementById('notasThread');
-    const contador = document.getElementById('notasCounter');
-    
-    if (!thread) {
-        console.error('❌ No se encontró notasThread');
-        return;
-    }
-    
-    // Actualizar contador
-    if (contador) {
-        contador.textContent = `(${notas.length})`;
-    }
-    
-    // Limpiar thread
-    thread.innerHTML = '';
-    
-    // Si no hay notas
-    if (!notas || notas.length === 0) {
-        thread.innerHTML = `
-            <div class="empty-state">
-                <span class="material-symbols-rounded">chat_bubble</span>
-                <p>No hay notas aún</p>
-                <small>Escribe la primera nota para este cliente</small>
-            </div>
-        `;
-        return;
-    }
-    
-    // Agrupar notas por fecha
-    const notasAgrupadas = agruparNotasPorFecha(notas);
-    
-    // Crear cards de notas
-    Object.keys(notasAgrupadas).forEach(fecha => {
-        // Separador de fecha
-        const separador = document.createElement('div');
-        separador.className = 'nota-fecha-separador';
-        separador.innerHTML = `
-            <span class="fecha-label">${fecha}</span>
-        `;
-        thread.appendChild(separador);
-        
-        // Notas de esa fecha
-        notasAgrupadas[fecha].forEach(nota => {
-            const card = crearCardNota(nota);
-            thread.appendChild(card);
-        });
-    });
-}
-
-/**
- * Agrupar notas por fecha para mejor visualización
- */
-function agruparNotasPorFecha(notas) {
-    const grupos = {};
-    
-    notas.forEach(nota => {
-        const fecha = new Date(nota.created_at);
-        const hoy = new Date();
-        const ayer = new Date(hoy);
-        ayer.setDate(ayer.getDate() - 1);
-        
-        let etiqueta;
-        
-        if (esMismaFecha(fecha, hoy)) {
-            etiqueta = 'Hoy';
-        } else if (esMismaFecha(fecha, ayer)) {
-            etiqueta = 'Ayer';
-        } else {
-            etiqueta = formatearFechaCompleta(fecha);
-        }
-        
-        if (!grupos[etiqueta]) {
-            grupos[etiqueta] = [];
-        }
-        
-        grupos[etiqueta].push(nota);
-    });
-    
-    return grupos;
-}
-
-/**
- * Verificar si dos fechas son el mismo día
- */
-function esMismaFecha(fecha1, fecha2) {
-    return fecha1.getFullYear() === fecha2.getFullYear() &&
-           fecha1.getMonth() === fecha2.getMonth() &&
-           fecha1.getDate() === fecha2.getDate();
-}
-
-/**
- * Crear card individual de nota
- */
-function crearCardNota(nota) {
-    const card = document.createElement('div');
-    card.className = 'nota-card';
-    card.dataset.notaId = nota.id;
-    
-    // Si es nota importante
-    if (nota.es_importante) {
-        card.classList.add('nota-importante');
-    }
-    
-    // Determinar ícono según tipo
-    const iconos = {
-        'nota': 'chat_bubble',
-        'llamada': 'call',
-        'email': 'email',
-        'reunion': 'event',
-        'seguimiento': 'flag'
-    };
-    
-    const icono = iconos[nota.tipo] || 'chat_bubble';
-    
-    // Formatear hora
-    const fecha = new Date(nota.created_at);
-    const hora = formatearHora(fecha);
-    
-    // HTML de la nota
-    card.innerHTML = `
-        <div class="nota-header">
-            <div class="nota-info">
-                <span class="nota-tipo-icon material-symbols-rounded" title="${nota.tipo}">${icono}</span>
-                <span class="nota-usuario">${nota.usuario_nombre || nota.usuario_email}</span>
-                <span class="nota-hora">${hora}</span>
-                ${nota.es_importante ? '<span class="nota-estrella material-symbols-rounded">star</span>' : ''}
-            </div>
-            <div class="nota-actions">
-                ${esNotaPropia(nota) ? `
-                    <button type="button" class="btn-nota-action" onclick="toggleImportanteNota('${nota.id}', ${!nota.es_importante})" title="${nota.es_importante ? 'Quitar importancia' : 'Marcar importante'}">
-                        <span class="material-symbols-rounded">${nota.es_importante ? 'star' : 'star_outline'}</span>
-                    </button>
-                    <button type="button" class="btn-nota-action btn-eliminar" onclick="eliminarNota('${nota.id}')" title="Eliminar">
-                        <span class="material-symbols-rounded">delete</span>
-                    </button>
-                ` : ''}
-            </div>
-        </div>
-        
-        <div class="nota-mensaje">
-            ${formatearMensajeNota(nota.mensaje)}
-        </div>
-        
-        ${nota.imagenes && nota.imagenes.length > 0 ? `
-            <div class="nota-imagenes">
-                ${nota.imagenes.map(url => `
-                    <div class="nota-imagen-wrapper">
-                        <img src="${url}" alt="Imagen adjunta" onclick="verImagenCompleta('${url}')">
-                    </div>
-                `).join('')}
-            </div>
-        ` : ''}
-    `;
-    
-    return card;
-}
-
-/**
- * Verificar si la nota es del usuario actual
- */
-function esNotaPropia(nota) {
-    // Obtener email del usuario actual desde Supabase
-    const user = supabaseClient.auth.getUser();
-    return nota.usuario_email === user?.email;
-}
-
-/**
- * Formatear mensaje (detectar URLs, menciones, etc.)
- */
-function formatearMensajeNota(mensaje) {
-    if (!mensaje) return '';
-    
-    // Convertir URLs a links
-    let formatted = mensaje.replace(
-        /(https?:\/\/[^\s]+)/g,
-        '<a href="$1" target="_blank" rel="noopener">$1</a>'
-    );
-    
-    // Convertir menciones @usuario
-    formatted = formatted.replace(
-        /@(\w+)/g,
-        '<span class="mencion">@$1</span>'
-    );
-    
-    // Convertir saltos de línea
-    formatted = formatted.replace(/\n/g, '<br>');
-    
-    return formatted;
-}
-
-/**
- * Formatear hora en formato legible
- */
-function formatearHora(fecha) {
-    const opciones = { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true
-    };
-    return fecha.toLocaleTimeString('es-ES', opciones);
-}
-
-/**
- * Formatear fecha completa
- */
-function formatearFechaCompleta(fecha) {
-    const opciones = { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    };
-    return fecha.toLocaleDateString('es-ES', opciones);
-}
-
-// =====================================================
-// ENVIAR NUEVA NOTA
-// =====================================================
-
-async function enviarNota() {
-    const textarea = document.getElementById('nuevaNota');
-    const mensaje = textarea.value.trim();
-    
-    if (!mensaje) {
-        alert('Escribe un mensaje antes de enviar');
-        textarea.focus();
-        return;
-    }
-    
-    console.log('📤 Enviando nota...');
-    
-    try {
-        // Obtener info del usuario actual
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        
-        if (!user) {
-            alert('Error: No hay usuario autenticado');
-            return;
-        }
-        
-        // Preparar datos de la nota
-        const notaData = {
-            cliente_id: clienteIdActual,
-            mensaje: mensaje,
-            tipo: 'nota', // Por defecto
-            usuario_email: user.email,
-            usuario_nombre: user.user_metadata?.nombre || user.email,
-            imagenes: imagenesNotaSeleccionadas.length > 0 ? imagenesNotaSeleccionadas : null
-        };
-        
-        // Insertar en base de datos
         const { data, error } = await supabaseClient
-            .from('notas')
-            .insert([notaData])
-            .select();
-        
-        if (error) {
-            console.error('Error al guardar nota:', error);
-            alert('Error al guardar nota: ' + error.message);
-            return;
-        }
-        
-        console.log('✅ Nota guardada:', data);
-        
-        // Limpiar formulario
-        textarea.value = '';
-        imagenesNotaSeleccionadas = [];
-        document.getElementById('imagenesPreview').innerHTML = '';
-        document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
-        
-        // Recargar notas
-        await cargarNotas(clienteIdActual);
-        
-        // Scroll al inicio del thread
-        const thread = document.getElementById('notasThread');
-        if (thread) {
-            thread.scrollTop = 0;
-        }
-        
-    } catch (error) {
-        console.error('Error al enviar nota:', error);
-        alert('Error al enviar nota: ' + error.message);
-    }
-}
-
-/**
- * Cancelar nota (limpiar formulario)
- */
-function cancelarNota() {
-    const textarea = document.getElementById('nuevaNota');
-    textarea.value = '';
-    
-    imagenesNotaSeleccionadas = [];
-    document.getElementById('imagenesPreview').innerHTML = '';
-    document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
-    
-    // Limpiar input de archivos
-    const fileInput = document.getElementById('notaImagen');
-    if (fileInput) {
-        fileInput.value = '';
-    }
-}
-
-// =====================================================
-// MANEJO DE IMÁGENES
-// =====================================================
-
-/**
- * Previsualizar imágenes seleccionadas
- */
-function previsualizarImagenesNota() {
-    const fileInput = document.getElementById('notaImagen');
-    const preview = document.getElementById('imagenesPreview');
-    const archivosLabel = document.getElementById('archivosSeleccionados');
-    
-    if (!fileInput.files || fileInput.files.length === 0) {
-        preview.innerHTML = '';
-        archivosLabel.textContent = 'Ningún archivo seleccionado';
-        return;
-    }
-    
-    const archivos = Array.from(fileInput.files);
-    archivosLabel.textContent = `${archivos.length} ${archivos.length === 1 ? 'archivo' : 'archivos'} seleccionado(s)`;
-    
-    preview.innerHTML = '';
-    imagenesNotaSeleccionadas = [];
-    
-    archivos.forEach((archivo, index) => {
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            imagenesNotaSeleccionadas.push(e.target.result);
-            
-            const imgWrapper = document.createElement('div');
-            imgWrapper.className = 'preview-imagen-wrapper';
-            imgWrapper.innerHTML = `
-                <img src="${e.target.result}" alt="Preview">
-                <button type="button" class="btn-quitar-imagen" onclick="quitarImagenNota(${index})" title="Quitar">
-                    <span class="material-symbols-rounded">close</span>
-                </button>
-            `;
-            preview.appendChild(imgWrapper);
-        };
-        
-        reader.readAsDataURL(archivo);
-    });
-}
-
-/**
- * Quitar imagen de la previsualización
- */
-function quitarImagenNota(index) {
-    imagenesNotaSeleccionadas.splice(index, 1);
-    
-    // Rehacer preview
-    const fileInput = document.getElementById('notaImagen');
-    const dt = new DataTransfer();
-    
-    const archivos = Array.from(fileInput.files);
-    archivos.forEach((file, i) => {
-        if (i !== index) {
-            dt.items.add(file);
-        }
-    });
-    
-    fileInput.files = dt.files;
-    previsualizarImagenesNota();
-}
-
-/**
- * Ver imagen en tamaño completo (modal)
- */
-function verImagenCompleta(url) {
-    const modal = document.createElement('div');
-    modal.className = 'modal-imagen-completa';
-    modal.innerHTML = `
-        <div class="modal-imagen-overlay" onclick="cerrarModalImagen()">
-            <div class="modal-imagen-container">
-                <button class="btn-cerrar-imagen" onclick="cerrarModalImagen()">
-                    <span class="material-symbols-rounded">close</span>
-                </button>
-                <img src="${url}" alt="Imagen completa">
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    setTimeout(() => modal.classList.add('show'), 10);
-}
-
-/**
- * Cerrar modal de imagen
- */
-function cerrarModalImagen() {
-    const modal = document.querySelector('.modal-imagen-completa');
-    if (modal) {
-        modal.classList.remove('show');
-        setTimeout(() => modal.remove(), 300);
-    }
-}
-
-// =====================================================
-// ACCIONES DE NOTAS
-// =====================================================
-
-/**
- * Marcar/desmarcar nota como importante
- */
-async function toggleImportanteNota(notaId, esImportante) {
-    console.log('⭐ Cambiando importancia de nota:', notaId, esImportante);
-    
-    try {
-        const { error } = await supabaseClient
-            .from('notas')
-            .update({ es_importante: esImportante })
-            .eq('id', notaId);
-        
-        if (error) {
-            console.error('Error al actualizar:', error);
-            alert('Error al actualizar nota');
-            return;
-        }
-        
-        console.log('✅ Nota actualizada');
-        await cargarNotas(clienteIdActual);
-        
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error al actualizar nota');
-    }
-}
-
-/**
- * Eliminar nota
- */
-async function eliminarNota(notaId) {
-    if (!confirm('¿Eliminar esta nota? Esta acción no se puede deshacer.')) {
-        return;
-    }
-    
-    console.log('🗑️ Eliminando nota:', notaId);
-    
-    try {
-        const { error } = await supabaseClient
-            .from('notas')
-            .delete()
-            .eq('id', notaId);
-        
-        if (error) {
-            console.error('Error al eliminar:', error);
-            alert('Error al eliminar nota');
-            return;
-        }
-        
-        console.log('✅ Nota eliminada');
-        await cargarNotas(clienteIdActual);
-        
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error al eliminar nota');
-    }
-}
-
-// =====================================================
-// ATAJOS DE TECLADO (Opcional)
-// =====================================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    const textarea = document.getElementById('nuevaNota');
-    
-    if (textarea) {
-        // Enviar con Ctrl+Enter
-        textarea.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'Enter') {
-                e.preventDefault();
-                enviarNota();
-            }
-        });
-    }
-});
-
-// =====================================================
-// FUNCIONES AUXILIARES
-// =====================================================
-
-/**
- * Buscar notas por texto
- */
-function buscarNotas(texto) {
-    const cards = document.querySelectorAll('.nota-card');
-    const textoBusqueda = texto.toLowerCase();
-    
-    cards.forEach(card => {
-        const mensaje = card.querySelector('.nota-mensaje').textContent.toLowerCase();
-        const usuario = card.querySelector('.nota-usuario').textContent.toLowerCase();
-        
-        if (mensaje.includes(textoBusqueda) || usuario.includes(textoBusqueda)) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
-    });
-}
-
-/**
- * Filtrar notas por tipo
- */
-function filtrarNotasPorTipo(tipo) {
-    const cards = document.querySelectorAll('.nota-card');
-    
-    cards.forEach(card => {
-        if (tipo === 'todas') {
-            card.style.display = 'block';
-        } else {
-            const iconElement = card.querySelector('.nota-tipo-icon');
-            const notaTipo = iconElement?.getAttribute('title');
-            
-            if (notaTipo === tipo) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
-        }
-    });
-}
-
-/**
- * Exportar notas a texto
- */
-async function exportarNotasTexto(clienteId) {
-    try {
-        const { data: notas, error } = await supabaseClient
-            .from('notas')
-            .select('*')
-            .eq('cliente_id', clienteId)
-            .order('created_at', { ascending: true });
+            .from('polizas')
+            .select('numero_poliza')
+            .like('numero_poliza', `POL-${anio}-%`)
+            .order('numero_poliza', { ascending: false })
+            .limit(1);
         
         if (error) throw error;
         
-        let texto = '=== HISTORIAL DE NOTAS ===\n\n';
+        let siguiente = 1;
+        if (data && data.length > 0) {
+            const match = data[0].numero_poliza.match(/POL-\d{4}-(\d+)/);
+            if (match) siguiente = parseInt(match[1]) + 1;
+        }
         
-        notas.forEach(nota => {
-            const fecha = new Date(nota.created_at);
-            texto += `[${formatearFechaCompleta(fecha)} ${formatearHora(fecha)}]\n`;
-            texto += `Usuario: ${nota.usuario_nombre || nota.usuario_email}\n`;
-            texto += `Tipo: ${nota.tipo}\n`;
-            texto += `Mensaje: ${nota.mensaje}\n`;
-            texto += '\n---\n\n';
-        });
-        
-        // Descargar
-        const blob = new Blob([texto], { type: 'text/plain;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `notas_cliente_${clienteId}_${new Date().toISOString().split('T')[0]}.txt`;
-        link.click();
-        
-        console.log('✅ Notas exportadas');
-        
+        return `POL-${anio}-${String(siguiente).padStart(4, '0')}`;
     } catch (error) {
-        console.error('Error al exportar:', error);
-        alert('Error al exportar notas');
+        console.error('Error al generar número:', error);
+        return `POL-${anio}-${Date.now().toString().slice(-4)}`;
     }
 }
+
+function obtenerDatosFormulario() {
+    const form = document.getElementById('clienteForm');
+    const formData = new FormData(form);
+    
+    const datos = {};
+    
+    for (let [key, value] of formData.entries()) {
+        datos[key] = value;
+    }
+    
+    return datos;
+}
+
+// ============================================
+// CANCELAR
+// ============================================
+
+function cancelarFormulario() {
+    if (confirm('¿Cancelar y volver? Se perderán los cambios no guardados.')) {
+        localStorage.removeItem(`borrador_cliente_${clienteId}`);
+        clearInterval(autosaveTimer);
+        window.location.href = './polizas.html';
+    }
+}
+
+// ============================================
+// LOG INICIAL
+// ============================================
+
+console.log('%c✏️ CLIENTE_EDITAR.JS CORREGIDO', 'color: #00a8e8; font-size: 16px; font-weight: bold');
+console.log('%c✅ Todas las correcciones aplicadas', 'color: #4caf50; font-weight: bold');
+console.log('Correcciones:');
+console.log('  ✓ Fechas en formato mm/dd/aaaa');
+console.log('  ✓ Teléfono límite 10 caracteres');
+console.log('  ✓ Fechas automáticas cargadas desde BD');
+console.log('  ✓ Método de pago desplegables funcionando');
+console.log('  ✓ Documentos sin tipo (solo archivo + notas)');
+console.log('Funciones de edición:');
+console.log('  ✓ Cargar datos existentes');
+console.log('  ✓ Actualizar cliente y póliza');
+console.log('  ✓ Cargar dependientes existentes');
+console.log('  ✓ Cargar notas existentes');
+console.log('  ✓ Eliminar notas guardadas en BD');

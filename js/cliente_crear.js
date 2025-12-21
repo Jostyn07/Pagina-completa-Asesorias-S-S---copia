@@ -1,6 +1,6 @@
 // ============================================
-// CLIENTE_CREAR.JS - VERSIÓN MEJORADA
-// Con todas las funciones fluidas de cliente.js
+// CLIENTE_CREAR.JS - VERSIÓN CORREGIDA
+// Todas las correcciones aplicadas
 // ============================================
 
 // ============================================
@@ -34,11 +34,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function inicializarFormulario() {
-    // Establecer fecha de registro a hoy
-    const hoy = new Date().toISOString().split('T')[0];
+    // Establecer fecha de registro a hoy en formato mm/dd/aaaa
+    const hoy = new Date();
     const fechaRegistro = document.getElementById('fechaRegistro');
     if (fechaRegistro) {
-        fechaRegistro.value = hoy;
+        fechaRegistro.value = formatearFechaUS(hoy);
     }
     
     // Inicializar inputs numéricos en 0
@@ -49,6 +49,36 @@ function inicializarFormulario() {
     if (ingresos) ingresos.value = 0;
     if (creditoFiscal) creditoFiscal.value = 0;
     if (prima) prima.value = 0;
+}
+
+// ============================================
+// FORMATEADORES DE FECHA
+// ============================================
+
+// Convertir Date a formato mm/dd/aaaa
+function formatearFechaUS(fecha) {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    const anio = d.getFullYear();
+    return `${mes}/${dia}/${anio}`;
+}
+
+// Convertir aaaa-mm-dd a mm/dd/aaaa
+function convertirAFormatoUS(fechaISO) {
+    if (!fechaISO) return '';
+    const partes = fechaISO.split('-');
+    if (partes.length !== 3) return '';
+    return `${partes[1]}/${partes[2]}/${partes[0]}`;
+}
+
+// Convertir mm/dd/aaaa a aaaa-mm-dd (para guardar en BD)
+function convertirAFormatoISO(fechaUS) {
+    if (!fechaUS) return '';
+    const partes = fechaUS.split('/');
+    if (partes.length !== 3) return '';
+    return `${partes[2]}-${partes[0]}-${partes[1]}`;
 }
 
 // ============================================
@@ -99,32 +129,51 @@ function toggleSection(header) {
 // ============================================
 
 function calcularFechasAutomaticas() {
-    const fechaEfectividad = document.getElementById('fechaEfectividad');
-    const fechaInicial = document.getElementById('fechaInicialCobertura');
-    const fechaFinal = document.getElementById('fechaFinalCobertura');
+    // Calcular fechas al cargar la página
+    calcularYMostrarFechas();
     
-    if (fechaEfectividad) {
-        fechaEfectividad.addEventListener('change', function() {
-            if (this.value) {
-                const fecha = new Date(this.value + 'T00:00:00');
-                
-                // Fecha inicial = mismo día
-                if (fechaInicial) {
-                    fechaInicial.value = this.value;
-                }
-                
-                // Fecha final = un año después (menos 1 día)
-                if (fechaFinal) {
-                    const fechaFin = new Date(fecha);
-                    fechaFin.setFullYear(fechaFin.getFullYear() + 1);
-                    fechaFin.setDate(fechaFin.getDate() - 1);
-                    fechaFinal.value = fechaFin.toISOString().split('T')[0];
-                }
-                
-                console.log('📅 Fechas calculadas automáticamente');
-            }
-        });
-    }
+    console.log('📅 Fechas calculadas automáticamente');
+}
+
+function calcularYMostrarFechas() {
+    const hoy = new Date();
+    
+    // Fecha inicial: Primer día del mes siguiente
+    const fechaInicial = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
+    
+    // Fecha final: Siempre 12/31/2026
+    const fechaFinal = new Date(2026, 11, 31); // Mes 11 = Diciembre
+    
+    // Fecha efectividad: Igual a fecha inicial
+    const fechaEfectividad = new Date(fechaInicial);
+    
+    // Formatear a mm/dd/aaaa para mostrar
+    const fechaInicialUS = formatearFechaUS(fechaInicial);
+    const fechaFinalUS = formatearFechaUS(fechaFinal);
+    const fechaEfectividadUS = formatearFechaUS(fechaEfectividad);
+    
+    // Mostrar en displays
+    const displayInicial = document.getElementById('displayFechaInicial');
+    const displayFinal = document.getElementById('displayFechaFinal');
+    const displayEfectividad = document.getElementById('displayFechaEfectividad');
+    
+    if (displayInicial) displayInicial.textContent = fechaInicialUS;
+    if (displayFinal) displayFinal.textContent = fechaFinalUS;
+    if (displayEfectividad) displayEfectividad.textContent = fechaEfectividadUS;
+    
+    // Guardar en inputs hidden (formato ISO para BD)
+    const inputInicial = document.getElementById('fechaInicialCobertura');
+    const inputFinal = document.getElementById('fechaFinalCobertura');
+    const inputEfectividad = document.getElementById('fechaEfectividad');
+    
+    if (inputInicial) inputInicial.value = convertirAFormatoISO(fechaInicialUS);
+    if (inputFinal) inputFinal.value = convertirAFormatoISO(fechaFinalUS);
+    if (inputEfectividad) inputEfectividad.value = convertirAFormatoISO(fechaEfectividadUS);
+    
+    console.log('Fechas calculadas:');
+    console.log('  Inicial:', fechaInicialUS, '→', convertirAFormatoISO(fechaInicialUS));
+    console.log('  Final:', fechaFinalUS, '→', convertirAFormatoISO(fechaFinalUS));
+    console.log('  Efectividad:', fechaEfectividadUS, '→', convertirAFormatoISO(fechaEfectividadUS));
 }
 
 // ============================================
@@ -140,7 +189,7 @@ function inicializarValidacionTiempoReal() {
         });
     }
     
-    // Teléfonos - Aplicar formato automáticamente
+    // Teléfonos - Aplicar formato automáticamente y límite 10
     const tel1 = document.getElementById('telefono1');
     const tel2 = document.getElementById('telefono2');
     
@@ -200,10 +249,16 @@ function inicializarValidacionTiempoReal() {
 
 // Formateadores
 function formatearTelefono(valor) {
+    // Remover todo excepto números
     const numeros = valor.replace(/\D/g, '');
-    if (numeros.length <= 3) return numeros;
-    if (numeros.length <= 6) return `(${numeros.slice(0, 3)}) ${numeros.slice(3)}`;
-    return `(${numeros.slice(0, 3)}) ${numeros.slice(3, 6)}-${numeros.slice(6, 10)}`;
+    
+    // Limitar a 10 dígitos
+    const limitado = numeros.slice(0, 10);
+    
+    // Formatear
+    if (limitado.length <= 3) return limitado;
+    if (limitado.length <= 6) return `(${limitado.slice(0, 3)}) ${limitado.slice(3)}`;
+    return `(${limitado.slice(0, 3)}) ${limitado.slice(3, 6)}-${limitado.slice(6, 10)}`;
 }
 
 function formatearSSN(valor) {
@@ -264,12 +319,55 @@ function validarCodigoPostal(input) {
 }
 
 // ============================================
+// MÉTODO DE PAGO
+// ============================================
+
+function mostrarFormularioPago(tipo) {
+    // Ocultar ambos formularios
+    const formBanco = document.getElementById('formBanco');
+    const formTarjeta = document.getElementById('formTarjeta');
+    
+    if (formBanco) formBanco.style.display = 'none';
+    if (formTarjeta) formTarjeta.style.display = 'none';
+    
+    // Mostrar el formulario seleccionado
+    if (tipo === 'banco' && formBanco) {
+        formBanco.style.display = 'block';
+    } else if (tipo === 'tarjeta' && formTarjeta) {
+        formTarjeta.style.display = 'block';
+    }
+}
+
+function limpiarMetodoPago() {
+    // Desmarcar radio buttons
+    document.querySelectorAll('[name="metodoPago"]').forEach(radio => {
+        radio.checked = false;
+    });
+    
+    // Ocultar formularios
+    const formBanco = document.getElementById('formBanco');
+    const formTarjeta = document.getElementById('formTarjeta');
+    
+    if (formBanco) formBanco.style.display = 'none';
+    if (formTarjeta) formTarjeta.style.display = 'none';
+    
+    // Limpiar campos
+    document.querySelectorAll('#formBanco input, #formTarjeta input, #formTarjeta select').forEach(input => {
+        input.value = '';
+    });
+}
+
+// ============================================
 // DEPENDIENTES
 // ============================================
 
 function agregarDependiente() {
     dependientesCount++;
     const container = document.getElementById('dependientesContainer');
+    
+    // Quitar empty state
+    const emptyState = container.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
     
     const dependienteHTML = `
         <div class="dependiente-item" id="dependiente-${dependientesCount}">
@@ -348,6 +446,18 @@ function eliminarDependiente(id) {
         if (elemento) {
             elemento.remove();
             actualizarContadorDependientes();
+            
+            // Mostrar empty state si no hay dependientes
+            const container = document.getElementById('dependientesContainer');
+            if (container.querySelectorAll('.dependiente-item').length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-symbols-rounded">family_restroom</span>
+                        <p>No hay dependientes agregados</p>
+                        <small>Haz clic en "Agregar Dependiente" para comenzar</small>
+                    </div>
+                `;
+            }
         }
     }
 }
@@ -361,40 +471,29 @@ function actualizarContadorDependientes() {
 }
 
 // ============================================
-// DOCUMENTOS
+// DOCUMENTOS (SIMPLIFICADOS - SIN TIPO)
 // ============================================
 
 function agregarDocumento() {
     documentosCount++;
     const container = document.getElementById('documentosContainer');
     
-    // Quitar empty state si existe
+    // Quitar empty state
     const emptyState = container.querySelector('.empty-state');
-    if (emptyState) {
-        emptyState.remove();
-    }
+    if (emptyState) emptyState.remove();
     
     const documentoHTML = `
         <div class="documento-item" id="documento-${documentosCount}">
             <div class="documento-header">
                 <span class="material-symbols-rounded">description</span>
-                <span class="documento-nombre" id="nombre-doc-${documentosCount}">Nuevo documento</span>
+                <span class="documento-nombre" id="nombre-doc-${documentosCount}">Documento #${documentosCount}</span>
                 <button type="button" class="btn-remove" onclick="eliminarDocumento(${documentosCount})">
                     <span class="material-symbols-rounded">delete</span>
                 </button>
             </div>
             <div class="documento-body">
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Tipo de Documento</label>
-                        <select name="doc_tipo_${documentosCount}" onchange="actualizarNombreDocumento(${documentosCount})">
-                            <option value="id">Identificación</option>
-                            <option value="poliza">Póliza</option>
-                            <option value="comprobante">Comprobante de Pago</option>
-                            <option value="otro">Otro</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
+                    <div class="form-group full-width">
                         <label>Archivo</label>
                         <input type="file" name="doc_archivo_${documentosCount}" 
                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
@@ -402,9 +501,9 @@ function agregarDocumento() {
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Notas (opcional)</label>
-                    <textarea name="doc_notas_${documentosCount}" rows="2" 
-                              placeholder="Agregar notas sobre este documento..."></textarea>
+                    <label>Notas</label>
+                    <textarea name="doc_notas_${documentosCount}" rows="3" 
+                              placeholder="Describe el documento, especifica qué tipo es (ID, Póliza, Comprobante, etc.)..."></textarea>
                 </div>
                 <div class="documento-preview" id="preview-doc-${documentosCount}"></div>
             </div>
@@ -437,14 +536,6 @@ function eliminarDocumento(id) {
     }
 }
 
-function actualizarNombreDocumento(id) {
-    const select = document.querySelector(`[name="doc_tipo_${id}"]`);
-    const nombreSpan = document.getElementById(`nombre-doc-${id}`);
-    if (select && nombreSpan) {
-        nombreSpan.textContent = select.options[select.selectedIndex].text;
-    }
-}
-
 function previsualizarDocumento(id, input) {
     const preview = document.getElementById(`preview-doc-${id}`);
     const file = input.files[0];
@@ -457,6 +548,12 @@ function previsualizarDocumento(id, input) {
     const fileName = file.name;
     const fileSize = (file.size / 1024).toFixed(2); // KB
     const fileType = file.type;
+    
+    // Actualizar nombre del documento
+    const nombreSpan = document.getElementById(`nombre-doc-${id}`);
+    if (nombreSpan) {
+        nombreSpan.textContent = fileName;
+    }
     
     let previewHTML = `
         <div class="archivo-info">
@@ -513,7 +610,6 @@ function enviarNota() {
         return;
     }
     
-    // Crear nota visual (temporal hasta guardar en BD)
     const notaHTML = `
         <div class="nota-card">
             <div class="nota-header">
@@ -535,13 +631,10 @@ function enviarNota() {
     
     const thread = document.getElementById('notasThread');
     const emptyState = thread.querySelector('.empty-state');
-    if (emptyState) {
-        emptyState.remove();
-    }
+    if (emptyState) emptyState.remove();
     
     thread.insertAdjacentHTML('afterbegin', notaHTML);
     
-    // Limpiar formulario
     cancelarNota();
     actualizarContadorNotas();
     
@@ -628,11 +721,11 @@ function actualizarContadorNotas() {
 // ============================================
 
 function togglePOBox() {
-    const checkbox = document.getElementById('tienePoBox');
-    const poBoxContainer = document.getElementById('poBoxContainer');
+    const checkbox = document.getElementById('tienePOBox');
+    const poBoxGroup = document.getElementById('poBoxGroup');
     
-    if (checkbox && poBoxContainer) {
-        poBoxContainer.style.display = checkbox.checked ? 'block' : 'none';
+    if (checkbox && poBoxGroup) {
+        poBoxGroup.style.display = checkbox.checked ? 'block' : 'none';
     }
 }
 
@@ -641,7 +734,6 @@ function togglePOBox() {
 // ============================================
 
 function inicializarAutoguardado() {
-    // Guardar cada 30 segundos
     autosaveTimer = setInterval(() => {
         guardarBorradorSilencioso();
     }, AUTOSAVE_INTERVAL);
@@ -653,7 +745,6 @@ function guardarBorradorSilencioso() {
     const formData = obtenerDatosFormulario();
     localStorage.setItem('borrador_cliente', JSON.stringify(formData));
     
-    // Mostrar indicador visual
     const indicator = document.getElementById('autosaveIndicator');
     if (indicator) {
         indicator.style.opacity = '1';
@@ -706,17 +797,14 @@ async function handleSubmit(event) {
     
     console.log('📤 Iniciando proceso de guardado...');
     
-    // Validar
     if (!validarFormularioCompleto()) {
         alert('Por favor, completa todos los campos requeridos correctamente.');
         return;
     }
     
-    // Confirmar
     const confirmacion = confirm('¿Guardar este nuevo cliente y póliza?');
     if (!confirmacion) return;
     
-    // Mostrar indicador
     const btnSubmit = document.querySelector('.btn-submit');
     const textoOriginal = btnSubmit.innerHTML;
     btnSubmit.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span> Guardando...';
@@ -748,8 +836,7 @@ function validarFormularioCompleto() {
         { id: 'estado', nombre: 'Estado' },
         { id: 'codigoPostal', nombre: 'Código postal' },
         { id: 'compania', nombre: 'Compañía' },
-        { id: 'plan', nombre: 'Plan' },
-        { id: 'fechaEfectividad', nombre: 'Fecha de efectividad' }
+        { id: 'plan', nombre: 'Plan' }
     ];
     
     for (const campo of camposRequeridos) {
@@ -758,12 +845,7 @@ function validarFormularioCompleto() {
             console.error(`Campo requerido vacío: ${campo.nombre}`);
             alert(`El campo "${campo.nombre}" es requerido`);
             elemento?.focus();
-            
-            // Cambiar al tab correspondiente
-            if (['nombres', 'apellidos', 'email', 'telefono1', 'fechaNacimiento', 'genero', 'estadoMigratorio'].includes(campo.id)) {
-                cambiarTab('info-general');
-            }
-            
+            cambiarTab('info-general');
             return false;
         }
     }
@@ -783,7 +865,7 @@ async function crearCliente(formData) {
         apellidos: formData.apellidos,
         email: formData.email,
         telefono: formData.telefono1.replace(/\D/g, ''),
-        telefono_secundario: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : null,
+        telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : null,
         fecha_nacimiento: formData.fechaNacimiento,
         sexo: formData.genero,
         ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
@@ -809,7 +891,6 @@ async function crearCliente(formData) {
     
     console.log('✅ Cliente creado:', cliente.id);
     
-    // Crear póliza
     const numeroPoliza = await generarNumeroPoliza();
     
     const polizaData = {
@@ -845,7 +926,6 @@ async function crearCliente(formData) {
     
     console.log('✅ Póliza creada:', poliza.id);
     
-    // Limpiar borrador y redirigir
     localStorage.removeItem('borrador_cliente');
     clearInterval(autosaveTimer);
     
@@ -890,7 +970,6 @@ function obtenerDatosFormulario() {
     
     const datos = {};
     
-    // Obtener todos los campos del formulario
     for (let [key, value] of formData.entries()) {
         datos[key] = value;
     }
@@ -914,15 +993,11 @@ function cancelarFormulario() {
 // LOG INICIAL
 // ============================================
 
-console.log('%c📝 CLIENTE_CREAR.JS MEJORADO', 'color: #00a8e8; font-size: 16px; font-weight: bold');
-console.log('%c✅ Todas las funciones cargadas', 'color: #4caf50; font-weight: bold');
-console.log('Funcionalidades activas:');
-console.log('  ✓ Tabs funcionales');
-console.log('  ✓ Validación en tiempo real');
-console.log('  ✓ Formatos automáticos (teléfono, SSN, montos)');
-console.log('  ✓ Fechas automáticas');
-console.log('  ✓ Dependientes dinámicos');
-console.log('  ✓ Documentos con preview');
-console.log('  ✓ Notas con imágenes');
-console.log('  ✓ Autoguardado cada 30s');
-console.log('  ✓ Secciones colapsables');
+console.log('%c📝 CLIENTE_CREAR.JS CORREGIDO', 'color: #00a8e8; font-size: 16px; font-weight: bold');
+console.log('%c✅ Todas las correcciones aplicadas', 'color: #4caf50; font-weight: bold');
+console.log('Correcciones:');
+console.log('  ✓ Fechas en formato mm/dd/aaaa');
+console.log('  ✓ Teléfono límite 10 caracteres');
+console.log('  ✓ Fechas automáticas (1° mes siguiente, 12/31/2026)');
+console.log('  ✓ Método de pago desplegables funcionando');
+console.log('  ✓ Documentos sin tipo (solo archivo + notas)');
