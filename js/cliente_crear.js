@@ -176,40 +176,44 @@ function calcularYMostrarFechas() {
     console.log('  Efectividad:', fechaEfectividadUS, '→', convertirAFormatoISO(fechaEfectividadUS));
 }
 
-
-// Sincronizar: Display → Hidden
-document.getElementById('fechaNacimiento_display').addEventListener('input', function(e) {
-    let valor = e.target.value.replace(/\D/g, '');
+/**
+* Convierte CUALQUIER formato de fecha a mm/dd/aaaa
+ * @param {string|Date} fecha - Fecha en cualquier formato
+ * @returns {string} Fecha en formato mm/dd/aaaa
+ */
+function formatoUS(fecha) {
+    if (!fecha) return '';
     
-    // Aplicar máscara
-    if (valor.length >= 2) {
-        valor = valor.slice(0, 2) + '/' + valor.slice(2);
+    // Si ya viene en formato mm/dd/aaaa, devolver tal cual
+    if (typeof fecha === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+        return fecha;
     }
-    if (valor.length >= 5) {
-        valor = valor.slice(0, 5) + '/' + valor.slice(5, 9);
+    
+    // Convertir a objeto Date
+    let d;
+    if (fecha instanceof Date) {
+        d = fecha;
+    } else if (typeof fecha === 'string') {
+        // Manejar formato ISO (aaaa-mm-dd)
+        if (fecha.includes('-')) {
+            const partes = fecha.split('T')[0].split('-');
+            d = new Date(partes[0], partes[1] - 1, partes[2]);
+        } else {
+            d = new Date(fecha);
+        }
+    } else {
+        return '';
     }
     
-    e.target.value = valor;
+    // Validar que sea fecha válida
+    if (isNaN(d.getTime())) return '';
     
-    // Actualizar hidden input
-    if (valor.length === 10) {
-        const partes = valor.split('/');
-        const fechaISO = `${partes[2]}-${partes[0]}-${partes[1]}`;
-        document.getElementById('fechaNacimiento_hidden').value = fechaISO;
-    }
-});
-
-// Sincronizar: Hidden → Display (al cargar datos)
-function cargarFecha(fechaISO) {
-    if (!fechaISO) return;
+    // Formatear a mm/dd/aaaa
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    const anio = d.getFullYear();
     
-    // Actualizar hidden
-    document.getElementById('fechaNacimiento_hidden').value = fechaISO;
-    
-    // Actualizar display en formato US
-    const partes = fechaISO.split('-');
-    const fechaUS = `${partes[1]}/${partes[2]}/${partes[0]}`;
-    document.getElementById('fechaNacimiento_display').value = fechaUS;
+    return `${mes}/${dia}/${anio}`;
 }
 
 // ============================================
@@ -965,6 +969,44 @@ async function crearCliente(formData) {
         estado_mercado: 'pendiente',
         observaciones: formData.observaciones || null,
     };
+
+    // ============================================
+// GUARDAR DEPENDIENTES
+// ============================================
+async function guardarDependientes(clienteId, formData) {
+    const dependientes = [];
+    
+    // Buscar todos los dependientes en el formulario
+    for (let i = 1; i <= dependientesCount; i++) {
+        const elemento = document.getElementById(`dependiente-${i}`);
+        if (!elemento) continue; // Si fue eliminado, saltar
+        
+        const nombres = formData[`dep_nombres_${i}`];
+        if (!nombres) continue; // Si está vacío, saltar
+        
+        dependientes.push({
+            cliente_id: clienteId,
+            nombres: nombres,
+            apellidos: formData[`dep_apellidos_${i}`] || '',
+            fecha_nacimiento: formData[`dep_fecha_nacimiento_${i}`] || null,
+            sexo: formData[`dep_genero_${i}`] || null,
+            ssn: formData[`dep_ssn_${i}`] ? formData[`dep_ssn_${i}`].replace(/\D/g, '') : null,
+            estado_migratorio: formData[`dep_estado_migratorio_${i}`] || null,
+            relacion: formData[`dep_relacion_${i}`] || null
+        });
+    }
+    
+    // Guardar todos los dependientes
+    if (dependientes.length > 0) {
+        const { error } = await supabaseClient
+            .from('dependientes')
+            .insert(dependientes);
+        
+        if (error) throw error;
+        
+        console.log(`✅ ${dependientes.length} dependiente(s) guardado(s)`);
+    }
+}
     
     const { data: poliza, error: polizaError } = await supabaseClient
         .from('polizas')

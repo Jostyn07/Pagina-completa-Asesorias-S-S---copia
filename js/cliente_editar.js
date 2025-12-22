@@ -163,38 +163,65 @@ async function cargarDatosCliente(id) {
     }
 }
 
-document.getElementById('fechaNacimiento_display').addEventListener('input', function(e) {
-    let valor = e.target.value.replace(/\D/g, '');
+/**
+* Convierte CUALQUIER formato de fecha a mm/dd/aaaa
+ * @param {string|Date} fecha - Fecha en cualquier formato
+ * @returns {string} Fecha en formato mm/dd/aaaa
+ */
+function formatoUS(fecha) {
+    if (!fecha) return '';
+    if (typeof fecha === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) return fecha;
     
-    // Aplicar máscara
-    if (valor.length >= 2) {
-        valor = valor.slice(0, 2) + '/' + valor.slice(2);
-    }
-    if (valor.length >= 5) {
-        valor = valor.slice(0, 5) + '/' + valor.slice(5, 9);
+    let d;
+    if (fecha instanceof Date) {
+        d = fecha;
+    } else if (typeof fecha === 'string') {
+        if (fecha.includes('-')) {
+            const partes = fecha.split('T')[0].split('-');
+            d = new Date(partes[0], partes[1] - 1, partes[2]);
+        } else {
+            d = new Date(fecha);
+        }
+    } else {
+        return '';
     }
     
-    e.target.value = valor;
+    if (isNaN(d.getTime())) return '';
     
-    // Actualizar hidden input
-    if (valor.length === 10) {
-        const partes = valor.split('/');
-        const fechaISO = `${partes[2]}-${partes[0]}-${partes[1]}`;
-        document.getElementById('fechaNacimiento_hidden').value = fechaISO;
-    }
-});
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    const anio = d.getFullYear();
+    
+    return `${mes}/${dia}/${anio}`;
+}
 
-// Sincronizar: Hidden → Display (al cargar datos)
-function cargarFecha(fechaISO) {
-    if (!fechaISO) return;
+// Para INPUTS type="date"
+function formatoISO(fecha) {
+    if (!fecha) return '';
     
-    // Actualizar hidden
-    document.getElementById('fechaNacimiento_hidden').value = fechaISO;
+    let d;
+    if (fecha instanceof Date) {
+        d = fecha;
+    } else if (typeof fecha === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}/.test(fecha)) {
+            return fecha.split('T')[0];
+        }
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+            const partes = fecha.split('/');
+            return `${partes[2]}-${partes[0]}-${partes[1]}`;
+        }
+        d = new Date(fecha);
+    } else {
+        return '';
+    }
     
-    // Actualizar display en formato US
-    const partes = fechaISO.split('-');
-    const fechaUS = `${partes[1]}/${partes[2]}/${partes[0]}`;
-    document.getElementById('fechaNacimiento_display').value = fechaUS;
+    if (isNaN(d.getTime())) return '';
+    
+    const anio = d.getFullYear();
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    
+    return `${anio}-${mes}-${dia}`;
 }
 
 // ============================================
@@ -204,28 +231,22 @@ function cargarFecha(fechaISO) {
 function rellenarFormulario(cliente, poliza, dependientes, notas) {
     console.log('📝 Rellenando formulario...');
     
-    if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = convertirAFormatoUS(cliente.tipo_registro);
-    if (cliente.fecha_registro) document.getElementById('fechaRegistro').value = cliente.fecha_registro;
+    if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = cliente.tipo_registro;
+    if (cliente.fecha_registro) document.getElementById('fechaRegistro').value = formatoUS(cliente.fecha_registro);
 
 
     // CLIENTE - Datos personales
     if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres;
     if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos;
     if (cliente.email) document.getElementById('email').value = cliente.email;
-    if (cliente.telefono) {
-        document.getElementById('telefono1').value = formatearTelefono(cliente.telefono1);
-    }
+    if (cliente.telefono1) document.getElementById('telefono1').value = formatearTelefono(cliente.telefono1);
     if (cliente.telefono2) {
         document.getElementById('telefono2').value = formatearTelefono(cliente.telefono2);
     }
     
     // Fecha de nacimiento en formato mm/dd/aaaa
-    if (cliente.fecha_nacimiento) {
-        const fechaNacInput = document.getElementById('fechaNacimiento');
-        fechaNacInput.value = cliente.fecha_nacimiento; // ISO para input type="date"
-        // Opcional: mostrar en formato US en un display si existe
-    }
-    
+    if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = formatoISO(cliente.fecha_nacimiento)
+
     if (cliente.genero) document.getElementById('genero').value = cliente.genero;
     if (cliente.ssn) document.getElementById('ssn').value = formatearSSN(cliente.ssn);
     if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio;
@@ -240,7 +261,8 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
     if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad;
     if (cliente.estado) document.getElementById('estado').value = cliente.estado;
     if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal;
-    
+    if (cliente.aplica) document.getElementById('aplica').value = cliente.aplica;
+    if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre;
     // PÓLIZA
     if (poliza) {
         if (poliza.compania) document.getElementById('compania').value = poliza.compania;
@@ -248,7 +270,6 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
         if (poliza.prima) document.getElementById('prima').value = poliza.prima;
         if (poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal;
         if (poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta;
-        if (poliza.operador_nombre) document.getElementById('operadorNombre').value = poliza.operador_nombre;
         if (poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza;
         if (poliza.member_id) document.getElementById('memberId').value = poliza.member_id;
         if (poliza.portal_npn) document.getElementById('portalNPN').value = poliza.portal_npn;
@@ -1161,7 +1182,7 @@ async function actualizarCliente(id, formData) {
         apellidos: formData.apellidos,
         genero: formData.genero,
         email: formData.email,
-        telefono1: formData.telefono1.replace(/\D/g, ''),
+        telefono1: formData.telefono1,
         telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : null,
         fecha_nacimiento: formData.fechaNacimiento,
         estado_migratorio: formData.estadoMigratorio,
@@ -1196,7 +1217,6 @@ async function actualizarCliente(id, formData) {
         cliente_id: id,
         compania: formData.compania,
         plan: formData.plan,
-        tipo_plan: formData.tipoPlan || null,
         prima: parseFloat(formData.prima) || 0,
         credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
         fecha_efectividad: formData.fechaEfectividad,
@@ -1212,6 +1232,45 @@ async function actualizarCliente(id, formData) {
         observaciones: formData.observaciones || null,
         updated_at: new Date().toISOString()
     };
+
+    // ============================================
+// GUARDAR DEPENDIENTES
+// ============================================
+async function guardarDependientes(clienteId, formData) {
+    const dependientes = [];
+    
+    // Buscar todos los dependientes en el formulario
+    for (let i = 1; i <= dependientesCount; i++) {
+        const elemento = document.getElementById(`dependiente-${i}`);
+        if (!elemento) continue; // Si fue eliminado, saltar
+        
+        const nombres = formData[`dep_nombres_${i}`];
+        if (!nombres) continue; // Si está vacío, saltar
+        
+        dependientes.push({
+            cliente_id: clienteId,
+            nombres: nombres,
+            apellidos: formData[`dep_apellidos_${i}`] || '',
+            fecha_nacimiento: formData[`dep_fecha_nacimiento_${i}`] || null,
+            sexo: formData[`dep_genero_${i}`] || null,
+            ssn: formData[`dep_ssn_${i}`] ? formData[`dep_ssn_${i}`].replace(/\D/g, '') : null,
+            estado_migratorio: formData[`dep_estado_migratorio_${i}`] || null,
+            aplica: formData[`dep_aplica_${i}`] || null,
+            relacion: formData[`dep_relacion_${i}`] || null
+        });
+    }
+    
+    // Guardar todos los dependientes
+    if (dependientes.length > 0) {
+        const { error } = await supabaseClient
+            .from('dependientes')
+            .insert(dependientes);
+        
+        if (error) throw error;
+        
+        console.log(`✅ ${dependientes.length} dependiente(s) guardado(s)`);
+    }
+}
     
     if (polizaId) {
         // Actualizar póliza existente
