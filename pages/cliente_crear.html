@@ -210,11 +210,24 @@
                                 <label>Teléfono Secundario</label>
                                 <input type="tel" id="telefono2" name="telefono2" placeholder="(305) 123-4567">
                             </div>
+                            
+                            <!-- Fecha nacimeinto -->
                             <div class="form-group">
-                                <label>Fecha de nacimiento <span class="required">*</span></label>
-                                <input type="date" id="fechaNacimiento" name="fechaNacimiento" required>
-                                <span class="validation-message"></span>
+                                <label>Fecha de Nacimiento</label>
+                                
+                                <!-- Input hidden (type="date") para el valor real -->
+                                <input type="date" 
+                                    id="fechaNacimiento_hidden" 
+                                    name="fechaNacimiento" 
+                                    style="display: none;">
+                                
+                                <!-- Input visible (type="text") para mostrar formato US -->
+                                <input type="text" 
+                                    id="fechaNacimiento_display" 
+                                    placeholder="mm/dd/aaaa"
+                                    maxlength="10">
                             </div>
+
                             <div class="form-group">
                                 <label>Estado migratorio <span class="required">*</span></label>
                                 <select id="estadoMigratorio" name="estadoMigratorio" required>
@@ -428,7 +441,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Portal NPN</label>
-                                <input type="text" id="portalNPN" name="portalNPN" placeholder="12345678">
+                                <input type="text" id="portalNPN" name="portalNPN" placeholder="Joel Nieves - ">
                             </div>
                             <div class="form-group">
                                 <label>Clave de Seguridad</label>

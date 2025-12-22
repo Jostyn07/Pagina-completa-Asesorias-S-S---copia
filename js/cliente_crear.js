@@ -176,6 +176,42 @@ function calcularYMostrarFechas() {
     console.log('  Efectividad:', fechaEfectividadUS, '→', convertirAFormatoISO(fechaEfectividadUS));
 }
 
+
+// Sincronizar: Display → Hidden
+document.getElementById('fechaNacimiento_display').addEventListener('input', function(e) {
+    let valor = e.target.value.replace(/\D/g, '');
+    
+    // Aplicar máscara
+    if (valor.length >= 2) {
+        valor = valor.slice(0, 2) + '/' + valor.slice(2);
+    }
+    if (valor.length >= 5) {
+        valor = valor.slice(0, 5) + '/' + valor.slice(5, 9);
+    }
+    
+    e.target.value = valor;
+    
+    // Actualizar hidden input
+    if (valor.length === 10) {
+        const partes = valor.split('/');
+        const fechaISO = `${partes[2]}-${partes[0]}-${partes[1]}`;
+        document.getElementById('fechaNacimiento_hidden').value = fechaISO;
+    }
+});
+
+// Sincronizar: Hidden → Display (al cargar datos)
+function cargarFecha(fechaISO) {
+    if (!fechaISO) return;
+    
+    // Actualizar hidden
+    document.getElementById('fechaNacimiento_hidden').value = fechaISO;
+    
+    // Actualizar display en formato US
+    const partes = fechaISO.split('-');
+    const fechaUS = `${partes[1]}/${partes[2]}/${partes[0]}`;
+    document.getElementById('fechaNacimiento_display').value = fechaUS;
+}
+
 // ============================================
 // VALIDACIÓN EN TIEMPO REAL
 // ============================================
@@ -422,8 +458,18 @@ function agregarDependiente() {
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Relación</label>
+                        <label>¿Aplica para el seguro?</label>
                         <select name="dep_relacion_${dependientesCount}">
+                            <option value="">Seleccionar...</option>
+                            <option value="Si">Si</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Relación</label>
+                        <select name="dep_aplicante_${dependientesCount}">
                             <option value="">Seleccionar...</option>
                             <option value="hijo/a">Hijo/a</option>
                             <option value="conyuge">Cónyuge</option>
@@ -431,7 +477,6 @@ function agregarDependiente() {
                             <option value="otro">Otro</option>
                         </select>
                     </div>
-                </div>
             </div>
         </div>
     `;
@@ -851,7 +896,7 @@ function validarFormularioCompleto() {
     }
     
     return true;
-}
+} 
 
 // ============================================
 // CREAR CLIENTE
@@ -861,23 +906,29 @@ async function crearCliente(formData) {
     console.log('📝 Creando cliente...');
     
     const clienteData = {
+        tipo_registro: formData.tipoRegistro,
+        fecha_registro: formData.fechaRegistro,
         nombres: formData.nombres,
         apellidos: formData.apellidos,
+        genero: formData.genero,
         email: formData.email,
-        telefono: formData.telefono1.replace(/\D/g, ''),
+        telefono1: formData.telefono1.replace(/\D/g, ''),
         telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : null,
         fecha_nacimiento: formData.fechaNacimiento,
-        sexo: formData.genero,
-        ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
         estado_migratorio: formData.estadoMigratorio,
+        ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
+        ingreso_anual: parseFloat(formData.ingresos) || 0,
+        ocupacion: formData.ocupacion || null,
+        nacionalidad: formData.ocupacion || null,
+        aplica: formData.aplica,
         direccion: formData.direccion,
+        casa_apartamento: formData.casaApartamento,
+        condado: formData.condado,
         ciudad: formData.ciudad,
         estado: formData.estado,
         codigo_postal: formData.codigoPostal,
-        empleador: formData.ocupacion || null,
-        ingreso_anual: parseFloat(formData.ingresos) || 0,
         operador_nombre: formData.operadorNombre || null,
-        agente_nombre: formData.agenteNombre || null,
+        agente_nombre: formData.portalNPN || null,
         observaciones: formData.observaciones || null
     };
     
@@ -898,7 +949,6 @@ async function crearCliente(formData) {
         numero_poliza: numeroPoliza,
         compania: formData.compania,
         plan: formData.plan,
-        tipo_plan: formData.tipoPlan || null,
         prima: parseFloat(formData.prima) || 0,
         credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
         fecha_efectividad: formData.fechaEfectividad,
@@ -910,10 +960,10 @@ async function crearCliente(formData) {
         enlace_poliza: formData.enlacePoliza || null,
         tipo_venta: formData.tipoVenta || null,
         operador_nombre: formData.operadorNombre || null,
-        agente_nombre: formData.agenteNombre || null,
+        agente_nombre: formData.portalNPN || null,
         estado_compania: 'pendiente',
         estado_mercado: 'pendiente',
-        observaciones: formData.observaciones || null
+        observaciones: formData.observaciones || null,
     };
     
     const { data: poliza, error: polizaError } = await supabaseClient

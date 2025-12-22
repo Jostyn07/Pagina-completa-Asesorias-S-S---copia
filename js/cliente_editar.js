@@ -163,6 +163,40 @@ async function cargarDatosCliente(id) {
     }
 }
 
+document.getElementById('fechaNacimiento_display').addEventListener('input', function(e) {
+    let valor = e.target.value.replace(/\D/g, '');
+    
+    // Aplicar máscara
+    if (valor.length >= 2) {
+        valor = valor.slice(0, 2) + '/' + valor.slice(2);
+    }
+    if (valor.length >= 5) {
+        valor = valor.slice(0, 5) + '/' + valor.slice(5, 9);
+    }
+    
+    e.target.value = valor;
+    
+    // Actualizar hidden input
+    if (valor.length === 10) {
+        const partes = valor.split('/');
+        const fechaISO = `${partes[2]}-${partes[0]}-${partes[1]}`;
+        document.getElementById('fechaNacimiento_hidden').value = fechaISO;
+    }
+});
+
+// Sincronizar: Hidden → Display (al cargar datos)
+function cargarFecha(fechaISO) {
+    if (!fechaISO) return;
+    
+    // Actualizar hidden
+    document.getElementById('fechaNacimiento_hidden').value = fechaISO;
+    
+    // Actualizar display en formato US
+    const partes = fechaISO.split('-');
+    const fechaUS = `${partes[1]}/${partes[2]}/${partes[0]}`;
+    document.getElementById('fechaNacimiento_display').value = fechaUS;
+}
+
 // ============================================
 // RELLENAR FORMULARIO
 // ============================================
@@ -170,12 +204,16 @@ async function cargarDatosCliente(id) {
 function rellenarFormulario(cliente, poliza, dependientes, notas) {
     console.log('📝 Rellenando formulario...');
     
+    if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = convertirAFormatoUS(cliente.tipo_registro);
+    if (cliente.fecha_registro) document.getElementById('fechaRegistro').value = cliente.fecha_registro;
+
+
     // CLIENTE - Datos personales
     if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres;
     if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos;
     if (cliente.email) document.getElementById('email').value = cliente.email;
     if (cliente.telefono) {
-        document.getElementById('telefono1').value = formatearTelefono(cliente.telefono);
+        document.getElementById('telefono1').value = formatearTelefono(cliente.telefono1);
     }
     if (cliente.telefono2) {
         document.getElementById('telefono2').value = formatearTelefono(cliente.telefono2);
@@ -188,15 +226,17 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
         // Opcional: mostrar en formato US en un display si existe
     }
     
-    if (cliente.sexo) document.getElementById('genero').value = cliente.sexo;
+    if (cliente.genero) document.getElementById('genero').value = cliente.genero;
     if (cliente.ssn) document.getElementById('ssn').value = formatearSSN(cliente.ssn);
     if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio;
     if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad;
-    if (cliente.empleador) document.getElementById('ocupacion').value = cliente.empleador;
+    if (cliente.ocupacion) document.getElementById('ocupacion').value = cliente.ocupacion;
     if (cliente.ingreso_anual) document.getElementById('ingresos').value = cliente.ingreso_anual;
     
     // Dirección
     if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion;
+    if (cliente.casa_apartamento) document.getElementById('casaApartamento').value = cliente.casa_apartamento;
+    if (cliente.condado) document.getElementById('condado').value = cliente.condado;
     if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad;
     if (cliente.estado) document.getElementById('estado').value = cliente.estado;
     if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal;
@@ -292,8 +332,8 @@ function agregarDependienteExistente(dep) {
                         <label>Género <span class="required">*</span></label>
                         <select name="dep_genero_${dependientesCount}" required>
                             <option value="">Seleccionar...</option>
-                            <option value="masculino" ${dep.sexo === 'masculino' ? 'selected' : ''}>Masculino</option>
-                            <option value="femenino" ${dep.sexo === 'femenino' ? 'selected' : ''}>Femenino</option>
+                            <option value="masculino" ${dep.genero === 'masculino' ? 'selected' : ''}>Masculino</option>
+                            <option value="femenino" ${dep.genero === 'femenino' ? 'selected' : ''}>Femenino</option>
                         </select>
                     </div>
                 </div>
@@ -1115,23 +1155,29 @@ async function actualizarCliente(id, formData) {
     
     // Actualizar cliente
     const clienteData = {
+        tipo_registro: formData.tipoRegistro,
+        fecha_registro: formData.fechaRegistro,
         nombres: formData.nombres,
         apellidos: formData.apellidos,
+        genero: formData.genero,
         email: formData.email,
-        telefono: formData.telefono1.replace(/\D/g, ''),
+        telefono1: formData.telefono1.replace(/\D/g, ''),
         telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : null,
         fecha_nacimiento: formData.fechaNacimiento,
-        sexo: formData.genero,
-        ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
         estado_migratorio: formData.estadoMigratorio,
+        ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
+        ingreso_anual: parseFloat(formData.ingresos) || 0,
+        ocupacion: formData.ocupacion || null,
+        nacionalidad: formData.ocupacion || null,
+        aplica: formData.aplica,
         direccion: formData.direccion,
+        casa_apartamento: formData.casaApartamento,
+        condado: formData.condado,
         ciudad: formData.ciudad,
         estado: formData.estado,
         codigo_postal: formData.codigoPostal,
-        empleador: formData.ocupacion || null,
-        ingreso_anual: parseFloat(formData.ingresos) || 0,
         operador_nombre: formData.operadorNombre || null,
-        agente_nombre: formData.agenteNombre || null,
+        agente_nombre: formData.portalNPN || null,
         observaciones: formData.observaciones || null,
         updated_at: new Date().toISOString()
     };
@@ -1162,7 +1208,7 @@ async function actualizarCliente(id, formData) {
         enlace_poliza: formData.enlacePoliza || null,
         tipo_venta: formData.tipoVenta || null,
         operador_nombre: formData.operadorNombre || null,
-        agente_nombre: formData.agenteNombre || null,
+        agente_nombre: formData.portalNPN || null,
         observaciones: formData.observaciones || null,
         updated_at: new Date().toISOString()
     };

@@ -276,13 +276,14 @@ async function guardarDependientes(clienteId) {
     for (const card of cards) {
         const id = card.id.split('-')[1];
         const dependienteData = {
-            nombres: card.querySelector(`[name="dependiente_${id}_nombres"]`).value,
-            apellidos: card.querySelector(`[name="dependiente_${id}_apellidos"]`).value,
-            fechaNacimiento: card.querySelector(`[name="dependiente_${id}_fechaNacimiento"]`).value,
-            genero: card.querySelector(`[name="dependiente_${id}_genero"]`).value,
-            relacion: card.querySelector(`[name="dependiente_${id}_relacion"]`).value,
-            ssn: card.querySelector(`[name="dependiente_${id}_ssn"]`).value,
-            aplicante: card.querySelector(`[name="dependiente_${id}_aplicante"]`).value
+            nombres: card.querySelector(`[name="dep_nombres_${id}"]`).value,
+            apellidos: card.querySelector(`[name="dep_apellidos_${id}"]`).value,
+            fechaNacimiento: card.querySelector(`[name="dep_fecha_nacimiento_${id}_fechaNacimiento"]`).value,
+            genero: card.querySelector(`[name="dep_genero_${id}"]`).value,
+            relacion: card.querySelector(`[name="dep_relacion_${id}"]`).value,
+            ssn: card.querySelector(`[name="dep_ssn_${id}"]`).value,
+            aplicante: card.querySelector(`[name="dep_aplicante_${id}"]`).value,
+            estadoMigratorio: card.querySelector(`[name="dep_estado_migratorio_${id}"]`)
         };
         
         const resultado = await agregarDependiente(clienteId, dependienteData);
