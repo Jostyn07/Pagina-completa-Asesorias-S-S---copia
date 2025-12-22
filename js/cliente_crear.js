@@ -946,6 +946,14 @@ async function crearCliente(formData) {
     
     console.log('✅ Cliente creado:', cliente.id);
     
+    // Guardar dependientes
+    await guardarDependientes(cliente.id, formData);
+
+    await guardarDocumentos(cliente.id);
+
+    await guardarNotas(cliente.id);
+
+
     const numeroPoliza = await generarNumeroPoliza();
     
     const polizaData = {
@@ -1007,6 +1015,127 @@ async function guardarDependientes(clienteId, formData) {
         console.log(`✅ ${dependientes.length} dependiente(s) guardado(s)`);
     }
 }
+    // =============================================
+    // GUARDAR DOCUMENTOS
+    // =============================================
+    async function guardarDocumentos(clienteId) {
+        const documentosGuardados = [];
+        
+        // Buscar todos los documentos en el formulario
+        for (let i = 1; i <= documentosCount; i++) {
+            const elemento = document.getElementById(`documento-${i}`);
+            if (!elemento) continue; // Si fue eliminado, saltar
+            
+            const fileInput = document.querySelector(`[name="doc_archivo_${i}"]`);
+            const notasInput = document.querySelector(`[name="doc_notas_${i}"]`);
+            
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) continue;
+            
+            const archivo = fileInput.files[0];
+            const notas = notasInput ? notasInput.value : '';
+            
+            try {
+                // 1. Subir archivo a Supabase Storage
+                const timestamp = Date.now();
+                const nombreArchivo = `${clienteId}/${timestamp}_${archivo.name}`;
+                
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                    .from('documentos') // Bucket de storage
+                    .upload(nombreArchivo, archivo, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+                
+                if (uploadError) {
+                    console.error('Error al subir archivo:', uploadError);
+                    continue;
+                }
+                
+                // 2. Obtener URL pública
+                const { data: urlData } = supabaseClient.storage
+                    .from('documentos')
+                    .getPublicUrl(nombreArchivo);
+                
+                const urlArchivo = urlData.publicUrl;
+                
+                // 3. Guardar en tabla documentos
+                documentosGuardados.push({
+                    cliente_id: clienteId,
+                    nombre_archivo: archivo.name,
+                    url_archivo: urlArchivo,
+                    tipo_archivo: archivo.type,
+                    tamanio: archivo.size,
+                    notas: notas || null
+                });
+                
+            } catch (error) {
+                console.error(`Error procesando documento ${i}:`, error);
+            }
+        }
+        
+        // Guardar todos los documentos en la BD
+        if (documentosGuardados.length > 0) {
+            const { error } = await supabaseClient
+                .from('documentos')
+                .insert(documentosGuardados);
+            
+            if (error) throw error;
+            
+            console.log(`✅ ${documentosGuardados.length} documento(s) guardado(s)`);
+        }
+    }
+
+    // ============================================
+    // GUARDAR NOTAS
+    // ============================================
+    async function guardarNotas(clienteId) {
+        const textarea = document.getElementById('nuevaNota');
+        const mensaje = textarea ? textarea.value.trim() : '';
+        
+        // Si no hay mensaje ni imágenes, saltar
+        if (!mensaje && imagenesNotaSeleccionadas.length === 0) {
+            console.log('No hay notas para guardar');
+            return;
+        }
+        
+        try {
+            // Obtener usuario actual
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            
+            if (!user) {
+                console.warn('No hay usuario autenticado, saltando notas');
+                return;
+            }
+            
+            // Preparar data de la nota
+            const notaData = {
+                cliente_id: clienteId,
+                mensaje: mensaje || null,
+                imagenes: imagenesNotaSeleccionadas.length > 0 ? imagenesNotaSeleccionadas : null,
+                usuario_email: user.email,
+                usuario_nombre: user.user_metadata?.nombre || user.email
+            };
+            
+            // Guardar nota
+            const { error } = await supabaseClient
+                .from('notas')
+                .insert([notaData]);
+            
+            if (error) throw error;
+            
+            console.log('✅ Nota guardada');
+            
+            // Limpiar formulario de notas
+            if (textarea) textarea.value = '';
+            imagenesNotaSeleccionadas = [];
+            const preview = document.getElementById('imagenesPreview');
+            if (preview) preview.innerHTML = '';
+            
+        } catch (error) {
+            console.error('Error al guardar nota:', error);
+            // No lanzar error para no bloquear la creación del cliente
+        }
+    }
     
     const { data: poliza, error: polizaError } = await supabaseClient
         .from('polizas')
