@@ -264,47 +264,47 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
     
     // DATOS DEL CLIENTE
     if (cliente) {
-        document.getElementById('tipoRegistro').value = cliente.tipo_registro || '';
-        document.getElementById('fechaRegistro').value = formatoISO(cliente.fecha_registro);
-        document.getElementById('nombres').value = cliente.nombres || '';
-        document.getElementById('apellidos').value = cliente.apellidos || '';
-        document.getElementById('genero').value = cliente.genero || '';
-        document.getElementById('email').value = cliente.email || '';
-        document.getElementById('telefono1').value = cliente.telefono1 || '';
-        document.getElementById('telefono2').value = cliente.telefono2 || '';
-        document.getElementById('fechaNacimiento').value = formatoISO(cliente.fecha_nacimiento);
-        document.getElementById('estadoMigratorio').value = cliente.estado_migratorio || '';
+       if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = cliente.tipo_registro || '';
+       if (cliente.fecha_registro) document.getElementById('fechaRegistro').value = formatoISO(cliente.fecha_registro);
+       if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres || '';
+       if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos || '';
+       if (cliente.genero) document.getElementById('genero').value = cliente.genero || '';
+       if (cliente.email) document.getElementById('email').value = cliente.email || '';
+       if (cliente.telefono1) document.getElementById('telefono1').value = cliente.telefono1 || '';
+       if (cliente.telefono2) document.getElementById('telefono2').value = cliente.telefono2 || '';
+       if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = formatoISO(cliente.fecha_nacimiento);
+       if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio || '';
         
         const ssnInput = document.getElementById('ssn');
         if (ssnInput && cliente.ssn) {
             ssnInput.value = formatearSSN(cliente.ssn);
         }
         
-        document.getElementById('ingresos').value = cliente.ingreso_anual || 0;
-        document.getElementById('ocupacion').value = cliente.ocupacion || '';
-        document.getElementById('nacionalidad').value = cliente.nacionalidad || '';
-        document.getElementById('aplica').value = cliente.aplica || '';
-        document.getElementById('direccion').value = cliente.direccion || '';
-        document.getElementById('casaApartamento').value = cliente.casa_apartamento || '';
-        document.getElementById('condado').value = cliente.condado || '';
-        document.getElementById('ciudad').value = cliente.ciudad || '';
-        document.getElementById('estado').value = cliente.estado || '';
-        document.getElementById('codigoPostal').value = cliente.codigo_postal || '';
-        document.getElementById('operadorNombre').value = cliente.operador_nombre || '';
-        document.getElementById('observaciones').value = cliente.observaciones || '';
+       if (cliente.ingreso_anual) document.getElementById('ingresos').value = cliente.ingreso_anual || 0;
+       if (cliente.ocupacion) document.getElementById('ocupacion').value = cliente.ocupacion || '';
+       if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad || '';
+       if (cliente.aplica) document.getElementById('aplica').value = cliente.aplica || '';
+       if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion || '';
+       if (cliente.casa_apartamento) document.getElementById('casaApartamento').value = cliente.casa_apartamento || '';
+       if (cliente.condado) document.getElementById('condado').value = cliente.condado || '';
+       if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad || '';
+       if (cliente.estado) document.getElementById('estado').value = cliente.estado || '';
+       if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal || '';
+       if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre || '';
+       if (cliente.observaciones) document.getElementById('observaciones').value = cliente.observaciones || '';
     }
     
     // DATOS DE LA PÓLIZA
     if (poliza) {
-        document.getElementById('compania').value = poliza.compania || '';
-        document.getElementById('plan').value = poliza.plan || '';
-        document.getElementById('prima').value = poliza.prima || 0;
-        document.getElementById('creditoFiscal').value = poliza.credito_fiscal || 0;
-        document.getElementById('memberId').value = poliza.member_id || '';
-        document.getElementById('portalNpn').value = poliza.portal_npn || '';
-        document.getElementById('claveSeguridad').value = poliza.clave_seguridad || '';
-        document.getElementById('enlacePoliza').value = poliza.enlace_poliza || '';
-        document.getElementById('tipoVenta').value = poliza.tipo_venta || '';
+       if(poliza.compania) document.getElementById('compania').value = poliza.compania || '';
+       if(poliza.plan) document.getElementById('plan').value = poliza.plan || '';
+       if(poliza.prima) document.getElementById('prima').value = poliza.prima || 0;
+       if(poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal || 0;
+       if(poliza.member_id) document.getElementById('memberId').value = poliza.member_id || '';
+       if(poliza.portal_npn) document.getElementById('portalNpn').value = poliza.portal_npn || '';
+       if(poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad || '';
+       if(poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza || '';
+       if(poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta || '';
         
         // Fechas de la póliza
         const fechaEfectividadInput = document.getElementById('fechaEfectividad');
@@ -654,7 +654,7 @@ function actualizarContadorDependientes() {
 }
 
 // ============================================
-// CARGAR DOCUMENTOS
+// DOCUMENTOS
 // ============================================
 
 async function cargarDocumentos(clienteId) {
@@ -676,6 +676,7 @@ async function cargarDocumentos(clienteId) {
                 <div class="empty-state">
                     <span class="material-symbols-rounded">upload_file</span>
                     <p>No hay documentos cargados</p>
+                    <small>Haz clic en "Agregar Documento" para comenzar</small>
                 </div>
             `;
             console.log('✅ Sin documentos');
@@ -688,25 +689,26 @@ async function cargarDocumentos(clienteId) {
         // Mostrar cada documento
         documentos.forEach(doc => {
             const docHTML = `
-                <div class="documento-item existente" data-doc-id="${doc.id}">
-                    <div class="documento-header">
+                <div class="documento-card" data-doc-id="${doc.id}">
+                    <div class="documento-icono">
                         <span class="material-symbols-rounded">description</span>
-                        <span class="documento-nombre">${doc.nombre_archivo}</span>
-                        <button type="button" class="btn-remove" onclick="confirmarEliminarDocumento('${doc.id}')">
-                            <span class="material-symbols-rounded">delete</span>
-                        </button>
                     </div>
-                    <div class="documento-body">
-                        <div class="documento-info">
-                            <p><strong>Tipo:</strong> ${doc.tipo_archivo || 'N/A'}</p>
-                            <p><strong>Tamaño:</strong> ${(doc.tamanio / 1024).toFixed(2)} KB</p>
-                            <p><strong>Subido:</strong> ${formatoUS(doc.created_at)}</p>
-                            ${doc.notas ? `<p><strong>Notas:</strong> ${doc.notas}</p>` : ''}
+                    <div class="documento-info">
+                        <h4 class="documento-nombre">${doc.nombre_archivo}</h4>
+                        <div class="documento-meta">
+                            <span class="documento-tipo">${doc.tipo_archivo || 'Archivo'}</span>
+                            <span class="documento-tamano">${(doc.tamanio / 1024).toFixed(2)} KB</span>
+                            <span class="documento-fecha">Subido: ${formatoUS(doc.created_at)}</span>
                         </div>
-                        <a href="${doc.url_archivo}" target="_blank" class="btn-ver-documento">
+                    </div>
+                    <div class="documento-acciones">
+                        <a href="${doc.url_archivo}" target="_blank" class="btn-ver-doc">
                             <span class="material-symbols-rounded">visibility</span>
                             Ver
                         </a>
+                        <button type="button" class="btn-eliminar-doc" onclick="confirmarEliminarDocumento('${doc.id}')">
+                            <span class="material-symbols-rounded">delete</span>
+                        </button>
                     </div>
                 </div>
             `;
@@ -754,19 +756,25 @@ async function confirmarEliminarDocumento(docId) {
         
         if (dbError) throw dbError;
         
-        // 5. Remover del DOM
+        // 5. Remover del DOM con animación
         const elemento = document.querySelector(`[data-doc-id="${docId}"]`);
-        if (elemento) elemento.remove();
-        
-        // 6. Verificar si quedaron documentos
-        const container = document.getElementById('documentosContainer');
-        if (container.querySelectorAll('.documento-item').length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <span class="material-symbols-rounded">upload_file</span>
-                    <p>No hay documentos cargados</p>
-                </div>
-            `;
+        if (elemento) {
+            elemento.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                elemento.remove();
+                
+                // 6. Verificar si quedaron documentos
+                const container = document.getElementById('documentosContainer');
+                if (container.querySelectorAll('.documento-card').length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <span class="material-symbols-rounded">upload_file</span>
+                            <p>No hay documentos cargados</p>
+                            <small>Haz clic en "Agregar Documento" para comenzar</small>
+                        </div>
+                    `;
+                }
+            }, 300);
         }
         
         console.log('✅ Documento eliminado');
@@ -786,25 +794,30 @@ function agregarDocumento() {
     if (emptyState) emptyState.remove();
     
     const docHTML = `
-        <div class="documento-item" id="documento-${documentosCount}">
-            <div class="documento-header">
+        <div class="documento-card nuevo" id="documento-${documentosCount}">
+            <div class="documento-icono">
                 <span class="material-symbols-rounded">upload_file</span>
-                <span class="documento-nombre">Documento #${documentosCount}</span>
-                <button type="button" class="btn-remove" onclick="eliminarDocumento(${documentosCount})">
+            </div>
+            <div class="documento-info">
+                <h4 class="documento-nombre" id="nombre-doc-${documentosCount}">Documento #${documentosCount}</h4>
+                <div class="documento-meta">
+                    <input type="file" 
+                           name="doc_archivo_${documentosCount}" 
+                           id="file-${documentosCount}"
+                           accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" 
+                           onchange="previsualizarDocumento(${documentosCount}, this)"
+                           style="display: none;">
+                    <label for="file-${documentosCount}" class="btn-seleccionar-archivo">
+                        <span class="material-symbols-rounded">attach_file</span>
+                        Seleccionar archivo
+                    </label>
+                    <span class="documento-estado" id="estado-doc-${documentosCount}">No seleccionado</span>
+                </div>
+            </div>
+            <div class="documento-acciones">
+                <button type="button" class="btn-eliminar-doc" onclick="eliminarDocumento(${documentosCount})">
                     <span class="material-symbols-rounded">delete</span>
                 </button>
-            </div>
-            <div class="documento-body">
-                <div class="form-group">
-                    <label>Archivo</label>
-                    <input type="file" name="doc_archivo_${documentosCount}" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="previsualizarDocumento(${documentosCount}, this)">
-                    <small class="help-text">PDF, JPG, PNG, DOC, DOCX (máx. 5MB)</small>
-                </div>
-                <div class="form-group">
-                    <label>Notas (opcional)</label>
-                    <textarea name="doc_notas_${documentosCount}" rows="2" placeholder="Descripción del documento..."></textarea>
-                </div>
-                <div class="documento-preview" id="preview-${documentosCount}"></div>
             </div>
         </div>
     `;
@@ -815,46 +828,47 @@ function agregarDocumento() {
 
 function eliminarDocumento(id) {
     const elemento = document.getElementById(`documento-${id}`);
-    if (elemento) elemento.remove();
-    
-    const container = document.getElementById('documentosContainer');
-    if (container.querySelectorAll('.documento-item').length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <span class="material-symbols-rounded">upload_file</span>
-                <p>No hay documentos agregados</p>
-            </div>
-        `;
+    if (elemento) {
+        elemento.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+            elemento.remove();
+            
+            const container = document.getElementById('documentosContainer');
+            if (container.querySelectorAll('.documento-card').length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-symbols-rounded">upload_file</span>
+                        <p>No hay documentos agregados</p>
+                        <small>Haz clic en "Agregar Documento" para comenzar</small>
+                    </div>
+                `;
+            }
+            
+            actualizarContadorDocumentos();
+        }, 300);
     }
-    
-    actualizarContadorDocumentos();
 }
 
 function previsualizarDocumento(id, input) {
-    const preview = document.getElementById(`preview-${id}`);
-    if (!preview) return;
+    if (!input.files || input.files.length === 0) return;
     
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const fileName = file.name;
+    const file = input.files[0];
+    const nombreElemento = document.getElementById(`nombre-doc-${id}`);
+    const estadoElemento = document.getElementById(`estado-doc-${id}`);
+    
+    if (nombreElemento) {
+        nombreElemento.textContent = file.name;
+    }
+    
+    if (estadoElemento) {
         const fileSize = (file.size / 1024).toFixed(2);
-        
-        preview.innerHTML = `
-            <div class="file-info">
-                <span class="material-symbols-rounded">check_circle</span>
-                <div>
-                    <strong>${fileName}</strong>
-                    <small>${fileSize} KB</small>
-                </div>
-            </div>
-        `;
-    } else {
-        preview.innerHTML = '';
+        estadoElemento.textContent = `${fileSize} KB`;
+        estadoElemento.classList.add('seleccionado');
     }
 }
 
 function actualizarContadorDocumentos() {
-    const total = document.querySelectorAll('.documento-item').length;
+    const total = document.querySelectorAll('.documento-card').length;
     const contador = document.getElementById('documentosCounter');
     if (contador) {
         contador.textContent = `(${total})`;
@@ -1063,8 +1077,18 @@ function verImagenCompleta(url) {
 // ============================================
 
 function inicializarTabs() {
+    // ✅ FIX ERROR #1: Agregar event listeners
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            cambiarTab(tabName);
+        });
+    });
+    
     // Tab por defecto
     cambiarTab('info-general');
+    
+    console.log('✅ Tabs inicializados correctamente');
 }
 
 function cambiarTab(tabName) {
@@ -1073,14 +1097,19 @@ function cambiarTab(tabName) {
         tab.classList.remove('active');
     });
     
-    // Desactivar todos los tabs
-    document.querySelectorAll('.tab-item').forEach(tab => {
+    // ✅ FIX ERROR #2: Cambiar de '.tab-item' a '.tab-btn'
+    document.querySelectorAll('.tab-btn').forEach(tab => {
         tab.classList.remove('active');
     });
     
     // Activar tab seleccionado
     document.getElementById(`tab-${tabName}`)?.classList.add('active');
     document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+}
+
+function toggleSection(header) {
+    const section = header.parentElement;
+    section.classList.toggle('collapsed');
 }
 
 function toggleSection(header) {

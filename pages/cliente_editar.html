@@ -203,7 +203,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Teléfono 1 <span class="required">*</span></label>
-                                <input type="tel" id="telefono1" name="telefono" placeholder="(305) 123-4567" required>
+                                <input type="tel" id="telefono1" name="telefono1" placeholder="(305) 123-4567" required>
                                 <span class="validation-message"></span>
                             </div>
                             <div class="form-group">
@@ -379,6 +379,14 @@
                                     <option value="WellPoint">WellPoint</option>
                                 </select>
                             </div>
+                            <div class="form-row">
+                            <div class="form-group">
+                                    <label>Número de Póliza</label>
+                                    <div class="readonly-field">
+                                        <span id="numeroPolizaDisplay">Se generará automáticamente</span>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label>Plan <span class="required">*</span></label>
                                 <input type="text" id="plan" name="plan" placeholder="Ej: Bronze 2219" required>
@@ -504,100 +512,6 @@
                                 <small>Haz clic en "Agregar Dependiente" para comenzar</small>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- ============================================
-                MODAL PARA DEPENDIENTES
-                AGREGAR ANTES DE </body>
-                ============================================ -->
-            <div id="modalDependiente" class="modal">
-                <div class="modal-overlay" onclick="cerrarModalDependiente()"></div>
-                <div class="modal-container">
-                    <div class="modal-header">
-                        <h3 id="modalDependienteTitulo">Agregar Dependiente</h3>
-                        <button type="button" class="btn-close-modal" onclick="cerrarModalDependiente()">
-                            <span class="material-symbols-rounded">close</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="formDependiente">
-                            <input type="hidden" id="modal_dep_id" value="">
-                            <input type="hidden" id="modal_dep_count" value="">
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Nombres <span class="required">*</span></label>
-                                    <input type="text" id="modal_dep_nombres" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Apellidos <span class="required">*</span></label>
-                                    <input type="text" id="modal_dep_apellidos" required>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Fecha de Nacimiento <span class="required">*</span></label>
-                                    <input type="date" id="modal_dep_fecha_nacimiento" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Sexo <span class="required">*</span></label>
-                                    <select id="modal_dep_sexo" required>
-                                        <option value="">Seleccionar...</option>
-                                        <option value="masculino">Masculino</option>
-                                        <option value="femenino">Femenino</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>SSN</label>
-                                    <input type="text" id="modal_dep_ssn" placeholder="###-##-####" maxlength="11">
-                                </div>
-                                <div class="form-group">
-                                    <label>Estado Migratorio</label>
-                                    <select id="modal_dep_estado_migratorio">
-                                        <option value="">Seleccionar...</option>
-                                        <option value="Ciudadano">Ciudadano</option>
-                                        <option value="Residente">Residente</option>
-                                        <option value="Indocumentado">Indocumentado</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Relación</label>
-                                    <select id="modal_dep_relacion">
-                                        <option value="">Seleccionar...</option>
-                                        <option value="Hijo/a">Hijo/a</option>
-                                        <option value="Esposo/a">Esposo/a</option>
-                                        <option value="Padre/Madre">Padre/Madre</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Aplica</label>
-                                    <select id="modal_dep_aplica">
-                                        <option value="">Seleccionar...</option>
-                                        <option value="Sí">Sí</option>
-                                        <option value="No">No</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn-secondary" onclick="cerrarModalDependiente()">
-                            Cancelar
-                        </button>
-                        <button type="button" class="btn-primary" onclick="guardarDependienteModal()">
-                            <span class="material-symbols-rounded">check</span>
-                            Guardar
-                        </button>
                     </div>
                 </div>
             </div>
@@ -917,6 +831,99 @@
             </div>
         </form>
     </div>
+    <!-- ============================================
+                MODAL PARA DEPENDIENTES
+                AGREGAR ANTES DE </body>
+                ============================================ -->
+            <div id="modalDependiente" class="modal">
+                <div class="modal-overlay"></div>
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h3 id="modalDependienteTitulo">Agregar Dependiente</h3>
+                        <button type="button" class="btn-close-modal" onclick="cerrarModalDependiente()">
+                            <span class="material-symbols-rounded">close</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formDependiente">
+                            <input type="hidden" id="modal_dep_id" value="">
+                            <input type="hidden" id="modal_dep_count" value="">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nombres <span class="required">*</span></label>
+                                    <input type="text" id="modal_dep_nombres" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Apellidos <span class="required">*</span></label>
+                                    <input type="text" id="modal_dep_apellidos" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Fecha de Nacimiento <span class="required">*</span></label>
+                                    <input type="date" id="modal_dep_fecha_nacimiento" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Sexo <span class="required">*</span></label>
+                                    <select id="modal_dep_sexo" required>
+                                        <option value="">Seleccionar...</option>
+                                        <option value="masculino">Masculino</option>
+                                        <option value="femenino">Femenino</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>SSN</label>
+                                    <input type="text" id="modal_dep_ssn" placeholder="###-##-####" maxlength="11">
+                                </div>
+                                <div class="form-group">
+                                    <label>Estado Migratorio</label>
+                                    <select id="modal_dep_estado_migratorio">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Ciudadano">Ciudadano</option>
+                                        <option value="Residente">Residente</option>
+                                        <option value="Indocumentado">Indocumentado</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Relación</label>
+                                    <select id="modal_dep_relacion">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Hijo/a">Hijo/a</option>
+                                        <option value="Esposo/a">Esposo/a</option>
+                                        <option value="Padre/Madre">Padre/Madre</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Aplica</label>
+                                    <select id="modal_dep_aplica">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Sí">Sí</option>
+                                        <option value="No">No</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" onclick="cerrarModalDependiente()">
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn-primary" onclick="guardarDependienteModal()">
+                            <span class="material-symbols-rounded">check</span>
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>

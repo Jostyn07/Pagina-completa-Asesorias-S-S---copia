@@ -2980,3 +2980,251 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================
+   DOCUMENTOS - DISEÑO TIPO TARJETA
+   Agregar al final de cliente.css
+   ============================================ */
+
+/* Container de documentos */
+#documentosContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 0;
+}
+
+/* Tarjeta de documento */
+.documento-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.documento-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.documento-card.nuevo {
+    border: 2px dashed #d1d5db;
+    background: #f9fafb;
+}
+
+/* Ícono del documento */
+.documento-icono {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.documento-icono .material-symbols-rounded {
+    font-size: 32px;
+}
+
+.documento-card.nuevo .documento-icono {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+/* Información del documento */
+.documento-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.documento-nombre {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.documento-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.documento-tipo,
+.documento-tamano,
+.documento-fecha,
+.documento-estado {
+    display: inline-flex;
+    align-items: center;
+}
+
+.documento-tipo::before,
+.documento-tamano::before,
+.documento-fecha::before {
+    content: '•';
+    margin-right: 8px;
+    color: #d1d5db;
+}
+
+.documento-tipo:first-child::before,
+.documento-tamano:first-child::before,
+.documento-fecha:first-child::before {
+    display: none;
+}
+
+/* Acciones del documento */
+.documento-acciones {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Botón Ver */
+.btn-ver-doc {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-ver-doc:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-ver-doc .material-symbols-rounded {
+    font-size: 18px;
+}
+
+/* Botón Eliminar */
+.btn-eliminar-doc {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 2px solid #ef4444;
+    border-radius: 50%;
+    color: #ef4444;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-eliminar-doc:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.1);
+}
+
+.btn-eliminar-doc .material-symbols-rounded {
+    font-size: 20px;
+}
+
+/* Botón seleccionar archivo */
+.btn-seleccionar-archivo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-seleccionar-archivo:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+.btn-seleccionar-archivo .material-symbols-rounded {
+    font-size: 16px;
+}
+
+/* Estado del archivo */
+.documento-estado {
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+.documento-estado.seleccionado {
+    color: #059669;
+    font-weight: 500;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #9ca3af;
+}
+
+.empty-state .material-symbols-rounded {
+    font-size: 64px;
+    color: #d1d5db;
+    margin-bottom: 16px;
+}
+
+.empty-state p {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #6b7280;
+    margin: 0 0 8px 0;
+}
+
+.empty-state small {
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .documento-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .documento-acciones {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .documento-meta {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .documento-tipo::before,
+    .documento-tamano::before,
+    .documento-fecha::before {
+        display: none;
+    }
+}
