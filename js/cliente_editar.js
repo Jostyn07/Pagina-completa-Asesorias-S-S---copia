@@ -1,4 +1,8 @@
 // ============================================
+// CLIENTE_EDITAR.JS - VERSIÓN CORREGIDA COMPLETA
+// ============================================
+
+// ============================================
 // VARIABLES GLOBALES
 // ============================================
 let clienteId = null;
@@ -13,7 +17,7 @@ const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 // ============================================
 // INICIALIZACIÓN
 // ============================================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('✏️ Modo: EDITAR CLIENTE');
     
     // Obtener ID de la URL
@@ -33,8 +37,17 @@ document.addEventListener('DOMContentLoaded', function() {
     inicializarValidacionTiempoReal();
     inicializarAutoguardado();
     
-    // Cargar datos del cliente
-    cargarDatosCliente(clienteId);
+    // ✅ CARGAR TODOS LOS DATOS
+    try {
+        await cargarDatosCliente(clienteId);
+        await cargarDocumentos(clienteId);
+        await cargarNotas(clienteId);
+        
+        console.log('✅ Todos los datos cargados correctamente');
+    } catch (error) {
+        console.error('❌ Error al cargar datos:', error);
+        alert('Error al cargar los datos: ' + error.message);
+    }
     
     document.getElementById('clienteForm').addEventListener('submit', handleSubmit);
     
@@ -128,7 +141,8 @@ async function cargarDatosCliente(id) {
         const { data: dependientesData, error: dependientesError } = await supabaseClient
             .from('dependientes')
             .select('*')
-            .eq('cliente_id', id);
+            .eq('cliente_id', id)
+            .order('created_at', { ascending: true });
         
         if (dependientesError) console.warn('⚠️ Error al cargar dependientes:', dependientesError);
         console.log(`✅ ${dependientesData?.length || 0} dependientes cargados`);
@@ -170,58 +184,75 @@ async function cargarDatosCliente(id) {
  */
 function formatoUS(fecha) {
     if (!fecha) return '';
-    if (typeof fecha === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) return fecha;
     
-    let d;
-    if (fecha instanceof Date) {
-        d = fecha;
-    } else if (typeof fecha === 'string') {
-        if (fecha.includes('-')) {
-            const partes = fecha.split('T')[0].split('-');
-            d = new Date(partes[0], partes[1] - 1, partes[2]);
-        } else {
-            d = new Date(fecha);
+    try {
+        let date;
+        
+        // Si ya es un objeto Date
+        if (fecha instanceof Date) {
+            date = fecha;
         }
-    } else {
+        // Si es string en formato ISO (yyyy-mm-dd)
+        else if (typeof fecha === 'string' && fecha.includes('-')) {
+            const partes = fecha.split('T')[0].split('-');
+            date = new Date(partes[0], partes[1] - 1, partes[2]);
+        }
+        // Si es string en formato US (mm/dd/yyyy)
+        else if (typeof fecha === 'string' && fecha.includes('/')) {
+            return fecha; // Ya está en formato US
+        }
+        else {
+            date = new Date(fecha);
+        }
+        
+        const mes = String(date.getMonth() + 1).padStart(2, '0');
+        const dia = String(date.getDate()).padStart(2, '0');
+        const anio = date.getFullYear();
+        
+        return `${mes}/${dia}/${anio}`;
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
         return '';
     }
-    
-    if (isNaN(d.getTime())) return '';
-    
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const dia = String(d.getDate()).padStart(2, '0');
-    const anio = d.getFullYear();
-    
-    return `${mes}/${dia}/${anio}`;
 }
 
-// Para INPUTS type="date"
+/**
+ * Convierte fecha a formato ISO (yyyy-mm-dd) para inputs type="date"
+ * @param {string|Date} fecha - Fecha en cualquier formato
+ * @returns {string} Fecha en formato yyyy-mm-dd
+ */
 function formatoISO(fecha) {
     if (!fecha) return '';
     
-    let d;
-    if (fecha instanceof Date) {
-        d = fecha;
-    } else if (typeof fecha === 'string') {
-        if (/^\d{4}-\d{2}-\d{2}/.test(fecha)) {
-            return fecha.split('T')[0];
+    try {
+        let date;
+        
+        // Si ya es un objeto Date
+        if (fecha instanceof Date) {
+            date = fecha;
         }
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+        // Si es string en formato US (mm/dd/yyyy)
+        else if (typeof fecha === 'string' && fecha.includes('/')) {
             const partes = fecha.split('/');
-            return `${partes[2]}-${partes[0]}-${partes[1]}`;
+            date = new Date(partes[2], partes[0] - 1, partes[1]);
         }
-        d = new Date(fecha);
-    } else {
+        // Si es string en formato ISO
+        else if (typeof fecha === 'string' && fecha.includes('-')) {
+            return fecha.split('T')[0]; // Ya está en ISO, solo quitar hora
+        }
+        else {
+            date = new Date(fecha);
+        }
+        
+        const anio = date.getFullYear();
+        const mes = String(date.getMonth() + 1).padStart(2, '0');
+        const dia = String(date.getDate()).padStart(2, '0');
+        
+        return `${anio}-${mes}-${dia}`;
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
         return '';
     }
-    
-    if (isNaN(d.getTime())) return '';
-    
-    const anio = d.getFullYear();
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const dia = String(d.getDate()).padStart(2, '0');
-    
-    return `${anio}-${mes}-${dia}`;
 }
 
 // ============================================
@@ -231,74 +262,71 @@ function formatoISO(fecha) {
 function rellenarFormulario(cliente, poliza, dependientes, notas) {
     console.log('📝 Rellenando formulario...');
     
-    if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = cliente.tipo_registro;
-    if (cliente.fecha_registro) document.getElementById('fechaRegistro').value = formatoUS(cliente.fecha_registro);
-
-
-    // CLIENTE - Datos personales
-    if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres;
-    if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos;
-    if (cliente.email) document.getElementById('email').value = cliente.email;
-    if (cliente.telefono1) document.getElementById('telefono1').value = formatearTelefono(cliente.telefono1);
-    if (cliente.telefono2) {
-        document.getElementById('telefono2').value = formatearTelefono(cliente.telefono2);
+    // DATOS DEL CLIENTE
+    if (cliente) {
+        document.getElementById('tipoRegistro').value = cliente.tipo_registro || '';
+        document.getElementById('fechaRegistro').value = formatoISO(cliente.fecha_registro);
+        document.getElementById('nombres').value = cliente.nombres || '';
+        document.getElementById('apellidos').value = cliente.apellidos || '';
+        document.getElementById('genero').value = cliente.genero || '';
+        document.getElementById('email').value = cliente.email || '';
+        document.getElementById('telefono1').value = cliente.telefono1 || '';
+        document.getElementById('telefono2').value = cliente.telefono2 || '';
+        document.getElementById('fechaNacimiento').value = formatoISO(cliente.fecha_nacimiento);
+        document.getElementById('estadoMigratorio').value = cliente.estado_migratorio || '';
+        
+        const ssnInput = document.getElementById('ssn');
+        if (ssnInput && cliente.ssn) {
+            ssnInput.value = formatearSSN(cliente.ssn);
+        }
+        
+        document.getElementById('ingresos').value = cliente.ingreso_anual || 0;
+        document.getElementById('ocupacion').value = cliente.ocupacion || '';
+        document.getElementById('nacionalidad').value = cliente.nacionalidad || '';
+        document.getElementById('aplica').value = cliente.aplica || '';
+        document.getElementById('direccion').value = cliente.direccion || '';
+        document.getElementById('casaApartamento').value = cliente.casa_apartamento || '';
+        document.getElementById('condado').value = cliente.condado || '';
+        document.getElementById('ciudad').value = cliente.ciudad || '';
+        document.getElementById('estado').value = cliente.estado || '';
+        document.getElementById('codigoPostal').value = cliente.codigo_postal || '';
+        document.getElementById('operadorNombre').value = cliente.operador_nombre || '';
+        document.getElementById('observaciones').value = cliente.observaciones || '';
     }
     
-    // Fecha de nacimiento en formato mm/dd/aaaa
-    if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = formatoISO(cliente.fecha_nacimiento)
-
-    if (cliente.genero) document.getElementById('genero').value = cliente.genero;
-    if (cliente.ssn) document.getElementById('ssn').value = formatearSSN(cliente.ssn);
-    if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio;
-    if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad;
-    if (cliente.ocupacion) document.getElementById('ocupacion').value = cliente.ocupacion;
-    if (cliente.ingreso_anual) document.getElementById('ingresos').value = cliente.ingreso_anual;
-    
-    // Dirección
-    if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion;
-    if (cliente.casa_apartamento) document.getElementById('casaApartamento').value = cliente.casa_apartamento;
-    if (cliente.condado) document.getElementById('condado').value = cliente.condado;
-    if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad;
-    if (cliente.estado) document.getElementById('estado').value = cliente.estado;
-    if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal;
-    if (cliente.aplica) document.getElementById('aplica').value = cliente.aplica;
-    if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre;
-    // PÓLIZA
+    // DATOS DE LA PÓLIZA
     if (poliza) {
-        if (poliza.compania) document.getElementById('compania').value = poliza.compania;
-        if (poliza.plan) document.getElementById('plan').value = poliza.plan;
-        if (poliza.prima) document.getElementById('prima').value = poliza.prima;
-        if (poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal;
-        if (poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta;
-        if (poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza;
-        if (poliza.member_id) document.getElementById('memberId').value = poliza.member_id;
-        if (poliza.portal_npn) document.getElementById('portalNPN').value = poliza.portal_npn;
-        if (poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad;
-        if (poliza.observaciones) document.getElementById('observaciones').value = poliza.observaciones;
+        document.getElementById('compania').value = poliza.compania || '';
+        document.getElementById('plan').value = poliza.plan || '';
+        document.getElementById('prima').value = poliza.prima || 0;
+        document.getElementById('creditoFiscal').value = poliza.credito_fiscal || 0;
+        document.getElementById('memberId').value = poliza.member_id || '';
+        document.getElementById('portalNpn').value = poliza.portal_npn || '';
+        document.getElementById('claveSeguridad').value = poliza.clave_seguridad || '';
+        document.getElementById('enlacePoliza').value = poliza.enlace_poliza || '';
+        document.getElementById('tipoVenta').value = poliza.tipo_venta || '';
         
-        // Fechas de cobertura en formato mm/dd/aaaa
-        if (poliza.fecha_inicial_cobertura) {
-            const fechaInicialUS = convertirAFormatoUS(poliza.fecha_inicial_cobertura);
-            const displayInicial = document.getElementById('displayFechaInicial');
-            const inputInicial = document.getElementById('fechaInicialCobertura');
-            if (displayInicial) displayInicial.textContent = fechaInicialUS;
-            if (inputInicial) inputInicial.value = poliza.fecha_inicial_cobertura;
+        // Fechas de la póliza
+        const fechaEfectividadInput = document.getElementById('fechaEfectividad');
+        if (fechaEfectividadInput && poliza.fecha_efectividad) {
+            fechaEfectividadInput.value = formatoISO(poliza.fecha_efectividad);
         }
         
-        if (poliza.fecha_final_cobertura) {
-            const fechaFinalUS = convertirAFormatoUS(poliza.fecha_final_cobertura);
-            const displayFinal = document.getElementById('displayFechaFinal');
-            const inputFinal = document.getElementById('fechaFinalCobertura');
-            if (displayFinal) displayFinal.textContent = fechaFinalUS;
-            if (inputFinal) inputFinal.value = poliza.fecha_final_cobertura;
+        const fechaInicialInput = document.getElementById('fechaInicialCobertura');
+        if (fechaInicialInput && poliza.fecha_inicial_cobertura) {
+            fechaInicialInput.value = formatoISO(poliza.fecha_inicial_cobertura);
         }
         
-        if (poliza.fecha_efectividad) {
-            const fechaEfectividadUS = convertirAFormatoUS(poliza.fecha_efectividad);
-            const displayEfectividad = document.getElementById('displayFechaEfectividad');
-            const inputEfectividad = document.getElementById('fechaEfectividad');
-            if (displayEfectividad) displayEfectividad.textContent = fechaEfectividadUS;
-            if (inputEfectividad) inputEfectividad.value = poliza.fecha_efectividad;
+        const fechaFinalInput = document.getElementById('fechaFinalCobertura');
+        if (fechaFinalInput && poliza.fecha_final_cobertura) {
+            fechaFinalInput.value = formatoISO(poliza.fecha_final_cobertura);
+        }
+        
+        // Displays de fechas en formato US
+        const displayEfectividad = document.getElementById('displayFechaEfectividad');
+        if (displayEfectividad && poliza.fecha_efectividad) {
+            const fechaEfectividadUS = formatoUS(poliza.fecha_efectividad);
+            displayEfectividad.textContent = fechaEfectividadUS;
         }
     }
     
@@ -317,429 +345,308 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
     console.log('✅ Formulario rellenado');
 }
 
+// ============================================
+// DEPENDIENTES - SISTEMA DE MODAL Y TARJETAS
+// ============================================
+
+// AGREGAR DEPENDIENTE EXISTENTE (Desde BD)
 function agregarDependienteExistente(dep) {
     dependientesCount++;
-    const container = document.getElementById('dependientesContainer');
     
-    // Quitar empty state
-    const emptyState = container.querySelector('.empty-state');
-    if (emptyState) emptyState.remove();
+    // Convertir sexo si viene en formato antiguo
+    let sexoFormateado = dep.sexo;
+    if (dep.sexo === 'M') sexoFormateado = 'masculino';
+    if (dep.sexo === 'F') sexoFormateado = 'femenino';
     
-    const dependienteHTML = `
-        <div class="dependiente-item" id="dependiente-${dependientesCount}" data-id="${dep.id}">
-            <div class="dependiente-header">
-                <h4>Dependiente #${dependientesCount}</h4>
-                <button type="button" class="btn-remove" onclick="eliminarDependiente(${dependientesCount})">
-                    <span class="material-symbols-rounded">delete</span>
-                </button>
-            </div>
-            <div class="dependiente-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nombres <span class="required">*</span></label>
-                        <input type="text" name="dep_nombres_${dependientesCount}" value="${dep.nombres || ''}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Apellidos <span class="required">*</span></label>
-                        <input type="text" name="dep_apellidos_${dependientesCount}" value="${dep.apellidos || ''}" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Fecha de Nacimiento <span class="required">*</span></label>
-                        <input type="date" name="dep_fecha_nacimiento_${dependientesCount}" value="${dep.fecha_nacimiento || ''}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Género <span class="required">*</span></label>
-                        <select name="dep_genero_${dependientesCount}" required>
-                            <option value="">Seleccionar...</option>
-                            <option value="masculino" ${dep.genero === 'masculino' ? 'selected' : ''}>Masculino</option>
-                            <option value="femenino" ${dep.genero === 'femenino' ? 'selected' : ''}>Femenino</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>SSN</label>
-                        <input type="text" name="dep_ssn_${dependientesCount}" 
-                               value="${dep.ssn ? formatearSSN(dep.ssn) : ''}"
-                               placeholder="###-##-####" 
-                               oninput="this.value = formatearSSN(this.value)">
-                    </div>
-                    <div class="form-group">
-                        <label>Estado Migratorio</label>
-                        <select name="dep_estado_migratorio_${dependientesCount}">
-                            <option value="">Seleccionar...</option>
-                            <option value="ciudadano" ${dep.estado_migratorio === 'ciudadano' ? 'selected' : ''}>Ciudadano</option>
-                            <option value="residente" ${dep.estado_migratorio === 'residente' ? 'selected' : ''}>Residente Permanente</option>
-                            <option value="visa" ${dep.estado_migratorio === 'visa' ? 'selected' : ''}>Visa</option>
-                            <option value="otro" ${dep.estado_migratorio === 'otro' ? 'selected' : ''}>Otro</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Relación</label>
-                        <select name="dep_relacion_${dependientesCount}">
-                            <option value="">Seleccionar...</option>
-                            <option value="hijo/a" ${dep.relacion === 'hijo/a' ? 'selected' : ''}>Hijo/a</option>
-                            <option value="conyuge" ${dep.relacion === 'conyuge' ? 'selected' : ''}>Cónyuge</option>
-                            <option value="padre/madre" ${dep.relacion === 'padre/madre' ? 'selected' : ''}>Padre/Madre</option>
-                            <option value="otro" ${dep.relacion === 'otro' ? 'selected' : ''}>Otro</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+    const dependiente = {
+        nombres: dep.nombres,
+        apellidos: dep.apellidos,
+        fecha_nacimiento: dep.fecha_nacimiento,
+        sexo: sexoFormateado,
+        ssn: dep.ssn || '',
+        estado_migratorio: dep.estado_migratorio || '',
+        relacion: dep.relacion || '',
+        aplica: dep.aplica || ''
+    };
     
-    container.insertAdjacentHTML('beforeend', dependienteHTML);
+    crearTarjetaDependiente(dependientesCount, dependiente, dep.id);
     actualizarContadorDependientes();
 }
 
-function mostrarNotasExistentes(notas) {
-    const thread = document.getElementById('notasThread');
-    const emptyState = thread.querySelector('.empty-state');
+// ABRIR MODAL PARA NUEVO DEPENDIENTE
+function agregarDependiente() {
+    // Limpiar formulario del modal
+    document.getElementById('formDependiente').reset();
+    document.getElementById('modal_dep_id').value = '';
+    document.getElementById('modal_dep_count').value = '';
+    
+    // Cambiar título
+    document.getElementById('modalDependienteTitulo').textContent = 'Agregar Dependiente';
+    
+    // Mostrar modal
+    document.getElementById('modalDependiente').classList.add('active');
+    
+    // Focus en primer campo
+    setTimeout(() => {
+        document.getElementById('modal_dep_nombres').focus();
+    }, 300);
+}
+
+// CERRAR MODAL
+function cerrarModalDependiente() {
+    document.getElementById('modalDependiente').classList.remove('active');
+    document.getElementById('formDependiente').reset();
+}
+
+// GUARDAR DEPENDIENTE DESDE MODAL
+function guardarDependienteModal() {
+    // Validar campos requeridos
+    const nombres = document.getElementById('modal_dep_nombres').value.trim();
+    const apellidos = document.getElementById('modal_dep_apellidos').value.trim();
+    const fechaNacimiento = document.getElementById('modal_dep_fecha_nacimiento').value;
+    const sexo = document.getElementById('modal_dep_sexo').value;
+    
+    if (!nombres || !apellidos || !fechaNacimiento || !sexo) {
+        alert('Por favor completa todos los campos requeridos (*)');
+        return;
+    }
+    
+    // Obtener datos
+    const depId = document.getElementById('modal_dep_id').value;
+    const depCount = document.getElementById('modal_dep_count').value;
+    
+    const dependiente = {
+        nombres: nombres,
+        apellidos: apellidos,
+        fecha_nacimiento: fechaNacimiento,
+        sexo: sexo,
+        ssn: document.getElementById('modal_dep_ssn').value.trim(),
+        estado_migratorio: document.getElementById('modal_dep_estado_migratorio').value,
+        relacion: document.getElementById('modal_dep_relacion').value,
+        aplica: document.getElementById('modal_dep_aplica').value
+    };
+    
+    if (depCount) {
+        // EDITAR existente
+        actualizarTarjetaDependiente(depCount, dependiente, depId);
+    } else {
+        // NUEVO
+        dependientesCount++;
+        crearTarjetaDependiente(dependientesCount, dependiente, null);
+    }
+    
+    // Cerrar modal
+    cerrarModalDependiente();
+    actualizarContadorDependientes();
+}
+
+// CREAR TARJETA DE DEPENDIENTE
+function crearTarjetaDependiente(count, dep, depId) {
+    const container = document.getElementById('dependientesContainer');
+    
+    // Quitar empty state si existe
+    const emptyState = container.querySelector('.empty-state');
     if (emptyState) emptyState.remove();
     
-    notas.forEach(nota => {
-        const notaHTML = `
-            <div class="nota-card" data-id="${nota.id}">
-                <div class="nota-header">
-                    <div class="nota-info">
-                        <span class="nota-usuario">${nota.usuario_nombre || nota.usuario_email}</span>
-                        <span class="nota-fecha">${formatearFechaUS(nota.created_at)}</span>
+    // Calcular edad
+    const edad = calcularEdad(dep.fecha_nacimiento);
+    
+    // Iniciales para avatar
+    const iniciales = (dep.nombres.charAt(0) + dep.apellidos.charAt(0)).toUpperCase();
+    
+    // Clase existente si viene de BD
+    const claseExistente = depId ? 'existente' : '';
+    const dataDepId = depId ? `data-dep-id="${depId}"` : '';
+    
+    const cardHTML = `
+        <div class="dependiente-card ${claseExistente}" 
+             id="dependiente-${count}" 
+             ${dataDepId}>
+            
+            <!-- Inputs ocultos para el submit -->
+            <input type="hidden" name="dep_nombres_${count}" value="${dep.nombres}">
+            <input type="hidden" name="dep_apellidos_${count}" value="${dep.apellidos}">
+            <input type="hidden" name="dep_fecha_nacimiento_${count}" value="${dep.fecha_nacimiento}">
+            <input type="hidden" name="dep_sexo_${count}" value="${dep.sexo}">
+            <input type="hidden" name="dep_ssn_${count}" value="${dep.ssn || ''}">
+            <input type="hidden" name="dep_estado_migratorio_${count}" value="${dep.estado_migratorio || ''}">
+            <input type="hidden" name="dep_relacion_${count}" value="${dep.relacion || ''}">
+            <input type="hidden" name="dep_aplica_${count}" value="${dep.aplica || ''}">
+            
+            <div class="dependiente-card-header">
+                <div class="dependiente-card-info">
+                    <div class="dependiente-avatar">${iniciales}</div>
+                    <div class="dependiente-card-nombre">
+                        <h4>${dep.nombres} ${dep.apellidos}</h4>
+                        <small>${edad} años • ${dep.sexo === 'masculino' ? 'Masculino' : 'Femenino'}</small>
                     </div>
-                    <button type="button" class="btn-remove-nota" onclick="eliminarNota('${nota.id}')">
+                </div>
+                <div class="dependiente-card-acciones">
+                    <button type="button" class="btn-icon" onclick="editarDependiente(${count})" title="Editar">
+                        <span class="material-symbols-rounded">edit</span>
+                    </button>
+                    <button type="button" class="btn-icon delete" onclick="eliminarDependienteCard(${count}, '${depId || ''}')" title="Eliminar">
                         <span class="material-symbols-rounded">delete</span>
                     </button>
                 </div>
-                <div class="nota-mensaje">${nota.mensaje || ''}</div>
-                ${nota.imagenes && nota.imagenes.length > 0 ? `
-                    <div class="nota-imagenes">
-                        ${nota.imagenes.map(img => `
-                            <img src="${img}" alt="Imagen adjunta" style="max-width: 150px; border-radius: 8px; margin: 5px; cursor: pointer;" onclick="verImagenCompleta('${img}')">
-                        `).join('')}
+            </div>
+            
+            <div class="dependiente-card-detalles">
+                ${dep.ssn ? `
+                    <div class="dependiente-detalle">
+                        <label>SSN</label>
+                        <span>${formatearSSN(dep.ssn)}</span>
                     </div>
                 ` : ''}
-            </div>
-        `;
-        thread.insertAdjacentHTML('beforeend', notaHTML);
-    });
-    
-    actualizarContadorNotas();
-}
-
-// ============================================
-// TABS NAVEGACIÓN
-// ============================================
-
-function inicializarTabs() {
-    const tabs = document.querySelectorAll('.tab-btn');
-    
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabName = tab.dataset.tab;
-            cambiarTab(tabName);
-        });
-    });
-}
-
-function cambiarTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    const tabContent = document.getElementById(`tab-${tabName}`);
-    const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
-    
-    if (tabContent) tabContent.classList.add('active');
-    if (tabButton) tabButton.classList.add('active');
-}
-
-// ============================================
-// SECCIONES COLAPSABLES
-// ============================================
-
-function toggleSection(header) {
-    const section = header.parentElement;
-    section.classList.toggle('collapsed');
-}
-
-// ============================================
-// VALIDACIÓN EN TIEMPO REAL
-// ============================================
-
-function inicializarValidacionTiempoReal() {
-    const emailInput = document.getElementById('email');
-    if (emailInput) {
-        emailInput.addEventListener('blur', function() {
-            validarEmail(this);
-        });
-    }
-    
-    const tel1 = document.getElementById('telefono1');
-    const tel2 = document.getElementById('telefono2');
-    
-    if (tel1) {
-        tel1.addEventListener('input', function() {
-            this.value = formatearTelefono(this.value);
-        });
-        tel1.addEventListener('blur', function() {
-            validarTelefono(this);
-        });
-    }
-    
-    if (tel2) {
-        tel2.addEventListener('input', function() {
-            this.value = formatearTelefono(this.value);
-        });
-        tel2.addEventListener('blur', function() {
-            validarTelefono(this);
-        });
-    }
-    
-    const ssn = document.getElementById('ssn');
-    if (ssn) {
-        ssn.addEventListener('input', function() {
-            this.value = formatearSSN(this.value);
-        });
-        ssn.addEventListener('blur', function() {
-            validarSSN(this);
-        });
-    }
-    
-    const cp = document.getElementById('codigoPostal');
-    if (cp) {
-        cp.addEventListener('input', function() {
-            this.value = this.value.replace(/\D/g, '').slice(0, 5);
-        });
-        cp.addEventListener('blur', function() {
-            validarCodigoPostal(this);
-        });
-    }
-    
-    const prima = document.getElementById('prima');
-    const creditoFiscal = document.getElementById('creditoFiscal');
-    const ingresos = document.getElementById('ingresos');
-    
-    [prima, creditoFiscal, ingresos].forEach(input => {
-        if (input) {
-            input.addEventListener('blur', function() {
-                formatearMonto(this);
-            });
-        }
-    });
-}
-
-function formatearTelefono(valor) {
-    const numeros = valor.replace(/\D/g, '');
-    const limitado = numeros.slice(0, 10);
-    
-    if (limitado.length <= 3) return limitado;
-    if (limitado.length <= 6) return `(${limitado.slice(0, 3)}) ${limitado.slice(3)}`;
-    return `(${limitado.slice(0, 3)}) ${limitado.slice(3, 6)}-${limitado.slice(6, 10)}`;
-}
-
-function formatearSSN(valor) {
-    const numeros = valor.replace(/\D/g, '');
-    if (numeros.length <= 3) return numeros;
-    if (numeros.length <= 5) return `${numeros.slice(0, 3)}-${numeros.slice(3)}`;
-    return `${numeros.slice(0, 3)}-${numeros.slice(3, 5)}-${numeros.slice(5, 9)}`;
-}
-
-function formatearMonto(input) {
-    let valor = parseFloat(input.value.replace(/[^0-9.]/g, ''));
-    if (isNaN(valor)) valor = 0;
-    input.value = valor.toFixed(2);
-}
-
-function validarEmail(input) {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (input.value && !regex.test(input.value)) {
-        input.setCustomValidity('Email inválido');
-        input.reportValidity();
-        return false;
-    }
-    input.setCustomValidity('');
-    return true;
-}
-
-function validarTelefono(input) {
-    const numeros = input.value.replace(/\D/g, '');
-    if (numeros && numeros.length !== 10) {
-        input.setCustomValidity('Teléfono debe tener 10 dígitos');
-        input.reportValidity();
-        return false;
-    }
-    input.setCustomValidity('');
-    return true;
-}
-
-function validarSSN(input) {
-    const numeros = input.value.replace(/\D/g, '');
-    if (numeros && numeros.length !== 9) {
-        input.setCustomValidity('SSN debe tener 9 dígitos');
-        input.reportValidity();
-        return false;
-    }
-    input.setCustomValidity('');
-    return true;
-}
-
-function validarCodigoPostal(input) {
-    if (input.value && input.value.length !== 5) {
-        input.setCustomValidity('Código postal debe tener 5 dígitos');
-        input.reportValidity();
-        return false;
-    }
-    input.setCustomValidity('');
-    return true;
-}
-
-// ============================================
-// MÉTODO DE PAGO
-// ============================================
-
-function mostrarFormularioPago(tipo) {
-    const formBanco = document.getElementById('formBanco');
-    const formTarjeta = document.getElementById('formTarjeta');
-    
-    if (formBanco) formBanco.style.display = 'none';
-    if (formTarjeta) formTarjeta.style.display = 'none';
-    
-    if (tipo === 'banco' && formBanco) {
-        formBanco.style.display = 'block';
-    } else if (tipo === 'tarjeta' && formTarjeta) {
-        formTarjeta.style.display = 'block';
-    }
-}
-
-function limpiarMetodoPago() {
-    document.querySelectorAll('[name="metodoPago"]').forEach(radio => {
-        radio.checked = false;
-    });
-    
-    const formBanco = document.getElementById('formBanco');
-    const formTarjeta = document.getElementById('formTarjeta');
-    
-    if (formBanco) formBanco.style.display = 'none';
-    if (formTarjeta) formTarjeta.style.display = 'none';
-    
-    document.querySelectorAll('#formBanco input, #formTarjeta input, #formTarjeta select').forEach(input => {
-        input.value = '';
-    });
-}
-
-// ============================================
-// DEPENDIENTES
-// ============================================
-
-function agregarDependiente() {
-    dependientesCount++;
-    const container = document.getElementById('dependientesContainer');
-    
-    const emptyState = container.querySelector('.empty-state');
-    if (emptyState) emptyState.remove();
-    
-    const dependienteHTML = `
-        <div class="dependiente-item" id="dependiente-${dependientesCount}">
-            <div class="dependiente-header">
-                <h4>Dependiente #${dependientesCount}</h4>
-                <button type="button" class="btn-remove" onclick="eliminarDependiente(${dependientesCount})">
-                    <span class="material-symbols-rounded">delete</span>
-                </button>
-            </div>
-            <div class="dependiente-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nombres <span class="required">*</span></label>
-                        <input type="text" name="dep_nombres_${dependientesCount}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Apellidos <span class="required">*</span></label>
-                        <input type="text" name="dep_apellidos_${dependientesCount}" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Fecha de Nacimiento <span class="required">*</span></label>
-                        <input type="date" name="dep_fecha_nacimiento_${dependientesCount}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Género <span class="required">*</span></label>
-                        <select name="dep_genero_${dependientesCount}" required>
-                            <option value="">Seleccionar...</option>
-                            <option value="masculino">Masculino</option>
-                            <option value="femenino">Femenino</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>SSN</label>
-                        <input type="text" name="dep_ssn_${dependientesCount}" 
-                               placeholder="###-##-####" 
-                               oninput="this.value = formatearSSN(this.value)">
-                    </div>
-                    <div class="form-group">
+                ${dep.estado_migratorio ? `
+                    <div class="dependiente-detalle">
                         <label>Estado Migratorio</label>
-                        <select name="dep_estado_migratorio_${dependientesCount}">
-                            <option value="">Seleccionar...</option>
-                            <option value="ciudadano">Ciudadano</option>
-                            <option value="residente">Residente Permanente</option>
-                            <option value="visa">Visa</option>
-                            <option value="otro">Otro</option>
-                        </select>
+                        <span>${dep.estado_migratorio}</span>
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
+                ` : ''}
+                ${dep.relacion ? `
+                    <div class="dependiente-detalle">
                         <label>Relación</label>
-                        <select name="dep_relacion_${dependientesCount}">
-                            <option value="">Seleccionar...</option>
-                            <option value="hijo/a">Hijo/a</option>
-                            <option value="conyuge">Cónyuge</option>
-                            <option value="padre/madre">Padre/Madre</option>
-                            <option value="otro">Otro</option>
-                        </select>
+                        <span>${dep.relacion}</span>
                     </div>
-                </div>
+                ` : ''}
+                ${dep.aplica ? `
+                    <div class="dependiente-detalle">
+                        <label>Aplica</label>
+                        <span>${dep.aplica}</span>
+                    </div>
+                ` : ''}
             </div>
         </div>
     `;
     
-    container.insertAdjacentHTML('beforeend', dependienteHTML);
-    actualizarContadorDependientes();
+    container.insertAdjacentHTML('beforeend', cardHTML);
 }
 
-function eliminarDependiente(id) {
-    if (confirm('¿Eliminar este dependiente?')) {
-        const elemento = document.getElementById(`dependiente-${id}`);
-        if (elemento) {
-            elemento.remove();
-            actualizarContadorDependientes();
+// CALCULAR EDAD
+function calcularEdad(fechaNacimiento) {
+    if (!fechaNacimiento) return 0;
+    
+    const hoy = new Date();
+    const nacimiento = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+    
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+        edad--;
+    }
+    
+    return edad;
+}
+
+// EDITAR DEPENDIENTE
+function editarDependiente(count) {
+    // Obtener datos de los inputs ocultos
+    const nombres = document.querySelector(`[name="dep_nombres_${count}"]`).value;
+    const apellidos = document.querySelector(`[name="dep_apellidos_${count}"]`).value;
+    const fechaNacimiento = document.querySelector(`[name="dep_fecha_nacimiento_${count}"]`).value;
+    const sexo = document.querySelector(`[name="dep_sexo_${count}"]`).value;
+    const ssn = document.querySelector(`[name="dep_ssn_${count}"]`).value;
+    const estadoMigratorio = document.querySelector(`[name="dep_estado_migratorio_${count}"]`).value;
+    const relacion = document.querySelector(`[name="dep_relacion_${count}"]`).value;
+    const aplica = document.querySelector(`[name="dep_aplica_${count}"]`).value;
+    
+    // Obtener ID si existe (dependiente de BD)
+    const elemento = document.getElementById(`dependiente-${count}`);
+    const depId = elemento ? elemento.getAttribute('data-dep-id') : '';
+    
+    // Llenar modal
+    document.getElementById('modal_dep_nombres').value = nombres;
+    document.getElementById('modal_dep_apellidos').value = apellidos;
+    document.getElementById('modal_dep_fecha_nacimiento').value = fechaNacimiento;
+    document.getElementById('modal_dep_sexo').value = sexo;
+    document.getElementById('modal_dep_ssn').value = ssn;
+    document.getElementById('modal_dep_estado_migratorio').value = estadoMigratorio;
+    document.getElementById('modal_dep_relacion').value = relacion;
+    document.getElementById('modal_dep_aplica').value = aplica;
+    
+    // Guardar ID y count para actualizar
+    document.getElementById('modal_dep_id').value = depId;
+    document.getElementById('modal_dep_count').value = count;
+    
+    // Cambiar título
+    document.getElementById('modalDependienteTitulo').textContent = 'Editar Dependiente';
+    
+    // Mostrar modal
+    document.getElementById('modalDependiente').classList.add('active');
+}
+
+// ACTUALIZAR TARJETA EXISTENTE
+function actualizarTarjetaDependiente(count, dep, depId) {
+    const card = document.getElementById(`dependiente-${count}`);
+    if (!card) return;
+    
+    // Actualizar inputs ocultos
+    card.querySelector(`[name="dep_nombres_${count}"]`).value = dep.nombres;
+    card.querySelector(`[name="dep_apellidos_${count}"]`).value = dep.apellidos;
+    card.querySelector(`[name="dep_fecha_nacimiento_${count}"]`).value = dep.fecha_nacimiento;
+    card.querySelector(`[name="dep_sexo_${count}"]`).value = dep.sexo;
+    card.querySelector(`[name="dep_ssn_${count}"]`).value = dep.ssn || '';
+    card.querySelector(`[name="dep_estado_migratorio_${count}"]`).value = dep.estado_migratorio || '';
+    card.querySelector(`[name="dep_relacion_${count}"]`).value = dep.relacion || '';
+    card.querySelector(`[name="dep_aplica_${count}"]`).value = dep.aplica || '';
+    
+    // Recrear tarjeta
+    card.remove();
+    crearTarjetaDependiente(count, dep, depId);
+}
+
+// ELIMINAR DEPENDIENTE
+async function eliminarDependienteCard(count, depId) {
+    if (!confirm('¿Eliminar este dependiente?')) return;
+    
+    try {
+        // Si tiene depId, es un dependiente de BD
+        if (depId) {
+            console.log('🗑️ Eliminando dependiente de BD:', depId);
             
-            const container = document.getElementById('dependientesContainer');
-            if (container.querySelectorAll('.dependiente-item').length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <span class="material-symbols-rounded">family_restroom</span>
-                        <p>No hay dependientes agregados</p>
-                        <small>Haz clic en "Agregar Dependiente" para comenzar</small>
-                    </div>
-                `;
-            }
+            const { error } = await supabaseClient
+                .from('dependientes')
+                .delete()
+                .eq('id', depId);
+            
+            if (error) throw error;
+            
+            console.log('✅ Dependiente eliminado de BD');
         }
+        
+        // Remover del DOM
+        const card = document.getElementById(`dependiente-${count}`);
+        if (card) {
+            card.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                card.remove();
+                
+                // Verificar si hay dependientes
+                const container = document.getElementById('dependientesContainer');
+                if (container.querySelectorAll('.dependiente-card').length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <span class="material-symbols-rounded">family_restroom</span>
+                            <p>No hay dependientes agregados</p>
+                            <small>Haz clic en "Agregar Dependiente" para comenzar</small>
+                        </div>
+                    `;
+                }
+                
+                actualizarContadorDependientes();
+            }, 300);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al eliminar dependiente:', error);
+        alert('Error al eliminar: ' + error.message);
     }
 }
 
+// ACTUALIZAR CONTADOR
 function actualizarContadorDependientes() {
-    const total = document.querySelectorAll('.dependiente-item').length;
+    const total = document.querySelectorAll('.dependiente-card').length;
     const contador = document.getElementById('dependientesCounter');
     if (contador) {
         contador.textContent = `(${total})`;
@@ -747,117 +654,202 @@ function actualizarContadorDependientes() {
 }
 
 // ============================================
-// DOCUMENTOS
+// CARGAR DOCUMENTOS
 // ============================================
+
+async function cargarDocumentos(clienteId) {
+    try {
+        console.log('📥 Cargando documentos...');
+        
+        const { data: documentos, error } = await supabaseClient
+            .from('documentos')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        const container = document.getElementById('documentosContainer');
+        
+        if (!documentos || documentos.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-rounded">upload_file</span>
+                    <p>No hay documentos cargados</p>
+                </div>
+            `;
+            console.log('✅ Sin documentos');
+            return;
+        }
+        
+        // Limpiar container
+        container.innerHTML = '';
+        
+        // Mostrar cada documento
+        documentos.forEach(doc => {
+            const docHTML = `
+                <div class="documento-item existente" data-doc-id="${doc.id}">
+                    <div class="documento-header">
+                        <span class="material-symbols-rounded">description</span>
+                        <span class="documento-nombre">${doc.nombre_archivo}</span>
+                        <button type="button" class="btn-remove" onclick="confirmarEliminarDocumento('${doc.id}')">
+                            <span class="material-symbols-rounded">delete</span>
+                        </button>
+                    </div>
+                    <div class="documento-body">
+                        <div class="documento-info">
+                            <p><strong>Tipo:</strong> ${doc.tipo_archivo || 'N/A'}</p>
+                            <p><strong>Tamaño:</strong> ${(doc.tamanio / 1024).toFixed(2)} KB</p>
+                            <p><strong>Subido:</strong> ${formatoUS(doc.created_at)}</p>
+                            ${doc.notas ? `<p><strong>Notas:</strong> ${doc.notas}</p>` : ''}
+                        </div>
+                        <a href="${doc.url_archivo}" target="_blank" class="btn-ver-documento">
+                            <span class="material-symbols-rounded">visibility</span>
+                            Ver
+                        </a>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', docHTML);
+        });
+        
+        console.log(`✅ ${documentos.length} documento(s) cargado(s)`);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar documentos:', error);
+    }
+}
+
+async function confirmarEliminarDocumento(docId) {
+    if (!confirm('¿Eliminar este documento? Esta acción no se puede deshacer.')) return;
+    
+    try {
+        // 1. Obtener info del documento
+        const { data: doc, error: fetchError } = await supabaseClient
+            .from('documentos')
+            .select('url_archivo')
+            .eq('id', docId)
+            .single();
+        
+        if (fetchError) throw fetchError;
+        
+        // 2. Extraer path del Storage
+        const url = new URL(doc.url_archivo);
+        const pathParts = url.pathname.split('/');
+        const bucketIndex = pathParts.indexOf('documentos');
+        const storagePath = pathParts.slice(bucketIndex + 1).join('/');
+        
+        // 3. Eliminar del Storage
+        const { error: storageError } = await supabaseClient.storage
+            .from('documentos')
+            .remove([storagePath]);
+        
+        if (storageError) console.warn('Error al eliminar de Storage:', storageError);
+        
+        // 4. Eliminar de BD
+        const { error: dbError } = await supabaseClient
+            .from('documentos')
+            .delete()
+            .eq('id', docId);
+        
+        if (dbError) throw dbError;
+        
+        // 5. Remover del DOM
+        const elemento = document.querySelector(`[data-doc-id="${docId}"]`);
+        if (elemento) elemento.remove();
+        
+        // 6. Verificar si quedaron documentos
+        const container = document.getElementById('documentosContainer');
+        if (container.querySelectorAll('.documento-item').length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-rounded">upload_file</span>
+                    <p>No hay documentos cargados</p>
+                </div>
+            `;
+        }
+        
+        console.log('✅ Documento eliminado');
+        
+    } catch (error) {
+        console.error('Error al eliminar documento:', error);
+        alert('Error al eliminar el documento: ' + error.message);
+    }
+}
 
 function agregarDocumento() {
     documentosCount++;
     const container = document.getElementById('documentosContainer');
     
+    // Remover empty state si existe
     const emptyState = container.querySelector('.empty-state');
     if (emptyState) emptyState.remove();
     
-    const documentoHTML = `
+    const docHTML = `
         <div class="documento-item" id="documento-${documentosCount}">
             <div class="documento-header">
-                <span class="material-symbols-rounded">description</span>
-                <span class="documento-nombre" id="nombre-doc-${documentosCount}">Documento #${documentosCount}</span>
+                <span class="material-symbols-rounded">upload_file</span>
+                <span class="documento-nombre">Documento #${documentosCount}</span>
                 <button type="button" class="btn-remove" onclick="eliminarDocumento(${documentosCount})">
                     <span class="material-symbols-rounded">delete</span>
                 </button>
             </div>
             <div class="documento-body">
-                <div class="form-row">
-                    <div class="form-group full-width">
-                        <label>Archivo</label>
-                        <input type="file" name="doc_archivo_${documentosCount}" 
-                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                               onchange="previsualizarDocumento(${documentosCount}, this)">
-                    </div>
+                <div class="form-group">
+                    <label>Archivo</label>
+                    <input type="file" name="doc_archivo_${documentosCount}" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="previsualizarDocumento(${documentosCount}, this)">
+                    <small class="help-text">PDF, JPG, PNG, DOC, DOCX (máx. 5MB)</small>
                 </div>
                 <div class="form-group">
-                    <label>Notas</label>
-                    <textarea name="doc_notas_${documentosCount}" rows="3" 
-                              placeholder="Describe el documento, especifica qué tipo es (ID, Póliza, Comprobante, etc.)..."></textarea>
+                    <label>Notas (opcional)</label>
+                    <textarea name="doc_notas_${documentosCount}" rows="2" placeholder="Descripción del documento..."></textarea>
                 </div>
-                <div class="documento-preview" id="preview-doc-${documentosCount}"></div>
+                <div class="documento-preview" id="preview-${documentosCount}"></div>
             </div>
         </div>
     `;
     
-    container.insertAdjacentHTML('beforeend', documentoHTML);
+    container.insertAdjacentHTML('beforeend', docHTML);
     actualizarContadorDocumentos();
 }
 
 function eliminarDocumento(id) {
-    if (confirm('¿Eliminar este documento?')) {
-        const elemento = document.getElementById(`documento-${id}`);
-        if (elemento) {
-            elemento.remove();
-            actualizarContadorDocumentos();
-            
-            const container = document.getElementById('documentosContainer');
-            if (container.querySelectorAll('.documento-item').length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <span class="material-symbols-rounded">upload_file</span>
-                        <p>No hay documentos cargados</p>
-                        <small>Haz clic en "Agregar Archivo" para comenzar</small>
-                    </div>
-                `;
-            }
-        }
+    const elemento = document.getElementById(`documento-${id}`);
+    if (elemento) elemento.remove();
+    
+    const container = document.getElementById('documentosContainer');
+    if (container.querySelectorAll('.documento-item').length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-rounded">upload_file</span>
+                <p>No hay documentos agregados</p>
+            </div>
+        `;
     }
+    
+    actualizarContadorDocumentos();
 }
 
 function previsualizarDocumento(id, input) {
-    const preview = document.getElementById(`preview-doc-${id}`);
-    const file = input.files[0];
+    const preview = document.getElementById(`preview-${id}`);
+    if (!preview) return;
     
-    if (!file) {
-        preview.innerHTML = '';
-        return;
-    }
-    
-    const fileName = file.name;
-    const fileSize = (file.size / 1024).toFixed(2);
-    const fileType = file.type;
-    
-    const nombreSpan = document.getElementById(`nombre-doc-${id}`);
-    if (nombreSpan) {
-        nombreSpan.textContent = fileName;
-    }
-    
-    let previewHTML = `
-        <div class="archivo-info">
-            <span class="material-symbols-rounded">insert_drive_file</span>
-            <div class="archivo-detalles">
-                <strong>${fileName}</strong>
-                <small>${fileSize} KB</small>
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const fileName = file.name;
+        const fileSize = (file.size / 1024).toFixed(2);
+        
+        preview.innerHTML = `
+            <div class="file-info">
+                <span class="material-symbols-rounded">check_circle</span>
+                <div>
+                    <strong>${fileName}</strong>
+                    <small>${fileSize} KB</small>
+                </div>
             </div>
-        </div>
-    `;
-    
-    if (fileType.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewHTML = `
-                <div class="imagen-preview">
-                    <img src="${e.target.result}" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
-                </div>
-                <div class="archivo-info">
-                    <span class="material-symbols-rounded">image</span>
-                    <div class="archivo-detalles">
-                        <strong>${fileName}</strong>
-                        <small>${fileSize} KB</small>
-                    </div>
-                </div>
-            `;
-            preview.innerHTML = previewHTML;
-        };
-        reader.readAsDataURL(file);
+        `;
     } else {
-        preview.innerHTML = previewHTML;
+        preview.innerHTML = '';
     }
 }
 
@@ -870,12 +862,81 @@ function actualizarContadorDocumentos() {
 }
 
 // ============================================
-// NOTAS
+// CARGAR NOTAS
 // ============================================
 
-async function enviarNota() {
+async function cargarNotas(clienteId) {
+    try {
+        console.log('📥 Cargando notas...');
+        
+        const { data: notas, error } = await supabaseClient
+            .from('notas')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        const thread = document.getElementById('notasThread');
+        
+        if (!notas || notas.length === 0) {
+            thread.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-rounded">chat_bubble</span>
+                    <p>No hay notas aún</p>
+                </div>
+            `;
+            console.log('✅ Sin notas');
+            return;
+        }
+        
+        // Limpiar thread
+        thread.innerHTML = '';
+        
+        // Mostrar cada nota
+        notas.forEach(nota => {
+            const notaHTML = `
+                <div class="nota-card" data-nota-id="${nota.id}">
+                    <div class="nota-header">
+                        <div class="nota-info">
+                            <span class="nota-usuario">${nota.usuario_nombre || nota.usuario_email}</span>
+                            <span class="nota-fecha">${formatoUS(nota.created_at)}</span>
+                        </div>
+                        <button type="button" class="btn-remove-nota" onclick="confirmarEliminarNota('${nota.id}')">
+                            <span class="material-symbols-rounded">delete</span>
+                        </button>
+                    </div>
+                    <div class="nota-mensaje">${nota.mensaje || ''}</div>
+                    ${nota.imagenes && nota.imagenes.length > 0 ? `
+                        <div class="nota-imagenes">
+                            ${nota.imagenes.map(img => `
+                                <img src="${img}" alt="Imagen" 
+                                     style="max-width: 150px; border-radius: 8px; margin: 5px; cursor: pointer;" 
+                                     onclick="verImagenCompleta('${img}')">
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            thread.insertAdjacentHTML('beforeend', notaHTML);
+        });
+        
+        actualizarContadorNotas();
+        console.log(`✅ ${notas.length} nota(s) cargada(s)`);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar notas:', error);
+    }
+}
+
+function mostrarNotasExistentes(notas) {
+    // Esta función ya no se usa porque cargarNotas() hace todo
+    console.log('mostrarNotasExistentes llamada (deprecada)');
+}
+
+async function agregarNota(clienteId) {
     const textarea = document.getElementById('nuevaNota');
-    const mensaje = textarea.value.trim();
+    const mensaje = textarea ? textarea.value.trim() : '';
     
     if (!mensaje && imagenesNotaSeleccionadas.length === 0) {
         alert('Escribe un mensaje o adjunta una imagen');
@@ -883,19 +944,17 @@ async function enviarNota() {
     }
     
     try {
-        // Obtener usuario actual
         const { data: { user } } = await supabaseClient.auth.getUser();
         
         if (!user) {
-            alert('Debes estar autenticado para agregar notas');
+            alert('Debes estar autenticado');
             return;
         }
         
-        // Guardar nota en BD
         const notaData = {
             cliente_id: clienteId,
-            mensaje: mensaje,
-            imagenes: imagenesNotaSeleccionadas,
+            mensaje: mensaje || null,
+            imagenes: imagenesNotaSeleccionadas.length > 0 ? imagenesNotaSeleccionadas : null,
             usuario_email: user.email,
             usuario_nombre: user.user_metadata?.nombre || user.email
         };
@@ -908,15 +967,15 @@ async function enviarNota() {
         
         if (error) throw error;
         
-        // Agregar visualmente
+        // Agregar al thread
         const notaHTML = `
-            <div class="nota-card" data-id="${nuevaNota.id}">
+            <div class="nota-card" data-nota-id="${nuevaNota.id}">
                 <div class="nota-header">
                     <div class="nota-info">
                         <span class="nota-usuario">${nuevaNota.usuario_nombre}</span>
                         <span class="nota-fecha">Ahora</span>
                     </div>
-                    <button type="button" class="btn-remove-nota" onclick="eliminarNota('${nuevaNota.id}')">
+                    <button type="button" class="btn-remove-nota" onclick="confirmarEliminarNota('${nuevaNota.id}')">
                         <span class="material-symbols-rounded">delete</span>
                     </button>
                 </div>
@@ -924,7 +983,7 @@ async function enviarNota() {
                 ${imagenesNotaSeleccionadas.length > 0 ? `
                     <div class="nota-imagenes">
                         ${imagenesNotaSeleccionadas.map(img => `
-                            <img src="${img}" alt="Imagen adjunta" style="max-width: 150px; border-radius: 8px; margin: 5px;">
+                            <img src="${img}" alt="Imagen" style="max-width: 150px; border-radius: 8px; margin: 5px;">
                         `).join('')}
                     </div>
                 ` : ''}
@@ -937,16 +996,22 @@ async function enviarNota() {
         
         thread.insertAdjacentHTML('afterbegin', notaHTML);
         
-        cancelarNota();
+        // Limpiar formulario
+        if (textarea) textarea.value = '';
+        imagenesNotaSeleccionadas = [];
+        const preview = document.getElementById('imagenesPreview');
+        if (preview) preview.innerHTML = '';
+        
         actualizarContadorNotas();
+        console.log('✅ Nota agregada');
         
     } catch (error) {
-        console.error('Error al guardar nota:', error);
-        alert('Error al guardar la nota: ' + error.message);
+        console.error('Error al agregar nota:', error);
+        alert('Error al agregar nota: ' + error.message);
     }
 }
 
-async function eliminarNota(notaId) {
+async function confirmarEliminarNota(notaId) {
     if (!confirm('¿Eliminar esta nota?')) return;
     
     try {
@@ -957,99 +1022,28 @@ async function eliminarNota(notaId) {
         
         if (error) throw error;
         
-        // Remover visualmente
-        const notaCard = document.querySelector(`[data-id="${notaId}"]`);
-        if (notaCard) notaCard.remove();
+        // Remover del DOM
+        const elemento = document.querySelector(`[data-nota-id="${notaId}"]`);
+        if (elemento) elemento.remove();
         
-        actualizarContadorNotas();
-        
-        // Mostrar empty state si no hay notas
+        // Verificar si quedaron notas
         const thread = document.getElementById('notasThread');
         if (thread.querySelectorAll('.nota-card').length === 0) {
             thread.innerHTML = `
                 <div class="empty-state">
                     <span class="material-symbols-rounded">chat_bubble</span>
                     <p>No hay notas aún</p>
-                    <small>Escribe la primera nota para este cliente</small>
                 </div>
             `;
         }
         
+        actualizarContadorNotas();
+        console.log('✅ Nota eliminada');
+        
     } catch (error) {
         console.error('Error al eliminar nota:', error);
-        alert('Error al eliminar la nota: ' + error.message);
+        alert('Error al eliminar nota: ' + error.message);
     }
-}
-
-function cancelarNota() {
-    document.getElementById('nuevaNota').value = '';
-    imagenesNotaSeleccionadas = [];
-    document.getElementById('imagenesPreview').innerHTML = '';
-    document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
-    
-    const fileInput = document.getElementById('notaImagen');
-    if (fileInput) fileInput.value = '';
-}
-
-function previsualizarImagenesNota() {
-    const fileInput = document.getElementById('notaImagen');
-    const preview = document.getElementById('imagenesPreview');
-    const label = document.getElementById('archivosSeleccionados');
-    
-    if (!fileInput.files || fileInput.files.length === 0) {
-        preview.innerHTML = '';
-        label.textContent = 'Ningún archivo seleccionado';
-        imagenesNotaSeleccionadas = [];
-        return;
-    }
-    
-    const archivos = Array.from(fileInput.files);
-    label.textContent = `${archivos.length} imagen(es) seleccionada(s)`;
-    
-    preview.innerHTML = '';
-    imagenesNotaSeleccionadas = [];
-    
-    archivos.forEach((archivo, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imagenesNotaSeleccionadas.push(e.target.result);
-            
-            const imgWrapper = document.createElement('div');
-            imgWrapper.className = 'preview-imagen-wrapper';
-            imgWrapper.style.cssText = 'display: inline-block; position: relative; margin-right: 10px;';
-            imgWrapper.innerHTML = `
-                <img src="${e.target.result}" alt="Preview" 
-                     style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;">
-                <button type="button" onclick="quitarImagenNota(${index})" 
-                        style="position: absolute; top: -5px; right: -5px; width: 24px; height: 24px; 
-                               background: #ef4444; color: white; border: none; border-radius: 50%; 
-                               cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                    <span class="material-symbols-rounded" style="font-size: 16px;">close</span>
-                </button>
-            `;
-            preview.appendChild(imgWrapper);
-        };
-        reader.readAsDataURL(archivo);
-    });
-}
-
-function quitarImagenNota(index) {
-    imagenesNotaSeleccionadas.splice(index, 1);
-    
-    const fileInput = document.getElementById('notaImagen');
-    const dt = new DataTransfer();
-    const archivos = Array.from(fileInput.files);
-    
-    archivos.forEach((file, i) => {
-        if (i !== index) dt.items.add(file);
-    });
-    
-    fileInput.files = dt.files;
-    previsualizarImagenesNota();
-}
-
-function verImagenCompleta(url) {
-    window.open(url, '_blank');
 }
 
 function actualizarContadorNotas() {
@@ -1060,17 +1054,180 @@ function actualizarContadorNotas() {
     }
 }
 
+function verImagenCompleta(url) {
+    window.open(url, '_blank');
+}
+
 // ============================================
-// PO BOX
+// TABS Y NAVEGACIÓN
 // ============================================
 
-function togglePOBox() {
-    const checkbox = document.getElementById('tienePOBox');
-    const poBoxGroup = document.getElementById('poBoxGroup');
+function inicializarTabs() {
+    // Tab por defecto
+    cambiarTab('info-general');
+}
+
+function cambiarTab(tabName) {
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
     
-    if (checkbox && poBoxGroup) {
-        poBoxGroup.style.display = checkbox.checked ? 'block' : 'none';
+    // Desactivar todos los tabs
+    document.querySelectorAll('.tab-item').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Activar tab seleccionado
+    document.getElementById(`tab-${tabName}`)?.classList.add('active');
+    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+}
+
+function toggleSection(header) {
+    const section = header.parentElement;
+    section.classList.toggle('collapsed');
+}
+
+// ============================================
+// VALIDACIÓN EN TIEMPO REAL
+// ============================================
+
+function inicializarValidacionTiempoReal() {
+    // Teléfonos
+    const telefono1 = document.getElementById('telefono1');
+    const telefono2 = document.getElementById('telefono2');
+    
+    if (telefono1) {
+        telefono1.addEventListener('input', function() {
+            this.value = formatearTelefono(this.value);
+        });
     }
+    
+    if (telefono2) {
+        telefono2.addEventListener('input', function() {
+            this.value = formatearTelefono(this.value);
+        });
+    }
+    
+    // SSN
+    const ssn = document.getElementById('ssn');
+    if (ssn) {
+        ssn.addEventListener('input', function() {
+            this.value = formatearSSN(this.value);
+        });
+    }
+    
+    // Email
+    const email = document.getElementById('email');
+    if (email) {
+        email.addEventListener('blur', function() {
+            validarEmail(this);
+        });
+    }
+    
+    // Código postal
+    const codigoPostal = document.getElementById('codigoPostal');
+    if (codigoPostal) {
+        codigoPostal.addEventListener('input', function() {
+            validarCodigoPostal(this);
+        });
+    }
+    
+    // Montos
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', function() {
+            formatearMonto(this);
+        });
+    });
+}
+
+function formatearTelefono(valor) {
+    const numeros = valor.replace(/\D/g, '').slice(0, 10);
+    if (numeros.length === 0) return '';
+    if (numeros.length <= 3) return numeros;
+    if (numeros.length <= 6) return `(${numeros.slice(0, 3)}) ${numeros.slice(3)}`;
+    return `(${numeros.slice(0, 3)}) ${numeros.slice(3, 6)}-${numeros.slice(6, 10)}`;
+}
+
+function formatearSSN(valor) {
+    const numeros = valor.replace(/\D/g, '').slice(0, 9);
+    if (numeros.length === 0) return '';
+    if (numeros.length <= 3) return numeros;
+    if (numeros.length <= 5) return `${numeros.slice(0, 3)}-${numeros.slice(3)}`;
+    return `${numeros.slice(0, 3)}-${numeros.slice(3, 5)}-${numeros.slice(5, 9)}`;
+}
+
+function formatearMonto(input) {
+    // Permitir solo números y punto decimal
+    input.value = input.value.replace(/[^0-9.]/g, '');
+}
+
+function validarEmail(input) {
+    const email = input.value;
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (email && !regex.test(email)) {
+        input.setCustomValidity('Email inválido');
+        input.reportValidity();
+    } else {
+        input.setCustomValidity('');
+    }
+}
+
+function validarTelefono(input) {
+    const tel = input.value.replace(/\D/g, '');
+    
+    if (tel && tel.length !== 10) {
+        input.setCustomValidity('Teléfono debe tener 10 dígitos');
+        input.reportValidity();
+    } else {
+        input.setCustomValidity('');
+    }
+}
+
+function validarSSN(input) {
+    const ssn = input.value.replace(/\D/g, '');
+    
+    if (ssn && ssn.length !== 9) {
+        input.setCustomValidity('SSN debe tener 9 dígitos');
+        input.reportValidity();
+    } else {
+        input.setCustomValidity('');
+    }
+}
+
+function validarCodigoPostal(input) {
+    const cp = input.value.replace(/\D/g, '');
+    
+    if (cp && cp.length !== 5) {
+        input.value = cp.slice(0, 5);
+    }
+}
+
+// ============================================
+// MÉTODO DE PAGO
+// ============================================
+
+function mostrarFormularioPago(tipo) {
+    const bancario = document.getElementById('pago-bancario');
+    const tarjeta = document.getElementById('pago-tarjeta');
+    
+    if (tipo === 'banco') {
+        bancario.style.display = 'block';
+        tarjeta.style.display = 'none';
+    } else if (tipo === 'tarjeta') {
+        bancario.style.display = 'none';
+        tarjeta.style.display = 'block';
+    }
+}
+
+function limpiarMetodoPago() {
+    document.querySelectorAll('#tab-pago input, #tab-pago select').forEach(input => {
+        input.value = '';
+    });
+    
+    document.getElementById('pago-bancario').style.display = 'none';
+    document.getElementById('pago-tarjeta').style.display = 'none';
 }
 
 // ============================================
@@ -1078,36 +1235,26 @@ function togglePOBox() {
 // ============================================
 
 function inicializarAutoguardado() {
-    autosaveTimer = setInterval(() => {
-        guardarBorradorSilencioso();
-    }, AUTOSAVE_INTERVAL);
-    
-    console.log('💾 Autoguardado activado (cada 30 segundos)');
+    autosaveTimer = setInterval(guardarBorradorSilencioso, AUTOSAVE_INTERVAL);
 }
 
 function guardarBorradorSilencioso() {
-    const formData = obtenerDatosFormulario();
-    localStorage.setItem(`borrador_cliente_${clienteId}`, JSON.stringify(formData));
-    
-    const indicator = document.getElementById('autosaveIndicator');
-    if (indicator) {
-        indicator.style.opacity = '1';
-        setTimeout(() => {
-            indicator.style.opacity = '0.6';
-        }, 2000);
+    try {
+        const formData = obtenerDatosFormulario();
+        localStorage.setItem(`borrador_cliente_${clienteId}`, JSON.stringify(formData));
+        console.log('💾 Borrador guardado automáticamente');
+    } catch (error) {
+        console.error('Error al guardar borrador:', error);
     }
-    
-    console.log('💾 Borrador guardado automáticamente');
 }
 
 function guardarBorrador() {
-    const formData = obtenerDatosFormulario();
-    localStorage.setItem(`borrador_cliente_${clienteId}`, JSON.stringify(formData));
-    alert('✅ Borrador guardado manualmente');
+    guardarBorradorSilencioso();
+    alert('✅ Borrador guardado');
 }
 
 // ============================================
-// SUBMIT - ACTUALIZAR CLIENTE
+// SUBMIT Y ACTUALIZACIÓN
 // ============================================
 
 async function handleSubmit(event) {
@@ -1130,7 +1277,26 @@ async function handleSubmit(event) {
     
     try {
         const formData = obtenerDatosFormulario();
+        
+        // 1. Actualizar cliente
         await actualizarCliente(clienteId, formData);
+        
+        // 2. Actualizar póliza
+        await actualizarPoliza(polizaId, formData);
+        
+        // 3. Actualizar dependientes
+        await actualizarDependientes(clienteId, formData);
+        
+        // 4. Guardar documentos NUEVOS
+        await guardarDocumentosNuevos(clienteId);
+        
+        // Limpiar borrador
+        localStorage.removeItem(`borrador_cliente_${clienteId}`);
+        clearInterval(autosaveTimer);
+        
+        alert('✅ Cliente y póliza actualizados correctamente');
+        window.location.href = './polizas.html';
+        
     } catch (error) {
         console.error('❌ Error:', error);
         alert(`Error al actualizar: ${error.message}`);
@@ -1171,10 +1337,13 @@ function validarFormularioCompleto() {
     return true;
 }
 
+// ============================================
+// ACTUALIZAR CLIENTE
+// ============================================
+
 async function actualizarCliente(id, formData) {
     console.log('🔄 Actualizando cliente...');
    
-    // Actualizar cliente
     const clienteData = {
         tipo_registro: formData.tipoRegistro,
         fecha_registro: formData.fechaRegistro,
@@ -1182,14 +1351,14 @@ async function actualizarCliente(id, formData) {
         apellidos: formData.apellidos,
         genero: formData.genero,
         email: formData.email,
-        telefono1: formData.telefono1,
+        telefono1: formData.telefono1 ? formData.telefono1.replace(/\D/g, '') : null,
         telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : null,
         fecha_nacimiento: formData.fechaNacimiento,
         estado_migratorio: formData.estadoMigratorio,
         ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
         ingreso_anual: parseFloat(formData.ingresos) || 0,
         ocupacion: formData.ocupacion || null,
-        nacionalidad: formData.ocupacion || null,
+        nacionalidad: formData.nacionalidad || null, // ✅ CORREGIDO
         aplica: formData.aplica,
         direccion: formData.direccion,
         casa_apartamento: formData.casaApartamento,
@@ -1198,7 +1367,7 @@ async function actualizarCliente(id, formData) {
         estado: formData.estado,
         codigo_postal: formData.codigoPostal,
         operador_nombre: formData.operadorNombre || null,
-        agente_nombre: formData.portalNPN || null,
+        agente_nombre: formData.agenteNombre || null,
         observaciones: formData.observaciones || null,
         updated_at: new Date().toISOString()
     };
@@ -1210,17 +1379,17 @@ async function actualizarCliente(id, formData) {
     
     if (clienteError) throw clienteError;
     
-    await guardarDependientes(id, formData);
-
-    await guardarDocumentos(clienteId);
-
-    await guardarNotas(clienteId);
-
     console.log('✅ Cliente actualizado');
+}
+
+// ============================================
+// ACTUALIZAR PÓLIZA
+// ============================================
+
+async function actualizarPoliza(polizaId, formData) {
+    console.log('🔄 Actualizando póliza...');
     
-    // Actualizar o crear póliza
     const polizaData = {
-        cliente_id: id,
         compania: formData.compania,
         plan: formData.plan,
         prima: parseFloat(formData.prima) || 0,
@@ -1234,203 +1403,184 @@ async function actualizarCliente(id, formData) {
         enlace_poliza: formData.enlacePoliza || null,
         tipo_venta: formData.tipoVenta || null,
         operador_nombre: formData.operadorNombre || null,
-        agente_nombre: formData.portalNPN || null,
+        agente_nombre: formData.agenteNombre || null,
         observaciones: formData.observaciones || null,
         updated_at: new Date().toISOString()
     };
-
-    // ============================================
-// GUARDAR DEPENDIENTES
-// ============================================
-async function guardarDependientes(clienteId, formData) {
-    const dependientes = [];
-    
-    // Buscar todos los dependientes en el formulario
-    for (let i = 1; i <= dependientesCount; i++) {
-        const elemento = document.getElementById(`dependiente-${i}`);
-        if (!elemento) continue; // Si fue eliminado, saltar
-        
-        const nombres = formData[`dep_nombres_${i}`];
-        if (!nombres) continue; // Si está vacío, saltar
-        
-        dependientes.push({
-            cliente_id: clienteId,
-            nombres: nombres,
-            apellidos: formData[`dep_apellidos_${i}`] || '',
-            fecha_nacimiento: formData[`dep_fecha_nacimiento_${i}`] || null,
-            sexo: formData[`dep_genero_${i}`] || null,
-            ssn: formData[`dep_ssn_${i}`] ? formData[`dep_ssn_${i}`].replace(/\D/g, '') : null,
-            estado_migratorio: formData[`dep_estado_migratorio_${i}`] || null,
-            aplica: formData[`dep_aplica_${i}`] || null,
-            relacion: formData[`dep_relacion_${i}`] || null
-        });
-    }
-    
-    // Guardar todos los dependientes
-    if (dependientes.length > 0) {
-        const { error } = await supabaseClient
-            .from('dependientes')
-            .insert(dependientes);
-        
-        if (error) throw error;
-        
-        console.log(`✅ ${dependientes.length} dependiente(s) guardado(s)`);
-    }
-
-        // =============================================
-    // GUARDAR DOCUMENTOS
-    // =============================================
-    async function guardarDocumentos(clienteId) {
-        const documentosGuardados = [];
-        
-        // Buscar todos los documentos en el formulario
-        for (let i = 1; i <= documentosCount; i++) {
-            const elemento = document.getElementById(`documento-${i}`);
-            if (!elemento) continue; // Si fue eliminado, saltar
-            
-            const fileInput = document.querySelector(`[name="doc_archivo_${i}"]`);
-            const notasInput = document.querySelector(`[name="doc_notas_${i}"]`);
-            
-            if (!fileInput || !fileInput.files || fileInput.files.length === 0) continue;
-            
-            const archivo = fileInput.files[0];
-            const notas = notasInput ? notasInput.value : '';
-            
-            try {
-                // 1. Subir archivo a Supabase Storage
-                const timestamp = Date.now();
-                const nombreArchivo = `${clienteId}/${timestamp}_${archivo.name}`;
-                
-                const { data: uploadData, error: uploadError } = await supabaseClient.storage
-                    .from('documentos') // Bucket de storage
-                    .upload(nombreArchivo, archivo, {
-                        cacheControl: '3600',
-                        upsert: false
-                    });
-                
-                if (uploadError) {
-                    console.error('Error al subir archivo:', uploadError);
-                    continue;
-                }
-                
-                // 2. Obtener URL pública
-                const { data: urlData } = supabaseClient.storage
-                    .from('documentos')
-                    .getPublicUrl(nombreArchivo);
-                
-                const urlArchivo = urlData.publicUrl;
-                
-                // 3. Guardar en tabla documentos
-                documentosGuardados.push({
-                    cliente_id: clienteId,
-                    nombre_archivo: archivo.name,
-                    url_archivo: urlArchivo,
-                    tipo_archivo: archivo.type,
-                    tamanio: archivo.size,
-                    notas: notas || null
-                });
-                
-            } catch (error) {
-                console.error(`Error procesando documento ${i}:`, error);
-            }
-        }
-        
-        // Guardar todos los documentos en la BD
-        if (documentosGuardados.length > 0) {
-            const { error } = await supabaseClient
-                .from('documentos')
-                .insert(documentosGuardados);
-            
-            if (error) throw error;
-            
-            console.log(`✅ ${documentosGuardados.length} documento(s) guardado(s)`);
-        }
-    }
-
-    // ============================================
-    // GUARDAR NOTAS
-    // ============================================
-    async function guardarNotas(clienteId) {
-        const textarea = document.getElementById('nuevaNota');
-        const mensaje = textarea ? textarea.value.trim() : '';
-        
-        // Si no hay mensaje ni imágenes, saltar
-        if (!mensaje && imagenesNotaSeleccionadas.length === 0) {
-            console.log('No hay notas para guardar');
-            return;
-        }
-        
-        try {
-            // Obtener usuario actual
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            
-            if (!user) {
-                console.warn('No hay usuario autenticado, saltando notas');
-                return;
-            }
-            
-            // Preparar data de la nota
-            const notaData = {
-                cliente_id: clienteId,
-                mensaje: mensaje || null,
-                imagenes: imagenesNotaSeleccionadas.length > 0 ? imagenesNotaSeleccionadas : null,
-                usuario_email: user.email,
-                usuario_nombre: user.user_metadata?.nombre || user.email
-            };
-            
-            // Guardar nota
-            const { error } = await supabaseClient
-                .from('notas')
-                .insert([notaData]);
-            
-            if (error) throw error;
-            
-            console.log('✅ Nota guardada');
-            
-            // Limpiar formulario de notas
-            if (textarea) textarea.value = '';
-            imagenesNotaSeleccionadas = [];
-            const preview = document.getElementById('imagenesPreview');
-            if (preview) preview.innerHTML = '';
-            
-        } catch (error) {
-            console.error('Error al guardar nota:', error);
-            // No lanzar error para no bloquear la creación del cliente
-        }
-    }
-}
     
     if (polizaId) {
         // Actualizar póliza existente
-        const { error: polizaError } = await supabaseClient
+        const { error } = await supabaseClient
             .from('polizas')
             .update(polizaData)
             .eq('id', polizaId);
         
-        if (polizaError) throw polizaError;
+        if (error) throw error;
         console.log('✅ Póliza actualizada');
     } else {
         // Crear nueva póliza
         const numeroPoliza = await generarNumeroPoliza();
         polizaData.numero_poliza = numeroPoliza;
+        polizaData.cliente_id = clienteId;
         
-        const { data: nuevaPoliza, error: polizaError } = await supabaseClient
+        const { data: nuevaPoliza, error } = await supabaseClient
             .from('polizas')
             .insert([polizaData])
             .select()
             .single();
         
-        if (polizaError) throw polizaError;
+        if (error) throw error;
         polizaId = nuevaPoliza.id;
         console.log('✅ Póliza creada');
     }
-    
-    localStorage.removeItem(`borrador_cliente_${id}`);
-    clearInterval(autosaveTimer);
-    
-    alert('✅ Cliente y póliza actualizados correctamente');
-    window.location.href = './polizas.html';
 }
+
+// ============================================
+// ✅ ACTUALIZAR DEPENDIENTES (UPDATE + INSERT)
+// ============================================
+
+async function actualizarDependientes(clienteId, formData) {
+    console.log('💾 Actualizando dependientes...');
+    
+    const dependientesActualizar = [];
+    const dependientesInsertar = [];
+    
+    // Recorrer todos los dependientes en el formulario
+    for (let i = 1; i <= dependientesCount; i++) {
+        const elemento = document.getElementById(`dependiente-${i}`);
+        if (!elemento) continue; // Fue eliminado
+        
+        const nombres = formData[`dep_nombres_${i}`];
+        if (!nombres) continue; // Vacío
+        
+        const depData = {
+            nombres: nombres,
+            apellidos: formData[`dep_apellidos_${i}`] || '',
+            fecha_nacimiento: formData[`dep_fecha_nacimiento_${i}`] || null,
+            sexo: formData[`dep_sexo_${i}`] || null, // ✅ CORREGIDO
+            ssn: formData[`dep_ssn_${i}`] ? formData[`dep_ssn_${i}`].replace(/\D/g, '') : null,
+            estado_migratorio: formData[`dep_estado_migratorio_${i}`] || null,
+            relacion: formData[`dep_relacion_${i}`] || null,
+            aplica: formData[`dep_aplica_${i}`] || null
+        };
+        
+        // Verificar si es existente o nuevo
+        const depId = elemento.getAttribute('data-dep-id');
+        
+        if (depId) {
+            // ACTUALIZAR existente
+            dependientesActualizar.push({
+                id: depId,
+                ...depData,
+                updated_at: new Date().toISOString()
+            });
+        } else {
+            // INSERTAR nuevo
+            dependientesInsertar.push({
+                cliente_id: clienteId,
+                ...depData
+            });
+        }
+    }
+    
+    // Ejecutar actualizaciones
+    for (const dep of dependientesActualizar) {
+        const { id, ...updateData } = dep;
+        const { error } = await supabaseClient
+            .from('dependientes')
+            .update(updateData)
+            .eq('id', id);
+        
+        if (error) throw error;
+    }
+    
+    // Ejecutar inserciones
+    if (dependientesInsertar.length > 0) {
+        const { error } = await supabaseClient
+            .from('dependientes')
+            .insert(dependientesInsertar);
+        
+        if (error) throw error;
+    }
+    
+    console.log(`✅ ${dependientesActualizar.length} dependiente(s) actualizado(s)`);
+    console.log(`✅ ${dependientesInsertar.length} dependiente(s) nuevo(s)`);
+}
+
+// ============================================
+// ✅ GUARDAR DOCUMENTOS NUEVOS (Solo los nuevos)
+// ============================================
+
+async function guardarDocumentosNuevos(clienteId) {
+    console.log('💾 Guardando documentos nuevos...');
+    
+    const documentosGuardados = [];
+    
+    // Solo procesar documentos NUEVOS (no los existentes)
+    for (let i = 1; i <= documentosCount; i++) {
+        const elemento = document.getElementById(`documento-${i}`);
+        if (!elemento) continue;
+        if (elemento.classList.contains('existente')) continue; // ✅ Saltar existentes
+        
+        const fileInput = document.querySelector(`[name="doc_archivo_${i}"]`);
+        const notasInput = document.querySelector(`[name="doc_notas_${i}"]`);
+        
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) continue;
+        
+        const archivo = fileInput.files[0];
+        const notas = notasInput ? notasInput.value : '';
+        
+        try {
+            // Subir archivo a Storage
+            const timestamp = Date.now();
+            const nombreArchivo = `${clienteId}/${timestamp}_${archivo.name}`;
+            
+            const { error: uploadError } = await supabaseClient.storage
+                .from('documentos')
+                .upload(nombreArchivo, archivo, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+            
+            if (uploadError) {
+                console.error('Error al subir archivo:', uploadError);
+                continue;
+            }
+            
+            // Obtener URL pública
+            const { data: urlData } = supabaseClient.storage
+                .from('documentos')
+                .getPublicUrl(nombreArchivo);
+            
+            documentosGuardados.push({
+                cliente_id: clienteId,
+                nombre_archivo: archivo.name,
+                url_archivo: urlData.publicUrl,
+                tipo_archivo: archivo.type,
+                tamanio: archivo.size,
+                notas: notas || null
+            });
+            
+        } catch (error) {
+            console.error(`Error procesando documento ${i}:`, error);
+        }
+    }
+    
+    // Guardar en BD
+    if (documentosGuardados.length > 0) {
+        const { error } = await supabaseClient
+            .from('documentos')
+            .insert(documentosGuardados);
+        
+        if (error) throw error;
+        
+        console.log(`✅ ${documentosGuardados.length} documento(s) nuevo(s) guardado(s)`);
+    }
+}
+
+// ============================================
+// HELPERS
+// ============================================
 
 async function generarNumeroPoliza() {
     const anio = new Date().getFullYear();
@@ -1471,6 +1621,21 @@ function obtenerDatosFormulario() {
     return datos;
 }
 
+function togglePOBox() {
+    const checkbox = document.getElementById('usaPOBox');
+    const campoApartamento = document.getElementById('casaApartamento');
+    
+    if (checkbox && campoApartamento) {
+        if (checkbox.checked) {
+            campoApartamento.value = 'P.O. Box';
+            campoApartamento.readOnly = true;
+        } else {
+            campoApartamento.value = '';
+            campoApartamento.readOnly = false;
+        }
+    }
+}
+
 // ============================================
 // CANCELAR
 // ============================================
@@ -1484,20 +1649,90 @@ function cancelarFormulario() {
 }
 
 // ============================================
-// LOG INICIAL
+// NOTAS ADICIONALES
 // ============================================
 
-console.log('%c✏️ CLIENTE_EDITAR.JS CORREGIDO', 'color: #00a8e8; font-size: 16px; font-weight: bold');
-console.log('%c✅ Todas las correcciones aplicadas', 'color: #4caf50; font-weight: bold');
-console.log('Correcciones:');
-console.log('  ✓ Fechas en formato mm/dd/aaaa');
-console.log('  ✓ Teléfono límite 10 caracteres');
-console.log('  ✓ Fechas automáticas cargadas desde BD');
-console.log('  ✓ Método de pago desplegables funcionando');
-console.log('  ✓ Documentos sin tipo (solo archivo + notas)');
-console.log('Funciones de edición:');
-console.log('  ✓ Cargar datos existentes');
-console.log('  ✓ Actualizar cliente y póliza');
-console.log('  ✓ Cargar dependientes existentes');
-console.log('  ✓ Cargar notas existentes');
-console.log('  ✓ Eliminar notas guardadas en BD');
+async function enviarNota() {
+    await agregarNota(clienteId);
+}
+
+async function eliminarNota(notaId) {
+    await confirmarEliminarNota(notaId);
+}
+
+function cancelarNota() {
+    const textarea = document.getElementById('nuevaNota');
+    if (textarea) textarea.value = '';
+    imagenesNotaSeleccionadas = [];
+    const preview = document.getElementById('imagenesPreview');
+    if (preview) preview.innerHTML = '';
+}
+
+function previsualizarImagenesNota() {
+    const input = document.getElementById('imagenNota');
+    if (!input || !input.files) return;
+    
+    const preview = document.getElementById('imagenesPreview');
+    if (!preview) return;
+    
+    Array.from(input.files).forEach((file, index) => {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            imagenesNotaSeleccionadas.push(e.target.result);
+            
+            const imgHTML = `
+                <div class="imagen-preview" id="preview-nota-${imagenesNotaSeleccionadas.length - 1}">
+                    <img src="${e.target.result}" alt="Preview">
+                    <button type="button" class="btn-remove-imagen" onclick="quitarImagenNota(${imagenesNotaSeleccionadas.length - 1})">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+            `;
+            
+            preview.insertAdjacentHTML('beforeend', imgHTML);
+        };
+        
+        reader.readAsDataURL(file);
+    });
+    
+    // Limpiar input
+    input.value = '';
+}
+
+function quitarImagenNota(index) {
+    imagenesNotaSeleccionadas.splice(index, 1);
+    
+    const preview = document.getElementById('imagenesPreview');
+    if (preview) {
+        preview.innerHTML = '';
+        
+        imagenesNotaSeleccionadas.forEach((img, i) => {
+            const imgHTML = `
+                <div class="imagen-preview" id="preview-nota-${i}">
+                    <img src="${img}" alt="Preview">
+                    <button type="button" class="btn-remove-imagen" onclick="quitarImagenNota(${i})">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+            `;
+            preview.insertAdjacentHTML('beforeend', imgHTML);
+        });
+    }
+}
+
+// ============================================
+// LOG FINAL
+// ============================================
+
+console.log('%c✏️ CLIENTE_EDITAR.JS COMPLETO Y CORREGIDO', 'color: #00a8e8; font-size: 16px; font-weight: bold');
+console.log('%c✅ Todas las correcciones aplicadas:', 'color: #4caf50; font-weight: bold');
+console.log('  ✓ Funciones movidas FUERA de actualizarCliente()');
+console.log('  ✓ Sistema de modal para dependientes');
+console.log('  ✓ Tarjetas visuales para dependientes');
+console.log('  ✓ actualizarDependientes() con UPDATE + INSERT');
+console.log('  ✓ Campo sexo corregido (dep_sexo)');
+console.log('  ✓ Campo nacionalidad corregido');
+console.log('  ✓ DOMContentLoaded con async');
+console.log('  ✓ Carga completa de datos al inicio');
+console.log('  ✓ guardarDocumentosNuevos() solo sube nuevos');
