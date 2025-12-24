@@ -1258,7 +1258,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10000;
+    z-index: 1;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -1278,6 +1278,7 @@ body {
     flex-direction: column;
     transform: translateY(-20px);
     transition: transform 0.3s ease;
+    z-index: 2;
 }
 
 .modal-overlay.show .modal-container {

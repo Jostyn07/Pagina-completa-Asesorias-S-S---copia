@@ -29,8 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Cargar borrador si existe
     cargarBorradorAutomatico();
-    
-    console.log('✅ Formulario de creación inicializado');
 });
 
 function inicializarFormulario() {
@@ -398,107 +396,235 @@ function limpiarMetodoPago() {
 }
 
 // ============================================
-// DEPENDIENTES
+// DEPENDIENTES - SISTEMA DE MODAL Y TARJETAS
+// Reemplazar desde línea 404 hasta línea 524
 // ============================================
 
+// ABRIR MODAL PARA NUEVO DEPENDIENTE
 function agregarDependiente() {
-    dependientesCount++;
+    // Limpiar formulario del modal
+    document.getElementById('formDependiente').reset();
+    document.getElementById('modal_dep_id').value = '';
+    document.getElementById('modal_dep_count').value = '';
+    
+    // Cambiar título
+    document.getElementById('modalDependienteTitulo').textContent = 'Agregar Dependiente';
+    
+    // Mostrar modal
+    document.getElementById('modalDependiente').classList.add('active');
+    
+    // Focus en primer campo
+    setTimeout(() => {
+        document.getElementById('modal_dep_nombres').focus();
+    }, 300);
+}
+
+// CERRAR MODAL
+function cerrarModalDependiente() {
+    document.getElementById('modalDependiente').classList.remove('active');
+    document.getElementById('formDependiente').reset();
+}
+
+// GUARDAR DEPENDIENTE DESDE MODAL
+function guardarDependienteModal() {
+    // Validar campos requeridos
+    const nombres = document.getElementById('modal_dep_nombres').value.trim();
+    const apellidos = document.getElementById('modal_dep_apellidos').value.trim();
+    const fechaNacimiento = document.getElementById('modal_dep_fecha_nacimiento').value;
+    const sexo = document.getElementById('modal_dep_sexo').value;
+    
+    if (!nombres || !apellidos || !fechaNacimiento || !sexo) {
+        alert('Por favor completa todos los campos requeridos (*)');
+        return;
+    }
+    
+    // Obtener datos
+    const depCount = document.getElementById('modal_dep_count').value;
+    
+    const dependiente = {
+        nombres: nombres,
+        apellidos: apellidos,
+        fecha_nacimiento: fechaNacimiento,
+        sexo: sexo,
+        ssn: document.getElementById('modal_dep_ssn').value.trim(),
+        estado_migratorio: document.getElementById('modal_dep_estado_migratorio').value,
+        relacion: document.getElementById('modal_dep_relacion').value,
+        aplica: document.getElementById('modal_dep_aplica').value
+    };
+    
+    if (depCount) {
+        // EDITAR existente
+        actualizarTarjetaDependiente(depCount, dependiente);
+    } else {
+        // NUEVO
+        dependientesCount++;
+        crearTarjetaDependiente(dependientesCount, dependiente);
+    }
+    
+    // Cerrar modal
+    cerrarModalDependiente();
+    actualizarContadorDependientes();
+}
+
+// CREAR TARJETA DE DEPENDIENTE
+function crearTarjetaDependiente(count, dep) {
     const container = document.getElementById('dependientesContainer');
     
-    // Quitar empty state
+    // Quitar empty state si existe
     const emptyState = container.querySelector('.empty-state');
     if (emptyState) emptyState.remove();
     
-    const dependienteHTML = `
-        <div class="dependiente-item" id="dependiente-${dependientesCount}">
-            <div class="dependiente-header">
-                <h4>Dependiente #${dependientesCount}</h4>
-                <button type="button" class="btn-remove" onclick="eliminarDependiente(${dependientesCount})">
-                    <span class="material-symbols-rounded">delete</span>
-                </button>
+    // Calcular edad
+    const edad = calcularEdad(dep.fecha_nacimiento);
+    
+    // Iniciales para avatar
+    const iniciales = (dep.nombres.charAt(0) + dep.apellidos.charAt(0)).toUpperCase();
+    
+    const cardHTML = `
+        <div class="dependiente-card" id="dependiente-${count}">
+            
+            <!-- Inputs ocultos para el submit -->
+            <input type="hidden" name="dep_nombres_${count}" value="${dep.nombres}">
+            <input type="hidden" name="dep_apellidos_${count}" value="${dep.apellidos}">
+            <input type="hidden" name="dep_fecha_nacimiento_${count}" value="${dep.fecha_nacimiento}">
+            <input type="hidden" name="dep_sexo_${count}" value="${dep.sexo}">
+            <input type="hidden" name="dep_ssn_${count}" value="${dep.ssn || ''}">
+            <input type="hidden" name="dep_estado_migratorio_${count}" value="${dep.estado_migratorio || ''}">
+            <input type="hidden" name="dep_relacion_${count}" value="${dep.relacion || ''}">
+            <input type="hidden" name="dep_aplica_${count}" value="${dep.aplica || ''}">
+            
+            <div class="dependiente-card-header">
+                <div class="dependiente-card-info">
+                    <div class="dependiente-avatar">${iniciales}</div>
+                    <div class="dependiente-card-nombre">
+                        <h4>${dep.nombres} ${dep.apellidos}</h4>
+                        <small>${edad} años • ${dep.sexo === 'masculino' ? 'Masculino' : 'Femenino'}</small>
+                    </div>
+                </div>
+                <div class="dependiente-card-acciones">
+                    <button type="button" class="btn-icon" onclick="editarDependiente(${count})" title="Editar">
+                        <span class="material-symbols-rounded">edit</span>
+                    </button>
+                    <button type="button" class="btn-icon delete" onclick="eliminarDependiente(${count})" title="Eliminar">
+                        <span class="material-symbols-rounded">delete</span>
+                    </button>
+                </div>
             </div>
-            <div class="dependiente-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nombres <span class="required">*</span></label>
-                        <input type="text" name="dep_nombres_${dependientesCount}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Apellidos <span class="required">*</span></label>
-                        <input type="text" name="dep_apellidos_${dependientesCount}" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Fecha de Nacimiento <span class="required">*</span></label>
-                        <input type="date" name="dep_fecha_nacimiento_${dependientesCount}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Género <span class="required">*</span></label>
-                        <select name="dep_genero_${dependientesCount}" required>
-                            <option value="">Seleccionar...</option>
-                            <option value="masculino">Masculino</option>
-                            <option value="femenino">Femenino</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
+            
+            <div class="dependiente-card-detalles">
+                ${dep.ssn ? `
+                    <div class="dependiente-detalle">
                         <label>SSN</label>
-                        <input type="text" name="dep_ssn_${dependientesCount}" 
-                               placeholder="###-##-####" 
-                               oninput="this.value = formatearSSN(this.value)">
+                        <span>${formatearSSN(dep.ssn)}</span>
                     </div>
-                    <div class="form-group">
+                ` : ''}
+                ${dep.estado_migratorio ? `
+                    <div class="dependiente-detalle">
                         <label>Estado Migratorio</label>
-                        <select name="dep_estado_migratorio_${dependientesCount}">
-                            <option value="">Seleccionar...</option>
-                            <option value="ciudadano">Ciudadano</option>
-                            <option value="residente">Residente Permanente</option>
-                            <option value="visa">Visa</option>
-                            <option value="otro">Otro</option>
-                        </select>
+                        <span>${dep.estado_migratorio}</span>
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>¿Aplica para el seguro?</label>
-                        <select name="dep_relacion_${dependientesCount}">
-                            <option value="">Seleccionar...</option>
-                            <option value="Si">Si</option>
-                            <option value="No">No</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
+                ` : ''}
+                ${dep.relacion ? `
+                    <div class="dependiente-detalle">
                         <label>Relación</label>
-                        <select name="dep_aplicante_${dependientesCount}">
-                            <option value="">Seleccionar...</option>
-                            <option value="hijo/a">Hijo/a</option>
-                            <option value="conyuge">Cónyuge</option>
-                            <option value="padre/madre">Padre/Madre</option>
-                            <option value="otro">Otro</option>
-                        </select>
+                        <span>${dep.relacion}</span>
                     </div>
+                ` : ''}
+                ${dep.aplica ? `
+                    <div class="dependiente-detalle">
+                        <label>Aplica</label>
+                        <span>${dep.aplica}</span>
+                    </div>
+                ` : ''}
             </div>
         </div>
     `;
     
-    container.insertAdjacentHTML('beforeend', dependienteHTML);
-    actualizarContadorDependientes();
+    container.insertAdjacentHTML('beforeend', cardHTML);
 }
 
-function eliminarDependiente(id) {
-    if (confirm('¿Eliminar este dependiente?')) {
-        const elemento = document.getElementById(`dependiente-${id}`);
-        if (elemento) {
-            elemento.remove();
-            actualizarContadorDependientes();
+// CALCULAR EDAD
+function calcularEdad(fechaNacimiento) {
+    if (!fechaNacimiento) return 0;
+    
+    const hoy = new Date();
+    const nacimiento = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+    
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+        edad--;
+    }
+    
+    return edad;
+}
+
+// EDITAR DEPENDIENTE
+function editarDependiente(count) {
+    // Obtener datos de los inputs ocultos
+    const nombres = document.querySelector(`[name="dep_nombres_${count}"]`).value;
+    const apellidos = document.querySelector(`[name="dep_apellidos_${count}"]`).value;
+    const fechaNacimiento = document.querySelector(`[name="dep_fecha_nacimiento_${count}"]`).value;
+    const sexo = document.querySelector(`[name="dep_sexo_${count}"]`).value;
+    const ssn = document.querySelector(`[name="dep_ssn_${count}"]`).value;
+    const estadoMigratorio = document.querySelector(`[name="dep_estado_migratorio_${count}"]`).value;
+    const relacion = document.querySelector(`[name="dep_relacion_${count}"]`).value;
+    const aplica = document.querySelector(`[name="dep_aplica_${count}"]`).value;
+    
+    // Llenar modal
+    document.getElementById('modal_dep_nombres').value = nombres;
+    document.getElementById('modal_dep_apellidos').value = apellidos;
+    document.getElementById('modal_dep_fecha_nacimiento').value = fechaNacimiento;
+    document.getElementById('modal_dep_sexo').value = sexo;
+    document.getElementById('modal_dep_ssn').value = ssn;
+    document.getElementById('modal_dep_estado_migratorio').value = estadoMigratorio;
+    document.getElementById('modal_dep_relacion').value = relacion;
+    document.getElementById('modal_dep_aplica').value = aplica;
+    
+    // Guardar count para actualizar
+    document.getElementById('modal_dep_count').value = count;
+    
+    // Cambiar título
+    document.getElementById('modalDependienteTitulo').textContent = 'Editar Dependiente';
+    
+    // Mostrar modal
+    document.getElementById('modalDependiente').classList.add('active');
+}
+
+// ACTUALIZAR TARJETA EXISTENTE
+function actualizarTarjetaDependiente(count, dep) {
+    const card = document.getElementById(`dependiente-${count}`);
+    if (!card) return;
+    
+    // Actualizar inputs ocultos
+    card.querySelector(`[name="dep_nombres_${count}"]`).value = dep.nombres;
+    card.querySelector(`[name="dep_apellidos_${count}"]`).value = dep.apellidos;
+    card.querySelector(`[name="dep_fecha_nacimiento_${count}"]`).value = dep.fecha_nacimiento;
+    card.querySelector(`[name="dep_sexo_${count}"]`).value = dep.sexo;
+    card.querySelector(`[name="dep_ssn_${count}"]`).value = dep.ssn || '';
+    card.querySelector(`[name="dep_estado_migratorio_${count}"]`).value = dep.estado_migratorio || '';
+    card.querySelector(`[name="dep_relacion_${count}"]`).value = dep.relacion || '';
+    card.querySelector(`[name="dep_aplica_${count}"]`).value = dep.aplica || '';
+    
+    // Recrear tarjeta
+    card.remove();
+    crearTarjetaDependiente(count, dep);
+}
+
+// ELIMINAR DEPENDIENTE
+function eliminarDependiente(count) {
+    if (!confirm('¿Eliminar este dependiente?')) return;
+    
+    // Remover del DOM
+    const card = document.getElementById(`dependiente-${count}`);
+    if (card) {
+        card.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+            card.remove();
             
-            // Mostrar empty state si no hay dependientes
+            // Verificar si hay dependientes
             const container = document.getElementById('dependientesContainer');
-            if (container.querySelectorAll('.dependiente-item').length === 0) {
+            if (container.querySelectorAll('.dependiente-card').length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <span class="material-symbols-rounded">family_restroom</span>
@@ -507,12 +633,15 @@ function eliminarDependiente(id) {
                     </div>
                 `;
             }
-        }
+            
+            actualizarContadorDependientes();
+        }, 300);
     }
 }
 
+// ACTUALIZAR CONTADOR
 function actualizarContadorDependientes() {
-    const total = document.querySelectorAll('.dependiente-item').length;
+    const total = document.querySelectorAll('.dependiente-card').length;
     const contador = document.getElementById('dependientesCounter');
     if (contador) {
         contador.textContent = `(${total})`;
@@ -520,126 +649,94 @@ function actualizarContadorDependientes() {
 }
 
 // ============================================
-// DOCUMENTOS (SIMPLIFICADOS - SIN TIPO)
+// DOCUMENTOS - NUEVO DISEÑO
+// Reemplazar desde línea 526 hasta línea 650
 // ============================================
 
 function agregarDocumento() {
     documentosCount++;
     const container = document.getElementById('documentosContainer');
     
-    // Quitar empty state
+    // Remover empty state si existe
     const emptyState = container.querySelector('.empty-state');
     if (emptyState) emptyState.remove();
     
-    const documentoHTML = `
-        <div class="documento-item" id="documento-${documentosCount}">
-            <div class="documento-header">
-                <span class="material-symbols-rounded">description</span>
-                <span class="documento-nombre" id="nombre-doc-${documentosCount}">Documento #${documentosCount}</span>
-                <button type="button" class="btn-remove" onclick="eliminarDocumento(${documentosCount})">
+    const docHTML = `
+        <div class="documento-card nuevo" id="documento-${documentosCount}">
+            <div class="documento-icono">
+                <span class="material-symbols-rounded">upload_file</span>
+            </div>
+            <div class="documento-info">
+                <h4 class="documento-nombre" id="nombre-doc-${documentosCount}">Documento #${documentosCount}</h4>
+                <div class="documento-meta">
+                    <input type="file" 
+                           name="doc_archivo_${documentosCount}" 
+                           id="file-${documentosCount}"
+                           accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" 
+                           onchange="previsualizarDocumento(${documentosCount}, this)"
+                           style="display: none;">
+                    <label for="file-${documentosCount}" class="btn-seleccionar-archivo">
+                        <span class="material-symbols-rounded">attach_file</span>
+                        Seleccionar archivo
+                    </label>
+                    <span class="documento-estado" id="estado-doc-${documentosCount}">No seleccionado</span>
+                </div>
+            </div>
+            <div class="documento-acciones">
+                <button type="button" class="btn-eliminar-doc" onclick="eliminarDocumento(${documentosCount})">
                     <span class="material-symbols-rounded">delete</span>
                 </button>
-            </div>
-            <div class="documento-body">
-                <div class="form-row">
-                    <div class="form-group full-width">
-                        <label>Archivo</label>
-                        <input type="file" name="doc_archivo_${documentosCount}" 
-                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                               onchange="previsualizarDocumento(${documentosCount}, this)">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Notas</label>
-                    <textarea name="doc_notas_${documentosCount}" rows="3" 
-                              placeholder="Describe el documento, especifica qué tipo es (ID, Póliza, Comprobante, etc.)..."></textarea>
-                </div>
-                <div class="documento-preview" id="preview-doc-${documentosCount}"></div>
             </div>
         </div>
     `;
     
-    container.insertAdjacentHTML('beforeend', documentoHTML);
+    container.insertAdjacentHTML('beforeend', docHTML);
     actualizarContadorDocumentos();
 }
 
 function eliminarDocumento(id) {
-    if (confirm('¿Eliminar este documento?')) {
-        const elemento = document.getElementById(`documento-${id}`);
-        if (elemento) {
+    const elemento = document.getElementById(`documento-${id}`);
+    if (elemento) {
+        elemento.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
             elemento.remove();
-            actualizarContadorDocumentos();
             
-            // Mostrar empty state si no hay documentos
             const container = document.getElementById('documentosContainer');
-            if (container.querySelectorAll('.documento-item').length === 0) {
+            if (container.querySelectorAll('.documento-card').length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <span class="material-symbols-rounded">upload_file</span>
-                        <p>No hay documentos cargados</p>
-                        <small>Haz clic en "Agregar Archivo" para comenzar</small>
+                        <p>No hay documentos agregados</p>
+                        <small>Haz clic en "Agregar Documento" para comenzar</small>
                     </div>
                 `;
             }
-        }
+            
+            actualizarContadorDocumentos();
+        }, 300);
     }
 }
 
 function previsualizarDocumento(id, input) {
-    const preview = document.getElementById(`preview-doc-${id}`);
+    if (!input.files || input.files.length === 0) return;
+    
     const file = input.files[0];
+    const nombreElemento = document.getElementById(`nombre-doc-${id}`);
+    const estadoElemento = document.getElementById(`estado-doc-${id}`);
     
-    if (!file) {
-        preview.innerHTML = '';
-        return;
+    if (nombreElemento) {
+        nombreElemento.textContent = file.name;
     }
     
-    const fileName = file.name;
-    const fileSize = (file.size / 1024).toFixed(2); // KB
-    const fileType = file.type;
-    
-    // Actualizar nombre del documento
-    const nombreSpan = document.getElementById(`nombre-doc-${id}`);
-    if (nombreSpan) {
-        nombreSpan.textContent = fileName;
-    }
-    
-    let previewHTML = `
-        <div class="archivo-info">
-            <span class="material-symbols-rounded">insert_drive_file</span>
-            <div class="archivo-detalles">
-                <strong>${fileName}</strong>
-                <small>${fileSize} KB</small>
-            </div>
-        </div>
-    `;
-    
-    // Si es imagen, mostrar preview
-    if (fileType.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewHTML = `
-                <div class="imagen-preview">
-                    <img src="${e.target.result}" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
-                </div>
-                <div class="archivo-info">
-                    <span class="material-symbols-rounded">image</span>
-                    <div class="archivo-detalles">
-                        <strong>${fileName}</strong>
-                        <small>${fileSize} KB</small>
-                    </div>
-                </div>
-            `;
-            preview.innerHTML = previewHTML;
-        };
-        reader.readAsDataURL(file);
-    } else {
-        preview.innerHTML = previewHTML;
+    if (estadoElemento) {
+        const fileSize = (file.size / 1024).toFixed(2);
+        estadoElemento.textContent = `${fileSize} KB`;
+        estadoElemento.classList.add('seleccionado');
     }
 }
 
 function actualizarContadorDocumentos() {
-    const total = document.querySelectorAll('.documento-item').length;
+    const total = document.querySelectorAll('.documento-card').length;
     const contador = document.getElementById('documentosCounter');
     if (contador) {
         contador.textContent = `(${total})`;
@@ -997,10 +1094,11 @@ async function guardarDependientes(clienteId, formData) {
             nombres: nombres,
             apellidos: formData[`dep_apellidos_${i}`] || '',
             fecha_nacimiento: formData[`dep_fecha_nacimiento_${i}`] || null,
-            sexo: formData[`dep_genero_${i}`] || null,
+            sexo: formData[`dep_sexo_${i}`] || null,
             ssn: formData[`dep_ssn_${i}`] ? formData[`dep_ssn_${i}`].replace(/\D/g, '') : null,
             estado_migratorio: formData[`dep_estado_migratorio_${i}`] || null,
-            relacion: formData[`dep_relacion_${i}`] || null
+            relacion: formData[`dep_relacion_${i}`] || null,
+            aplica: formData[`dep_aplica_${i}`] || null,
         });
     }
     
