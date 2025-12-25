@@ -1076,43 +1076,63 @@ async function crearCliente(formData) {
     };
 
     // ============================================
-// GUARDAR DEPENDIENTES
-// ============================================
-async function guardarDependientes(clienteId, formData) {
-    const dependientes = [];
-    
-    // Buscar todos los dependientes en el formulario
-    for (let i = 1; i <= dependientesCount; i++) {
-        const elemento = document.getElementById(`dependiente-${i}`);
-        if (!elemento) continue; // Si fue eliminado, saltar
+    // GUARDAR DEPENDIENTES
+    // ============================================
+    async function guardarDependientes(clienteId, formData) {
+        const dependientes = [];
         
-        const nombres = formData[`dep_nombres_${i}`];
-        if (!nombres) continue; // Si está vacío, saltar
+        // Buscar todos los dependientes en el formulario
+        for (let i = 1; i <= dependientesCount; i++) {
+            const elemento = document.getElementById(`dependiente-${i}`);
+            if (!elemento) continue; // Si fue eliminado, saltar
+            
+            const nombres = formData[`dep_nombres_${i}`];
+            if (!nombres) continue; // Si está vacío, saltar
+            
+            dependientes.push({
+                cliente_id: clienteId,
+                nombres: nombres,
+                apellidos: formData[`dep_apellidos_${i}`] || '',
+                fecha_nacimiento: formData[`dep_fecha_nacimiento_${i}`] || null,
+                sexo: formData[`dep_sexo_${i}`] || null,
+                ssn: formData[`dep_ssn_${i}`] ? formData[`dep_ssn_${i}`].replace(/\D/g, '') : null,
+                estado_migratorio: formData[`dep_estado_migratorio_${i}`] || null,
+                relacion: formData[`dep_relacion_${i}`] || null,
+                aplica: formData[`dep_aplica_${i}`] || null,
+            });
+        }
         
-        dependientes.push({
-            cliente_id: clienteId,
-            nombres: nombres,
-            apellidos: formData[`dep_apellidos_${i}`] || '',
-            fecha_nacimiento: formData[`dep_fecha_nacimiento_${i}`] || null,
-            sexo: formData[`dep_sexo_${i}`] || null,
-            ssn: formData[`dep_ssn_${i}`] ? formData[`dep_ssn_${i}`].replace(/\D/g, '') : null,
-            estado_migratorio: formData[`dep_estado_migratorio_${i}`] || null,
-            relacion: formData[`dep_relacion_${i}`] || null,
-            aplica: formData[`dep_aplica_${i}`] || null,
-        });
+        // Guardar todos los dependientes
+        if (dependientes.length > 0) {
+            const { error } = await supabaseClient
+                .from('dependientes')
+                .insert(dependientes);
+            
+            if (error) throw error;
+            
+            console.log(`✅ ${dependientes.length} dependiente(s) guardado(s)`);
+        }
     }
-    
-    // Guardar todos los dependientes
-    if (dependientes.length > 0) {
-        const { error } = await supabaseClient
-            .from('dependientes')
-            .insert(dependientes);
-        
-        if (error) throw error;
-        
-        console.log(`✅ ${dependientes.length} dependiente(s) guardado(s)`);
+
+    // =============================================
+    // GUARDAR METODO DE PAGO
+    // =============================================
+    const metodos_pagos = {
+        cliente_id: clienteId,
+        tipo: null,
+        // Información cuenta de banco
+        nombre_banco: formData.nombreBanco || null,
+        numero_cuenta: formData.numeroCuenta || null,
+        routing_number: formData.routingNumber || null,
+        nombre_cuenta: formData.nombreCuenta || null,
+
+        // Información tarjeta
+        numero_tarjeta: formData.numeroTarjeta || null,
+        nombre_tarjeta: formData.nombreTarjeta || null,
+        fecha_expiracion: formData.fechaExpiracion || null,
+        cvv: formData.cvv || null,
+        tipo_tarjeta: formData.tipoTarjeta || null,
     }
-}
     // =============================================
     // GUARDAR DOCUMENTOS
     // =============================================

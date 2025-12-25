@@ -120,7 +120,9 @@ async function cargarDatosCliente(id) {
         
         if (clienteError) throw clienteError;
         if (!clienteData) throw new Error('Cliente no encontrado');
-        
+
+        await cargarMetodoPago(clienteId);
+
         console.log('✅ Cliente cargado:', clienteData);
         
         // Cargar póliza
@@ -1238,25 +1240,38 @@ function validarCodigoPostal(input) {
 // ============================================
 
 function mostrarFormularioPago(tipo) {
-    const bancario = document.getElementById('pago-bancario');
-    const tarjeta = document.getElementById('pago-tarjeta');
+    // Ocultar ambos formularios
+    const formBanco = document.getElementById('formBanco');
+    const formTarjeta = document.getElementById('formTarjeta');
     
-    if (tipo === 'banco') {
-        bancario.style.display = 'block';
-        tarjeta.style.display = 'none';
-    } else if (tipo === 'tarjeta') {
-        bancario.style.display = 'none';
-        tarjeta.style.display = 'block';
+    if (formBanco) formBanco.style.display = 'none';
+    if (formTarjeta) formTarjeta.style.display = 'none';
+    
+    // Mostrar el formulario seleccionado
+    if (tipo === 'banco' && formBanco) {
+        formBanco.style.display = 'block';
+    } else if (tipo === 'tarjeta' && formTarjeta) {
+        formTarjeta.style.display = 'block';
     }
 }
 
 function limpiarMetodoPago() {
-    document.querySelectorAll('#tab-pago input, #tab-pago select').forEach(input => {
-        input.value = '';
+    // Desmarcar radio buttons
+    document.querySelectorAll('[name="metodoPago"]').forEach(radio => {
+        radio.checked = false;
     });
     
-    document.getElementById('pago-bancario').style.display = 'none';
-    document.getElementById('pago-tarjeta').style.display = 'none';
+    // Ocultar formularios
+    const formBanco = document.getElementById('formBanco');
+    const formTarjeta = document.getElementById('formTarjeta');
+    
+    if (formBanco) formBanco.style.display = 'none';
+    if (formTarjeta) formTarjeta.style.display = 'none';
+    
+    // Limpiar campos
+    document.querySelectorAll('#formBanco input, #formTarjeta input, #formTarjeta select').forEach(input => {
+        input.value = '';
+    });
 }
 
 // ============================================
@@ -1534,6 +1549,183 @@ async function actualizarDependientes(clienteId, formData) {
     
     console.log(`✅ ${dependientesActualizar.length} dependiente(s) actualizado(s)`);
     console.log(`✅ ${dependientesInsertar.length} dependiente(s) nuevo(s)`);
+}
+
+// CARGAR MÉTODO DE PAGO EXISTENTE
+async function cargarMetodoPago(clienteId) {
+    try {
+        console.log('💳 Cargando método de pago...');
+        
+        const { data: metodos, error } = await supabaseClient
+            .from('metodos_pago')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .eq('activo', true)
+            .single();
+        
+        if (error) {
+            if (error.code === 'PGRST116') {
+                // No hay método de pago registrado
+                console.log('ℹ️ Sin método de pago registrado');
+                return;
+            }
+            throw error;
+        }
+        
+        if (!metodos) {
+            console.log('ℹ️ Sin método de pago');
+            return;
+        }
+        
+        // Marcar el tipo de método de pago
+        const radioTipo = document.querySelector(`[name="metodoPago"][value="${metodos.tipo}"]`);
+        if (radioTipo) {
+            radioTipo.checked = true;
+            mostrarFormularioPago(metodos.tipo);
+        }
+        
+        // Llenar campos según el tipo
+        if (metodos.tipo === 'banco') {
+            // Datos bancarios
+            document.getElementById('nombreBanco').value = metodos.nombre_banco || '';
+            document.getElementById('numeroCuenta').value = metodos.numero_cuenta || '';
+            document.getElementById('routingNumber').value = metodos.routing_number || '';
+            document.getElementById('nombreCuentaBanco').value = metodos.nombre_cuenta || '';
+            
+        } else if (metodos.tipo === 'tarjeta') {
+            // Datos de tarjeta
+            document.getElementById('numeroTarjeta').value = metodos.numero_tarjeta || '';
+            document.getElementById('nombreTarjeta').value = metodos.nombre_tarjeta || '';
+            document.getElementById('fechaExpiracion').value = metodos.fecha_expiracion || '';
+            document.getElementById('cvv').value = metodos.cvv || '';
+            
+            const tipoTarjeta = document.getElementById('tipoTarjeta');
+            if (tipoTarjeta && metodos.tipo_tarjeta) {
+                tipoTarjeta.value = metodos.tipo_tarjeta;
+            }
+        }
+        
+        // Checkbox de usar misma dirección
+        const usarMismaDireccion = document.getElementById('usarMismaDireccion');
+        if (usarMismaDireccion) {
+            usarMismaDireccion.checked = metodos.usar_misma_direccion !== false;
+        }
+        
+        console.log(`✅ Método de pago cargado: ${metodos.tipo}`);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar método de pago:', error);
+    }
+}
+
+// GUARDAR O ACTUALIZAR MÉTODO DE PAGO
+async function guardarMetodoPago(clienteId) {
+    try {
+        // Verificar si hay un método seleccionado
+        const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
+        
+        if (!tipoSeleccionado) {
+            console.log('ℹ️ Sin método de pago seleccionado');
+            return;
+        }
+        
+        const tipo = tipoSeleccionado.value;
+        let metodoPagoData = {
+            cliente_id: clienteId,
+            tipo: tipo,
+            usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
+            activo: true
+        };
+        
+        // Recopilar datos según el tipo
+        if (tipo === 'banco') {
+            metodoPagoData.nombre_banco = document.getElementById('nombreBanco')?.value || null;
+            metodoPagoData.numero_cuenta = document.getElementById('numeroCuenta')?.value || null;
+            metodoPagoData.routing_number = document.getElementById('routingNumber')?.value || null;
+            metodoPagoData.nombre_cuenta = document.getElementById('nombreCuentaBanco')?.value || null;
+            
+            // Limpiar campos de tarjeta
+            metodoPagoData.numero_tarjeta = null;
+            metodoPagoData.nombre_tarjeta = null;
+            metodoPagoData.fecha_expiracion = null;
+            metodoPagoData.cvv = null;
+            metodoPagoData.tipo_tarjeta = null;
+            
+        } else if (tipo === 'tarjeta') {
+            metodoPagoData.numero_tarjeta = document.getElementById('numeroTarjeta')?.value || null;
+            metodoPagoData.nombre_tarjeta = document.getElementById('nombreTarjeta')?.value || null;
+            metodoPagoData.fecha_expiracion = document.getElementById('fechaExpiracion')?.value || null;
+            metodoPagoData.cvv = document.getElementById('cvv')?.value || null;
+            metodoPagoData.tipo_tarjeta = document.getElementById('tipoTarjeta')?.value || null;
+            
+            // Limpiar campos de banco
+            metodoPagoData.nombre_banco = null;
+            metodoPagoData.numero_cuenta = null;
+            metodoPagoData.routing_number = null;
+            metodoPagoData.nombre_cuenta = null;
+        }
+        
+        // Verificar si ya existe un método de pago para este cliente
+        const { data: existente, error: errorBuscar } = await supabaseClient
+            .from('metodos_pago')
+            .select('id')
+            .eq('cliente_id', clienteId)
+            .eq('activo', true)
+            .maybeSingle();
+        
+        if (errorBuscar) throw errorBuscar;
+        
+        if (existente) {
+            // ACTUALIZAR método existente
+            const { error: errorUpdate } = await supabaseClient
+                .from('metodos_pago')
+                .update(metodoPagoData)
+                .eq('id', existente.id);
+            
+            if (errorUpdate) throw errorUpdate;
+            
+            console.log('✅ Método de pago actualizado');
+            
+        } else {
+            // INSERTAR nuevo método
+            const { error: errorInsert } = await supabaseClient
+                .from('metodos_pago')
+                .insert([metodoPagoData]);
+            
+            if (errorInsert) throw errorInsert;
+            
+            console.log('✅ Método de pago guardado');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al guardar método de pago:', error);
+        throw error;
+    }
+}
+
+// ELIMINAR MÉTODO DE PAGO
+async function eliminarMetodoPago(clienteId) {
+    try {
+        if (!confirm('¿Eliminar el método de pago actual?')) return;
+        
+        const { error } = await supabaseClient
+            .from('metodos_pago')
+            .update({ activo: false })
+            .eq('cliente_id', clienteId)
+            .eq('activo', true);
+        
+        if (error) throw error;
+        
+        // Limpiar formulario
+        limpiarMetodoPago();
+        
+        console.log('✅ Método de pago eliminado');
+        alert('Método de pago eliminado correctamente');
+        
+    } catch (error) {
+        console.error('❌ Error al eliminar método de pago:', error);
+        alert('Error al eliminar el método de pago');
+    }
 }
 
 // ============================================
