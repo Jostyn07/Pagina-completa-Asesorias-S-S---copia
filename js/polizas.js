@@ -143,9 +143,9 @@ function crearFilaPoliza(poliza) {
     const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim();
     
     // Formatear fechas
-    const fechaEfectividad = poliza.fecha_efectividad ? formatearFecha(poliza.fecha_efectividad) : '--/--/----';
-    const fechaCreacion = poliza.created_at ? formatearFecha(poliza.created_at) : '--/--/----';
-    const fechaModificacion = poliza.updated_at ? formatearFecha(poliza.updated_at) : '--/--/----';
+    const fechaEfectividad = poliza.fecha_efectividad ? formatoUS(poliza.fecha_efectividad) : '--/--/----';
+    const fechaCreacion = poliza.created_at ? formatoUS(poliza.created_at) : '--/--/----';
+    const fechaModificacion = poliza.updated_at ? formatoUS(poliza.updated_at) : '--/--/----';
     
     // Formatear prima
     const prima = poliza.prima ? `$${parseFloat(poliza.prima).toFixed(2)}` : '$0.00';
@@ -278,19 +278,19 @@ async function abrirDetalles(polizaId) {
                     <div class="detalle-grid">
                         <div class="detalle-item">
                             <label>Fecha efectividad</label>
-                            <p>${poliza.fecha_efectividad ? formatearFecha(poliza.fecha_efectividad) : 'N/A'}</p>
+                            <p>${poliza.fecha_efectividad ? formatoUS(poliza.fecha_efectividad) : 'N/A'}</p>
                         </div>
                         <div class="detalle-item">
                             <label>Fecha inicial cobertura</label>
-                            <p>${poliza.fecha_inicial_cobertura ? formatearFecha(poliza.fecha_inicial_cobertura) : 'N/A'}</p>
+                            <p>${poliza.fecha_inicial_cobertura ? formatoUS(poliza.fecha_inicial_cobertura) : 'N/A'}</p>
                         </div>
                         <div class="detalle-item">
                             <label>Fecha final cobertura</label>
-                            <p>${poliza.fecha_final_cobertura ? formatearFecha(poliza.fecha_final_cobertura) : 'N/A'}</p>
+                            <p>${poliza.fecha_final_cobertura ? formatoUS(poliza.fecha_final_cobertura) : 'N/A'}</p>
                         </div>
                         <div class="detalle-item">
                             <label>Fecha creación</label>
-                            <p>${poliza.created_at ? formatearFecha(poliza.created_at) : 'N/A'}</p>
+                            <p>${poliza.created_at ? formatoUS(poliza.created_at) : 'N/A'}</p>
                         </div>
                     </div>
                 </div>
@@ -677,12 +677,77 @@ function actualizarEstadisticas(polizas) {
 // ============================================
 // UTILIDADES
 // ============================================
-function formatearFecha(fechaISO) {
-    const fecha = new Date(fechaISO);
-    const dia = String(fecha.getDate()).padStart(2, '0');
-    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-    const año = fecha.getFullYear();
-    return `${dia}/${mes}/${año}`;
+/**
+ * Convierte CUALQUIER formato de fecha a mm/dd/aaaa
+ * SIN conversiones de zona horaria
+ * @param {string|Date} fecha - Fecha en cualquier formato
+ * @returns {string} Fecha en formato mm/dd/aaaa
+ */
+function formatoUS(fecha) {
+    if (!fecha) return '';
+    
+    try {
+        // Si es string en formato ISO (yyyy-mm-dd o yyyy-mm-ddTHH:MM:SS)
+        if (typeof fecha === 'string' && fecha.includes('-')) {
+            const soloFecha = fecha.split('T')[0]; // Quitar hora si existe
+            const [anio, mes, dia] = soloFecha.split('-');
+            return `${mes}/${dia}/${anio}`;
+        }
+        
+        // Si es string en formato US (mm/dd/yyyy)
+        if (typeof fecha === 'string' && fecha.includes('/')) {
+            return fecha; // Ya está en formato US
+        }
+        
+        // Si es Date object (último recurso)
+        if (fecha instanceof Date) {
+            const anio = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            return `${mes}/${dia}/${anio}`;
+        }
+        
+        return '';
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
+        return '';
+    }
+}
+
+/**
+ * Convierte fecha a formato ISO (yyyy-mm-dd) para inputs type="date"
+ * SIN conversiones de zona horaria
+ * @param {string|Date} fecha - Fecha en cualquier formato
+ * @returns {string} Fecha en formato yyyy-mm-dd
+ */
+function formatoISO(fecha) {
+    if (!fecha) return '';
+    
+    try {
+        // Si es string en formato ISO (yyyy-mm-dd o yyyy-mm-ddTHH:MM:SS)
+        if (typeof fecha === 'string' && fecha.includes('-')) {
+            return fecha.split('T')[0]; // Ya está en ISO, solo quitar hora
+        }
+        
+        // Si es string en formato US (mm/dd/yyyy)
+        if (typeof fecha === 'string' && fecha.includes('/')) {
+            const [mes, dia, anio] = fecha.split('/');
+            return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        }
+        
+        // Si es Date object (último recurso)
+        if (fecha instanceof Date) {
+            const anio = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            return `${anio}-${mes}-${dia}`;
+        }
+        
+        return '';
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
+        return '';
+    }
 }
 
 function obtenerBadgeEstado(estado) {

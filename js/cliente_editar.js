@@ -72,27 +72,77 @@ function inicializarFormulario() {
 // FORMATEADORES DE FECHA
 // ============================================
 
-function formatearFechaUS(fecha) {
+/**
+ * Convierte CUALQUIER formato de fecha a mm/dd/aaaa
+ * SIN conversiones de zona horaria
+ * @param {string|Date} fecha - Fecha en cualquier formato
+ * @returns {string} Fecha en formato mm/dd/aaaa
+ */
+function formatoUS(fecha) {
     if (!fecha) return '';
-    const d = new Date(fecha);
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const dia = String(d.getDate()).padStart(2, '0');
-    const anio = d.getFullYear();
-    return `${mes}/${dia}/${anio}`;
+    
+    try {
+        // Si es string en formato ISO (yyyy-mm-dd o yyyy-mm-ddTHH:MM:SS)
+        if (typeof fecha === 'string' && fecha.includes('-')) {
+            const soloFecha = fecha.split('T')[0]; // Quitar hora si existe
+            const [anio, mes, dia] = soloFecha.split('-');
+            return `${mes}/${dia}/${anio}`;
+        }
+        
+        // Si es string en formato US (mm/dd/yyyy)
+        if (typeof fecha === 'string' && fecha.includes('/')) {
+            return fecha; // Ya está en formato US
+        }
+        
+        // Si es Date object (último recurso)
+        if (fecha instanceof Date) {
+            const anio = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            return `${mes}/${dia}/${anio}`;
+        }
+        
+        return '';
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
+        return '';
+    }
 }
 
-function convertirAFormatoUS(fechaISO) {
-    if (!fechaISO) return '';
-    const partes = fechaISO.split('-');
-    if (partes.length !== 3) return '';
-    return `${partes[1]}/${partes[2]}/${partes[0]}`;
-}
-
-function convertirAFormatoISO(fechaUS) {
-    if (!fechaUS) return '';
-    const partes = fechaUS.split('/');
-    if (partes.length !== 3) return '';
-    return `${partes[2]}-${partes[0]}-${partes[1]}`;
+/**
+ * Convierte fecha a formato ISO (yyyy-mm-dd) para inputs type="date"
+ * SIN conversiones de zona horaria
+ * @param {string|Date} fecha - Fecha en cualquier formato
+ * @returns {string} Fecha en formato yyyy-mm-dd
+ */
+function formatoISO(fecha) {
+    if (!fecha) return '';
+    
+    try {
+        // Si es string en formato ISO (yyyy-mm-dd o yyyy-mm-ddTHH:MM:SS)
+        if (typeof fecha === 'string' && fecha.includes('-')) {
+            return fecha.split('T')[0]; // Ya está en ISO, solo quitar hora
+        }
+        
+        // Si es string en formato US (mm/dd/yyyy)
+        if (typeof fecha === 'string' && fecha.includes('/')) {
+            const [mes, dia, anio] = fecha.split('/');
+            return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        }
+        
+        // Si es Date object (último recurso)
+        if (fecha instanceof Date) {
+            const anio = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            return `${anio}-${mes}-${dia}`;
+        }
+        
+        return '';
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
+        return '';
+    }
 }
 
 // ============================================
@@ -267,7 +317,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
     // DATOS DEL CLIENTE
     if (cliente) {
        if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = cliente.tipo_registro || '';
-       if (cliente.fecha_registro) document.getElementById('fechaRegistro').value = formatoISO(cliente.fecha_registro);
+       if (cliente.fecha_registro) document.getElementById('fechaRegistro').value = formatoUS(cliente.fecha_registro);
        if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres || '';
        if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos || '';
        if (cliente.genero) document.getElementById('genero').value = cliente.genero || '';
@@ -300,7 +350,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
     if (poliza) {
        if(poliza.compania) document.getElementById('compania').value = poliza.compania || '';
        if(poliza.plan) document.getElementById('plan').value = poliza.plan || '';
-       if(poliza.prima) document.getElementById('prima').value = poliza.prima || 0;
+       document.getElementById('prima').value = poliza.prima || 0;
        if(poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal || 0;
        if(poliza.member_id) document.getElementById('memberId').value = poliza.member_id || '';
        if(poliza.portal_npn) document.getElementById('portalNpn').value = poliza.portal_npn || '';
@@ -1642,7 +1692,7 @@ async function guardarMetodoPago(clienteId) {
             metodoPagoData.nombre_banco = document.getElementById('nombreBanco')?.value || null;
             metodoPagoData.numero_cuenta = document.getElementById('numeroCuenta')?.value || null;
             metodoPagoData.routing_number = document.getElementById('routingNumber')?.value || null;
-            metodoPagoData.nombre_cuenta = document.getElementById('nombreCuentaBanco')?.value || null;
+            metodoPagoData.nombre_cuenta = document.getElementById('nombreCuenta')?.value || null;
             
             // Limpiar campos de tarjeta
             metodoPagoData.numero_tarjeta = null;
@@ -1843,17 +1893,11 @@ function obtenerDatosFormulario() {
 }
 
 function togglePOBox() {
-    const checkbox = document.getElementById('usaPOBox');
-    const campoApartamento = document.getElementById('casaApartamento');
+    const checkbox = document.getElementById('tienePOBox');
+    const poBoxGroup = document.getElementById('poBoxGroup');
     
-    if (checkbox && campoApartamento) {
-        if (checkbox.checked) {
-            campoApartamento.value = 'P.O. Box';
-            campoApartamento.readOnly = true;
-        } else {
-            campoApartamento.value = '';
-            campoApartamento.readOnly = false;
-        }
+    if (checkbox && poBoxGroup) {
+        poBoxGroup.style.display = checkbox.checked ? 'block' : 'none';
     }
 }
 

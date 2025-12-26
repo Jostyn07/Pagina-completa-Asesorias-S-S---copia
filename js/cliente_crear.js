@@ -395,9 +395,53 @@ function limpiarMetodoPago() {
     });
 }
 
+async function guardarMetodoPago(clienteId) {    
+    try {
+        const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
+        
+        if (!tipoSeleccionado) {
+            return;
+        }
+        
+        const tipo = tipoSeleccionado.value;        
+        let metodoPagoData = {
+            cliente_id: clienteId,
+            tipo: tipo,
+            usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
+            activo: true
+        };
+        
+        if (tipo === 'banco') {
+            metodoPagoData.nombre_banco = document.getElementById('nombreBanco')?.value || null;
+            metodoPagoData.numero_cuenta = document.getElementById('numeroCuenta')?.value || null;
+            metodoPagoData.routing_number = document.getElementById('routingNumber')?.value || null;
+            metodoPagoData.nombre_cuenta = document.getElementById('nombreCuenta')?.value || null;
+        } else if (tipo === 'tarjeta') {
+            metodoPagoData.numero_tarjeta = document.getElementById('numeroTarjeta')?.value || null;
+            metodoPagoData.nombre_tarjeta = document.getElementById('nombreTarjeta')?.value || null;
+            metodoPagoData.fecha_expiracion = document.getElementById('fechaExpiracion')?.value || null;
+            metodoPagoData.cvv = document.getElementById('cvv')?.value || null;
+            metodoPagoData.tipo_tarjeta = document.getElementById('tipoTarjeta')?.value || null;
+        }
+                
+        const { data, error } = await supabaseClient
+            .from('metodos_pago')
+            .insert([metodoPagoData])
+            .select();
+        
+        
+        if (error) {
+            throw error;
+        }
+        
+        
+    } catch (error) {
+
+    }
+}
+
 // ============================================
 // DEPENDIENTES - SISTEMA DE MODAL Y TARJETAS
-// Reemplazar desde línea 404 hasta línea 524
 // ============================================
 
 // ABRIR MODAL PARA NUEVO DEPENDIENTE
@@ -649,8 +693,7 @@ function actualizarContadorDependientes() {
 }
 
 // ============================================
-// DOCUMENTOS - NUEVO DISEÑO
-// Reemplazar desde línea 526 hasta línea 650
+// DOCUMENTOS
 // ============================================
 
 function agregarDocumento() {
@@ -970,19 +1013,26 @@ async function handleSubmit(event) {
 
 function validarFormularioCompleto() {
     const camposRequeridos = [
+        { id: 'tipoRegistro', nombre: 'Tipo de registro'},
         { id: 'nombres', nombre: 'Nombres' },
         { id: 'apellidos', nombre: 'Apellidos' },
-        { id: 'email', nombre: 'Email' },
+        { id: 'genero', nombre: 'Género' },
+        { id: 'email', nombre: 'Correo electrónico' },
         { id: 'telefono1', nombre: 'Teléfono' },
         { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
-        { id: 'genero', nombre: 'Género' },
         { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'nacionalidad', nombre: 'Nacionalidad' },
+        { id: 'aplica', nombre: '¿Aplica para el seguro?'},
         { id: 'direccion', nombre: 'Dirección' },
+        { id: 'condado', nombre: 'Condado'},
         { id: 'ciudad', nombre: 'Ciudad' },
         { id: 'estado', nombre: 'Estado' },
         { id: 'codigoPostal', nombre: 'Código postal' },
         { id: 'compania', nombre: 'Compañía' },
-        { id: 'plan', nombre: 'Plan' }
+        { id: 'plan', nombre: 'Plan' },
+        { id: 'prima', nombre: 'Prima' },
+        { id: 'tipoVenta', nombre: 'Tipo de venta' },
+        { id: 'operadorNombre', nombre: 'operador' },
     ];
     
     for (const campo of camposRequeridos) {
@@ -1020,7 +1070,7 @@ async function crearCliente(formData) {
         ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
         ingreso_anual: parseFloat(formData.ingresos) || 0,
         ocupacion: formData.ocupacion || null,
-        nacionalidad: formData.ocupacion || null,
+        nacionalidad: formData.nacionalidad || null,
         aplica: formData.aplica,
         direccion: formData.direccion,
         casa_apartamento: formData.casaApartamento,
@@ -1050,6 +1100,7 @@ async function crearCliente(formData) {
 
     await guardarNotas(cliente.id);
 
+    await guardarMetodoPago(cliente.id);
 
     const numeroPoliza = await generarNumeroPoliza();
     
@@ -1112,26 +1163,6 @@ async function crearCliente(formData) {
             
             console.log(`✅ ${dependientes.length} dependiente(s) guardado(s)`);
         }
-    }
-
-    // =============================================
-    // GUARDAR METODO DE PAGO
-    // =============================================
-    const metodos_pagos = {
-        cliente_id: clienteId,
-        tipo: null,
-        // Información cuenta de banco
-        nombre_banco: formData.nombreBanco || null,
-        numero_cuenta: formData.numeroCuenta || null,
-        routing_number: formData.routingNumber || null,
-        nombre_cuenta: formData.nombreCuenta || null,
-
-        // Información tarjeta
-        numero_tarjeta: formData.numeroTarjeta || null,
-        nombre_tarjeta: formData.nombreTarjeta || null,
-        fecha_expiracion: formData.fechaExpiracion || null,
-        cvv: formData.cvv || null,
-        tipo_tarjeta: formData.tipoTarjeta || null,
     }
     // =============================================
     // GUARDAR DOCUMENTOS
