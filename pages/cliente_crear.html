@@ -94,7 +94,7 @@
             <div class="header-left">
                 <button class="btn-back" onclick="window.location.href='./polizas.html'">
                     <span class="material-symbols-rounded">arrow_back</span>
-                    Volver a Pólizas
+                    Volver a Pólizas 
                 </button>
                 <h1 id="pageTitle">📝 Crear Nuevo Cliente y Póliza</h1>
             </div>
@@ -102,6 +102,37 @@
                 <div class="autosave-indicator" id="autosaveIndicator">
                     <span class="material-symbols-rounded">cloud_done</span>
                     <span id="autosaveText">Todos los cambios guardados</span>
+                </div>
+                <div class="user-menu">
+                    <button class="user-profile-btn" onclick="toggleUserMenu()">
+                        <img src="https://ui-avatars.com/api/?name=Usuario&background=667eea&color=fff&size=40" 
+                            alt="Usuario" 
+                            class="user-avatar">
+                        <span class="material-symbols-rounded dropdown-icon">expand_more</span>
+                    </button>
+                    
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-dropdown-header">
+                            <div class="user-info">
+                                <strong id="userName">Usuario</strong>
+                                <small id="userEmail">usuario@ejemplo.com</small>
+                            </div>
+                        </div>
+                        <div class="user-dropdown-divider"></div>
+                        <button class="dropdown-item">
+                            <span class="material-symbols-rounded">person</span>
+                            Mi Perfil
+                        </button>
+                        <button class="dropdown-item">
+                            <span class="material-symbols-rounded">settings</span>
+                            Configuración
+                        </button>
+                        <div class="user-dropdown-divider"></div>
+                        <button class="dropdown-item danger" onclick="cerrarSesion()">
+                            <span class="material-symbols-rounded">logout</span>
+                            Cerrar Sesión
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -472,13 +503,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="form-row">
-                            <div class="form-group full-width">
-                                <label>Observaciones</label>
-                                <textarea id="observaciones" name="observaciones" rows="4" placeholder="Notas adicionales sobre la póliza..."></textarea>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -805,6 +829,10 @@
                 <button type="button" class="btn-draft" onclick="guardarBorrador()" id="btnBorrador">
                     <span class="material-symbols-rounded">save</span>
                     Guardar Borrador
+                </button>
+                <button type="button" class="btn-next" onclick="siguientePestana()" id="btnSiguiente">
+                    <span class="material-symbols-rounded">arrow_forward</span>
+                    Siguiente
                 </button>
                 <button type="submit" class="btn-submit">
                     <span class="material-symbols-rounded">check_circle</span>

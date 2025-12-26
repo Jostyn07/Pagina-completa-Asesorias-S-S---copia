@@ -201,7 +201,37 @@
                     </div>
                     <div class="header__welcome__inf">
                         <p>Hola, <span class="nombre-usuario">Usuario</span></p>
-                        <img src="../images/Montañas.jpg" alt="Foto de perfil" class="header__welcome__inf__foto-perfil">
+                        <div class="user-menu">
+                            <button class="user-profile-btn" onclick="toggleUserMenu()">
+                                <img src="https://ui-avatars.com/api/?name=Usuario&background=667eea&color=fff&size=40" 
+                                    alt="Usuario" 
+                                    class="user-avatar">
+                                <span class="material-symbols-rounded dropdown-icon">expand_more</span>
+                            </button>
+                            
+                            <div class="user-dropdown" id="userDropdown">
+                                <div class="user-dropdown-header">
+                                    <div class="user-info">
+                                        <strong id="userName">Usuario</strong>
+                                        <small id="userEmail">usuario@ejemplo.com</small>
+                                    </div>
+                                </div>
+                                <div class="user-dropdown-divider"></div>
+                                <button class="dropdown-item">
+                                    <span class="material-symbols-rounded">person</span>
+                                    Mi Perfil
+                                </button>
+                                <button class="dropdown-item">
+                                    <span class="material-symbols-rounded">settings</span>
+                                    Configuración
+                                </button>
+                                <div class="user-dropdown-divider"></div>
+                                <button class="dropdown-item danger" onclick="cerrarSesion()">
+                                    <span class="material-symbols-rounded">logout</span>
+                                    Cerrar Sesión
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>

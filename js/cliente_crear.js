@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Cargar borrador si existe
     cargarBorradorAutomatico();
+
+    cargarInfoUsuario();
+
 });
 
 function inicializarFormulario() {
@@ -111,6 +114,103 @@ function cambiarTab(tabName) {
     
     if (tabContent) tabContent.classList.add('active');
     if (tabButton) tabButton.classList.add('active');
+}
+
+// ============================================
+// NAVEGACIÓN CON BOTÓN SIGUIENTE
+// ============================================
+
+function siguientePestana() {
+    const tabsEnOrden = [
+        'info-general',
+        'dependientes',
+        'pago',
+        'documentos',
+        'notas',
+    ];
+    
+    // Obtener pestaña actual
+    const tabActual = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
+    const indexActual = tabsEnOrden.indexOf(tabActual);
+    
+    if (indexActual === -1 || indexActual >= tabsEnOrden.length - 1) {
+        // Ya está en la última pestaña
+        alert('Ya estás en la última pestaña. Haz click en "Guardar Cliente" para finalizar.');
+        return;
+    }
+    
+    // Validar pestaña actual antes de avanzar
+    if (!validarPestanaActual(tabActual)) {
+        return; // No avanzar si hay errores
+    }
+    
+    // Avanzar a la siguiente pestaña
+    const siguienteTab = tabsEnOrden[indexActual + 1];
+    cambiarTab(siguienteTab);
+    
+    // Actualizar botón si es la última pestaña
+    actualizarBotonSiguiente();
+}
+
+function validarPestanaActual(tab) {
+    switch(tab) {
+        case 'info-general':
+            return validarInfoGeneral();
+        case 'dependientes':
+            return true; // Dependientes son opcionales
+        case 'documentos':
+            return true; // Documentos son opcionales
+        case 'notas':
+            return true; // Notas son opcionales
+        case 'metodos-pago':
+            return true; // Método de pago es opcional
+        default:
+            return true;
+    }
+}
+
+function validarInfoGeneral() {
+    const camposRequeridos = [
+        { id: 'tipoRegistro', nombre: 'Tipo de registro'},
+        { id: 'nombres', nombre: 'Nombres' },
+        { id: 'apellidos', nombre: 'Apellidos' },
+        { id: 'genero', nombre: 'Género' },
+        { id: 'email', nombre: 'Correo electrónico' },
+        { id: 'telefono1', nombre: 'Teléfono' },
+        { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
+        { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'direccion', nombre: 'Dirección' },
+        { id: 'ciudad', nombre: 'Ciudad' },
+        { id: 'estado', nombre: 'Estado' },
+        { id: 'codigoPostal', nombre: 'Código postal' },
+        { id: 'compania', nombre: 'Compañía' },
+        { id: 'plan', nombre: 'Plan' },
+        { id: 'prima', nombre: 'Prima' }
+    ];
+    
+    for (const campo of camposRequeridos) {
+        const elemento = document.getElementById(campo.id);
+        if (!elemento || !elemento.value || elemento.value.trim() === '') {
+            alert(`El campo "${campo.nombre}" es requerido antes de continuar`);
+            elemento?.focus();
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+function actualizarBotonSiguiente() {
+    const btnSiguiente = document.getElementById('btnSiguiente');
+    const tabActual = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
+    
+    if (tabActual === 'metodos-pago') {
+        // Última pestaña
+        btnSiguiente.textContent = 'Finalizar';
+        btnSiguiente.innerHTML = '<span class="material-symbols-rounded">check_circle</span> Finalizar';
+    } else {
+        btnSiguiente.innerHTML = '<span class="material-symbols-rounded">arrow_forward</span> Siguiente';
+    }
 }
 
 // ============================================
@@ -1346,6 +1446,161 @@ function obtenerDatosFormulario() {
     
     return datos;
 }
+
+// ============================================
+// MENÚ DE USUARIO
+// ============================================
+
+function toggleUserMenu() {
+    const dropdown = document.getElementById('userDropdown');
+    dropdown.classList.toggle('active');
+}
+
+// Cerrar menú al hacer click fuera
+document.addEventListener('click', function(event) {
+    const userMenu = document.querySelector('.user-menu');
+    const dropdown = document.getElementById('userDropdown');
+    
+    if (dropdown && userMenu && !userMenu.contains(event.target)) {
+        dropdown.classList.remove('active');
+    }
+});
+
+async function cerrarSesion() {
+    const confirmacion = confirm('¿Estás seguro de que deseas cerrar sesión?');
+    
+    if (!confirmacion) return;
+    
+    try {
+        // Cerrar sesión en Supabase
+        const { error } = await supabaseClient.auth.signOut();
+        
+        if (error) throw error;
+        
+        // Limpiar localStorage
+        localStorage.clear();
+        
+        // Redirigir al login
+        window.location.href = '../index.html';
+        
+    } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+        alert('Error al cerrar sesión: ' + error.message);
+    }
+}
+
+// Cargar información del usuario
+async function cargarInfoUsuario() {
+    try {
+        // Obtener usuario autenticado
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
+        
+        if (error) throw error;
+        
+        if (!user) {
+            console.warn('⚠️ No hay usuario autenticado');
+            // Redirigir al login si no hay usuario
+            window.location.href = '../index.html';
+            return;
+        }
+        
+        console.log('✅ Usuario cargado:', user);
+        
+        // Extraer información del usuario
+        const email = user.email || 'usuario@ejemplo.com';
+        const metadata = user.user_metadata || {};
+        
+        // Intentar obtener el nombre de diferentes fuentes
+        let nombreCompleto = metadata.full_name || 
+                            metadata.name || 
+                            metadata.display_name ||
+                            email.split('@')[0];
+        
+        // Si el nombre tiene formato "nombre apellido", tomar solo el primer nombre
+        const primerNombre = nombreCompleto.split(' ')[0];
+        
+        // Actualizar elementos del DOM
+        const userName = document.getElementById('userName');
+        const userEmail = document.getElementById('userEmail');
+        const userAvatar = document.querySelector('.user-avatar');
+        
+        if (userName) {
+            userName.textContent = primerNombre;
+        }
+        
+        if (userEmail) {
+            userEmail.textContent = email;
+        }
+        
+        // Actualizar avatar
+        if (userAvatar) {
+            // Si el usuario tiene foto de perfil en metadata
+            if (metadata.avatar_url || metadata.picture) {
+                userAvatar.src = metadata.avatar_url || metadata.picture;
+            } else {
+                // Generar avatar con iniciales
+                const iniciales = obtenerIniciales(nombreCompleto);
+                const colorFondo = generarColorDesdeTexto(email);
+                userAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(iniciales)}&background=${colorFondo}&color=fff&size=80&bold=true`;
+            }
+            
+            userAvatar.alt = nombreCompleto;
+        }
+        
+        console.log('✅ Información de usuario actualizada');
+        
+    } catch (error) {
+        console.error('❌ Error al cargar info de usuario:', error);
+        // No redirigir si es solo un error de carga
+    }
+}
+
+// Obtener iniciales del nombre
+function obtenerIniciales(nombre) {
+    if (!nombre) return 'U';
+    
+    const palabras = nombre.trim().split(' ').filter(p => p.length > 0);
+    
+    if (palabras.length === 0) return 'U';
+    if (palabras.length === 1) return palabras[0].substring(0, 2).toUpperCase();
+    
+    // Tomar primera letra de primer y último nombre
+    return (palabras[0][0] + palabras[palabras.length - 1][0]).toUpperCase();
+}
+
+// Generar color consistente desde un texto (para el avatar)
+function generarColorDesdeTexto(texto) {
+    if (!texto) return '667eea';
+    
+    // Lista de colores agradables
+    const colores = [
+        '667eea', // Morado
+        '764ba2', // Morado oscuro
+        'f093fb', // Rosa
+        '4facfe', // Azul claro
+        '43e97b', // Verde
+        'fa709a', // Rosa fuerte
+        'fee140', // Amarillo
+        '30cfd0', // Turquesa
+        'a8edea', // Menta
+        'ff6b6b'  // Rojo suave
+    ];
+    
+    // Generar hash simple del texto
+    let hash = 0;
+    for (let i = 0; i < texto.length; i++) {
+        hash = texto.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Seleccionar color basado en el hash
+    const index = Math.abs(hash) % colores.length;
+    return colores[index];
+}
+
+// Llamar al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    cargarInfoUsuario();
+});
 
 // ============================================
 // CANCELAR
