@@ -148,11 +148,82 @@ function formatoISO(fecha) {
 }
 
 // ============================================
+// APLICAR PERMISOS ESTADO EN MERCADO
+// ============================================
+
+async function aplicarPermisosEstadoMercado() {
+    const camposEstadoMercado = [
+        'fechaRevisionMercado',
+        'estadoMercado',
+        'nombreAgenteMercado',
+        'observacionMercado',
+        'estadoDocumentos'
+    ];
+    
+    if (!esAdministrador()) {
+        // Deshabilitar campos
+        camposEstadoMercado.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.disabled = true;
+                field.classList.add('campo-bloqueado');
+                field.style.cursor = 'not-allowed';
+            }
+        });
+        
+        // Mostrar badge y mensaje de solo admin
+        const badgeAdmin = document.getElementById('badgeAdminMercado');
+        const mensajeNoAdmin = document.getElementById('mensajeNoAdmin');
+        
+        if (badgeAdmin) badgeAdmin.style.display = 'inline-flex';
+        if (mensajeNoAdmin) mensajeNoAdmin.style.display = 'block';
+        
+        console.log('⚠️ Estado en Mercado bloqueado - Solo Administradores');
+    } else {
+        console.log('✅ Administrador - Acceso completo a Estado en Mercado');
+    }
+}
+
+// ============================================
+// VERIFICAR ACCESO AL CLIENTE
+// ============================================
+
+async function verificarAccesoCliente(clienteId) {
+    try {
+        // Admin siempre tiene acceso
+        if (esAdministrador()) {
+            return true;
+        }
+        
+        // Verificar si es cliente propio
+        const esPropio = await esClientePropio(clienteId);
+        
+        if (!esPropio) {
+            alert('⛔ No tienes permiso para ver este cliente');
+            window.location.href = './polizas.html';
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error al verificar acceso:', error);
+        return false;
+    }
+}
+
+// ============================================
 // CARGAR DATOS DEL CLIENTE
 // ============================================
 
 async function cargarDatosCliente(id) {
     try {
+        await cargarRolUsuario();
+        
+        const tieneAcceso = await verificarAccesoCliente(id);
+        if (!tieneAcceso) {
+            return;
+        }
+        
         console.log('📡 Cargando datos del cliente:', id);
         
         // Mostrar indicador de carga
@@ -225,6 +296,11 @@ async function cargarDatosCliente(id) {
             btnSubmit.innerHTML = textoOriginal;
             btnSubmit.disabled = false;
         }
+
+        await aplicarPermisosEstadoMercado();
+        
+        mostrarCargando(false);
+        console.log('✅ Datos cargados correctamente');
         
     } catch (error) {
         console.error('❌ Error al cargar cliente:', error);
@@ -2398,17 +2474,22 @@ async function guardarEstadoSeguimiento(polizaId) {
             fecha_revision_compania: document.getElementById('fechaRevisionCompania')?.value || null,
             nombre_agente_compania: document.getElementById('nombreAgenteCompania')?.value || null,
             estado_compania: document.getElementById('estadoCompania')?.value || null,
-            
-            // 2) Estado en Mercado
-            fecha_revision_mercado: document.getElementById('fechaRevisionMercado')?.value || null,
-            estado_mercado: document.getElementById('estadoMercado')?.value || null,
-            nombre_agente_mercado: document.getElementById('nombreAgenteMercado')?.value || null,
-            observacion_mercado: document.getElementById('observacionMercado')?.value || null,
-            estado_documentos: document.getElementById('estadoDocumentos')?.value || null,
-            
-            updated_at: new Date().toISOString()
+
+            updated_at: new Date().toISOString(),
         };
-        
+            // 2) Estado en Mercado
+        if (esAdministrador()) {
+            estadoData.fecha_revision_mercado = document.getElementById('fechaRevisionMercado')?.value || null;
+            estadoData.estado_mercado = document.getElementById('estadoMercado')?.value || null;
+            estadoData.nombre_agente_mercado = document.getElementById('nombreAgenteMercado')?.value || null;
+            estadoData.observacion_mercado = document.getElementById('observacionMercado')?.value || null;
+            estadoData.estado_documentos = document.getElementById('estadoDocumentos')?.value || null;
+            
+            console.log('✅ Admin - Guardando Estado en Mercado');
+        } else {
+            console.log('⚠️ Operador - Estado en Mercado NO se guardará');
+        }
+                
         const { error } = await supabaseClient
             .from('polizas')
             .update(estadoData)

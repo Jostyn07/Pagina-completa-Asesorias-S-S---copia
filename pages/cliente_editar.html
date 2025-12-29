@@ -587,11 +587,14 @@
                 <!--===========================================================
                 Estado en mercado
                 =========================================================== -->
-                <div class="form-section">
+                <div class="form-section" id="seccionEstadoMercado">
                     <div class="section-header" onclick="toggleSection(this)">
                         <div class="section-title">
                             <span class="material-symbols-rounded">public</span>
                             <h2>Estado en mercado</h2>
+                            <span class="badge badge-warning" id="badgeAdminMercado" style="display: none;">
+                                <span class="material-symbols-rounded">admin_panel_settings</span>
+                            </span>
                         </div>
                         <span class="material-symbols-rounded toggle-icon">expand_less</span>
                     </div>
@@ -650,6 +653,13 @@
                                     Estado Documentos
                                     <span class="badge" id="badgeEstadoDocumentos">Sin estado</span>
                                 </label>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning" id="mensajeNoAdmin" style="display: none;">
+                            <span class="material-symbols-rounded">lock</span>
+                            <div>
+                                <strong>Sin permisos de edición</strong>
+                                <p>Solo los administradores pueden modificar el Estado en Mercado</p>
                             </div>
                         </div>
                     </div>
@@ -1140,6 +1150,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
+    <script src="../js/permisos.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/cliente_editar.js"></script>
 </body>

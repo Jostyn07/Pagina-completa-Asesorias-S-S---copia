@@ -60,7 +60,7 @@ body {
    CAJA DE LOGIN
    ============================================ */
 .cuerpo-login {
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(10, 10, 50, 0.7);
     backdrop-filter: blur(12px);
     max-width: 500px;
     width: 100%;
@@ -113,7 +113,7 @@ body {
 
 .titulo-encabezado h2 {
     font-weight: 700;
-    color: var(--azul-oscuro);
+    color: var(--gris-claro);
     font-size: 1.8rem;
     line-height: 1.4;
 }
@@ -128,7 +128,7 @@ body {
 .datos-ingreso label {
     display: block;
     font-weight: 600;
-    color: var(--azul-oscuro);
+    color: var(--gris-claro);
     margin-bottom: 0.5rem;
     font-size: 0.95rem;
 }
@@ -194,7 +194,7 @@ body {
 }
 
 .enlaces-adicionales a {
-    color: var(--azul-primario);
+    color: var(--gris-claro);
     text-decoration: none;
     font-size: 0.9rem;
     transition: color 0.3s ease;

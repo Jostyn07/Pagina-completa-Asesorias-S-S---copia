@@ -1149,6 +1149,14 @@ function validarFormularioCompleto() {
     return true;
 } 
 
+function obtenerUsuarioId() {
+    return usuarioActual?.id || null;
+}
+
+function obtenerUsuarioEmail() {
+    return usuarioActual?.email || null;
+}
+
 // ============================================
 // CREAR CLIENTE
 // ============================================
@@ -1159,6 +1167,8 @@ async function crearCliente(formData) {
     const clienteData = {
         tipo_registro: formData.tipoRegistro,
         fecha_registro: formData.fechaRegistro,
+        operador_id: obtenerUsuarioId(),
+        operador_email: obtenerUsuarioEmail(),
         nombres: formData.nombres,
         apellidos: formData.apellidos,
         genero: formData.genero,

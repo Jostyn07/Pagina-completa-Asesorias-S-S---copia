@@ -19,9 +19,6 @@ let polizaSeleccionada = null;
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('📋 Iniciando módulo de pólizas mejorado...');
     
-    // Cargar pólizas desde Supabase
-    await cargarPolizas();
-    
     // Configurar búsqueda
     configurarBusqueda();
     
@@ -37,6 +34,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('✅ Módulo de pólizas mejorado cargado');
 });
 
+function esAdministrador() {
+    return rolUsuario === 'admin';
+}
+
 // ============================================
 // CARGAR PÓLIZAS DESDE SUPABASE
 // ============================================
@@ -46,43 +47,60 @@ async function cargarPolizas() {
         
         console.log('📡 Cargando pólizas desde Supabase...');
         
-        // Obtener pólizas con datos relacionados
-        const { data, error } = await supabaseClient
+        // Obtener usuario actual
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        
+        // Obtener nombre del usuario desde tabla usuarios
+        const { data: usuarioData } = await supabaseClient
+            .from('usuarios')
+            .select('nombre, rol')
+            .eq('id', user.id)
+            .single();
+        
+        const nombreOperador = usuarioData?.nombre;
+        const esAdmin = usuarioData?.rol === 'admin';
+        
+        console.log('👤 Usuario:', nombreOperador, '| Admin:', esAdmin);
+        
+        // Query base
+        let query = supabaseClient
             .from('polizas')
             .select(`
                 *,
-                cliente:clientes (
+                cliente:clientes!inner (
                     id,
                     nombres,
                     apellidos,
                     telefono1,
-                    telefono2,
                     email,
-                    direccion,
-                    ciudad,
-                    estado,
-                    codigo_postal
+                    operador_id,
+                    operador:usuarios!clientes_operador_id_fkey (
+                        nombre
+                    )
                 )
             `)
-            .order(ordenColumna, { ascending: ordenDireccion === 'asc' });
+            .order('created_at', { ascending: false });
         
-        if (error) {
-            throw error;
+        // ✅ Filtrar por nombre del operador (no por ID)
+        if (!esAdmin && nombreOperador) {
+            query = query.eq('cliente.operador.nombre', nombreOperador);
+            console.log('🔒 Operador - Filtrando por nombre:', nombreOperador);
+        } else {
+            console.log('✅ Admin - Todas las pólizas');
         }
         
-        console.log(`✅ ${data.length} pólizas cargadas`);
+        const { data, error } = await query;
         
-        todasLasPolizas = data;
-        polizasFiltradas = data;
+        if (error) throw error;
+        
+        console.log(`✅ ${data?.length || 0} pólizas cargadas`);
+        
+        todasLasPolizas = data || [];
+        polizasFiltradas = data || [];
         paginaActual = 1;
         
-        // Renderizar tabla
         renderizarTabla();
-        
-        // Actualizar estadísticas
         actualizarEstadisticas(data);
-        
-        // Actualizar paginación
         actualizarPaginacion();
         
         mostrarIndicadorCarga(false);
@@ -93,6 +111,73 @@ async function cargarPolizas() {
         mostrarError('Error al cargar las pólizas: ' + error.message);
     }
 }
+
+// async function cargarPolizasDesdeSupabase() {
+//     try {
+//         console.log('📥 Cargando pólizas desde Supabase...');
+        
+//         // ✅ Cargar rol del usuario
+//         await cargarRolUsuario();
+        
+//         // ✅ Query base
+//         let query = supabaseClient
+//             .from('clientes')
+//             .select(`
+//                 id,
+//                 nombres,
+//                 apellido,
+//                 telefono1,
+//                 email,
+//                 operador_id,
+//                 created_at,
+//                 updated_at,
+//                 polizas!inner (
+//                     id,
+//                     numero_poliza,
+//                     compania,
+//                     tipo_plan,
+//                     nombre_plan,
+//                     prima,
+//                     credito_fiscal,
+//                     fecha_efectividad,
+//                     estado_mercado,
+//                     estado_compania,
+//                     operador_nombre,
+//                     agente_nombre
+//                 )
+//             `)
+//             .order('created_at', { ascending: false });
+        
+//         // ✅ Si NO es admin, filtrar solo sus clientes
+//         if (!esAdministrador()) {
+//             const userId = obtenerUsuarioId();
+//             query = query.eq('operador_id', userId);
+//             console.log('🔒 Operador - Mostrando solo mis clientes');
+//         } else {
+//             console.log('✅ Admin - Mostrando todos los clientes');
+//         }
+        
+//         const { data, error } = await query;
+        
+//         if (error) {
+//             console.error('❌ Error al cargar desde Supabase:', error);
+//             throw error;
+//         }
+        
+//         console.log(`✅ ${data?.length || 0} clientes cargados desde Supabase`);
+        
+//         // Guardar en variable global
+//         todasLasPolizas = data || [];
+        
+//         // Renderizar
+//         renderizarPolizas(todasLasPolizas);
+//         actualizarContadores();
+        
+//     } catch (error) {
+//         console.error('❌ Error crítico:', error);
+//         mostrarMensajeError('Error al cargar las pólizas');
+//     }
+// }
 
 // ============================================
 // RENDERIZAR TABLA CON PAGINACIÓN
@@ -122,6 +207,48 @@ function renderizarTabla() {
         `;
         return;
     }
+
+    // Calcular rango de pólizas para la página actual
+    const inicio = (paginaActual - 1) * polizasPorPagina;
+    const fin = inicio + polizasPorPagina;
+    const polizasPagina = polizasFiltradas.slice(inicio, fin);
+
+    // Renderizar cada póliza
+    polizasPagina.forEach(poliza => {
+        const cliente = poliza.cliente;
+        
+        const tr = document.createElement('tr');
+        tr.onclick = () => mostrarDetallesPoliza(poliza);
+        tr.style.cursor = 'pointer';
+        
+        tr.innerHTML = `
+            <td data-label="Póliza">${poliza.numero_poliza || '-'}</td>
+            <td data-label="Operador">${poliza.operador_nombre || cliente?.operador_email || '-'}</td>
+            <td class="td1" data-label="Cliente">
+                <div class="td1__flex">
+                    <a href="./cliente_editar.html?id=${cliente?.id || ''}" onclick="event.stopPropagation()">
+                        ${cliente?.nombres || ''} ${cliente?.apellido || ''}
+                    </a>
+                </div>
+            </td>
+            <td data-label="Teléfono">${cliente?.telefono1 || '-'}</td>
+            <td data-label="Estado (Mercado)">
+                <span class="badge-estado ${poliza.estado_mercado || 'pendiente'}">
+                    ${poliza.estado_mercado || 'Pendiente'}
+                </span>
+            </td>
+            <td data-label="Compañía">${poliza.compania || '-'}</td>
+            <td data-label="Plan">${poliza.nombre_plan || '-'}</td>
+            <td data-label="Prima">$${poliza.prima || '0.00'}</td>
+            <td data-label="Agente">${poliza.agente_nombre || '-'}</td>
+            <td data-label="Efectividad">${poliza.fecha_efectividad ? new Date(poliza.fecha_efectividad).toLocaleDateString('es-ES') : '-'}</td>
+            <td data-label="Creación">${poliza.created_at ? new Date(poliza.created_at).toLocaleDateString('es-ES') : '-'}</td>
+            <td data-label="Modificación">${poliza.updated_at ? new Date(poliza.updated_at).toLocaleDateString('es-ES') : '-'}</td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+}
     
     // Calcular rango de paginación
     const inicio = (paginaActual - 1) * polizasPorPagina;
@@ -133,7 +260,7 @@ function renderizarTabla() {
         const fila = crearFilaPoliza(poliza);
         tbody.innerHTML += fila;
     });
-}
+
 
 // ============================================
 // CREAR FILA DE PÓLIZA
@@ -1198,4 +1325,6 @@ function generarColorDesdeTexto(texto) {
 // Llamar al cargar la página
 document.addEventListener('DOMContentLoaded', function() {
     cargarInfoUsuario();
+    cargarPolizas()
 });
+
