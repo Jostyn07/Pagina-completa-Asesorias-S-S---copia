@@ -1180,7 +1180,6 @@ async function crearCliente(formData) {
         codigo_postal: formData.codigoPostal,
         operador_nombre: formData.operadorNombre || null,
         agente_nombre: formData.portalNPN || null,
-        observaciones: formData.observaciones || null
     };
     
     const { data: cliente, error: clienteError } = await supabaseClient
@@ -1223,7 +1222,6 @@ async function crearCliente(formData) {
         agente_nombre: formData.portalNPN || null,
         estado_compania: 'pendiente',
         estado_mercado: 'pendiente',
-        observaciones: formData.observaciones || null,
     };
 
     // ============================================

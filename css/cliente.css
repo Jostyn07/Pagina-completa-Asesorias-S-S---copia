@@ -3383,3 +3383,442 @@ body {
 .dropdown-item:last-child {
     border-radius: 0 0 12px 12px;
 }
+
+/* ============================================
+   TAB ESTADO Y SEGUIMIENTO - ESTILOS V2
+   Agregar en cliente.css
+   ============================================ */
+
+/* Badges de estado */
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.badge.pendiente {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge.en_revision {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge.aprobado {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge.rechazado {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge.cancelado {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.badge.activo {
+    background: #d1fae5;
+    color: #047857;
+}
+
+/* Estados de documentos */
+.badge.incompleto {
+    background: #fed7aa;
+    color: #9a3412;
+}
+
+.badge.en_verificacion {
+    background: #bfdbfe;
+    color: #1e40af;
+}
+
+.badge.completo {
+    background: #bbf7d0;
+    color: #14532d;
+}
+
+/* Timeline para historial */
+.timeline-container {
+    padding: 20px 0;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 40px;
+    padding-bottom: 30px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    width: 2px;
+    height: calc(100% - 8px);
+    background: #e5e7eb;
+}
+
+.timeline-item:last-child::before {
+    display: none;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #667eea;
+    z-index: 1;
+}
+
+.timeline-dot.pendiente {
+    border-color: #f59e0b;
+}
+
+.timeline-dot.aprobado {
+    border-color: #10b981;
+}
+
+.timeline-dot.rechazado {
+    border-color: #ef4444;
+}
+
+.timeline-content {
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 3px solid #667eea;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.timeline-title {
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.timeline-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.timeline-description {
+    color: #4b5563;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.timeline-meta {
+    margin-top: 8px;
+    display: flex;
+    gap: 16px;
+    font-size: 0.875rem;
+}
+
+.timeline-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #6b7280;
+}
+
+.timeline-meta-item .material-symbols-rounded {
+    font-size: 16px;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #9ca3af;
+}
+
+.empty-state .material-symbols-rounded {
+    font-size: 64px;
+    opacity: 0.3;
+    margin-bottom: 16px;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    margin: 0 0 8px 0;
+}
+
+.empty-state small {
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+/* Estilos para textarea */
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    transition: border-color 0.3s ease;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ============================================
+   SEGUIMIENTOS
+   ============================================ */
+
+.seguimiento-actions {
+    margin-bottom: 20px;
+}
+
+.btn-add-seguimiento {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-add-seguimiento:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.seguimientos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.seguimiento-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    animation: slideInUp 0.3s ease;
+}
+
+.seguimiento-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #667eea;
+}
+
+.seguimiento-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.seguimiento-info {
+    flex: 1;
+}
+
+.seguimiento-fecha {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #667eea;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.seguimiento-fecha .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.seguimiento-medio {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #f3f4f6;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.seguimiento-medio .material-symbols-rounded {
+    font-size: 16px;
+}
+
+/* Iconos según medio de comunicación */
+.seguimiento-medio.telefono {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.seguimiento-medio.email {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.seguimiento-medio.whatsapp {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.seguimiento-medio.presencial {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.seguimiento-medio.sms {
+    background: #fed7aa;
+    color: #9a3412;
+}
+
+.seguimiento-medio.otro {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.seguimiento-actions-btn {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit-seg,
+.btn-delete-seg {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-edit-seg {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.btn-edit-seg:hover {
+    background: #667eea;
+    color: white;
+}
+
+.btn-delete-seg {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.btn-delete-seg:hover {
+    background: #dc2626;
+    color: white;
+}
+
+.seguimiento-observacion {
+    color: #4b5563;
+    line-height: 1.6;
+    margin-top: 12px;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+}
+
+.seguimiento-meta {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 16px;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.seguimiento-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.seguimiento-meta-item .material-symbols-rounded {
+    font-size: 16px;
+}
+
+/* Animaciones */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOutDown {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+.seguimiento-card.removing {
+    animation: slideOutDown 0.3s ease forwards;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .seguimiento-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .seguimiento-actions-btn {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .seguimiento-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

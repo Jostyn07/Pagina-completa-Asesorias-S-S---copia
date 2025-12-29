@@ -189,6 +189,8 @@ async function cargarDatosCliente(id) {
         if (polizaData) {
             polizaId = polizaData.id;
             console.log('✅ Póliza cargada:', polizaId);
+
+            await cargarEstadoSeguimiento(polizaId);
         }
         
         // Cargar dependientes
@@ -345,7 +347,6 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if (cliente.estado) document.getElementById('estado').value = cliente.estado || '';
        if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal || '';
        if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre || '';
-       if (cliente.observaciones) document.getElementById('observaciones').value = cliente.observaciones || '';
     }
     
     // DATOS DE LA PÓLIZA
@@ -393,7 +394,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
         if (displayFinal && poliza.fecha_final_cobertura) {
             const fechaFinalUS = formatoUS(poliza.fecha_final_cobertura);
             displayFinal.textContent = fechaFinalUS;
-}
+        }
     }
     
     // DEPENDIENTES
@@ -1485,6 +1486,9 @@ async function handleSubmit(event) {
         
         // 2. Actualizar póliza
         await actualizarPoliza(polizaId, formData);
+
+        // Actualizar estado y seguimiento
+        await guardarEstadoSeguimiento(polizaId);
         
         // 3. Actualizar dependientes
         await actualizarDependientes(clienteId, formData);
@@ -1570,7 +1574,6 @@ async function actualizarCliente(id, formData) {
         codigo_postal: formData.codigoPostal,
         operador_nombre: formData.operadorNombre || null,
         agente_nombre: formData.agenteNombre || null,
-        observaciones: formData.observaciones || null,
         updated_at: new Date().toISOString()
     };
     
@@ -2248,6 +2251,549 @@ function generarColorDesdeTexto(texto) {
 document.addEventListener('DOMContentLoaded', function() {
     cargarInfoUsuario();
 });
+
+// ============================================
+// TAB ESTADO Y SEGUIMIENTO
+// ============================================
+
+// Variables globales para seguimientos
+let seguimientosCount = 0;
+let seguimientosData = [];
+
+// ============================================
+// CARGAR ESTADO Y SEGUIMIENTO
+// ============================================
+
+async function cargarEstadoSeguimiento(polizaId) {
+    try {
+        console.log('📊 Cargando estado y seguimiento...');
+        
+        const { data: poliza, error } = await supabaseClient
+            .from('polizas')
+            .select('*')
+            .eq('id', polizaId)
+            .single();
+        
+        if (error) throw error;
+        
+        if (poliza) {
+            // ===== 1) ESTADO EN COMPAÑÍA =====
+            if (poliza.fecha_revision_compania) {
+                document.getElementById('fechaRevisionCompania').value = formatoISO(poliza.fecha_revision_compania);
+            }
+            if (poliza.nombre_agente_compania) {
+                document.getElementById('nombreAgenteCompania').value = poliza.nombre_agente_compania;
+            }
+            if (poliza.estado_compania) {
+                document.getElementById('estadoCompania').value = poliza.estado_compania;
+                actualizarBadgeEstado('badgeEstadoCompania', poliza.estado_compania);
+            }
+            
+            // ===== 2) ESTADO EN MERCADO =====
+            if (poliza.fecha_revision_mercado) {
+                document.getElementById('fechaRevisionMercado').value = formatoISO(poliza.fecha_revision_mercado);
+            }
+            if (poliza.estado_mercado) {
+                document.getElementById('estadoMercado').value = poliza.estado_mercado;
+                actualizarBadgeEstado('badgeEstadoMercado', poliza.estado_mercado);
+            }
+            if (poliza.nombre_agente_mercado) {
+                document.getElementById('nombreAgenteMercado').value = poliza.nombre_agente_mercado;
+            }
+            if (poliza.observacion_mercado) {
+                document.getElementById('observacionMercado').value = poliza.observacion_mercado;
+            }
+            if (poliza.estado_documentos) {
+                document.getElementById('estadoDocumentos').value = poliza.estado_documentos;
+                actualizarBadgeEstado('badgeEstadoDocumentos', poliza.estado_documentos);
+            }
+            
+            console.log('✅ Estado y seguimiento cargado');
+        }
+        
+        // Cargar seguimientos
+        await cargarSeguimientos(polizaId);
+        
+        // Cargar historial
+        await cargarHistorialEstados(polizaId);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar estado:', error);
+    }
+}
+
+// ============================================
+// ACTUALIZAR BADGES DE ESTADO
+// ============================================
+
+function actualizarBadgeEstado(badgeId, estado) {
+    const badge = document.getElementById(badgeId);
+    if (!badge) return;
+    
+    // Remover clases anteriores
+    badge.className = 'badge';
+    
+    // Agregar clase del estado
+    badge.classList.add(estado);
+    
+    // Textos para estados generales
+    const textosGenerales = {
+        'pendiente': 'Pendiente',
+        'en_revision': 'En Revisión',
+        'aprobado': 'Aprobado',
+        'rechazado': 'Rechazado',
+        'cancelado': 'Cancelado',
+        'activo': 'Activo'
+    };
+    
+    // Textos para estados de documentos
+    const textosDocumentos = {
+        'pendiente': 'Pendiente',
+        'incompleto': 'Incompleto',
+        'en_verificacion': 'A la espera de verificación',
+        'completo': 'Documentos completos'
+    };
+    
+    // Determinar qué textos usar
+    const textos = badgeId === 'badgeEstadoDocumentos' ? textosDocumentos : textosGenerales;
+    
+    badge.textContent = textos[estado] || 'Sin estado';
+}
+
+// Listeners para actualizar badges en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const estadoCompania = document.getElementById('estadoCompania');
+    const estadoMercado = document.getElementById('estadoMercado');
+    const estadoDocumentos = document.getElementById('estadoDocumentos');
+    
+    if (estadoCompania) {
+        estadoCompania.addEventListener('change', function() {
+            actualizarBadgeEstado('badgeEstadoCompania', this.value);
+        });
+    }
+    
+    if (estadoMercado) {
+        estadoMercado.addEventListener('change', function() {
+            actualizarBadgeEstado('badgeEstadoMercado', this.value);
+        });
+    }
+    
+    if (estadoDocumentos) {
+        estadoDocumentos.addEventListener('change', function() {
+            actualizarBadgeEstado('badgeEstadoDocumentos', this.value);
+        });
+    }
+});
+
+// ============================================
+// GUARDAR ESTADO Y SEGUIMIENTO
+// ============================================
+
+async function guardarEstadoSeguimiento(polizaId) {
+    try {
+        console.log('💾 Guardando estado y seguimiento...');
+        
+        const estadoData = {
+            // 1) Estado en Compañía
+            fecha_revision_compania: document.getElementById('fechaRevisionCompania')?.value || null,
+            nombre_agente_compania: document.getElementById('nombreAgenteCompania')?.value || null,
+            estado_compania: document.getElementById('estadoCompania')?.value || null,
+            
+            // 2) Estado en Mercado
+            fecha_revision_mercado: document.getElementById('fechaRevisionMercado')?.value || null,
+            estado_mercado: document.getElementById('estadoMercado')?.value || null,
+            nombre_agente_mercado: document.getElementById('nombreAgenteMercado')?.value || null,
+            observacion_mercado: document.getElementById('observacionMercado')?.value || null,
+            estado_documentos: document.getElementById('estadoDocumentos')?.value || null,
+            
+            updated_at: new Date().toISOString()
+        };
+        
+        const { error } = await supabaseClient
+            .from('polizas')
+            .update(estadoData)
+            .eq('id', polizaId);
+        
+        if (error) throw error;
+        
+        console.log('✅ Estado y seguimiento guardado');
+        
+        // Registrar cambio en historial
+        await registrarCambioEstado(polizaId, estadoData);
+        
+    } catch (error) {
+        console.error('❌ Error al guardar estado:', error);
+        throw error;
+    }
+}
+
+// ============================================
+// 3) SEGUIMIENTOS
+// ============================================
+
+async function cargarSeguimientos(polizaId) {
+    try {
+        const { data: seguimientos, error } = await supabaseClient
+            .from('seguimientos')
+            .select('*')
+            .eq('poliza_id', polizaId)
+            .order('fecha_seguimiento', { ascending: false });
+        
+        if (error && error.code !== 'PGRST116') {
+            console.warn('⚠️ Error al cargar seguimientos:', error);
+            return;
+        }
+        
+        const container = document.getElementById('seguimientosContainer');
+        if (!container) return;
+        
+        if (!seguimientos || seguimientos.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-rounded">assignment</span>
+                    <p>No hay seguimientos registrados</p>
+                    <small>Click en "Agregar Seguimiento" para crear uno nuevo</small>
+                </div>
+            `;
+            return;
+        }
+        
+        // Renderizar seguimientos
+        container.innerHTML = seguimientos.map(seg => renderSeguimientoCard(seg)).join('');
+        
+        // Guardar en memoria
+        seguimientosData = seguimientos;
+        
+    } catch (error) {
+        console.error('Error al cargar seguimientos:', error);
+    }
+}
+
+function renderSeguimientoCard(seg) {
+    const iconosMedio = {
+        'telefono': 'phone',
+        'email': 'email',
+        'whatsapp': 'chat',
+        'sms': 'sms',
+    };
+    
+    const icono = iconosMedio[seg.medio_comunicacion] || 'contact_support';
+    
+    return `
+        <div class="seguimiento-card" data-seg-id="${seg.id}">
+            <div class="seguimiento-header">
+                <div class="seguimiento-info">
+                    <div class="seguimiento-fecha">
+                        <span class="material-symbols-rounded">event</span>
+                        ${formatoUS(seg.fecha_seguimiento)}
+                    </div>
+                    <div class="seguimiento-medio ${seg.medio_comunicacion}">
+                        <span class="material-symbols-rounded">${icono}</span>
+                        ${formatearMedioComunicacion(seg.medio_comunicacion)}
+                    </div>
+                </div>
+                <div class="seguimiento-actions-btn">
+                    <button class="btn-edit-seg" onclick="editarSeguimiento('${seg.id}')" title="Editar">
+                        <span class="material-symbols-rounded">edit</span>
+                    </button>
+                    <button class="btn-delete-seg" onclick="eliminarSeguimiento('${seg.id}')" title="Eliminar">
+                        <span class="material-symbols-rounded">delete</span>
+                    </button>
+                </div>
+            </div>
+            <div class="seguimiento-observacion">
+                ${seg.observacion}
+            </div>
+            ${seg.created_at ? `
+                <div class="seguimiento-meta">
+                    <div class="seguimiento-meta-item">
+                        <span class="material-symbols-rounded">schedule</span>
+                        <span>Registrado: ${formatoUS(seg.created_at)}</span>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function formatearMedioComunicacion(medio) {
+    const medios = {
+        'telefono': 'Teléfono',
+        'email': 'Email',
+        'whatsapp': 'WhatsApp',
+        'sms': 'SMS',
+    };
+    return medios[medio] || medio;
+}
+
+// ============================================
+// MODAL DE SEGUIMIENTO
+// ============================================
+
+function agregarSeguimiento() {
+    // Limpiar formulario
+    document.getElementById('formSeguimiento').reset();
+    document.getElementById('modal_seg_id').value = '';
+    
+    // Cambiar título
+    document.getElementById('modalSeguimientoTitulo').textContent = 'Agregar Seguimiento';
+    
+    // Establecer fecha de hoy
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('modal_seg_fecha').value = hoy;
+    
+    // Mostrar modal
+    document.getElementById('modalSeguimiento').classList.add('active');
+}
+
+function cerrarModalSeguimiento() {
+    document.getElementById('modalSeguimiento').classList.remove('active');
+    document.getElementById('formSeguimiento').reset();
+}
+
+async function guardarSeguimientoModal() {
+    const form = document.getElementById('formSeguimiento');
+    
+    if (!form.checkValidity()) {
+        alert('Por favor, completa todos los campos requeridos');
+        return;
+    }
+    
+    const segId = document.getElementById('modal_seg_id').value;
+    const seguimiento = {
+        poliza_id: polizaId,
+        fecha_seguimiento: document.getElementById('modal_seg_fecha').value,
+        medio_comunicacion: document.getElementById('modal_seg_medio').value,
+        observacion: document.getElementById('modal_seg_observacion').value
+    };
+    
+    try {
+        if (segId) {
+            // ACTUALIZAR existente
+            const { error } = await supabaseClient
+                .from('seguimientos')
+                .update(seguimiento)
+                .eq('id', segId);
+            
+            if (error) throw error;
+            
+            console.log('✅ Seguimiento actualizado');
+        } else {
+            // INSERTAR nuevo
+            const { error } = await supabaseClient
+                .from('seguimientos')
+                .insert([seguimiento]);
+            
+            if (error) throw error;
+            
+            console.log('✅ Seguimiento creado');
+        }
+        
+        // Recargar seguimientos
+        await cargarSeguimientos(polizaId);
+        
+        // Cerrar modal
+        cerrarModalSeguimiento();
+        
+    } catch (error) {
+        console.error('Error al guardar seguimiento:', error);
+        alert('Error al guardar el seguimiento: ' + error.message);
+    }
+}
+
+async function editarSeguimiento(segId) {
+    try {
+        const { data: seg, error } = await supabaseClient
+            .from('seguimientos')
+            .select('*')
+            .eq('id', segId)
+            .single();
+        
+        if (error) throw error;
+        
+        // Llenar formulario
+        document.getElementById('modal_seg_id').value = seg.id;
+        document.getElementById('modal_seg_fecha').value = formatoISO(seg.fecha_seguimiento);
+        document.getElementById('modal_seg_medio').value = seg.medio_comunicacion;
+        document.getElementById('modal_seg_observacion').value = seg.observacion;
+        
+        // Cambiar título
+        document.getElementById('modalSeguimientoTitulo').textContent = 'Editar Seguimiento';
+        
+        // Mostrar modal
+        document.getElementById('modalSeguimiento').classList.add('active');
+        
+    } catch (error) {
+        console.error('Error al cargar seguimiento:', error);
+        alert('Error al cargar el seguimiento');
+    }
+}
+
+async function eliminarSeguimiento(segId) {
+    if (!confirm('¿Eliminar este seguimiento?')) return;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('seguimientos')
+            .delete()
+            .eq('id', segId);
+        
+        if (error) throw error;
+        
+        // Animar eliminación
+        const card = document.querySelector(`[data-seg-id="${segId}"]`);
+        if (card) {
+            card.classList.add('removing');
+            setTimeout(() => {
+                cargarSeguimientos(polizaId);
+            }, 300);
+        }
+        
+        console.log('✅ Seguimiento eliminado');
+        
+    } catch (error) {
+        console.error('Error al eliminar seguimiento:', error);
+        alert('Error al eliminar el seguimiento');
+    }
+}
+
+// ============================================
+// HISTORIAL DE ESTADOS
+// ============================================
+
+async function cargarHistorialEstados(polizaId) {
+    try {
+        const { data: historial, error } = await supabaseClient
+            .from('historial_estados')
+            .select('*')
+            .eq('poliza_id', polizaId)
+            .order('created_at', { ascending: false });
+        
+        if (error && error.code !== 'PGRST116') {
+            console.warn('⚠️ Tabla historial_estados no existe o sin datos');
+            return;
+        }
+        
+        const container = document.getElementById('historialEstados');
+        if (!container) return;
+        
+        if (!historial || historial.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-rounded">event_note</span>
+                    <p>No hay cambios de estado registrados</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Renderizar historial
+        container.innerHTML = historial.map(item => `
+            <div class="timeline-item">
+                <div class="timeline-dot ${item.estado_nuevo}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <div class="timeline-title">
+                            <span class="badge ${item.estado_nuevo}">${formatearEstado(item.estado_nuevo)}</span>
+                            <span>${item.tipo === 'compania' ? 'Compañía' : item.tipo === 'mercado' ? 'Mercado' : 'Documentos'}</span>
+                        </div>
+                        <div class="timeline-date">${formatoUS(item.created_at)}</div>
+                    </div>
+                    ${item.notas ? `<div class="timeline-description">${item.notas}</div>` : ''}
+                    ${item.agente_nombre ? `
+                        <div class="timeline-meta">
+                            <div class="timeline-meta-item">
+                                <span class="material-symbols-rounded">person</span>
+                                <span>${item.agente_nombre}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error al cargar historial:', error);
+    }
+}
+
+function formatearEstado(estado) {
+    const textos = {
+        'pendiente': 'Pendiente',
+        'en_revision': 'En Revisión',
+        'aprobado': 'Aprobado',
+        'rechazado': 'Rechazado',
+        'cancelado': 'Cancelado',
+        'activo': 'Activo',
+        'incompleto': 'Incompleto',
+        'en_verificacion': 'En Verificación',
+        'completo': 'Completo'
+    };
+    return textos[estado] || estado;
+}
+
+async function registrarCambioEstado(polizaId, estadoData) {
+    try {
+        // Obtener estado anterior
+        const { data: polizaAnterior } = await supabaseClient
+            .from('polizas')
+            .select('estado_compania, estado_mercado, estado_documentos')
+            .eq('id', polizaId)
+            .single();
+        
+        const cambios = [];
+        
+        // Verificar cambio en compañía
+        if (estadoData.estado_compania && estadoData.estado_compania !== polizaAnterior?.estado_compania) {
+            cambios.push({
+                poliza_id: polizaId,
+                tipo: 'compania',
+                estado_anterior: polizaAnterior?.estado_compania,
+                estado_nuevo: estadoData.estado_compania,
+                agente_nombre: estadoData.nombre_agente_compania,
+                notas: null
+            });
+        }
+        
+        // Verificar cambio en mercado
+        if (estadoData.estado_mercado && estadoData.estado_mercado !== polizaAnterior?.estado_mercado) {
+            cambios.push({
+                poliza_id: polizaId,
+                tipo: 'mercado',
+                estado_anterior: polizaAnterior?.estado_mercado,
+                estado_nuevo: estadoData.estado_mercado,
+                agente_nombre: estadoData.nombre_agente_mercado,
+                notas: estadoData.observacion_mercado
+            });
+        }
+        
+        // Verificar cambio en documentos
+        if (estadoData.estado_documentos && estadoData.estado_documentos !== polizaAnterior?.estado_documentos) {
+            cambios.push({
+                poliza_id: polizaId,
+                tipo: 'documentos',
+                estado_anterior: polizaAnterior?.estado_documentos,
+                estado_nuevo: estadoData.estado_documentos,
+                agente_nombre: estadoData.nombre_agente_mercado,
+                notas: null
+            });
+        }
+        
+        // Insertar cambios en historial
+        if (cambios.length > 0) {
+            const { error } = await supabaseClient
+                .from('historial_estados')
+                .insert(cambios);
+            
+            if (error && error.code !== '42P01') {
+                console.warn('⚠️ No se pudo guardar historial:', error);
+            }
+        }
+        
+    } catch (error) {
+        console.warn('⚠️ Error al registrar historial:', error);
+    }
+}
 
 // ============================================
 // LOG FINAL

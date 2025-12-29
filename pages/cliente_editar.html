@@ -194,7 +194,7 @@
                                     <option value="">Selecciona...</option>
                                     <option value="Nuevo">Nuevo</option>
                                     <option value="Renovacion">Renovación</option>
-                                    <option value="Cambio">Cambio de plan</option>
+                                    <option value="Cambio">Cambio de vida</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -540,44 +540,173 @@
                 </div>
             </div>
 
-            <!-- TAB 3: ESTADO Y SEGUIMIENTO (Solo visible en modo EDITAR) -->
+            <!-- TAB 3: ESTADO Y SEGUIMIENTO -->
             <div class="tab-content" id="tab-estado">
-                <div class="info-message">
-                    <span class="material-symbols-rounded">info</span>
-                    <p>Los estados de Compañía y Mercado estarán disponibles después de guardar la póliza.</p>
-                </div>
-
-                <!-- ESTADO EN COMPAÑÍA -->
+                <!--===========================================================
+                    Estado en compañia
+                    =========================================================== -->
+                
                 <div class="form-section">
-                    <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-header" onclick="toogleSection(this)">
                         <div class="section-title">
                             <span class="material-symbols-rounded">business</span>
-                            <h2>Estado en Compañía</h2>
+                            <h2>Estado en compañia</h2>
                         </div>
                         <span class="material-symbols-rounded toggle-icon">expand_less</span>
                     </div>
                     <div class="section-content">
-                        <!-- Contenido se habilitará en modo editar -->
-                        <p class="text-muted">Disponible después de procesar la póliza</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Fecha de revisión</label>
+                                <input type="text" id="fechaRevisionCompania" name="fechaRevisionCompania">
+                            </div>
+                            <div class="form-group">
+                                <label>Nombre del agente</label>
+                                <input type="text" name="nombreAgenteCompania" id="nombreAgenteCompania">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="estadoCompania"></label>
+                                <select name="estadoCompania" id="estadoCompania">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Activo">Activo</option>
+                                    <option value="Cancelado">Cancelado</option>
+                                    <option value="Pendiente">Pendiente</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    Estado Actual
+                                    <span class="badge" id="badgeEstadoCompania">Sin estado</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <!-- ESTADO EN MERCADO -->
+                <!--===========================================================
+                Estado en mercado
+                =========================================================== -->
                 <div class="form-section">
                     <div class="section-header" onclick="toggleSection(this)">
                         <div class="section-title">
                             <span class="material-symbols-rounded">public</span>
-                            <h2>Estado en Mercado</h2>
+                            <h2>Estado en mercado</h2>
                         </div>
                         <span class="material-symbols-rounded toggle-icon">expand_less</span>
                     </div>
                     <div class="section-content">
-                        <!-- Contenido se habilitará en modo editar -->
-                        <p class="text-muted">Disponible después de procesar la póliza</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Fecha de revision</label>
+                                <input type="text" id="fechaRevisionMercado" name="fechaRevisionMercado">
+                            </div>
+                            <div class="form-group">
+                                <label>Estado en mercado</label>
+                                <select name="estadoMercado" id="estadoMercado">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Activo">Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                    <option value="Cancelado">Cancelado</option>
+                                    <option value="Robado">Robado</option>
+                                    <option value="Doble póliza">Doble póliza</option>
+                                    <option value="Triple póliza">Triple póliza</option>
+                                    <option value="No registra">No registra</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Agente</label>
+                                <input type="text" name="nombreAgenteMercado" id="nombreAgenteMercado" placeholder="Ej: Joel Nieves - 19952518">
+                            </div>
+                            <div class="form-group">
+                                <label for="">
+                                    Estado Actual
+                                    <span class="badge" id="badgeEstadoMercado">Sin estado</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="">Observación</label>
+                                <textarea name="observacionMercado" id="observacionMercado" rows="3" placeholder="Ej: Cliente registra activo desde..."></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="">Estado de documentos</label>
+                                <select name="estadoDocumentos" id="estadoDocumentos">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="Incompleto">Incompleto</option>
+                                    <option value="A la espera de verificación">A la espera de verificación</option>
+                                    <option value="Rechazado">Rechazado</option>
+                                    <option value="Documentos completos">Documentos completos</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    Estado Documentos
+                                    <span class="badge" id="badgeEstadoDocumentos">Sin estado</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ============================================
+                3) SEGUIMIENTO
+                ============================================ -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">track_changes</span>
+                            <h2>Seguimiento</h2>
+                        </div>
+                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
+                    </div>
+                    <div class="section-content">
+                        
+                        <!-- Botón para agregar nuevo seguimiento -->
+                        <div class="seguimiento-actions">
+                            <button type="button" class="btn-add-seguimiento" onclick="agregarSeguimiento()">
+                                <span class="material-symbols-rounded">add_circle</span>
+                                Agregar Seguimiento
+                            </button>
+                        </div>
+                        <!-- Lista de seguimientos -->
+                        <div id="seguimientosContainer" class="seguimientos-list">
+                            <!-- Se llenará dinámicamente -->
+                            <div class="empty-state">
+                                <span class="material-symbols-rounded">assignment</span>
+                                <p>No hay seguimientos registrados</p>
+                                <small>Click en "Agregar Seguimiento" para crear uno nuevo</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ============================================
+                HISTORIAL DE CAMBIOS
+                ============================================ -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <div class="section-title">
+                            <span class="material-symbols-rounded">history</span>
+                            <h2>Historial de Cambios</h2>
+                        </div>
+                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
+                    </div>
+                    <div class="section-content">
+                        <div id="historialEstados" class="timeline-container">
+                            <!-- Se llenará dinámicamente con JavaScript -->
+                            <div class="empty-state">
+                                <span class="material-symbols-rounded">event_note</span>
+                                <p>No hay cambios de estado registrados</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
             <!-- TAB 4: MÉTODO DE PAGO -->
             <div class="tab-content" id="tab-pago">
                 <div class="form-section">
@@ -859,99 +988,155 @@
             </div>
         </form>
     </div>
-                <!-- ============================================
-                MODAL PARA DEPENDIENTES
-                AGREGAR ANTES DE </body>
-                ============================================ -->
-            <div id="modalDependiente" class="modal">
-                <div class="modal-overlay"></div>
-                <div class="modal-container">
-                    <div class="modal-header">
-                        <h3 id="modalDependienteTitulo">Agregar Dependiente</h3>
-                        <button type="button" class="btn-close-modal" onclick="cerrarModalDependiente()">
-                            <span class="material-symbols-rounded">close</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="formDependiente">
-                            <input type="hidden" id="modal_dep_id" value="">
-                            <input type="hidden" id="modal_dep_count" value="">
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Nombres <span class="required">*</span></label>
-                                    <input type="text" id="modal_dep_nombres" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Apellidos <span class="required">*</span></label>
-                                    <input type="text" id="modal_dep_apellidos" required>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Fecha de Nacimiento <span class="required">*</span></label>
-                                    <input type="date" id="modal_dep_fecha_nacimiento" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Sexo <span class="required">*</span></label>
-                                    <select id="modal_dep_sexo" required>
-                                        <option value="">Seleccionar...</option>
-                                        <option value="masculino">Masculino</option>
-                                        <option value="femenino">Femenino</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>SSN</label>
-                                    <input type="text" id="modal_dep_ssn" placeholder="###-##-####" maxlength="11">
-                                </div>
-                                <div class="form-group">
-                                    <label>Estado Migratorio</label>
-                                    <select id="modal_dep_estado_migratorio">
-                                        <option value="">Seleccionar...</option>
-                                        <option value="Ciudadano">Ciudadano</option>
-                                        <option value="Residente">Residente</option>
-                                        <option value="Indocumentado">Indocumentado</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Relación</label>
-                                    <select id="modal_dep_relacion">
-                                        <option value="">Seleccionar...</option>
-                                        <option value="Hijo/a">Hijo/a</option>
-                                        <option value="Esposo/a">Esposo/a</option>
-                                        <option value="Padre/Madre">Padre/Madre</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Aplica</label>
-                                    <select id="modal_dep_aplica">
-                                        <option value="">Seleccionar...</option>
-                                        <option value="Sí">Sí</option>
-                                        <option value="No">No</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn-secondary" onclick="cerrarModalDependiente()">
-                            Cancelar
-                        </button>
-                        <button type="button" class="btn-primary" onclick="guardarDependienteModal()">
-                            <span class="material-symbols-rounded">check</span>
-                            Guardar
-                        </button>
-                    </div>
-                </div>
+    <!-- ============================================
+    MODAL PARA DEPENDIENTES
+    ============================================ -->
+    <div id="modalDependiente" class="modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalDependienteTitulo">Agregar Dependiente</h3>
+                <button type="button" class="btn-close-modal" onclick="cerrarModalDependiente()">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
             </div>
+            <div class="modal-body">
+                <form id="formDependiente">
+                    <input type="hidden" id="modal_dep_id" value="">
+                    <input type="hidden" id="modal_dep_count" value="">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nombres <span class="required">*</span></label>
+                            <input type="text" id="modal_dep_nombres" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellidos <span class="required">*</span></label>
+                            <input type="text" id="modal_dep_apellidos" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha de Nacimiento <span class="required">*</span></label>
+                            <input type="date" id="modal_dep_fecha_nacimiento" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sexo <span class="required">*</span></label>
+                            <select id="modal_dep_sexo" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="masculino">Masculino</option>
+                                <option value="femenino">Femenino</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>SSN</label>
+                            <input type="text" id="modal_dep_ssn" placeholder="###-##-####" maxlength="11">
+                        </div>
+                        <div class="form-group">
+                            <label>Estado Migratorio</label>
+                            <select id="modal_dep_estado_migratorio">
+                                <option value="">Selecciona...</option>
+                                <option value="ciudadano">Ciudadano</option>
+                                <option value="Residente Permanente">Residente Permanente</option>
+                                <option value="Permiso de trabajo">Permiso de trabajo</option>
+                                <option value="Asilo politico">Asilo politico</option>
+                                <option value="I-94">I-94</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Relación</label>
+                            <select id="modal_dep_relacion">
+                                <option value="">Seleccionar...</option>
+                                <option value="Hijo/a">Hijo/a</option>
+                                <option value="Esposo/a">Esposo/a</option>
+                                <option value="Padre/Madre">Padre/Madre</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Aplica</label>
+                            <select id="modal_dep_aplica">
+                                <option value="">Seleccionar...</option>
+                                <option value="Sí">Sí</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="cerrarModalDependiente()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn-primary" onclick="guardarDependienteModal()">
+                    <span class="material-symbols-rounded">check</span>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+    MODAL PARA SEGUIMIENTO
+    ============================================ -->
+    <div id="modalSeguimiento" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalSeguimiento()"></div>
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="modalSeguimientoTitulo">Agregar Seguimiento</h3>
+                <button type="button" class="btn-close-modal" onclick="cerrarModalSeguimiento()">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formSeguimiento">
+                    <input type="hidden" id="modal_seg_id" value="">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha de Seguimiento <span class="required">*</span></label>
+                            <input type="date" id="modal_seg_fecha" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Medio de Comunicación <span class="required">*</span></label>
+                            <select id="modal_seg_medio" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Teléfono">Teléfono</option>
+                                <option value="Correo electrónico">Correo electrónico</option>
+                                <option value="Whatsapp">WhatsApp</option>
+                                <option value="SMS">SMS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label>Observación <span class="required">*</span></label>
+                            <textarea id="modal_seg_observacion" rows="4" required
+                                    placeholder="Descripción detallada del seguimiento..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="cerrarModalSeguimiento()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn-primary" onclick="guardarSeguimientoModal()">
+                    <span class="material-symbols-rounded">check</span>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
