@@ -50,40 +50,36 @@ async function cargarPolizas() {
         // Obtener usuario actual
         const { data: { user } } = await supabaseClient.auth.getUser();
         
-        // Obtener nombre del usuario desde tabla usuarios
         const { data: usuarioData } = await supabaseClient
             .from('usuarios')
-            .select('nombre, rol')
-            .eq('id', user.id)
+            .select('id, nombre, rol, email')
+            .eq('email', user.email)
             .single();
         
-        const nombreOperador = usuarioData?.nombre;
         const esAdmin = usuarioData?.rol === 'admin';
+        const nombreOperador = usuarioData?.nombre;
         
-        console.log('👤 Usuario:', nombreOperador, '| Admin:', esAdmin);
+        console.log('👤 Usuario:', nombreOperador);
+        console.log('🔐 Rol:', usuarioData?.rol, '| Admin:', esAdmin);
         
-        // Query base
+        // ✅ Query con filtro directo por operador_nombre
         let query = supabaseClient
             .from('polizas')
             .select(`
                 *,
-                cliente:clientes!inner (
+                cliente:clientes (
                     id,
                     nombres,
                     apellidos,
                     telefono1,
-                    email,
-                    operador_id,
-                    operador:usuarios!clientes_operador_id_fkey (
-                        nombre
-                    )
+                    email
                 )
             `)
             .order('created_at', { ascending: false });
         
-        // ✅ Filtrar por nombre del operador (no por ID)
+        // ✅ Filtrar directamente en la query por operador_nombre
         if (!esAdmin && nombreOperador) {
-            query = query.eq('cliente.operador.nombre', nombreOperador);
+            query = query.eq('operador_nombre', nombreOperador);
             console.log('🔒 Operador - Filtrando por nombre:', nombreOperador);
         } else {
             console.log('✅ Admin - Todas las pólizas');
@@ -91,7 +87,10 @@ async function cargarPolizas() {
         
         const { data, error } = await query;
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Error:', error);
+            throw error;
+        }
         
         console.log(`✅ ${data?.length || 0} pólizas cargadas`);
         
@@ -111,6 +110,7 @@ async function cargarPolizas() {
         mostrarError('Error al cargar las pólizas: ' + error.message);
     }
 }
+
 
 // async function cargarPolizasDesdeSupabase() {
 //     try {
@@ -223,7 +223,7 @@ function renderizarTabla() {
         
         tr.innerHTML = `
             <td data-label="Póliza">${poliza.numero_poliza || '-'}</td>
-            <td data-label="Operador">${poliza.operador_nombre || cliente?.operador_email || '-'}</td>
+            <td data-label="Operador">${cliente?.operador_nombre || cliente?.operador_email || poliza.operador_nombre || '-'}</td>
             <td class="td1" data-label="Cliente">
                 <div class="td1__flex">
                     <a href="./cliente_editar.html?id=${cliente?.id || ''}" onclick="event.stopPropagation()">
@@ -1218,10 +1218,8 @@ async function cerrarSesion() {
 async function cargarInfoUsuario() {
     try {
         // Obtener usuario autenticado
-        const { data: { user }, error } = await supabaseClient.auth.getUser();
-        
-        if (error) throw error;
-        
+        const { data: { user } } = await supabaseClient.auth.getUser();
+                
         if (!user) {
             console.warn('⚠️ No hay usuario autenticado');
             // Redirigir al login si no hay usuario

@@ -171,6 +171,7 @@ async function verificarAutenticacion() {
         console.log('✅ Sesión válida');
         console.log('👤 Usuario:', usuario.nombre);
         console.log('🎭 Rol:', usuario.rol);
+        console.log('ID:', usuario.id)
         
     } catch (error) {
         console.error('❌ Error al verificar autenticación:', error);

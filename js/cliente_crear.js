@@ -1215,6 +1215,7 @@ async function crearCliente(formData) {
     
     const polizaData = {
         cliente_id: cliente.id,
+        aplicantes: parseInt(document.getElementById('aplicantes').value) || 1,
         numero_poliza: numeroPoliza,
         compania: formData.compania,
         plan: formData.plan,
@@ -1351,7 +1352,7 @@ async function crearCliente(formData) {
         
         // Si no hay mensaje ni imágenes, saltar
         if (!mensaje && imagenesNotaSeleccionadas.length === 0) {
-            console.log('No hay notas para guardar');
+            alert('Escribe un mensaje o adjunta una imagen');
             return;
         }
         
@@ -1374,19 +1375,49 @@ async function crearCliente(formData) {
             };
             
             // Guardar nota
-            const { error } = await supabaseClient
+            const { data: nuevaNota, error } = await supabaseClient
                 .from('notas')
-                .insert([notaData]);
+                .insert([notaData])
+                .select()
+                .single();
             
             if (error) throw error;
+            const notaHTML = `
+            <div class="nota-card" data-nota-id="${nuevaNota.id}">
+                <div class="nota-header">
+                    <div class="nota-info">
+                        <span class="nota-usuario">${nuevaNota.usuario_nombre}</span>
+                        <span class="nota-fecha">Ahora</span>
+                    </div>
+                    <button type="button" class="btn-remove-nota" onclick="confirmarEliminarNota('${nuevaNota.id}')">
+                        <span class="material-symbols-rounded">delete</span>
+                    </button>
+                </div>
+                <div class="nota-mensaje">${mensaje}</div>
+                ${imagenesNotaSeleccionadas.length > 0 ? `
+                    <div class="nota-imagenes">
+                        ${imagenesNotaSeleccionadas.map(img => `
+                            <img src="${img}" alt="Imagen" style="max-width: 150px; border-radius: 8px; margin: 5px;">
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+            `;
+        
+            const thread = document.getElementById('notasThread');
+            const emptyState = thread.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
             
-            console.log('✅ Nota guardada');
+            thread.insertAdjacentHTML('afterbegin', notaHTML);
             
-            // Limpiar formulario de notas
+            // Limpiar formulario
             if (textarea) textarea.value = '';
             imagenesNotaSeleccionadas = [];
             const preview = document.getElementById('imagenesPreview');
             if (preview) preview.innerHTML = '';
+            
+            actualizarContadorNotas();
+            console.log('✅ Nota agregada');
             
         } catch (error) {
             console.error('Error al guardar nota:', error);

@@ -188,29 +188,6 @@ async function aplicarPermisosEstadoMercado() {
 // VERIFICAR ACCESO AL CLIENTE
 // ============================================
 
-async function verificarAccesoCliente(clienteId) {
-    try {
-        // Admin siempre tiene acceso
-        if (esAdministrador()) {
-            return true;
-        }
-        
-        // Verificar si es cliente propio
-        const esPropio = await esClientePropio(clienteId);
-        
-        if (!esPropio) {
-            alert('⛔ No tienes permiso para ver este cliente');
-            window.location.href = './polizas.html';
-            return false;
-        }
-        
-        return true;
-    } catch (error) {
-        console.error('Error al verificar acceso:', error);
-        return false;
-    }
-}
-
 // ============================================
 // CARGAR DATOS DEL CLIENTE
 // ============================================
@@ -218,12 +195,7 @@ async function verificarAccesoCliente(clienteId) {
 async function cargarDatosCliente(id) {
     try {
         await cargarRolUsuario();
-        
-        const tieneAcceso = await verificarAccesoCliente(id);
-        if (!tieneAcceso) {
-            return;
-        }
-        
+                
         console.log('📡 Cargando datos del cliente:', id);
         
         // Mostrar indicador de carga
@@ -299,7 +271,6 @@ async function cargarDatosCliente(id) {
 
         await aplicarPermisosEstadoMercado();
         
-        mostrarCargando(false);
         console.log('✅ Datos cargados correctamente');
         
     } catch (error) {
@@ -398,6 +369,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
     if (cliente) {
        if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = cliente.tipo_registro || '';
        if (cliente.fecha_registro) document.getElementById('fechaRegistro').value = formatoUS(cliente.fecha_registro);
+       document.getElementById('aplicantes').value = poliza.aplicantes || 1;
        if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres || '';
        if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos || '';
        if (cliente.genero) document.getElementById('genero').value = cliente.genero || '';
@@ -1629,6 +1601,7 @@ async function actualizarCliente(id, formData) {
     const clienteData = {
         tipo_registro: formData.tipoRegistro,
         fecha_registro: formData.fechaRegistro,
+        aplicantes: parseInt(document.getElementById('aplicantes').value) || 1,
         nombres: formData.nombres,
         apellidos: formData.apellidos,
         genero: formData.genero,
