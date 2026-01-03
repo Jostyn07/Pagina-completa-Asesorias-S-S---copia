@@ -1648,20 +1648,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function cancelarFormulario() {
     if (confirm('¿Cancelar y volver? Se perderán los cambios no guardados.')) {
         localStorage.removeItem('borrador_cliente');
-        clearInterval(autosaveTimer);
+        clearInterval(autosaveTimer)
         window.location.href = './polizas.html';
     }
 }
-
-// ============================================
-// LOG INICIAL
-// ============================================
-
-console.log('%c📝 CLIENTE_CREAR.JS CORREGIDO', 'color: #00a8e8; font-size: 16px; font-weight: bold');
-console.log('%c✅ Todas las correcciones aplicadas', 'color: #4caf50; font-weight: bold');
-console.log('Correcciones:');
-console.log('  ✓ Fechas en formato mm/dd/aaaa');
-console.log('  ✓ Teléfono límite 10 caracteres');
-console.log('  ✓ Fechas automáticas (1° mes siguiente, 12/31/2026)');
-console.log('  ✓ Método de pago desplegables funcionando');
-console.log('  ✓ Documentos sin tipo (solo archivo + notas)');

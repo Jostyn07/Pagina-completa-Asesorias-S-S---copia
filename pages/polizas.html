@@ -173,6 +173,11 @@
                     <span class="material-symbols-rounded">history</span>
                     <span>Mis Evaluaciones</span>
                 </a>
+
+                <a href="./clientes_archivados.html" class="menu-item" id="menuArchivados" style="display: none;">
+                    <span class="material-symbols-rounded">archive</span>
+                    <span>Clientes Archivados</span>
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -300,6 +305,181 @@
                             </div>
                         </div>
                     </form>
+                </div>
+
+                <div id="modalFiltros" class="modal-filtros" style="display: none;">
+                    <div class="modal-filtros-content">
+                        <div class="modal-filtros-header">
+                            <h2>
+                                <span class="material-symbols-rounded">filter_alt</span>
+                                Filtros Avanzados
+                            </h2>
+                            <button class="btn-close-modal" onclick="cerrarModalFiltros()">
+                                <span class="material-symbols-rounded">close</span>
+                            </button>
+                        </div>
+                        
+                        <div class="modal-filtros-body">
+                            <!-- CLIENTE -->
+                            <div class="filtro-section">
+                                <h3>📋 Información del Cliente</h3>
+                                <div class="filtro-grid">
+                                    <div class="filtro-group">
+                                        <label>Nombre</label>
+                                        <input type="text" id="filtroNombre" placeholder="Buscar por nombre...">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Apellido</label>
+                                        <input type="text" id="filtroApellido" placeholder="Buscar por apellido...">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Teléfono</label>
+                                        <input type="text" id="filtroTelefono" placeholder="Ej: 305-123-4567">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Estado Migratorio</label>
+                                        <select id="filtroEstadoMigratorio">
+                                            <option value="">Todos</option>
+                                            <option value="Ciudadano">Ciudadano</option>
+                                            <option value="Residente">Residente</option>
+                                            <option value="Visa">Visa</option>
+                                            <option value="Indocumentado">Indocumentado</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- PÓLIZA -->
+                            <div class="filtro-section">
+                                <h3>📄 Información de la Póliza</h3>
+                                <div class="filtro-grid">
+                                    <div class="filtro-group">
+                                        <label>Compañía</label>
+                                        <select id="filtroCompania">
+                                            <option value="">Todas</option>
+                                            <option value="Aetna">Aetna</option>
+                                            <option value="Ambetter">Ambetter</option>
+                                            <option value="Florida Blue">Florida Blue</option>
+                                            <option value="Molina">Molina</option>
+                                            <option value="Oscar">Oscar</option>
+                                            <option value="United HealthCare">United HealthCare</option>
+                                        </select>
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Tipo de Venta</label>
+                                        <select id="filtroTipoVenta">
+                                            <option value="">Todos</option>
+                                            <option value="Nueva">Nueva venta</option>
+                                            <option value="Renovacion">Renovación</option>
+                                            <option value="Cambio">Cambio de plan</option>
+                                        </select>
+                                    </div>
+                                    <div class="filtro-group" id="filtroOperadorGroup">
+                                        <label>Operador (Solo Admin)</label>
+                                        <select id="filtroOperador">
+                                            <option value="">Todos</option>
+                                            <option value="Jostyn Aragón">Jostyn Aragón</option>
+                                            <option value="Ana Pedroza">Ana Pedroza</option>
+                                            <option value="Edgar Sanchez">Edgar Sanchez</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- ESTADOS -->
+                            <div class="filtro-section">
+                                <h3>📊 Estados</h3>
+                                <div class="filtro-grid">
+                                    <div class="filtro-group">
+                                        <label>Estado en Mercado</label>
+                                        <select id="filtroEstadoMercado">
+                                            <option value="">Todos</option>
+                                            <option value="Pendiente">Pendiente</option>
+                                            <option value="Activo">Activo</option>
+                                            <option value="Cancelado">Cancelado</option>
+                                            <option value="Suspendido">Suspendido</option>
+                                        </select>
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Estado en Compañía</label>
+                                        <select id="filtroEstadoCompania">
+                                            <option value="">Todos</option>
+                                            <option value="Pendiente">Pendiente</option>
+                                            <option value="Activo">Activo</option>
+                                            <option value="Cancelado">Cancelado</option>
+                                            <option value="Suspendido">Suspendido</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- FECHAS -->
+                            <div class="filtro-section">
+                                <h3>📅 Fechas</h3>
+                                <div class="filtro-grid">
+                                    <div class="filtro-group">
+                                        <label>Fecha Registro Desde</label>
+                                        <input type="date" id="filtroFechaRegistroDesde">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Registro Hasta</label>
+                                        <input type="date" id="filtroFechaRegistroHasta">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Efectividad Desde</label>
+                                        <input type="date" id="filtroFechaEfectividadDesde">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Efectividad Hasta</label>
+                                        <input type="date" id="filtroFechaEfectividadHasta">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Cobertura Inicial Desde</label>
+                                        <input type="date" id="filtroFechaCoberturaInicialDesde">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Cobertura Inicial Hasta</label>
+                                        <input type="date" id="filtroFechaCoberturaInicialHasta">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Revisión Mercado Desde</label>
+                                        <input type="date" id="filtroFechaRevisionMercadoDesde">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Revisión Mercado Hasta</label>
+                                        <input type="date" id="filtroFechaRevisionMercadoHasta">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Revisión Compañía Desde</label>
+                                        <input type="date" id="filtroFechaRevisionCompaniaDesde">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Revisión Compañía Hasta</label>
+                                        <input type="date" id="filtroFechaRevisionCompaniaHasta">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Seguimiento Desde</label>
+                                        <input type="date" id="filtroFechaSeguimientoDesde">
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Fecha Seguimiento Hasta</label>
+                                        <input type="date" id="filtroFechaSeguimientoHasta">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-filtros-footer">
+                            <button class="btn-limpiar" onclick="limpiarFiltros()">
+                                <span class="material-symbols-rounded">restart_alt</span>
+                                Limpiar Filtros
+                            </button>
+                            <button class="btn-aplicar" onclick="aplicarFiltrosAvanzados()">
+                                <span class="material-symbols-rounded">check</span>
+                                Aplicar Filtros
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Controles de Paginación y Exportar -->

@@ -401,8 +401,8 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
     if (poliza) {
        if(poliza.compania) document.getElementById('compania').value = poliza.compania || '';
        if(poliza.plan) document.getElementById('plan').value = poliza.plan || '';
-       document.getElementById('prima').value = poliza.prima || 0;
-       if(poliza.credito_fiscal) document.getElementById('creditoFiscal').value = poliza.credito_fiscal || 0;
+       document.getElementById('prima').value = parseFloat(poliza.prima) || 0;
+       if(poliza.credito_fiscal) document.getElementById('creditoFiscal').value = parseFloat(poliza.credito_fiscal) || 0;
        if(poliza.member_id) document.getElementById('memberId').value = poliza.member_id || '';
        if(poliza.portal_npn) document.getElementById('portalNpn').value = poliza.portal_npn || '';
        if(poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad || '';
@@ -1601,7 +1601,6 @@ async function actualizarCliente(id, formData) {
     const clienteData = {
         tipo_registro: formData.tipoRegistro,
         fecha_registro: formData.fechaRegistro,
-        aplicantes: parseInt(document.getElementById('aplicantes').value) || 1,
         nombres: formData.nombres,
         apellidos: formData.apellidos,
         genero: formData.genero,
@@ -1644,6 +1643,7 @@ async function actualizarPoliza(polizaId, formData) {
     console.log('🔄 Actualizando póliza...');
     
     const polizaData = {
+        aplicantes: parseInt(document.getElementById('aplicantes').value) || 1,
         compania: formData.compania,
         plan: formData.plan,
         prima: parseFloat(formData.prima) || 0,
@@ -2848,6 +2848,101 @@ async function registrarCambioEstado(polizaId, estadoData) {
         console.warn('⚠️ Error al registrar historial:', error);
     }
 }
+
+// ============================================
+// ARCHIVAR CLIENTE (SOLO ADMIN)
+// ============================================
+
+let clienteIdParaArchivar = null;
+
+// Mostrar botón archivar
+async function mostrarBotonArchivar() {
+    const btnArchivar = document.getElementById('btnArchivarCliente');
+    
+    if (!btnArchivar) return;
+    
+    if (!rolUsuario) {
+        await cargarRolUsuario();
+    }
+    
+    if (esAdministrador()) {
+        btnArchivar.style.display = 'flex';
+    }
+}
+
+// Confirmar archivado
+function confirmarArchivarCliente() {
+    if (!esAdministrador()) {
+        alert('⚠️ No tienes permisos para archivar clientes');
+        return;
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    clienteIdParaArchivar = urlParams.get('id');
+    
+    if (!clienteIdParaArchivar) {
+        alert('❌ Error: No se encontró el ID del cliente');
+        return;
+    }
+    
+    document.getElementById('motivoArchivo').value = '';
+    
+    const modal = document.getElementById('modalArchivarCliente');
+    if (modal) modal.style.display = 'flex';
+}
+
+// Cerrar modal
+function cerrarModalArchivar() {
+    const modal = document.getElementById('modalArchivarCliente');
+    if (modal) modal.style.display = 'none';
+    clienteIdParaArchivar = null;
+}
+
+// Ejecutar archivado
+async function ejecutarArchivarCliente() {
+    if (!esAdministrador()) {
+        alert('⚠️ No tienes permisos');
+        cerrarModalArchivar();
+        return;
+    }
+    
+    if (!clienteIdParaArchivar) {
+        alert('❌ Error: No se encontró el ID');
+        cerrarModalArchivar();
+        return;
+    }
+    
+    try {
+        const motivo = document.getElementById('motivoArchivo').value;
+        const usuarioData = JSON.parse(localStorage.getItem('usuario'));
+        
+        const { error } = await supabaseClient
+            .from('clientes')
+            .update({
+                archivado: true,
+                archivado_por: usuarioData?.nombre || 'Admin',
+                archivado_fecha: new Date().toISOString(),
+                motivo_archivo: motivo || null
+            })
+            .eq('id', clienteIdParaArchivar);
+        
+        if (error) throw error;
+        
+        cerrarModalArchivar();
+        alert('✅ Cliente archivado exitosamente');
+        window.location.href = './polizas.html';
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('Error al archivar cliente: ' + error.message);
+    }
+}
+
+// Llamar al cargar
+document.addEventListener('DOMContentLoaded', async function() {
+    await mostrarBotonArchivar();
+    await mostrarBotonEliminar();
+});
 
 // ============================================
 // LOG FINAL

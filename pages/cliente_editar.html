@@ -103,6 +103,10 @@
                     <span class="material-symbols-rounded">cloud_done</span>
                     <span id="autosaveText">Todos los cambios guardados</span>
                 </div>
+                <button class="btn-archivar-cliente" id="btnArchivarCliente" onclick="confirmarArchivarCliente()">
+                    <span class="material-symbols-rounded">archive</span>
+                    Archivar Cliente
+                </button>
             </div>
                 <div class="user-menu">
                     <button class="user-profile-btn" onclick="toggleUserMenu()">
@@ -428,12 +432,12 @@
                             </div>
                             <div class="form-group">
                                 <label>Prima <span class="required">*</span></label>
-                                <input type="number" id="prima" name="prima" placeholder="0.00" step="0.01" min="0" required>
+                                <input type="text" id="prima" name="prima" placeholder="0.00" step="0.01" min="0" required>
                                 <span class="validation-message"></span>
                             </div>
                             <div class="form-group">
                                 <label>Crédito Fiscal</label>
-                                <input type="number" id="creditoFiscal" name="creditoFiscal" placeholder="0.00" step="0.01" min="0" value="0">
+                                <input type="text" id="creditoFiscal" name="creditoFiscal" placeholder="0.00" step="0.01" min="0" value="0">
                             </div>
                         </div>
 
@@ -1152,6 +1156,42 @@
         </div>
     </div>
 
+    <!-- MODAL DE CONFIRMACIÓN DE ARCHIVADO -->
+<div id="modalArchivarCliente" class="modal-archivar" style="display: none;">
+    <div class="modal-archivar-content">
+        <div class="modal-archivar-header">
+            <span class="material-symbols-rounded icon-archive">archive</span>
+            <h2>¿Archivar Cliente?</h2>
+        </div>
+        
+        <div class="modal-archivar-body">
+            <p><strong>El cliente será movido a la sección de archivados.</strong></p>
+            <p>Al archivar este cliente:</p>
+            <ul>
+                <li>✓ No aparecerá en la lista principal de pólizas</li>
+                <li>✓ Se mantendrá toda su información intacta</li>
+                <li>✓ Podrás restaurarlo cuando quieras</li>
+                <li>✓ Se registrará quién y cuándo lo archivó</li>
+            </ul>
+            
+            <div class="motivo-archivo">
+                <label>Motivo del archivado (opcional):</label>
+                <textarea id="motivoArchivo" rows="3" placeholder="Ej: Cliente inactivo, ya no requiere servicio..."></textarea>
+            </div>
+        </div>
+        
+        <div class="modal-archivar-footer">
+            <button class="btn-cancelar" onclick="cerrarModalArchivar()">
+                <span class="material-symbols-rounded">close</span>
+                Cancelar
+            </button>
+            <button class="btn-confirmar-archivar" onclick="ejecutarArchivarCliente()">
+                <span class="material-symbols-rounded">archive</span>
+                Sí, Archivar Cliente
+            </button>
+        </div>
+    </div>
+</div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
     <script src="../js/permisos.js"></script>

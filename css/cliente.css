@@ -3823,3 +3823,323 @@ textarea:focus {
     }
 }
 
+/* Botón archivar */
+.btn-archivar-cliente {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-archivar-cliente:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+/* ============================================
+   MODAL DE ARCHIVADO
+   ============================================ */
+
+.modal-archivar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-archivar-content {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.4s ease;
+    overflow: hidden;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-archivar-header {
+    padding: 40px 30px 30px 30px;
+    text-align: center;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fef3c7 100%);
+    border-bottom: 3px solid #f59e0b;
+    position: relative;
+}
+
+.modal-archivar-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #f59e0b, #d97706, #b45309);
+}
+
+.icon-archive {
+    font-size: 72px;
+    color: #f59e0b;
+    animation: bounce 2s infinite;
+    filter: drop-shadow(0 4px 12px rgba(245, 158, 11, 0.3));
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.modal-archivar-header h2 {
+    margin: 20px 0 0 0;
+    color: #92400e;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.modal-archivar-body {
+    padding: 35px 40px;
+    background: white;
+}
+
+.modal-archivar-body > p:first-child {
+    font-size: 1.1rem;
+    color: #1f2937;
+    font-weight: 600;
+    margin: 0 0 25px 0;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.modal-archivar-body ul {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 30px 0;
+}
+
+.modal-archivar-body ul li {
+    padding: 12px 0;
+    color: #4b5563;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #f3f4f6;
+    transition: all 0.2s;
+}
+
+.modal-archivar-body ul li:hover {
+    background: #fef3c7;
+    padding-left: 10px;
+    border-radius: 8px;
+}
+
+.modal-archivar-body ul li::before {
+    content: '✓';
+    color: #10b981;
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 24px;
+    height: 24px;
+    background: #d1fae5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.motivo-archivo {
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 2px solid #fde68a;
+}
+
+.motivo-archivo label {
+    display: block;
+    margin-bottom: 12px;
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.motivo-archivo label::before {
+    content: '✏️';
+    font-size: 1.2rem;
+}
+
+.motivo-archivo textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    min-height: 100px;
+    box-sizing: border-box;
+}
+
+.motivo-archivo textarea:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+    background: #fffbeb;
+}
+
+.motivo-archivo textarea::placeholder {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.modal-archivar-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    padding: 25px 40px;
+    border-top: 1px solid #e5e7eb;
+    background: linear-gradient(to bottom, #fafafa 0%, #f9fafb 100%);
+}
+
+.btn-cancelar,
+.btn-confirmar-archivar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-cancelar {
+    background: white;
+    color: #6b7280;
+    border: 2px solid #e5e7eb;
+}
+
+.btn-cancelar:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-confirmar-archivar {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.btn-confirmar-archivar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.btn-confirmar-archivar:hover::before {
+    left: 100%;
+}
+
+.btn-confirmar-archivar:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
+}
+
+.btn-confirmar-archivar:active {
+    transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-archivar-content {
+        width: 95%;
+        max-width: none;
+        margin: 20px;
+    }
+    
+    .modal-archivar-header {
+        padding: 30px 20px 20px 20px;
+    }
+    
+    .modal-archivar-body {
+        padding: 25px 20px;
+    }
+    
+    .modal-archivar-footer {
+        padding: 20px;
+        flex-direction: column;
+    }
+    
+    .btn-cancelar,
+    .btn-confirmar-archivar {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .icon-archive {
+        font-size: 56px;
+    }
+    
+    .modal-archivar-header h2 {
+        font-size: 1.4rem;
+    }
+}
+
+/* Animación al cerrar */
+.modal-archivar.closing {
+    animation: fadeOut 0.3s ease;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}

@@ -448,10 +448,6 @@ function openDatePicker() {
     alert('Selector de fecha - En desarrollo');
 }
 
-function abrirModalFiltros() {
-    alert('Modal de filtros avanzados - En desarrollo\n\nPróximamente podrás filtrar por:\n- Compañía\n- Agente\n- Rango de fechas\n- Estado\n- Y más...');
-}
-
 // ============================================
 // CREAR NUEVA PÓLIZA
 // ============================================

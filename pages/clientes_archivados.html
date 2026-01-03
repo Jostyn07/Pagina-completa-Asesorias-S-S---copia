@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes Archivados - S&S Asesorías</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="../css/polizas.css">
+</head>
+<body>
+    <!-- SIDEBAR (copiar del polizas.html) -->
+    <aside class="sidebar-unified" id="sidebar">
+        <!-- ... mismo sidebar ... -->
+    </aside>
+
+    <div class="main-container">
+        <header class="page-header">
+            <div class="header-left">
+                <button class="btn-back" onclick="window.location.href='./polizas.html'">
+                    <span class="material-symbols-rounded">arrow_back</span>
+                    Volver a Pólizas 
+                </button>
+                <h1>📦 Clientes Archivados</h1>
+            </div>
+        </header>
+
+        <main class="main__container">
+            <!-- Info -->
+            <div class="alert alert-info" style="margin: 20px; display: flex;">
+                <span class="material-symbols-rounded">info</span>
+                <div>
+                    <strong>Clientes Archivados</strong>
+                    <p>Aquí se encuentran los clientes que han sido archivados. Puedes restaurarlos en cualquier momento.</p>
+                </div>
+            </div>
+
+            <!-- Barra de búsqueda -->
+            <div class="container__form">
+                <div class="bar__search">
+                    <input 
+                        type="text" 
+                        id="searchArchivados" 
+                        class="search" 
+                        placeholder="Buscar cliente archivado..."
+                    >
+                    <button class="button__bar" onclick="buscarArchivados()">
+                        <span class="material-symbols-rounded">search</span>
+                        Buscar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla de archivados -->
+            <div class="content">
+                <div class="content__info-client">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Teléfono</th>
+                                <th>Email</th>
+                                <th>Archivado Por</th>
+                                <th>Fecha Archivado</th>
+                                <th>Motivo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaArchivados">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px;">
+                                    Cargando clientes archivados...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase_config.js"></script>
+    <script src="../js/permisos.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/clientes_archivados.js"></script>
+</body>
+</html>
