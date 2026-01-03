@@ -238,7 +238,7 @@ function renderizarTabla() {
                 </span>
             </td>
             <td data-label="Compañía">${poliza.compania || '-'}</td>
-            <td data-label="Plan">${poliza.nombre_plan || '-'}</td>
+            <td data-label="Plan">${poliza.plan || '-'}</td>
             <td data-label="Prima">$${poliza.prima || '0.00'}</td>
             <td data-label="Agente">${poliza.agente_nombre || '-'}</td>
             <td data-label="Efectividad">${poliza.fecha_efectividad ? new Date(poliza.fecha_efectividad).toLocaleDateString('es-ES') : '-'}</td>
