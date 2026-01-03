@@ -407,7 +407,6 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if(poliza.portal_npn) document.getElementById('portalNpn').value = poliza.portal_npn || '';
        if(poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad || '';
        if(poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza || '';
-       if(poliza.tipo_venta) document.getElementById('tipoVenta').value = poliza.tipo_venta || '';
         
         // Fechas de la póliza
         const fechaEfectividadInput = document.getElementById('fechaEfectividad');
@@ -1655,7 +1654,6 @@ async function actualizarPoliza(polizaId, formData) {
         portal_npn: formData.portalNpn || null,
         clave_seguridad: formData.claveSeguridad || null,
         enlace_poliza: formData.enlacePoliza || null,
-        tipo_venta: formData.tipoVenta || null,
         operador_nombre: formData.operadorNombre || null,
         agente_nombre: formData.agenteNombre || null,
         observaciones: formData.observaciones || null,

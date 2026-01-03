@@ -1228,7 +1228,6 @@ async function crearCliente(formData) {
         portal_npn: formData.portalNpn || null,
         clave_seguridad: formData.claveSeguridad || null,
         enlace_poliza: formData.enlacePoliza || null,
-        tipo_venta: formData.tipoVenta || null,
         operador_nombre: formData.operadorNombre || null,
         agente_nombre: formData.portalNPN || null,
         estado_compania: 'pendiente',
