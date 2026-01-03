@@ -171,6 +171,7 @@ async function verificarAutenticacion() {
         console.log('✅ Sesión válida');
         console.log('👤 Usuario:', usuario.nombre);
         console.log('🎭 Rol:', usuario.rol);
+        console.log('ID:', usuario.id)
         
     } catch (error) {
         console.error('❌ Error al verificar autenticación:', error);
@@ -445,10 +446,6 @@ function applyFilters() {
 
 function openDatePicker() {
     alert('Selector de fecha - En desarrollo');
-}
-
-function abrirModalFiltros() {
-    alert('Modal de filtros avanzados - En desarrollo\n\nPróximamente podrás filtrar por:\n- Compañía\n- Agente\n- Rango de fechas\n- Estado\n- Y más...');
 }
 
 // ============================================

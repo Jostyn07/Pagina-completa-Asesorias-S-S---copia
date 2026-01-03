@@ -1,8 +1,4 @@
 // ============================================
-// POLIZAS.JS - GESTIÓN DE PÓLIZAS MEJORADA
-// ============================================
-
-// ============================================
 // VARIABLES GLOBALES
 // ============================================
 let todasLasPolizas = [];
@@ -38,6 +34,11 @@ function esAdministrador() {
     return rolUsuario === 'admin';
 }
 
+// Mostrar menú de archivados solo para admins
+if (esAdministrador()) {
+    document.getElementById('menuArchivados').style.display = 'flex';
+}
+
 // ============================================
 // CARGAR PÓLIZAS DESDE SUPABASE
 // ============================================
@@ -50,40 +51,36 @@ async function cargarPolizas() {
         // Obtener usuario actual
         const { data: { user } } = await supabaseClient.auth.getUser();
         
-        // Obtener nombre del usuario desde tabla usuarios
         const { data: usuarioData } = await supabaseClient
             .from('usuarios')
-            .select('nombre, rol')
-            .eq('id', user.id)
+            .select('id, nombre, rol, email')
+            .eq('email', user.email)
             .single();
         
-        const nombreOperador = usuarioData?.nombre;
         const esAdmin = usuarioData?.rol === 'admin';
+        const nombreOperador = usuarioData?.nombre;
         
-        console.log('👤 Usuario:', nombreOperador, '| Admin:', esAdmin);
+        console.log('👤 Usuario:', nombreOperador);
+        console.log('🔐 Rol:', usuarioData?.rol, '| Admin:', esAdmin);
         
-        // Query base
+        // ✅ Query con filtro directo por operador_nombre
         let query = supabaseClient
             .from('polizas')
             .select(`
                 *,
-                cliente:clientes!inner (
+                cliente:clientes (
                     id,
                     nombres,
                     apellidos,
                     telefono1,
-                    email,
-                    operador_id,
-                    operador:usuarios!clientes_operador_id_fkey (
-                        nombre
-                    )
+                    email
                 )
             `)
             .order('created_at', { ascending: false });
         
-        // ✅ Filtrar por nombre del operador (no por ID)
+        // ✅ Filtrar directamente en la query por operador_nombre
         if (!esAdmin && nombreOperador) {
-            query = query.eq('cliente.operador.nombre', nombreOperador);
+            query = query.eq('operador_nombre', nombreOperador);
             console.log('🔒 Operador - Filtrando por nombre:', nombreOperador);
         } else {
             console.log('✅ Admin - Todas las pólizas');
@@ -91,7 +88,10 @@ async function cargarPolizas() {
         
         const { data, error } = await query;
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Error:', error);
+            throw error;
+        }
         
         console.log(`✅ ${data?.length || 0} pólizas cargadas`);
         
@@ -111,6 +111,7 @@ async function cargarPolizas() {
         mostrarError('Error al cargar las pólizas: ' + error.message);
     }
 }
+
 
 // async function cargarPolizasDesdeSupabase() {
 //     try {
@@ -223,11 +224,11 @@ function renderizarTabla() {
         
         tr.innerHTML = `
             <td data-label="Póliza">${poliza.numero_poliza || '-'}</td>
-            <td data-label="Operador">${poliza.operador_nombre || cliente?.operador_email || '-'}</td>
+            <td data-label="Operador">${cliente?.operador_nombre || cliente?.operador_email || poliza.operador_nombre || '-'}</td>
             <td class="td1" data-label="Cliente">
                 <div class="td1__flex">
                     <a href="./cliente_editar.html?id=${cliente?.id || ''}" onclick="event.stopPropagation()">
-                        ${cliente?.nombres || ''} ${cliente?.apellido || ''}
+                        ${cliente?.nombres || ''} ${cliente?.apellidos || ''}
                     </a>
                 </div>
             </td>
@@ -711,12 +712,14 @@ function buscarPolizas(termino) {
             const numeroPoliza = poliza.numero_poliza || '';
             const compania = poliza.compania || '';
             const plan = poliza.plan || '';
+            const estadoMercado = poliza.estado_mercado || '';
             
             return nombreCompleto.includes(termino) ||
-                   telefono1.includes(termino) ||
+                   telefono.includes(termino) ||
                    numeroPoliza.toLowerCase().includes(termino) ||
                    compania.toLowerCase().includes(termino) ||
-                   plan.toLowerCase().includes(termino);
+                   plan.toLowerCase().includes(termino) ||
+                   estadoMercado.toLowerCase().includes(termino);
         });
     }
     
@@ -1167,11 +1170,6 @@ function crearNuevaPoliza() {
     window.location.href = './cliente_crear.html';
 }
 
-function abrirModalFiltros() {
-    // TODO: Implementar modal de filtros avanzados
-    console.log('Modal de filtros - Por implementar');
-}
-
 // ============================================
 // MENÚ DE USUARIO
 // ============================================
@@ -1218,10 +1216,8 @@ async function cerrarSesion() {
 async function cargarInfoUsuario() {
     try {
         // Obtener usuario autenticado
-        const { data: { user }, error } = await supabaseClient.auth.getUser();
-        
-        if (error) throw error;
-        
+        const { data: { user } } = await supabaseClient.auth.getUser();
+                
         if (!user) {
             console.warn('⚠️ No hay usuario autenticado');
             // Redirigir al login si no hay usuario
@@ -1328,3 +1324,185 @@ document.addEventListener('DOMContentLoaded', function() {
     cargarPolizas()
 });
 
+// ============================================
+// MODAL DE FILTROS AVANZADOS
+// ============================================
+
+function abrirModalFiltros() {
+    const modal = document.getElementById('modalFiltros');
+    if (modal) {
+        modal.style.display = 'flex';
+        
+        // Ocultar filtro de operador si no es admin
+        const filtroOperadorGroup = document.getElementById('filtroOperadorGroup');
+        if (filtroOperadorGroup && !esAdministrador()) {
+            filtroOperadorGroup.style.display = 'none';
+        }
+    }
+}
+
+function cerrarModalFiltros() {
+    const modal = document.getElementById('modalFiltros');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function limpiarFiltros() {
+    // Limpiar todos los campos
+    document.getElementById('filtroNombre').value = '';
+    document.getElementById('filtroApellido').value = '';
+    document.getElementById('filtroTelefono').value = '';
+    document.getElementById('filtroEstadoMigratorio').value = '';
+    document.getElementById('filtroCompania').value = '';
+    document.getElementById('filtroTipoVenta').value = '';
+    document.getElementById('filtroOperador').value = '';
+    document.getElementById('filtroEstadoMercado').value = '';
+    document.getElementById('filtroEstadoCompania').value = '';
+    
+    // Limpiar fechas
+    document.getElementById('filtroFechaRegistroDesde').value = '';
+    document.getElementById('filtroFechaRegistroHasta').value = '';
+    document.getElementById('filtroFechaEfectividadDesde').value = '';
+    document.getElementById('filtroFechaEfectividadHasta').value = '';
+    document.getElementById('filtroFechaCoberturaInicialDesde').value = '';
+    document.getElementById('filtroFechaCoberturaInicialHasta').value = '';
+    document.getElementById('filtroFechaRevisionMercadoDesde').value = '';
+    document.getElementById('filtroFechaRevisionMercadoHasta').value = '';
+    document.getElementById('filtroFechaRevisionCompaniaDesde').value = '';
+    document.getElementById('filtroFechaRevisionCompaniaHasta').value = '';
+    document.getElementById('filtroFechaSeguimientoDesde').value = '';
+    document.getElementById('filtroFechaSeguimientoHasta').value = '';
+    
+    // Aplicar filtros vacíos (mostrar todo)
+    aplicarFiltrosAvanzados();
+}
+
+function aplicarFiltrosAvanzados() {
+    console.log('🔍 Aplicando filtros avanzados...');
+    
+    // Obtener valores de filtros
+    const filtros = {
+        nombre: document.getElementById('filtroNombre').value.toLowerCase(),
+        apellido: document.getElementById('filtroApellido').value.toLowerCase(),
+        telefono: document.getElementById('filtroTelefono').value.toLowerCase(),
+        estadoMigratorio: document.getElementById('filtroEstadoMigratorio').value,
+        compania: document.getElementById('filtroCompania').value,
+        tipoVenta: document.getElementById('filtroTipoVenta').value,
+        operador: document.getElementById('filtroOperador').value,
+        estadoMercado: document.getElementById('filtroEstadoMercado').value,
+        estadoCompania: document.getElementById('filtroEstadoCompania').value,
+        fechaRegistroDesde: document.getElementById('filtroFechaRegistroDesde').value,
+        fechaRegistroHasta: document.getElementById('filtroFechaRegistroHasta').value,
+        fechaEfectividadDesde: document.getElementById('filtroFechaEfectividadDesde').value,
+        fechaEfectividadHasta: document.getElementById('filtroFechaEfectividadHasta').value,
+        fechaCoberturaInicialDesde: document.getElementById('filtroFechaCoberturaInicialDesde').value,
+        fechaCoberturaInicialHasta: document.getElementById('filtroFechaCoberturaInicialHasta').value,
+        fechaRevisionMercadoDesde: document.getElementById('filtroFechaRevisionMercadoDesde').value,
+        fechaRevisionMercadoHasta: document.getElementById('filtroFechaRevisionMercadoHasta').value,
+        fechaRevisionCompaniaDesde: document.getElementById('filtroFechaRevisionCompaniaDesde').value,
+        fechaRevisionCompaniaHasta: document.getElementById('filtroFechaRevisionCompaniaHasta').value,
+        fechaSeguimientoDesde: document.getElementById('filtroFechaSeguimientoDesde').value,
+        fechaSeguimientoHasta: document.getElementById('filtroFechaSeguimientoHasta').value
+    };
+    
+    // Filtrar pólizas
+    polizasFiltradas = todasLasPolizas.filter(poliza => {
+        const cliente = poliza.cliente || {};
+        
+        // Filtro por nombre
+        if (filtros.nombre && !cliente.nombres?.toLowerCase().includes(filtros.nombre)) {
+            return false;
+        }
+        
+        // Filtro por apellido
+        if (filtros.apellido && !cliente.apellidos?.toLowerCase().includes(filtros.apellido)) {
+            return false;
+        }
+        
+        // Filtro por teléfono
+        if (filtros.telefono && !cliente.telefono1?.toLowerCase().includes(filtros.telefono)) {
+            return false;
+        }
+        
+        // Filtro por estado migratorio
+        if (filtros.estadoMigratorio && cliente.estado_migratorio !== filtros.estadoMigratorio) {
+            return false;
+        }
+        
+        // Filtro por compañía
+        if (filtros.compania && poliza.compania !== filtros.compania) {
+            return false;
+        }
+        
+        // Filtro por tipo de venta
+        if (filtros.tipoVenta && poliza.tipo_venta !== filtros.tipoVenta) {
+            return false;
+        }
+        
+        // Filtro por operador (solo para admins)
+        if (filtros.operador && poliza.operador_nombre !== filtros.operador) {
+            return false;
+        }
+        
+        // Filtro por estado mercado
+        if (filtros.estadoMercado && poliza.estado_mercado !== filtros.estadoMercado) {
+            return false;
+        }
+        
+        // Filtro por estado compañía
+        if (filtros.estadoCompania && poliza.estado_compania !== filtros.estadoCompania) {
+            return false;
+        }
+        
+        // Filtros de fechas
+        if (!filtrarPorRangoFecha(poliza.created_at, filtros.fechaRegistroDesde, filtros.fechaRegistroHasta)) return false;
+        if (!filtrarPorRangoFecha(poliza.fecha_efectividad, filtros.fechaEfectividadDesde, filtros.fechaEfectividadHasta)) return false;
+        if (!filtrarPorRangoFecha(poliza.fecha_inicial_cobertura, filtros.fechaCoberturaInicialDesde, filtros.fechaCoberturaInicialHasta)) return false;
+        if (!filtrarPorRangoFecha(poliza.fecha_revision_mercado, filtros.fechaRevisionMercadoDesde, filtros.fechaRevisionMercadoHasta)) return false;
+        if (!filtrarPorRangoFecha(poliza.fecha_revision_compania, filtros.fechaRevisionCompaniaDesde, filtros.fechaRevisionCompaniaHasta)) return false;
+        if (!filtrarPorRangoFecha(poliza.fecha_seguimiento, filtros.fechaSeguimientoDesde, filtros.fechaSeguimientoHasta)) return false;
+        
+        return true;
+    });
+    
+    console.log(`✅ Filtros aplicados: ${polizasFiltradas.length} pólizas de ${todasLasPolizas.length}`);
+    
+    // Resetear paginación
+    paginaActual = 1;
+    
+    // Renderizar
+    renderizarTabla();
+    actualizarPaginacion();
+    
+    // Cerrar modal
+    cerrarModalFiltros();
+}
+
+// Función auxiliar para filtrar por rango de fechas
+function filtrarPorRangoFecha(fecha, desde, hasta) {
+    if (!desde && !hasta) return true; // Sin filtro
+    if (!fecha) return false; // No tiene fecha
+    
+    const fechaObj = new Date(fecha);
+    
+    if (desde) {
+        const desdeObj = new Date(desde);
+        if (fechaObj < desdeObj) return false;
+    }
+    
+    if (hasta) {
+        const hastaObj = new Date(hasta);
+        if (fechaObj > hastaObj) return false;
+    }
+    
+    return true;
+}
+
+// Cerrar modal al hacer clic fuera
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('modalFiltros');
+    if (modal && event.target === modal) {
+        cerrarModalFiltros();
+    }
+});
