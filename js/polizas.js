@@ -224,7 +224,7 @@ function renderizarTabla() {
         
         tr.innerHTML = `
             <td data-label="Póliza">${poliza.numero_poliza || '-'}</td>
-            <td data-label="Operador">${cliente?.operador_nombre || '-'}</td>
+            <td data-label="Operador">${cliente?.operador_nombre || poliza?.operador_nombre || '-'}</td>
             <td class="td1" data-label="Cliente">
                 <div class="td1__flex">
                     <a href="./cliente_editar.html?id=${cliente?.id || ''}" onclick="event.stopPropagation()">
@@ -251,16 +251,16 @@ function renderizarTabla() {
     });
 }
     
-    // Calcular rango de paginación
-    const inicio = (paginaActual - 1) * polizasPorPagina;
-    const fin = inicio + polizasPorPagina;
-    const polizasPagina = polizasFiltradas.slice(inicio, fin);
-    
-    // Generar filas
-    polizasPagina.forEach(poliza => {
-        const fila = crearFilaPoliza(poliza);
-        tbody.innerHTML += fila;
-    });
+// Calcular rango de paginación
+const inicio = (paginaActual - 1) * polizasPorPagina;
+const fin = inicio + polizasPorPagina;
+const polizasPagina = polizasFiltradas.slice(inicio, fin);
+
+// Generar filas
+polizasPagina.forEach(poliza => {
+    const fila = crearFilaPoliza(poliza);
+    tbody.innerHTML += fila;
+});
 
 
 // ============================================
@@ -268,7 +268,7 @@ function renderizarTabla() {
 // ============================================
 function crearFilaPoliza(poliza) {
     const cliente = poliza.cliente || {};
-    const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim();
+    const nombreCompleto = `${cliente.nombres|| ''} ${cliente.apellidos || ''}`.trim();
     
     // Formatear fechas
     const fechaEfectividad = poliza.fecha_efectividad ? formatoUS(poliza.fecha_efectividad) : '--/--/----';

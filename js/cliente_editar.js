@@ -469,8 +469,8 @@ function agregarDependienteExistente(dep) {
     
     // Convertir sexo si viene en formato antiguo
     let sexoFormateado = dep.sexo;
-    if (dep.sexo === 'M') sexoFormateado = 'masculino';
-    if (dep.sexo === 'F') sexoFormateado = 'femenino';
+    if (dep.sexo === 'M') sexoFormateado = 'Masculino';
+    if (dep.sexo === 'F') sexoFormateado = 'Femenino';
     
     const dependiente = {
         nombres: dep.nombres,
