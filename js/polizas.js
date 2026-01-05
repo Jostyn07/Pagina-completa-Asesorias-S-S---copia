@@ -224,7 +224,7 @@ function renderizarTabla() {
         
         tr.innerHTML = `
             <td data-label="Póliza">${poliza.numero_poliza || '-'}</td>
-            <td data-label="Operador">${cliente?.operador_nombre || cliente?.operador_email || poliza.operador_nombre || '-'}</td>
+            <td data-label="Operador">${cliente?.operador_nombre || '-'}</td>
             <td class="td1" data-label="Cliente">
                 <div class="td1__flex">
                     <a href="./cliente_editar.html?id=${cliente?.id || ''}" onclick="event.stopPropagation()">
@@ -233,7 +233,7 @@ function renderizarTabla() {
                 </div>
             </td>
             <td data-label="Teléfono">${cliente?.telefono1 || '-'}</td>
-            <td data-label="Estado (Mercado)">
+            <td data-label="Estado (Mercado)">  
                 <span class="badge-estado ${poliza.estado_mercado || 'pendiente'}">
                     ${poliza.estado_mercado || 'Pendiente'}
                 </span>
