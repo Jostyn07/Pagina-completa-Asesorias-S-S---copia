@@ -156,7 +156,6 @@ async function aplicarPermisosEstadoMercado() {
         'fechaRevisionMercado',
         'estadoMercado',
         'nombreAgenteMercado',
-        'observacionMercado',
         'estadoDocumentos'
     ];
     
@@ -1072,24 +1071,30 @@ function mostrarNotasExistentes(notas) {
 
 async function agregarNota(clienteId) {
     const textarea = document.getElementById('nuevaNota');
-    const mensaje = textarea ? textarea.value.trim() : '';
+    let mensaje = textarea ? textarea.value.trim() : '';
     
+    // Validar que haya contenido
     if (!mensaje && imagenesNotaSeleccionadas.length === 0) {
-        alert('Escribe un mensaje o adjunta una imagen');
+        mostrarNotificacion('⚠️ Escribe un mensaje o adjunta una imagen', 'warning');
         return;
+    }
+    
+    // Si solo hay imágenes sin mensaje, crear mensaje automático
+    if (!mensaje && imagenesNotaSeleccionadas.length > 0) {
+        mensaje = `📎 ${imagenesNotaSeleccionadas.length} imagen${imagenesNotaSeleccionadas.length > 1 ? 'es' : ''} adjunta${imagenesNotaSeleccionadas.length > 1 ? 's' : ''}`;
     }
     
     try {
         const { data: { user } } = await supabaseClient.auth.getUser();
         
         if (!user) {
-            alert('Debes estar autenticado');
+            mostrarNotificacion('❌ Debes estar autenticado', 'error');
             return;
         }
         
         const notaData = {
             cliente_id: clienteId,
-            mensaje: mensaje || null,
+            mensaje: mensaje, // Siempre tendrá valor
             imagenes: imagenesNotaSeleccionadas.length > 0 ? imagenesNotaSeleccionadas : null,
             usuario_email: user.email,
             usuario_nombre: user.user_metadata?.nombre || user.email
@@ -1103,7 +1108,27 @@ async function agregarNota(clienteId) {
         
         if (error) throw error;
         
-        // Agregar al thread
+        let imagenesHTML = '';
+        if (imagenesNotaSeleccionadas.length > 0) {
+            const imagenesEscapadas = JSON.stringify(imagenesNotaSeleccionadas).replace(/"/g, '&quot;');
+            
+            imagenesHTML = `
+                <div class="nota-imagenes">
+                    ${imagenesNotaSeleccionadas.map((img, index) => `
+                        <div class="nota-imagen-thumb" 
+                             onclick="abrirModalImagen('${img}', ${imagenesEscapadas}, ${index})"
+                             data-tooltip="Click para ampliar">
+                            <span class="imagen-numero">${index + 1}</span>
+                            <img src="${img}" 
+                                 alt="Imagen ${index + 1}"
+                                 loading="lazy"
+                                 onload="this.classList.add('loaded')">
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
         const notaHTML = `
             <div class="nota-card" data-nota-id="${nuevaNota.id}">
                 <div class="nota-header">
@@ -1116,13 +1141,7 @@ async function agregarNota(clienteId) {
                     </button>
                 </div>
                 <div class="nota-mensaje">${mensaje}</div>
-                ${imagenesNotaSeleccionadas.length > 0 ? `
-                    <div class="nota-imagenes">
-                        ${imagenesNotaSeleccionadas.map(img => `
-                            <img src="${img}" alt="Imagen" style="max-width: 150px; border-radius: 8px; margin: 5px;">
-                        `).join('')}
-                    </div>
-                ` : ''}
+                ${imagenesHTML}
             </div>
         `;
         
@@ -1138,12 +1157,20 @@ async function agregarNota(clienteId) {
         const preview = document.getElementById('imagenesPreview');
         if (preview) preview.innerHTML = '';
         
-        actualizarContadorNotas();
+        // Actualizar contadores
+        if (typeof actualizarContadorImagenes === 'function') {
+            actualizarContadorImagenes();
+        }
+        if (typeof actualizarContadorNotas === 'function') {
+            actualizarContadorNotas();
+        }
+        
+        mostrarNotificacion('✅ Nota agregada correctamente', 'success');
         console.log('✅ Nota agregada');
         
     } catch (error) {
-        console.error('Error al agregar nota:', error);
-        alert('Error al agregar nota: ' + error.message);
+        console.error('❌ Error al agregar nota:', error);
+        mostrarNotificacion('❌ Error al agregar nota: ' + error.message, 'error');
     }
 }
 
@@ -2094,62 +2121,55 @@ async function eliminarNota(notaId) {
 function cancelarNota() {
     const textarea = document.getElementById('nuevaNota');
     if (textarea) textarea.value = '';
+    
     imagenesNotaSeleccionadas = [];
+    
     const preview = document.getElementById('imagenesPreview');
     if (preview) preview.innerHTML = '';
+    
+    actualizarContadorImagenes();
+    
+    const input = document.getElementById('notaImagen');
+    if (input) input.value = '';
 }
 
 function previsualizarImagenesNota() {
-    const input = document.getElementById('notaImagen');
-    if (!input || !input.files) return;
+    const input = document.getElementById('notaImagen'); // ✅ ID correcto
     
-    const preview = document.getElementById('imagenesPreview');
-    if (!preview) return;
+    if (!input || !input.files || input.files.length === 0) return;
     
-    Array.from(input.files).forEach((file, index) => {
+    Array.from(input.files).forEach((file) => {
+        // Validar tamaño (max 5MB)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            mostrarNotificacion('⚠️ ' + file.name + ' es muy grande (máx 5MB)', 'warning');
+            return;
+        }
+        
         const reader = new FileReader();
         
         reader.onload = function(e) {
             imagenesNotaSeleccionadas.push(e.target.result);
-            
-            const imgHTML = `
-                <div class="imagen-preview" id="preview-nota-${imagenesNotaSeleccionadas.length - 1}">
-                    <img src="${e.target.result}" alt="Preview">
-                    <button type="button" class="btn-remove-imagen" onclick="quitarImagenNota(${imagenesNotaSeleccionadas.length - 1})">
-                        <span class="material-symbols-rounded">close</span>
-                    </button>
-                </div>
-            `;
-            
-            preview.insertAdjacentHTML('beforeend', imgHTML);
+            actualizarPrevisualizacionImagenes();
+            actualizarContadorImagenes();
         };
         
         reader.readAsDataURL(file);
     });
     
-    // Limpiar input
+    // Limpiar input para permitir seleccionar el mismo archivo después
     input.value = '';
+    
+    // Feedback
+    const numArchivos = input.files.length;
+    mostrarNotificacion(`✅ ${numArchivos} imagen${numArchivos > 1 ? 'es' : ''} agregada${numArchivos > 1 ? 's' : ''}`, 'success');
 }
 
 function quitarImagenNota(index) {
     imagenesNotaSeleccionadas.splice(index, 1);
-    
-    const preview = document.getElementById('imagenesPreview');
-    if (preview) {
-        preview.innerHTML = '';
-        
-        imagenesNotaSeleccionadas.forEach((img, i) => {
-            const imgHTML = `
-                <div class="imagen-preview" id="preview-nota-${i}">
-                    <img src="${img}" alt="Preview">
-                    <button type="button" class="btn-remove-imagen" onclick="quitarImagenNota(${i})">
-                        <span class="material-symbols-rounded">close</span>
-                    </button>
-                </div>
-            `;
-            preview.insertAdjacentHTML('beforeend', imgHTML);
-        });
-    }
+    actualizarPrevisualizacionImagenes();
+    actualizarContadorImagenes();
+    mostrarNotificacion('🗑️ Imagen eliminada', 'info');
 }
 
 // ============================================
@@ -2354,9 +2374,6 @@ async function cargarEstadoSeguimiento(polizaId) {
             }
             if (poliza.nombre_agente_mercado) {
                 document.getElementById('nombreAgenteMercado').value = poliza.nombre_agente_mercado;
-            }
-            if (poliza.observacion_mercado) {
-                document.getElementById('observacionMercado').value = poliza.observacion_mercado;
             }
             if (poliza.estado_documentos) {
                 document.getElementById('estadoDocumentos').value = poliza.estado_documentos;
@@ -3108,6 +3125,102 @@ document.addEventListener('DOMContentLoaded', function() {
 // También inicializar si el script se carga después del DOMContentLoaded
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(inicializarSubPestanas, 100);
+}
+
+/**
+ * Actualizar previsualizacion de imagenes
+ */
+function actualizarPrevisualizacionImagenes() {
+    const preview = document.getElementById('imagenesPreview');
+    
+    if (!preview) return;
+    
+    // Limpiar previsualizacion
+    preview.innerHTML = '';
+    
+    // Renderizar todas las imagenes
+    imagenesNotaSeleccionadas.forEach((imagen, index) => {
+        const imgHTML = `
+            <div class="imagen-preview" id="preview-nota-${index}">
+                <img src="${imagen}" alt="Preview ${index + 1}">
+                <button type="button" class="btn-remove-imagen" onclick="quitarImagenNota(${index})">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+                <div class="imagen-info">
+                    Imagen ${index + 1}
+                </div>
+            </div>
+        `;
+        
+        preview.insertAdjacentHTML('beforeend', imgHTML);
+    });
+}
+
+/**
+ * Actualizar contador de imagenes
+ */
+function actualizarContadorImagenes() {
+    const contador = document.getElementById('archivosSeleccionados');
+    
+    if (!contador) return;
+    
+    const numImagenes = imagenesNotaSeleccionadas.length;
+    
+    if (numImagenes === 0) {
+        contador.textContent = 'Ningún archivo seleccionado';
+        contador.style.color = '#64748b';
+        contador.style.fontWeight = 'normal';
+    } else {
+        contador.textContent = `${numImagenes} imagen${numImagenes > 1 ? 'es' : ''} adjunta${numImagenes > 1 ? 's' : ''}`;
+        contador.style.color = '#10b981';
+        contador.style.fontWeight = '600';
+    }
+}
+
+/**
+ * Mostrar notificacion temporal
+ */
+function mostrarNotificacion(mensaje, tipo = 'info') {
+    let notif = document.getElementById('notificacionPaste');
+    
+    if (!notif) {
+        notif = document.createElement('div');
+        notif.id = 'notificacionPaste';
+        notif.className = 'notificacion-paste';
+        notif.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+            font-size: 0.95rem;
+            z-index: 10001;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            color: white;
+        `;
+        document.body.appendChild(notif);
+    }
+    
+    const colores = {
+        success: '#10b981',
+        error: '#ef4444',
+        info: '#3b82f6',
+        warning: '#f59e0b'
+    };
+    
+    notif.style.background = colores[tipo] || colores.info;
+    notif.textContent = mensaje;
+    notif.style.opacity = '1';
+    notif.style.transform = 'translateX(0)';
+    
+    setTimeout(() => {
+        notif.style.opacity = '0';
+        notif.style.transform = 'translateX(400px)';
+    }, 3000);
 }
 
 // Exportar funciones para uso global
