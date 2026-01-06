@@ -1131,7 +1131,6 @@ function validarFormularioCompleto() {
         { id: 'compania', nombre: 'Compañía' },
         { id: 'plan', nombre: 'Plan' },
         { id: 'prima', nombre: 'Prima' },
-        { id: 'tipoVenta', nombre: 'Tipo de venta' },
         { id: 'operadorNombre', nombre: 'operador' },
     ];
     
