@@ -256,6 +256,8 @@ async function cargarDatosCliente(id) {
         if (notasError) console.warn('⚠️ Error al cargar notas:', notasError);
         console.log(`✅ ${notasData?.length || 0} notas cargadas`);
         
+        // En la sección donde cargas los datos de la póliza
+
         // Rellenar formulario
         rellenarFormulario(clienteData, polizaData, dependientesData, notasData);
         

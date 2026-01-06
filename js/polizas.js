@@ -242,9 +242,9 @@ function renderizarTabla() {
             <td data-label="Plan">${poliza.plan || '-'}</td>
             <td data-label="Prima">$${poliza.prima || '0.00'}</td>
             <td data-label="Agente">${poliza.agente_nombre || '-'}</td>
-            <td data-label="Efectividad">${poliza.fecha_efectividad ? new Date(poliza.fecha_efectividad).toLocaleDateString('es-ES') : '-'}</td>
-            <td data-label="Creación">${poliza.created_at ? new Date(poliza.created_at).toLocaleDateString('es-ES') : '-'}</td>
-            <td data-label="Modificación">${poliza.updated_at ? new Date(poliza.updated_at).toLocaleDateString('es-ES') : '-'}</td>
+            <td data-label="Efectividad">${formatoUS(poliza.fecha_efectividad)}</td>
+            <td data-label="Creación">${formatoUS(poliza.created_at)}</td>
+            <td data-label="Modificación">${formatearFechaHora(poliza.updated_at)}</td>
         `;
         
         tbody.appendChild(tr);
@@ -272,8 +272,8 @@ function crearFilaPoliza(poliza) {
     
     // Formatear fechas
     const fechaEfectividad = poliza.fecha_efectividad ? formatoUS(poliza.fecha_efectividad) : '--/--/----';
-    const fechaCreacion = poliza.created_at ? formatoUS(poliza.created_at) : '--/--/----';
-    const fechaModificacion = poliza.updated_at ? formatoUS(poliza.updated_at) : '--/--/----';
+    const fechaCreacion = poliza.created_at ? formatearFecha(poliza.created_at) : '--/--/----';
+    const fechaModificacion = poliza.updated_at ? formatearFecha(poliza.updated_at) : '--/--/----';
     
     // Formatear prima
     const prima = poliza.prima ? `$${parseFloat(poliza.prima).toFixed(2)}` : '$0.00';
@@ -802,6 +802,53 @@ function actualizarEstadisticas(polizas) {
     if (elementoActivas) elementoActivas.textContent = activas;
     if (elementoCanceladas) elementoCanceladas.textContent = canceladas;
     if (elementoProximas) elementoProximas.textContent = proximas;
+}
+
+// ============================================
+// FORMATEAR FECHA - FORMATO USA (MM/DD/YYYY)
+// ============================================
+
+function formatearFecha(fecha) {
+    if (!fecha) return '-';
+    
+    // Extraer solo la parte de fecha (YYYY-MM-DD)
+    const fechaStr = fecha.split('T')[0];
+    const [year, month, day] = fechaStr.split('-');
+    
+    // Retornar en formato MM/DD/YYYY (USA)
+    return `${month}/${day}/${year}`;
+}
+
+// Formatear fecha con hora - FORMATO USA (MM/DD/YYYY HH:MM)
+function formatearFechaHora(fecha) {
+    if (!fecha) return '-';
+    
+    const date = new Date(fecha);
+    
+    // Extraer componentes
+    const mes = String(date.getMonth() + 1).padStart(2, '0');
+    const dia = String(date.getDate()).padStart(2, '0');
+    const anio = date.getFullYear();
+    const hora = String(date.getHours()).padStart(2, '0');
+    const minutos = String(date.getMinutes()).padStart(2, '0');
+    
+    // Formato MM/DD/YYYY HH:MM
+    return `${mes}/${dia}/${anio} ${hora}:${minutos}`;
+}
+
+// Formatear fecha solo con mes y día corto (opcional)
+function formatearFechaCorta(fecha) {
+    if (!fecha) return '-';
+    
+    const date = new Date(fecha);
+    const meses = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const mes = meses[date.getMonth()];
+    const dia = date.getDate();
+    const anio = date.getFullYear();
+    
+    // Formato: Jan 5, 2026
+    return `${mes} ${dia}, ${anio}`;
 }
 
 // ============================================
