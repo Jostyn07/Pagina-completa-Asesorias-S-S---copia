@@ -1039,10 +1039,16 @@ async function cargarNotas(clienteId) {
                     <div class="nota-mensaje">${nota.mensaje || ''}</div>
                     ${nota.imagenes && nota.imagenes.length > 0 ? `
                         <div class="nota-imagenes">
-                            ${nota.imagenes.map(img => `
-                                <img src="${img}" alt="Imagen" 
-                                     style="max-width: 150px; border-radius: 8px; margin: 5px; cursor: pointer;" 
-                                     onclick="verImagenCompleta('${img}')">
+                            ${nota.imagenes.map((img, index) => `
+                                <div class="nota-imagen-thumb" 
+                                    onclick="abrirModalImagen('${img}', ${JSON.stringify(nota.imagenes).replace(/"/g, '&quot;')}, ${index})"
+                                    data-tooltip="Click para ampliar">
+                                    <span class="imagen-numero">${index + 1}</span>
+                                    <img src="${img}" 
+                                        alt="Imagen ${index + 1}"
+                                        loading="lazy"
+                                        onload="this.classList.add('loaded')">
+                                </div>
                             `).join('')}
                         </div>
                     ` : ''}
@@ -2094,7 +2100,7 @@ function cancelarNota() {
 }
 
 function previsualizarImagenesNota() {
-    const input = document.getElementById('imagenNota');
+    const input = document.getElementById('notaImagen');
     if (!input || !input.files) return;
     
     const preview = document.getElementById('imagenesPreview');
@@ -2943,6 +2949,174 @@ document.addEventListener('DOMContentLoaded', async function() {
     await mostrarBotonArchivar();
     await mostrarBotonEliminar();
 });
+
+// ============================================
+// MANEJO DE SUB-PESTAÑAS DE SEGUIMIENTO
+// ============================================
+
+/**
+ * Inicializar sub-pestañas de seguimiento (Agente 3.5, Estado Compañía, etc.)
+ */
+function inicializarSubPestanas() {
+    const botonesSubPestanas = document.querySelectorAll('.tab-btn-poliza');
+    
+    botonesSubPestanas.forEach(boton => {
+        boton.addEventListener('click', function() {
+            const target = this.getAttribute('data-target');
+            cambiarSubPestana(target);
+        });
+    });
+    
+    console.log('✅ Sub-pestañas de seguimiento inicializadas');
+}
+
+/**
+ * Cambiar entre sub-pestañas
+ */
+function cambiarSubPestana(targetTab) {
+    // Desactivar todos los botones
+    document.querySelectorAll('.tab-btn-poliza').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Ocultar todo el contenido
+    document.querySelectorAll('.tab-poliza').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Activar el botón seleccionado
+    const botonActivo = document.querySelector(`.tab-btn-poliza[data-target="${targetTab}"]`);
+    if (botonActivo) {
+        botonActivo.classList.add('active');
+    }
+    
+    // Mostrar el contenido seleccionado
+    const contenidoActivo = document.querySelector(`.tab-poliza[data-tab="${targetTab}"]`);
+    if (contenidoActivo) {
+        contenidoActivo.classList.add('active');
+    }
+}
+
+// ============================================
+// FUNCIONES AGENTE 3.5
+// ============================================
+
+/**
+ * Cargar datos de Agente 3.5 en el formulario
+ */
+function cargarAgente35(poliza) {
+    if (!poliza) return;
+    
+    // Cargar estado
+    const selectEstado = document.getElementById('agente35_estado');
+    if (selectEstado && poliza.agente35_estado) {
+        selectEstado.value = poliza.agente35_estado;
+    }
+    
+    // Cargar notas
+    const textareaNotas = document.getElementById('agente35_notas');
+    if (textareaNotas) {
+        textareaNotas.value = poliza.agente35_notas || '';
+    }
+    
+    // Cargar fecha de actualización
+    const inputFecha = document.getElementById('agente35_fecha');
+    if (inputFecha) {
+        if (poliza.agente35_fecha_actualizacion) {
+            inputFecha.value = formatearFechaHora(poliza.agente35_fecha_actualizacion);
+        } else {
+            inputFecha.value = 'Sin actualizar';
+        }
+    }
+    
+    // Cargar quién actualizó
+    const inputActualizadoPor = document.getElementById('agente35_actualizado_por');
+    if (inputActualizadoPor) {
+        inputActualizadoPor.value = poliza.agente35_actualizado_por || 'Sin actualizar';
+    }
+    
+    console.log('✅ Datos de Agente 3.5 cargados');
+}
+
+/**
+ * Obtener datos de Agente 3.5 del formulario para guardar
+ */
+function obtenerDatosAgente35() {
+    const estado = document.getElementById('agente35_estado')?.value || null;
+    const notas = document.getElementById('agente35_notas')?.value || null;
+    
+    // Obtener usuario actual
+    const usuarioData = localStorage.getItem('usuario');
+    const usuario = usuarioData ? JSON.parse(usuarioData) : null;
+    
+    return {
+        agente35_estado: estado,
+        agente35_notas: notas,
+        agente35_fecha_actualizacion: estado ? new Date().toISOString() : null,
+        agente35_actualizado_por: estado ? (usuario?.nombre || usuario?.email || 'Usuario') : null
+    };
+}
+
+/**
+ * Formatear fecha con hora (MM/DD/YYYY HH:MM)
+ */
+function formatearFechaHora(fecha) {
+    if (!fecha) return '-';
+    
+    try {
+        const date = new Date(fecha);
+        
+        const mes = String(date.getMonth() + 1).padStart(2, '0');
+        const dia = String(date.getDate()).padStart(2, '0');
+        const anio = date.getFullYear();
+        const hora = String(date.getHours()).padStart(2, '0');
+        const minutos = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${mes}/${dia}/${anio} ${hora}:${minutos}`;
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
+        return '-';
+    }
+}
+
+/**
+ * Obtener badge HTML para el estado de Agente 3.5
+ */
+function obtenerBadgeAgente35(estado) {
+    if (!estado) {
+        return '<span class="badge-agente35 sin-estado">Sin estado</span>';
+    }
+    
+    const badges = {
+        'Procesado': '<span class="badge-agente35 procesado">✓ Procesado</span>',
+        'Pendiente': '<span class="badge-agente35 pendiente">⏳ Pendiente</span>',
+        'Cambio necesario': '<span class="badge-agente35 cambio">⚠ Cambio necesario</span>'
+    };
+    
+    return badges[estado] || '<span class="badge-agente35 sin-estado">-</span>';
+}
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    inicializarSubPestanas();
+});
+
+// También inicializar si el script se carga después del DOMContentLoaded
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(inicializarSubPestanas, 100);
+}
+
+// Exportar funciones para uso global
+window.inicializarSubPestanas = inicializarSubPestanas;
+window.cambiarSubPestana = cambiarSubPestana;
+window.cargarAgente35 = cargarAgente35;
+window.obtenerDatosAgente35 = obtenerDatosAgente35;
+window.obtenerBadgeAgente35 = obtenerBadgeAgente35;
+window.formatearFechaHora = formatearFechaHora;
 
 // ============================================
 // LOG FINAL

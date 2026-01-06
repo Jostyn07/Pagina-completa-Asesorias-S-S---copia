@@ -1,0 +1,340 @@
+/* ============================================
+   THUMBNAILS EN NOTAS Y MODAL DE IMAGEN
+   ============================================ */
+
+/* Contenedor de imágenes en notas guardadas */
+.nota-imagenes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+    max-width: 400px; /* Limitar ancho máximo */
+}
+
+/* Thumbnail individual */
+.nota-imagen-thumb {
+    position: relative;
+    width: 100%;
+    padding-top: 100%; /* Aspect ratio 1:1 cuadrado */
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #f1f5f9;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nota-imagen-thumb:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+.nota-imagen-thumb img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.3s ease;
+}
+
+.nota-imagen-thumb:hover img {
+    opacity: 0.85;
+}
+
+/* Icono de zoom al hacer hover */
+.nota-imagen-thumb::after {
+    content: '🔍';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.nota-imagen-thumb:hover::after {
+    opacity: 1;
+}
+
+/* Badge con número de imagen */
+.imagen-numero {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    z-index: 2;
+}
+
+/* ============================================
+   MODAL DE IMAGEN AMPLIADA
+   ============================================ */
+
+.modal-imagen {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-imagen.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Contenedor de la imagen */
+.modal-imagen-contenedor {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Imagen ampliada */
+.modal-imagen-contenedor img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: zoomIn 0.3s ease;
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Botón cerrar */
+.modal-imagen-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10001;
+}
+
+.modal-imagen-close:hover {
+    background: #f1f5f9;
+    transform: scale(1.1) rotate(90deg);
+}
+
+.modal-imagen-close .material-symbols-rounded {
+    font-size: 28px;
+    color: #1e293b;
+}
+
+/* Controles de navegación (si hay múltiples imágenes) */
+.modal-imagen-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.modal-imagen-nav:hover {
+    background: white;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.modal-imagen-nav.prev {
+    left: 20px;
+}
+
+.modal-imagen-nav.next {
+    right: 20px;
+}
+
+.modal-imagen-nav .material-symbols-rounded {
+    font-size: 32px;
+    color: #1e293b;
+}
+
+/* Contador de imágenes */
+.modal-imagen-contador {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Info de la imagen (opcional) */
+.modal-imagen-info {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    max-width: 80%;
+    text-align: center;
+}
+
+/* Loading state */
+.modal-imagen-contenedor.loading::after {
+    content: '';
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    /* Thumbnails más grandes en móvil */
+    .nota-imagenes {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+    }
+    
+    /* Modal */
+    .modal-imagen {
+        padding: 10px;
+    }
+    
+    .modal-imagen-close {
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .modal-imagen-nav {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .modal-imagen-nav.prev {
+        left: 10px;
+    }
+    
+    .modal-imagen-nav.next {
+        right: 10px;
+    }
+    
+    .modal-imagen-contador {
+        bottom: 20px;
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+}
+
+/* Dark mode support (opcional) */
+@media (prefers-color-scheme: dark) {
+    .nota-imagen-thumb {
+        background: #1e293b;
+    }
+    
+    .modal-imagen {
+        background: rgba(0, 0, 0, 0.98);
+    }
+}
+
+/* Efecto de carga suave */
+.nota-imagen-thumb img {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.nota-imagen-thumb img.loaded {
+    opacity: 1;
+}
+
+/* Tooltip en thumbnails */
+.nota-imagen-thumb[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+.nota-imagen-thumb:hover[data-tooltip]::before {
+    opacity: 1;
+}

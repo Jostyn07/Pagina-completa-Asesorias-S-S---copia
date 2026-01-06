@@ -238,6 +238,7 @@ function renderizarTabla() {
                     ${poliza.estado_mercado || 'Pendiente'}
                 </span>
             </td>
+            <td data-label="Agente 3.5">${obtenerBadgeAgente35(poliza.agente35_estado)}</td>
             <td data-label="Compañía">${poliza.compania || '-'}</td>
             <td data-label="Plan">${poliza.plan || '-'}</td>
             <td data-label="Prima">$${poliza.prima || '0.00'}</td>
@@ -392,6 +393,10 @@ async function abrirDetalles(polizaId) {
                         <div class="detalle-item">
                             <label>Crédito fiscal</label>
                             <p>$${parseFloat(poliza.credito_fiscal || 0).toFixed(2)}</p>
+                        </div>
+                        <div class="detalle-item">
+                            <label>Estado</label>
+                            <p>${obtenerBadgeEstado(poliza.estado_mercado || 'pendiente')}</p>
                         </div>
                         <div class="detalle-item">
                             <label>Estado</label>
@@ -1553,3 +1558,23 @@ document.addEventListener('click', function(event) {
         cerrarModalFiltros();
     }
 });
+// ============================================
+// FUNCIÓN PARA BADGE DE AGENTE 3.5
+// ============================================
+
+/**
+ * Obtener badge HTML para el estado de Agente 3.5
+ */
+function obtenerBadgeAgente35(estado) {
+    if (!estado) {
+        return '<span class="badge-agente35 sin-estado">Sin estado</span>';
+    }
+    
+    const badges = {
+        'Procesado': '<span class="badge-agente35 procesado">✓ Procesado</span>',
+        'Pendiente': '<span class="badge-agente35 pendiente">⏳ Pendiente</span>',
+        'Cambio necesario': '<span class="badge-agente35 cambio">⚠ Cambio necesario</span>'
+    };
+    
+    return badges[estado] || '<span class="badge-agente35 sin-estado">-</span>';
+}

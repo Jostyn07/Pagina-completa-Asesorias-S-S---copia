@@ -4143,3 +4143,490 @@ textarea:focus {
     from { opacity: 1; }
     to { opacity: 0; }
 }
+
+/* ============================================
+   FORMATEO AUTOMÁTICO DE FECHAS
+   ============================================ */
+
+/* Input de fecha */
+input[data-type="date"],
+input.fecha-input {
+    letter-spacing: 1px;
+}
+
+/* Fecha válida */
+input.fecha-valida {
+    border-color: #10b981 !important;
+    background-color: #f0fdf4 !important;
+}
+
+/* Fecha inválida */
+input.fecha-invalida {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+}
+
+/* Mensaje de error */
+.fecha-error {
+    display: none;
+    color: #ef4444;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+.fecha-error::before {
+    content: "⚠️ ";
+}
+
+/* Placeholder mejorado */
+input[data-type="date"]::placeholder,
+input.fecha-input::placeholder {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* ============================================
+   SUB-PESTAÑAS DE SEGUIMIENTO (AGENTE 3.5, ETC)
+   ============================================ */
+
+/* Navegación de sub-pestañas */
+.poliza-tabs-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 12px;
+    overflow-x: auto;
+    flex-wrap: wrap;
+}
+
+/* Botones de sub-pestañas */
+.tab-btn-poliza {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.tab-btn-poliza:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
+    transform: translateY(-2px);
+}
+
+.tab-btn-poliza.active {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    border-color: #2563eb;
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.tab-btn-poliza.active .material-symbols-rounded {
+    color: white;
+}
+
+.tab-btn-poliza .material-symbols-rounded {
+    font-size: 20px;
+    color: #64748b;
+}
+
+/* Contenido de sub-pestañas */
+.tab-poliza {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-poliza.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   ESTILOS ESPECÍFICOS AGENTE 3.5
+   ============================================ */
+
+/* Badge de estado Agente 3.5 en tabla de pólizas */
+.badge-agente35 {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-agente35.procesado {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.badge-agente35.pendiente {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fbbf24;
+}
+
+.badge-agente35.cambio {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.badge-agente35.sin-estado {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+/* Campos solo lectura */
+input[readonly] {
+    background-color: #f1f5f9 !important;
+    cursor: not-allowed !important;
+    color: #64748b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .poliza-tabs-nav {
+        flex-wrap: nowrap;
+        overflow-x: scroll;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .tab-btn-poliza {
+        flex-shrink: 0;
+        font-size: 0.85rem;
+        padding: 10px 15px;
+    }
+}
+
+/* ============================================
+   ESTILOS PARA CTRL+V Y NOTIFICACIONES
+   ============================================ */
+
+/* Notificación toast para feedback */
+.notificacion-paste {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 24px;
+    background: #10b981;
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    font-size: 0.95rem;
+    z-index: 10001;
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: none;
+}
+
+.notificacion-paste.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Info sobre la imagen en preview */
+.imagen-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    color: white;
+    font-size: 0.75rem;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.imagen-preview:hover .imagen-info {
+    opacity: 1;
+}
+
+/* Mejorar textarea para indicar zona de paste */
+#nuevaNota {
+    transition: all 0.3s ease;
+}
+
+#nuevaNota:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Indicador visual cuando se puede pegar */
+#nuevaNota::placeholder {
+    color: #94a3b8;
+}
+
+#nuevaNota:focus::placeholder {
+    color: #cbd5e1;
+}
+
+/* Animación para nuevas imágenes agregadas */
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.imagen-preview {
+    animation: aparecer 0.3s ease;
+}
+
+/* Mejorar botón de adjuntar */
+.btn-attach {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-attach::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-attach:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* Contador de imágenes mejorado */
+#archivosSeleccionados {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    transition: all 0.3s ease;
+}
+
+#archivosSeleccionados::before {
+    content: '📎';
+    font-size: 1rem;
+}
+
+/* Área de drop para arrastrar archivos (opcional) */
+.nota-attachments {
+    position: relative;
+}
+
+.nota-attachments.dragover {
+    background: #dbeafe;
+    border-color: #3b82f6;
+}
+
+.nota-attachments.dragover::after {
+    content: '📥 Suelta aquí para adjuntar';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #3b82f6;
+    font-weight: 700;
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+
+/* Mejorar acciones de nota */
+.nota-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #e2e8f0;
+}
+
+.nota-actions button {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efecto ripple en botones */
+.nota-actions button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.nota-actions button:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Badge de cantidad de imágenes */
+.imagen-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: 8px;
+}
+
+/* Efecto hover en previsualizaciones */
+.imagen-preview {
+    position: relative;
+    cursor: pointer;
+}
+
+.imagen-preview::before {
+    content: '🔍';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.imagen-preview:hover::before {
+    opacity: 1;
+}
+
+.imagen-preview:hover img {
+    filter: brightness(0.7);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .notificacion-paste {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        text-align: center;
+    }
+    
+    .nota-actions {
+        flex-direction: column;
+    }
+    
+    .nota-actions button {
+        width: 100%;
+    }
+}
+
+/* Loading state para cuando se procesa imagen */
+.procesando-imagen {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.procesando-imagen::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid #fff;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Tooltip informativo */
+.tooltip-paste {
+    position: relative;
+}
+
+.tooltip-paste::after {
+    content: 'Presiona Ctrl+V para pegar imágenes';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    background: #1e293b;
+    color: white;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    margin-bottom: 8px;
+}
+
+.tooltip-paste::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1e293b;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tooltip-paste:hover::after,
+.tooltip-paste:hover::before {
+    opacity: 1;
+}
+

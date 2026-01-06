@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/cliente.css">
+    <link rel="stylesheet" href="../css/thumbnails_modal_styles.css">
+
 </head>
 <body>
     <!-- SIDEBAR UNIFICADO -->
@@ -172,10 +174,6 @@
                     <span class="material-symbols-rounded">chat</span>
                     💬 Notas
                 </button>
-                <button class="tab-btn-poliza" data-target="agente35">
-                    <span class="material-symbols-rounded">smart_toy</span>
-                    Agente 3.5
-                </button>
             </div>
         </div>
 
@@ -256,7 +254,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Fecha de nacimiento <span class="required">*</span></label>
-                                <input type="text" id="fechaNacimiento" name="fechaNacimiento" required>
+                                <input type="text" id="fechaNacimiento" name="fecha_nacimiento" data-type="date" placeholder="MM/DD/YYYY" maxlength="10">                                
                                 <span class="validation-message"></span>
                             </div>
                             <div class="form-group">
@@ -555,257 +553,285 @@
                 </div>
             </div>
 
-            <!-- TAB 3: ESTADO Y SEGUIMIENTO -->
+
+<!-- TAB 3: ESTADO Y SEGUIMIENTO -->
             <div class="tab-content" id="tab-estado">
-                <!--===========================================================
-                    Estado en compañia
-                    =========================================================== -->
                 
-                <div class="form-section">
-                    <div class="section-header" onclick="toogleSection(this)">
-                        <div class="section-title">
-                            <span class="material-symbols-rounded">business</span>
-                            <h2>Estado en compañia</h2>
+                <!-- SUB-PESTAÑAS DE SEGUIMIENTO -->
+                <div class="poliza-tabs-nav">
+                    <button type="button" class="tab-btn-poliza active" data-target="estado-compania">
+                        <span class="material-symbols-rounded">business</span>
+                        Estado Compañía
+                    </button>
+                    <button type="button" class="tab-btn-poliza" data-target="estado-mercado">
+                        <span class="material-symbols-rounded">public</span>
+                        Estado Mercado
+                    </button>
+                    <button type="button" class="tab-btn-poliza" data-target="agente35">
+                        <span class="material-symbols-rounded">smart_toy</span>
+                        Agente 3.5
+                    </button>
+                    <button type="button" class="tab-btn-poliza" data-target="seguimiento">
+                        <span class="material-symbols-rounded">track_changes</span>
+                        Seguimiento
+                    </button>
+                    <button type="button" class="tab-btn-poliza" data-target="historial">
+                        <span class="material-sy mbols-rounded">history</span>
+                        <span>Historial</span>
+                    </button>
+                </div>
+
+                <!-- SUB-TAB: ESTADO COMPAÑÍA -->
+                <div class="tab-poliza active" data-tab="estado-compania">
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-title">
+                                <span class="material-symbols-rounded">business</span>
+                                <h2>Estado en Compañía</h2>
+                            </div>
                         </div>
-                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
-                    </div>
-                    <div class="section-content">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Fecha de revisión</label>
-                                <input type="text" id="fechaRevisionCompania" name="fechaRevisionCompania">
+                        <div class="section-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Fecha de revisión</label>
+                                    <input type="text" id="fechaRevisionCompania" name="fechaRevisionCompania">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nombre del agente</label>
+                                    <input type="text" name="nombreAgenteCompania" id="nombreAgenteCompania">
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label>Nombre del agente</label>
-                                <input type="text" name="nombreAgenteCompania" id="nombreAgenteCompania">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="estadoCompania"></label>
-                                <select name="estadoCompania" id="estadoCompania">
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Activo">Activo</option>
-                                    <option value="Cancelado">Cancelado</option>
-                                    <option value="Pendiente">Pendiente</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>
-                                    Estado Actual
-                                    <span class="badge" id="badgeEstadoCompania">Sin estado</span>
-                                </label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="estadoCompania">Estado</label>
+                                    <select name="estadoCompania" id="estadoCompania">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Activo">Activo</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                        <option value="Pendiente">Pendiente</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        Estado Actual
+                                        <span class="badge" id="badgeEstadoCompania">Sin estado</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!--===========================================================
-                Estado en mercado
-                =========================================================== -->
-                <div class="form-section" id="seccionEstadoMercado">
-                    <div class="section-header" onclick="toggleSection(this)">
-                        <div class="section-title">
-                            <span class="material-symbols-rounded">public</span>
-                            <h2>Estado en mercado</h2>
-                            <span class="badge badge-warning" id="badgeAdminMercado" style="display: none;">
-                                <span class="material-symbols-rounded">admin_panel_settings</span>
-                            </span>
-                        </div>
-                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
-                    </div>
-                    <div class="section-content">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Fecha de revision</label>
-                                <input type="text" id="fechaRevisionMercado" name="fechaRevisionMercado">
-                            </div>
-                            <div class="form-group">
-                                <label>Estado en mercado</label>
-                                <select name="estadoMercado" id="estadoMercado">
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Activo">Activo</option>
-                                    <option value="Inactivo">Inactivo</option>
-                                    <option value="Cancelado">Cancelado</option>
-                                    <option value="Robado">Robado</option>
-                                    <option value="Doble póliza">Doble póliza</option>
-                                    <option value="Triple póliza">Triple póliza</option>
-                                    <option value="No registra">No registra</option>
-                                </select>
+
+                <!-- SUB-TAB: ESTADO MERCADO -->
+                <div class="tab-poliza" data-tab="estado-mercado">
+                    <div class="form-section" id="seccionEstadoMercado">
+                        <div class="section-header">
+                            <div class="section-title">
+                                <span class="material-symbols-rounded">public</span>
+                                <h2>Estado en Mercado</h2>
+                                <span class="badge badge-warning" id="badgeAdminMercado" style="display: none;">
+                                    <span class="material-symbols-rounded">admin_panel_settings</span>
+                                </span>
                             </div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Agente</label>
-                                <input type="text" name="nombreAgenteMercado" id="nombreAgenteMercado" placeholder="Ej: Joel Nieves - 19952518">
+                        <div class="section-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Fecha de revisión</label>
+                                    <input type="text" id="fechaRevisionMercado" name="fechaRevisionMercado">
+                                </div>
+                                <div class="form-group">
+                                    <label>Estado en mercado</label>
+                                    <select name="estadoMercado" id="estadoMercado">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Activo">Activo</option>
+                                        <option value="Inactivo">Inactivo</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                        <option value="Robado">Robado</option>
+                                        <option value="Doble póliza">Doble póliza</option>
+                                        <option value="Triple póliza">Triple póliza</option>
+                                        <option value="No registra">No registra</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="">
-                                    Estado Actual
-                                    <span class="badge" id="badgeEstadoMercado">Sin estado</span>
-                                </label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Agente</label>
+                                    <input type="text" name="nombreAgenteMercado" id="nombreAgenteMercado" placeholder="Ej: Joel Nieves - 19952518">
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        Estado Actual
+                                        <span class="badge" id="badgeEstadoMercado">Sin estado</span>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group full-width">
-                                <label for="">Observación</label>
-                                <textarea name="observacionMercado" id="observacionMercado" rows="3" placeholder="Ej: Cliente registra activo desde..."></textarea>
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label>Observación</label>
+                                    <textarea name="observacionMercado" id="observacionMercado" rows="3" placeholder="Ej: Cliente registra activo desde..."></textarea>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="">Estado de documentos</label>
-                                <select name="estadoDocumentos" id="estadoDocumentos">
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="Incompleto">Incompleto</option>
-                                    <option value="A la espera de verificación">A la espera de verificación</option>
-                                    <option value="Rechazado">Rechazado</option>
-                                    <option value="Documentos completos">Documentos completos</option>
-                                </select>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Estado de documentos</label>
+                                    <select name="estadoDocumentos" id="estadoDocumentos">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="Incompleto">Incompleto</option>
+                                        <option value="A la espera de verificación">A la espera de verificación</option>
+                                        <option value="Rechazado">Rechazado</option>
+                                        <option value="Documentos completos">Documentos completos</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        Estado Documentos
+                                        <span class="badge" id="badgeEstadoDocumentos">Sin estado</span>
+                                    </label>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label>
-                                    Estado Documentos
-                                    <span class="badge" id="badgeEstadoDocumentos">Sin estado</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="alert alert-warning" id="mensajeNoAdmin" style="display: none;">
-                            <span class="material-symbols-rounded">lock</span>
-                            <div>
-                                <strong>Sin permisos de edición</strong>
-                                <p>Solo los administradores pueden modificar el Estado en Mercado</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- ============================================
-                3) SEGUIMIENTO
-                ============================================ -->
-                <div class="form-section">
-                    <div class="section-header" onclick="toggleSection(this)">
-                        <div class="section-title">
-                            <span class="material-symbols-rounded">track_changes</span>
-                            <h2>Seguimiento</h2>
-                        </div>
-                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
-                    </div>
-                    <div class="section-content">
-                        
-                        <!-- Botón para agregar nuevo seguimiento -->
-                        <div class="seguimiento-actions">
-                            <button type="button" class="btn-add-seguimiento" onclick="agregarSeguimiento()">
-                                <span class="material-symbols-rounded">add_circle</span>
-                                Agregar Seguimiento
-                            </button>
-                        </div>
-                        <!-- Lista de seguimientos -->
-                        <div id="seguimientosContainer" class="seguimientos-list">
-                            <!-- Se llenará dinámicamente -->
-                            <div class="empty-state">
-                                <span class="material-symbols-rounded">assignment</span>
-                                <p>No hay seguimientos registrados</p>
-                                <small>Click en "Agregar Seguimiento" para crear uno nuevo</small>
+                            <div class="alert alert-warning" id="mensajeNoAdmin" style="display: none;">
+                                <span class="material-symbols-rounded">lock</span>
+                                <div>
+                                    <strong>Sin permisos de edición</strong>
+                                    <p>Solo los administradores pueden modificar el Estado en Mercado</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- ============================================
-                HISTORIAL DE CAMBIOS
-                ============================================ -->
-                <div class="form-section">
-                    <div class="section-header" onclick="toggleSection(this)">
-                        <div class="section-title">
-                            <span class="material-symbols-rounded">history</span>
-                            <h2>Historial de Cambios</h2>
-                        </div>
-                        <span class="material-symbols-rounded toggle-icon">expand_less</span>
-                    </div>
-                    <div class="section-content">
-                        <div id="historialEstados" class="timeline-container">
-                            <!-- Se llenará dinámicamente con JavaScript -->
-                            <div class="empty-state">
-                                <span class="material-symbols-rounded">event_note</span>
-                                <p>No hay cambios de estado registrados</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- TAB: AGENTE 3.5 -->
+
+                <!-- SUB-TAB: AGENTE 3.5 -->
                 <div class="tab-poliza" data-tab="agente35">
                     <div class="form-section">
                         <div class="section-header">
-                            <div class="section-icon">
-                                <span class="material-symbols-rounded">smart_toy</span>
-                            </div>
                             <div class="section-title">
+                                <span class="material-symbols-rounded">smart_toy</span>
                                 <h2>Agente 3.5</h2>
-                                <p>Estado y notas del procesamiento automático</p>
+                                <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px;">Estado y notas del procesamiento automático</p>
                             </div>
                         </div>
 
-                        <div class="form-grid">
-                            <!-- Estado -->
-                            <div class="form-group">
-                                <label for="agente35_estado">
-                                    <span class="material-symbols-rounded">bookmark</span>
-                                    Estado
-                                </label>
-                                <select id="agente35_estado" name="agente35_estado">
-                                    <option value="">Seleccionar estado</option>
-                                    <option value="Procesado">Procesado</option>
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="Cambio necesario">Cambio necesario</option>
-                                </select>
+                        <div class="section-content">
+                            <div class="form-row">
+                                <!-- Estado -->
+                                <div class="form-group">
+                                    <label for="agente35_estado">
+                                        <span class="material-symbols-rounded">bookmark</span>
+                                        Estado
+                                    </label>
+                                    <select id="agente35_estado" name="agente35_estado">
+                                        <option value="">Seleccionar estado</option>
+                                        <option value="Procesado">Procesado</option>
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="Cambio necesario">Cambio necesario</option>
+                                    </select>
+                                </div>
+
+                                <!-- Fecha actualización (solo lectura) -->
+                                <div class="form-group">
+                                    <label for="agente35_fecha">
+                                        <span class="material-symbols-rounded">schedule</span>
+                                        Última actualización
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="agente35_fecha" 
+                                        readonly 
+                                        style="background-color: #f1f5f9; cursor: not-allowed;"
+                                        placeholder="Sin actualizar"
+                                    >
+                                </div>
                             </div>
 
-                            <!-- Fecha actualización (solo lectura) -->
-                            <div class="form-group">
-                                <label for="agente35_fecha">
-                                    <span class="material-symbols-rounded">schedule</span>
-                                    Última actualización
-                                </label>
-                                <input 
-                                    type="text" 
-                                    id="agente35_fecha" 
-                                    readonly 
-                                    class="campo-bloqueado"
-                                    placeholder="Sin actualizar"
-                                >
+                            <div class="form-row">
+                                <!-- Notas -->
+                                <div class="form-group full-width">
+                                    <label for="agente35_notas">
+                                        <span class="material-symbols-rounded">note</span>
+                                        Notas
+                                    </label>
+                                    <textarea 
+                                        id="agente35_notas" 
+                                        name="agente35_notas" 
+                                        rows="4"
+                                        placeholder="Observaciones del agente 3.5..."
+                                    ></textarea>
+                                </div>
                             </div>
 
-                            <!-- Notas -->
-                            <div class="form-group full-width">
-                                <label for="agente35_notas">
-                                    <span class="material-symbols-rounded">note</span>
-                                    Notas
-                                </label>
-                                <textarea 
-                                    id="agente35_notas" 
-                                    name="agente35_notas" 
-                                    rows="4"
-                                    placeholder="Observaciones del agente 3.5..."
-                                ></textarea>
-                            </div>
-
-                            <!-- Actualizado por (solo lectura) -->
-                            <div class="form-group">
-                                <label for="agente35_actualizado_por">
-                                    <span class="material-symbols-rounded">person</span>
-                                    Actualizado por
-                                </label>
-                                <input 
-                                    type="text" 
-                                    id="agente35_actualizado_por" 
-                                    readonly 
-                                    class="campo-bloqueado"
-                                    placeholder="Sin actualizar"
-                                >
+                            <div class="form-row">
+                                <!-- Actualizado por (solo lectura) -->
+                                <div class="form-group">
+                                    <label for="agente35_actualizado_por">
+                                        <span class="material-symbols-rounded">person</span>
+                                        Actualizado por
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="agente35_actualizado_por" 
+                                        readonly 
+                                        style="background-color: #f1f5f9; cursor: not-allowed;"
+                                        placeholder="Sin actualizar"
+                                    >
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- SUB-TAB: SEGUIMIENTO -->
+                <div class="tab-poliza" data-tab="seguimiento">
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-title">
+                                <span class="material-symbols-rounded">track_changes</span>
+                                <h2>Seguimiento</h2>
+                            </div>
+                        </div>
+                        <div class="section-content">
+                            <!-- Botón para agregar nuevo seguimiento -->
+                            <div class="seguimiento-actions">
+                                <button type="button" class="btn-add-seguimiento" onclick="agregarSeguimiento()">
+                                    <span class="material-symbols-rounded">add_circle</span>
+                                    Agregar Seguimiento
+                                </button>
+                            </div>
+                            <!-- Lista de seguimientos -->
+                            <div id="seguimientosContainer" class="seguimientos-list">
+                                <div class="empty-state">
+                                    <span class="material-symbols-rounded">assignment</span>
+                                    <p>No hay seguimientos registrados</p>
+                                    <small>Click en "Agregar Seguimiento" para crear uno nuevo</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-TAB: HISTORIAL -->
+                <div class="tab-poliza" data-tab="historial">
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-title">
+                                <span class="material-symbols-rounded">history</span>
+                                <h2>Historial de Cambios</h2>
+                            </div>
+                        </div>
+                        <div class="section-content">
+                            <div id="historialEstados" class="timeline-container">
+                                <div class="empty-state">
+                                    <span class="material-symbols-rounded">event_note</span>
+                                    <p>No hay cambios de estado registrados</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
+
             <!-- TAB 4: MÉTODO DE PAGO -->
             <div class="tab-content" id="tab-pago">
                 <div class="form-section">
@@ -1278,5 +1304,8 @@
     <script src="../js/permisos.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/cliente_editar.js"></script>
+    <script src="../js/formatear_input_fechas.js"></script>
+    <script src="../js/pegar_imagen_ctrl_v.js"></script>
+    <script src="../js/modal_imagenes_navegacion.js"></script>
 </body>
 </html>
