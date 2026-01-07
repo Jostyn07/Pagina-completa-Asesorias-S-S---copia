@@ -613,7 +613,8 @@
                                         <option value="">Seleccionar...</option>
                                         <option value="Activo">Activo</option>
                                         <option value="Cancelado">Cancelado</option>
-                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="Pendiente">Inactivo</option>
+                                        <option value="Pre-member">Pre-member</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -684,10 +685,22 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>
-                                        Estado Documentos
-                                        <span class="badge" id="badgeEstadoDocumentos">Sin estado</span>
-                                    </label>
+                                    <label for="documentosPendientes">Documentos Pendientes</label>
+                                    <select name="documentosPendientes" id="documentosPendientes">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Documentos completos">Documentos completos</option>
+                                        <option value="Income">Income</option>
+                                        <option value="Estado migratorio">Estado migratorio</option>
+                                        <option value="carta de rechazo medicaid">Carta de rechazo medicaid</option>
+                                        <option value="Income y estado migratorio">Income y estado migratorio</option>
+                                        <option value="Income y carta de rechazo medicaid">Income y carta de rechazo medicaid</option>
+                                        <option value="Estado migratorio y carta de rechazo">Estado migratorio y carta de rechazo</option>
+                                        <option value="Income, estado migratorio y carta de rechazo medicaid">Income, estado migratorio y carta de rechazo medicaid</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fechaPlazoDocumento">Fecha de plazo de documento</label>
+                                    <input type="text" name="fechaPlazoDocumento" id="fechaPlazoDocumento" data-type="date">
                                 </div>
                             </div>
                             <div class="alert alert-warning" id="mensajeNoAdmin" style="display: none;">

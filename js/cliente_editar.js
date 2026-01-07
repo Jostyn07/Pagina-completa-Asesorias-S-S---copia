@@ -183,10 +183,6 @@ async function aplicarPermisosEstadoMercado() {
 }
 
 // ============================================
-// VERIFICAR ACCESO AL CLIENTE
-// ============================================
-
-// ============================================
 // CARGAR DATOS DEL CLIENTE
 // ============================================
 
@@ -411,6 +407,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if(poliza.portal_npn) document.getElementById('portalNpn').value = poliza.portal_npn || '';
        if(poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad || '';
        if(poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza || '';
+       if(poliza.documentos_pendientes) document.getElementById('documentosPendientes').value = poliza.documentos_pendientes;
         
         // Fechas de la póliza
         const fechaEfectividadInput = document.getElementById('fechaEfectividad');
@@ -446,6 +443,8 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
             const fechaFinalUS = formatoUS(poliza.fecha_final_cobertura);
             displayFinal.textContent = fechaFinalUS;
         }
+
+        if(poliza.fecha_plazo_documentos) document.getElementById('fechaPlazoDocumento').value = poliza.fecha_plazo_documentos;
     }
     
     // DEPENDIENTES
@@ -1702,6 +1701,8 @@ async function actualizarPoliza(polizaId, formData) {
         operador_nombre: formData.operadorNombre || null,
         agente_nombre: formData.agenteNombre || null,
         observaciones: formData.observaciones || null,
+        documentos_pendientes: formData.documentosPendientes || '-',
+        fecha_plazo_documentos: formData.fechaPlazoDocumento || '--/--/----',
         updated_at: new Date().toISOString()
     };
     
