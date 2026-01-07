@@ -1692,7 +1692,7 @@ async function actualizarPoliza(polizaId, formData) {
         plan: formData.plan,
         prima: parseFloat(formData.prima) || 0,
         credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
-        fecha_efectividad: formData.fechaEfectividad,
+        fecha_efectividad: formData.displayFechaEfectividad || formData.fechaEfectividad,
         fecha_inicial_cobertura: formData.fechaInicialCobertura,
         fecha_final_cobertura: formData.fechaFinalCobertura,
         member_id: formData.memberId || null,
