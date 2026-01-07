@@ -595,7 +595,7 @@ function crearTarjetaDependiente(count, dep, depId) {
                     <div class="dependiente-avatar">${iniciales}</div>
                     <div class="dependiente-card-nombre">
                         <h4>${dep.nombres} ${dep.apellidos}</h4>
-                        <small>${edad} años • ${dep.sexo === 'masculino' ? 'Masculino' : 'Femenino'}</small>
+                        <small>${edad} años • ${dep.sexo === 'Masculino' ? 'Masculino' : 'Femenino'}</small>
                     </div>
                 </div>
                 <div class="dependiente-card-acciones">
@@ -1755,7 +1755,7 @@ async function actualizarDependientes(clienteId, formData) {
             nombres: nombres,
             apellidos: formData[`dep_apellidos_${i}`] || '',
             fecha_nacimiento: formData[`dep_fecha_nacimiento_${i}`] || null,
-            sexo: formData[`dep_sexo_${i}`] || null, // ✅ CORREGIDO
+            sexo: formData[`dep_sexo_${i}`] || null,
             ssn: formData[`dep_ssn_${i}`] ? formData[`dep_ssn_${i}`].replace(/\D/g, '') : null,
             estado_migratorio: formData[`dep_estado_migratorio_${i}`] || null,
             relacion: formData[`dep_relacion_${i}`] || null,
