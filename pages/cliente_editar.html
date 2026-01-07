@@ -162,7 +162,7 @@
                     <span class="material-symbols-rounded">payment</span>
                     Método de Pago
                 </button>
-                <button class="tab-btn tab-comisiones" data-tab="comisiones" style="display: none;">
+                <button class="tab-btn tab-comisiones" data-tab="comisiones" style="display: none;" disabled>
                     <span class="material-symbols-rounded">payments</span>
                     💰 Comisiones
                 </button>
@@ -173,6 +173,11 @@
                 <button class="tab-btn" data-tab="notas">
                     <span class="material-symbols-rounded">chat</span>
                     💬 Notas
+                </button>
+                <button type="button" class="tab-btn" data-tab="historial">
+                    <span class="material-symbols-rounded">history</span>
+                    Historial
+                    <span id="historialCounter" class="tab-counter">(0)</span>
                 </button>
             </div>
         </div>
@@ -507,9 +512,9 @@
                                             <label>Fecha final cobertura:</label>
                                             <span id="displayFechaFinal">--/--/----</span>
                                         </div>
-                                        <div class="date-display">
+                                        <div class="date-display display-efectividad">
                                             <label>Fecha efectividad:</label>
-                                            <span id="displayFechaEfectividad">--/--/----</span>
+                                            <input type="text" id="displayFechaEfectividad" data-type="date" name="displayFechaEfectividad">
                                         </div>
                                         <small class="helper-text">
                                             <span class="material-symbols-rounded">info</span>
@@ -1086,6 +1091,108 @@
                 </div>
             </div>
 
+            <!-- ============================================
+            TAB DE HISTORIAL DE CAMBIOS
+            Agregar esto en cliente_editar.html
+            ============================================ -->
+
+            <button type="button" class="tab-btn" data-target="historial" style="display: none;">
+                <span class="material-symbols-rounded">history</span>
+                Historial
+                <span id="historialCounter" class="tab-counter">(0)</span>
+            </button>
+
+            <div id="tab-historial" class="tab-content">
+                <div class="tab-header">
+                    <h2>
+                        <span class="material-symbols-rounded">history</span>
+                        Historial de Cambios
+                    </h2>
+                    <div class="tab-actions">
+                        <button type="button" class="btn-secondary" onclick="filtrarHistorial()">
+                            <span class="material-symbols-rounded">filter_list</span>
+                            Filtrar
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="exportarHistorial()">
+                            <span class="material-symbols-rounded">download</span>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div id="historialFiltros" class="historial-filtros" style="display: none;">
+                    <div class="filtros-contenedor">
+                        <div class="filtro-grupo">
+                            <label>Tipo de Cambio</label>
+                            <select id="filtroTipoCambio" onchange="aplicarFiltrosHistorial()">
+                                <option value="">Todos</option>
+                                <option value="cliente_editado">Cliente Editado</option>
+                                <option value="poliza_editada">Póliza Editada</option>
+                                <option value="estado_cambiado">Estado Cambiado</option>
+                                <option value="nota_agregada">Nota Agregada</option>
+                                <option value="nota_eliminada">Nota Eliminada</option>
+                                <option value="asignacion_cambiada">Asignación Cambiada</option>
+                            </select>
+                        </div>
+
+                        <div class="filtro-grupo">
+                            <label>Usuario</label>
+                            <select id="filtroUsuario" onchange="aplicarFiltrosHistorial()">
+                                <option value="">Todos</option>
+                                <!-- Se llenará dinámicamente -->
+                            </select>
+                        </div>
+
+                        <div class="filtro-grupo">
+                            <label>Desde</label>
+                            <input type="date" id="filtroDesde" onchange="aplicarFiltrosHistorial()">
+                        </div>
+
+                        <div class="filtro-grupo">
+                            <label>Hasta</label>
+                            <input type="date" id="filtroHasta" onchange="aplicarFiltrosHistorial()">
+                        </div>
+
+                        <div class="filtro-grupo">
+                            <button type="button" class="btn-secondary" onclick="limpiarFiltrosHistorial()">
+                                <span class="material-symbols-rounded">clear</span>
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline de cambios -->
+                <div class="historial-timeline" id="historialTimeline">
+                    <!-- Se llenará dinámicamente con JavaScript -->
+                    <div class="empty-state">
+                        <span class="material-symbols-rounded">history</span>
+                        <p>No hay historial de cambios</p>
+                        <small>Los cambios se registrarán automáticamente</small>
+                    </div>
+                </div>
+
+                <!-- Loading state -->
+                <div id="historialLoading" class="loading-state" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Cargando historial...</p>
+                </div>
+
+                <!-- Paginación -->
+                <div id="historialPaginacion" class="paginacion" style="display: none;">
+                    <button type="button" class="btn-paginacion" id="btnAnterior" onclick="cargarHistorialPagina('anterior')">
+                        <span class="material-symbols-rounded">chevron_left</span>
+                        Anterior
+                    </button>
+                    <span id="paginaActual">Página 1</span>
+                    <button type="button" class="btn-paginacion" id="btnSiguiente" onclick="cargarHistorialPagina('siguiente')">
+                        Siguiente
+                        <span class="material-symbols-rounded">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- BOTONES DE ACCIÓN -->
             <div class="form-actions">
                 <button type="button" class="btn-cancel" onclick="cancelarFormulario()">
@@ -1202,6 +1309,8 @@
             </div>
         </div>
     </div>
+
+
 
     <!-- ============================================
     MODAL PARA SEGUIMIENTO

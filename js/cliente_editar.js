@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('✅ Todos los datos cargados correctamente');
     } catch (error) {
         console.error('❌ Error al cargar datos:', error);
-        alert('Error al cargar los datos: ' + error.message);
     }
     
     document.getElementById('clienteForm').addEventListener('submit', handleSubmit);
@@ -271,13 +270,17 @@ async function cargarDatosCliente(id) {
         }
 
         await aplicarPermisosEstadoMercado();
+        capturarDatosOriginales(clienteData , polizaData);
+    
+        if (document.querySelector('#historial.active')) {
+            await cargarHistorial(id);
+        }
         
         console.log('✅ Datos cargados correctamente');
         
     } catch (error) {
         console.error('❌ Error al cargar cliente:', error);
         alert(`Error al cargar los datos: ${error.message}`);
-        window.location.href = './polizas.html';
     }
 }
 
@@ -1107,6 +1110,8 @@ async function agregarNota(clienteId) {
             .single();
         
         if (error) throw error;
+
+        await registrarNotaAgregada(clienteId, mensaje);
         
         let imagenesHTML = '';
         if (imagenesNotaSeleccionadas.length > 0) {
@@ -1254,6 +1259,10 @@ function cambiarTab(tabName) {
     // Activar tab seleccionado
     document.getElementById(`tab-${tabName}`)?.classList.add('active');
     document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+
+    if (tabName === 'historial' && clienteId) {
+        cargarHistorial(clienteId);
+    }
 }
 
 function siguientePestana() {
@@ -1322,7 +1331,8 @@ function validarInfoGeneral() {
         { id: 'codigoPostal', nombre: 'Código postal' },
         { id: 'compania', nombre: 'Compañía' },
         { id: 'plan', nombre: 'Plan' },
-        { id: 'prima', nombre: 'Prima' }
+        { id: 'prima', nombre: 'Prima' },
+        { id: 'aplica', nombre: 'Tipo de registro'}
     ];
     
     for (const campo of camposRequeridos) {
@@ -2116,6 +2126,7 @@ async function enviarNota() {
 
 async function eliminarNota(notaId) {
     await confirmarEliminarNota(notaId);
+    await registrarNotaEliminada(clienteId, notaId);
 }
 
 function cancelarNota() {
@@ -2354,7 +2365,7 @@ async function cargarEstadoSeguimiento(polizaId) {
         if (poliza) {
             // ===== 1) ESTADO EN COMPAÑÍA =====
             if (poliza.fecha_revision_compania) {
-                document.getElementById('fechaRevisionCompania').value = formatoISO(poliza.fecha_revision_compania);
+                document.getElementById('fechaRevisionCompania').value = formatoUS(poliza.fecha_revision_compania);
             }
             if (poliza.nombre_agente_compania) {
                 document.getElementById('nombreAgenteCompania').value = poliza.nombre_agente_compania;
@@ -2964,7 +2975,6 @@ async function ejecutarArchivarCliente() {
 // Llamar al cargar
 document.addEventListener('DOMContentLoaded', async function() {
     await mostrarBotonArchivar();
-    await mostrarBotonEliminar();
 });
 
 // ============================================
@@ -3221,6 +3231,821 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
         notif.style.opacity = '0';
         notif.style.transform = 'translateX(400px)';
     }, 3000);
+}
+
+// ============================================
+// SISTEMA DE HISTORIAL DE CAMBIOS
+// Agregar a cliente_editar.js
+// ============================================
+
+// Variables globales para el historial
+let datosOriginalesCliente = {};
+let datosOriginalesPoliza = {};
+let historialPaginaActual = 1;
+let historialPorPagina = 20;
+
+/**
+ * Capturar datos originales al cargar el cliente
+ * Llamar en cargarDatosCliente()
+ */
+function capturarDatosOriginales(cliente, poliza) {
+    // Clonar profundamente los datos originales
+    datosOriginalesCliente = JSON.parse(JSON.stringify(cliente || {}));
+    datosOriginalesPoliza = JSON.parse(JSON.stringify(poliza || {}));
+    
+    console.log('📸 Datos originales capturados');
+}
+
+/**
+ * Comparar valores y determinar cambios
+ */
+function compararCambios(datosOriginales, datosNuevos, seccion) {
+    const cambios = [];
+    
+    // Obtener todas las claves únicas
+    const todasLasClaves = new Set([
+        ...Object.keys(datosOriginales),
+        ...Object.keys(datosNuevos)
+    ]);
+    
+    todasLasClaves.forEach(campo => {
+        const valorAnterior = datosOriginales[campo];
+        const valorNuevo = datosNuevos[campo];
+        
+        // Ignorar campos de sistema
+        const camposIgnorados = ['id', 'created_at', 'updated_at', 'cliente_id'];
+        if (camposIgnorados.includes(campo)) return;
+        
+        // Normalizar valores nulos
+        const anterior = valorAnterior === null || valorAnterior === undefined ? '' : String(valorAnterior);
+        const nuevo = valorNuevo === null || valorNuevo === undefined ? '' : String(valorNuevo);
+        
+        // Si hay diferencia, registrar
+        if (anterior !== nuevo) {
+            cambios.push({
+                campo: campo,
+                valorAnterior: anterior,
+                valorNuevo: nuevo,
+                seccion: seccion
+            });
+        }
+    });
+    
+    return cambios;
+}
+
+/**
+ * Registrar cambio en el historial
+ */
+async function registrarCambio(clienteId, tipoCambio, seccion, cambios) {
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        
+        if (!user) {
+            console.warn('⚠️ Usuario no autenticado, no se puede registrar cambio');
+            return;
+        }
+        
+        // Obtener información del usuario
+        const { data: usuarioData } = await supabaseClient
+            .from('usuarios')
+            .select('nombre')
+            .eq('email', user.email)
+            .single();
+        
+        const usuarioNombre = usuarioData?.nombre || user.email;
+        
+        // Registrar cada cambio individualmente
+        const registros = cambios.map(cambio => ({
+            cliente_id: clienteId,
+            tipo_cambio: tipoCambio,
+            seccion: cambio.seccion || seccion,
+            campo_modificado: formatearNombreCampo(cambio.campo),
+            valor_anterior: cambio.valorAnterior || null,
+            valor_nuevo: cambio.valorNuevo || null,
+            usuario_nombre: usuarioNombre,
+            usuario_email: user.email,
+            created_at: new Date().toISOString()
+        }));
+        
+        // Insertar en la base de datos
+        const { error } = await supabaseClient
+            .from('historial_cambios')
+            .insert(registros);
+        
+        if (error) throw error;
+        
+        console.log(`✅ ${cambios.length} cambio(s) registrado(s) en historial`);
+        
+        // Recargar historial si estamos en ese tab
+        if (document.querySelector('#historial.active')) {
+            await cargarHistorial(clienteId);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al registrar cambio en historial:', error);
+    }
+}
+
+/**
+ * Formatear nombre de campo para mostrarlo bonito
+ */
+function formatearNombreCampo(campo) {
+    const nombres = {
+        // Cliente
+        'nombre': 'Nombre',
+        'email': 'Email',
+        'telefono': 'Teléfono',
+        'direccion': 'Dirección',
+        'ciudad': 'Ciudad',
+        'estado': 'Estado',
+        'codigo_postal': 'Código Postal',
+        'fecha_nacimiento': 'Fecha de Nacimiento',
+        'genero': 'Género',
+        'ocupacion': 'Ocupación',
+        'notas_personales': 'Notas Personales',
+        'operador_asignado': 'Operador Asignado',
+        
+        // Póliza
+        'numero_poliza': 'Número de Póliza',
+        'compania': 'Compañía',
+        'tipo_plan': 'Tipo de Plan',
+        'fecha_inicio': 'Fecha de Inicio',
+        'fecha_vencimiento': 'Fecha de Vencimiento',
+        'prima_mensual': 'Prima Mensual',
+        'deducible': 'Deducible',
+        'coaseguro': 'Coaseguro',
+        'maximo_bolsillo': 'Máximo de Bolsillo',
+        'estado_compania': 'Estado (Compañía)',
+        'estado_mercado': 'Estado (Mercado)',
+        'agente35_estado': 'Estado Agente 3.5',
+        'agente35_notas': 'Notas Agente 3.5',
+        'observaciones': 'Observaciones'
+    };
+    
+    return nombres[campo] || campo.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+/**
+ * Función para guardar cambios con registro en historial
+ * MODIFICAR la función guardarCambios() existente
+ */
+async function guardarCambiosConHistorial() {
+    try {
+        // 1. Obtener datos actuales del formulario
+        const datosCliente = obtenerDatosFormularioCliente();
+        const datosPoliza = obtenerDatosFormularioPoliza();
+        
+        // 2. Comparar con datos originales
+        const cambiosCliente = compararCambios(datosOriginalesCliente, datosCliente, 'Información Personal');
+        const cambiosPoliza = compararCambios(datosOriginalesPoliza, datosPoliza, 'Póliza');
+        
+        // 3. Guardar en la base de datos (función original)
+        const { error: errorCliente } = await supabaseClient
+            .from('clientes')
+            .update(datosCliente)
+            .eq('id', clienteId);
+        
+        if (errorCliente) throw errorCliente;
+        
+        if (datosPoliza && Object.keys(datosPoliza).length > 0) {
+            const { error: errorPoliza } = await supabaseClient
+                .from('polizas')
+                .update(datosPoliza)
+                .eq('cliente_id', clienteId);
+            
+            if (errorPoliza) throw errorPoliza;
+        }
+        
+        // 4. Registrar cambios en historial
+        if (cambiosCliente.length > 0) {
+            await registrarCambio(clienteId, 'cliente_editado', 'Información Personal', cambiosCliente);
+        }
+        
+        if (cambiosPoliza.length > 0) {
+            await registrarCambio(clienteId, 'poliza_editada', 'Póliza', cambiosPoliza);
+        }
+        
+        // 5. Actualizar datos originales para la próxima edición
+        capturarDatosOriginales(datosCliente, datosPoliza);
+        
+        // 6. Mostrar mensaje de éxito
+        const totalCambios = cambiosCliente.length + cambiosPoliza.length;
+        if (totalCambios > 0) {
+            mostrarNotificacion(`✅ Guardado correctamente (${totalCambios} cambio${totalCambios > 1 ? 's' : ''})`, 'success');
+        } else {
+            mostrarNotificacion('ℹ️ No hay cambios para guardar', 'info');
+        }
+        
+        console.log('✅ Cambios guardados y registrados en historial');
+        
+    } catch (error) {
+        console.error('❌ Error al guardar cambios:', error);
+        mostrarNotificacion('❌ Error al guardar: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Obtener datos del formulario de cliente
+ */
+function obtenerDatosFormularioCliente() {
+    return {
+        nombre: document.getElementById('nombre')?.value || '',
+        email: document.getElementById('email')?.value || '',
+        telefono: document.getElementById('telefono')?.value || '',
+        direccion: document.getElementById('direccion')?.value || '',
+        ciudad: document.getElementById('ciudad')?.value || '',
+        estado: document.getElementById('estado')?.value || '',
+        codigo_postal: document.getElementById('codigoPostal')?.value || '',
+        fecha_nacimiento: document.getElementById('fechaNacimiento')?.value || null,
+        genero: document.getElementById('genero')?.value || '',
+        ocupacion: document.getElementById('ocupacion')?.value || '',
+        notas_personales: document.getElementById('notasPersonales')?.value || '',
+        operador_asignado: document.getElementById('operadorAsignado')?.value || ''
+    };
+}
+
+/**
+ * Obtener datos del formulario de póliza
+ */
+function obtenerDatosFormularioPoliza() {
+    return {
+        numero_poliza: document.getElementById('numeroPoliza')?.value || '',
+        compania: document.getElementById('compania')?.value || '',
+        tipo_plan: document.getElementById('tipoPlan')?.value || '',
+        fecha_inicio: document.getElementById('fechaInicio')?.value || null,
+        fecha_vencimiento: document.getElementById('fechaVencimiento')?.value || null,
+        prima_mensual: document.getElementById('primaMensual')?.value || '',
+        deducible: document.getElementById('deducible')?.value || '',
+        coaseguro: document.getElementById('coaseguro')?.value || '',
+        maximo_bolsillo: document.getElementById('maximoBolsillo')?.value || '',
+        estado_compania: document.getElementById('estadoCompania')?.value || '',
+        estado_mercado: document.getElementById('estadoMercado')?.value || '',
+        agente35_estado: document.getElementById('agente35Estado')?.value || '',
+        agente35_notas: document.getElementById('agente35Notas')?.value || '',
+        observaciones: document.getElementById('observaciones')?.value || ''
+    };
+}
+
+/**
+ * Registrar cambio de estado específico
+ */
+async function registrarCambioEstado(clienteId, tipoEstado, estadoAnterior, estadoNuevo) {
+    const seccion = tipoEstado === 'compania' ? 'Estado Compañía' : 
+                   tipoEstado === 'mercado' ? 'Estado Mercado' : 'Agente 3.5';
+    
+    await registrarCambio(clienteId, 'estado_cambiado', seccion, [{
+        campo: `Estado (${seccion})`,
+        valorAnterior: estadoAnterior,
+        valorNuevo: estadoNuevo,
+        seccion: seccion
+    }]);
+}
+
+/**
+ * Registrar nota agregada
+ */
+async function registrarNotaAgregada(clienteId, mensaje) {
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: usuarioData } = await supabaseClient
+            .from('usuarios')
+            .select('nombre')
+            .eq('email', user.email)
+            .single();
+        
+        await supabaseClient
+            .from('historial_cambios')
+            .insert([{
+                cliente_id: clienteId,
+                tipo_cambio: 'nota_agregada',
+                seccion: 'Notas',
+                campo_modificado: 'Nueva Nota',
+                valor_anterior: null,
+                valor_nuevo: mensaje.substring(0, 100) + (mensaje.length > 100 ? '...' : ''),
+                usuario_nombre: usuarioData?.nombre || user.email,
+                usuario_email: user.email
+            }]);
+        
+        console.log('✅ Nota agregada registrada en historial');
+    } catch (error) {
+        console.error('❌ Error al registrar nota en historial:', error);
+    }
+}
+
+/**
+ * Registrar nota eliminada
+ */
+async function registrarNotaEliminada(clienteId, notaId) {
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: usuarioData } = await supabaseClient
+            .from('usuarios')
+            .select('nombre')
+            .eq('email', user.email)
+            .single();
+        
+        await supabaseClient
+            .from('historial_cambios')
+            .insert([{
+                cliente_id: clienteId,
+                tipo_cambio: 'nota_eliminada',
+                seccion: 'Notas',
+                campo_modificado: 'Nota Eliminada',
+                valor_anterior: `ID: ${notaId}`,
+                valor_nuevo: null,
+                usuario_nombre: usuarioData?.nombre || user.email,
+                usuario_email: user.email
+            }]);
+        
+        console.log('✅ Nota eliminada registrada en historial');
+    } catch (error) {
+        console.error('❌ Error al registrar eliminación en historial:', error);
+    }
+}
+
+/**
+ * Registrar cambio de operador
+ */
+async function registrarCambioOperador(clienteId, operadorAnterior, operadorNuevo) {
+    await registrarCambio(clienteId, 'asignacion_cambiada', 'Asignación', [{
+        campo: 'Operador Asignado',
+        valorAnterior: operadorAnterior,
+        valorNuevo: operadorNuevo,
+        seccion: 'Asignación'
+    }]);
+}
+
+// ============================================
+// MOSTRAR HISTORIAL DE CAMBIOS
+// Agregar a cliente_editar.js
+// ============================================
+
+/**
+ * Cargar historial del cliente
+ */
+async function cargarHistorial(clienteId, pagina = 1) {
+    try {
+        console.log('📥 Cargando historial...');
+        
+        // Mostrar loading
+        const timeline = document.getElementById('historialTimeline');
+        const loading = document.getElementById('historialLoading');
+        
+        if (timeline) timeline.style.display = 'none';
+        if (loading) loading.style.display = 'flex';
+        
+        // Calcular rango de paginación
+        const desde = (pagina - 1) * historialPorPagina;
+        const hasta = desde + historialPorPagina - 1;
+        
+        // Obtener historial de la base de datos
+        const { data: cambios, error, count } = await supabaseClient
+            .from('historial_cambios')
+            .select('*', { count: 'exact' })
+            .eq('cliente_id', clienteId)
+            .order('created_at', { ascending: false })
+            .range(desde, hasta);
+        
+        if (error) throw error;
+        
+        // Ocultar loading
+        if (loading) loading.style.display = 'none';
+        if (timeline) timeline.style.display = 'block';
+        
+        // Mostrar historial
+        if (!cambios || cambios.length === 0) {
+            timeline.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-rounded">history</span>
+                    <p>No hay historial de cambios</p>
+                    <small>Los cambios se registrarán automáticamente</small>
+                </div>
+            `;
+            
+            // Actualizar contador
+            const counter = document.getElementById('historialCounter');
+            if (counter) counter.textContent = '(0)';
+            
+            return;
+        }
+        
+        // Actualizar contador total
+        const counter = document.getElementById('historialCounter');
+        if (counter) counter.textContent = `(${count || cambios.length})`;
+        
+        // Agrupar cambios por fecha y usuario
+        const cambiosAgrupados = agruparCambiosPorEvento(cambios);
+        
+        // Renderizar timeline
+        renderizarTimeline(cambiosAgrupados);
+        
+        // Actualizar paginación
+        actualizarPaginacion(pagina, count, historialPorPagina);
+        
+        // Llenar filtro de usuarios
+        llenarFiltroUsuarios(cambios);
+        
+        console.log(`✅ ${cambios.length} cambio(s) en historial cargados`);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar historial:', error);
+        const timeline = document.getElementById('historialTimeline');
+        if (timeline) {
+            timeline.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-rounded">error</span>
+                    <p>Error al cargar historial</p>
+                    <small>${error.message}</small>
+                </div>
+            `;
+        }
+    }
+}
+
+/**
+ * Agrupar cambios por evento (mismo usuario, mismo momento)
+ */
+function agruparCambiosPorEvento(cambios) {
+    const grupos = [];
+    let grupoActual = null;
+    
+    cambios.forEach(cambio => {
+        const fechaCambio = new Date(cambio.created_at);
+        
+        // Si es el mismo usuario y dentro de 1 minuto, agrupar
+        if (grupoActual && 
+            grupoActual.usuario_email === cambio.usuario_email &&
+            grupoActual.tipo_cambio === cambio.tipo_cambio &&
+            Math.abs(new Date(grupoActual.fecha) - fechaCambio) < 60000) {
+            
+            grupoActual.cambios.push(cambio);
+        } else {
+            // Nuevo grupo
+            grupoActual = {
+                id: cambio.id,
+                tipo_cambio: cambio.tipo_cambio,
+                seccion: cambio.seccion,
+                usuario_nombre: cambio.usuario_nombre,
+                usuario_email: cambio.usuario_email,
+                fecha: cambio.created_at,
+                cambios: [cambio]
+            };
+            grupos.push(grupoActual);
+        }
+    });
+    
+    return grupos;
+}
+
+/**
+ * Renderizar timeline de historial
+ */
+function renderizarTimeline(grupos) {
+    const timeline = document.getElementById('historialTimeline');
+    
+    if (!timeline) return;
+    
+    timeline.innerHTML = '';
+    
+    grupos.forEach(grupo => {
+        const itemHTML = crearItemHistorial(grupo);
+        timeline.insertAdjacentHTML('beforeend', itemHTML);
+    });
+}
+
+/**
+ * Crear HTML de un item de historial
+ */
+function crearItemHistorial(grupo) {
+    const fecha = new Date(grupo.fecha);
+    const fechaFormateada = formatearFechaHistorial(fecha);
+    
+    // Determinar icono según tipo de cambio
+    const iconos = {
+        'cliente_editado': 'edit',
+        'poliza_editada': 'description',
+        'estado_cambiado': 'swap_horiz',
+        'nota_agregada': 'add_comment',
+        'nota_eliminada': 'delete',
+        'asignacion_cambiada': 'person_add'
+    };
+    
+    const icono = iconos[grupo.tipo_cambio] || 'edit';
+    
+    // Determinar título según tipo de cambio
+    const titulos = {
+        'cliente_editado': 'Cliente Editado',
+        'poliza_editada': 'Póliza Editada',
+        'estado_cambiado': 'Estado Cambiado',
+        'nota_agregada': 'Nota Agregada',
+        'nota_eliminada': 'Nota Eliminada',
+        'asignacion_cambiada': 'Operador Cambiado'
+    };
+    
+    const titulo = titulos[grupo.tipo_cambio] || 'Cambio Realizado';
+    
+    // Renderizar cambios
+    const cambiosHTML = grupo.cambios.map(cambio => {
+        if (!cambio.valor_anterior && !cambio.valor_nuevo) return '';
+        
+        return `
+            <div class="cambio-item">
+                <div class="cambio-campo">${cambio.campo_modificado}</div>
+                <div class="cambio-valores">
+                    ${cambio.valor_anterior ? `<span class="cambio-anterior">${escaparHTML(cambio.valor_anterior)}</span>` : ''}
+                    ${cambio.valor_anterior && cambio.valor_nuevo ? '<span class="cambio-flecha">→</span>' : ''}
+                    ${cambio.valor_nuevo ? `<span class="cambio-nuevo">${escaparHTML(cambio.valor_nuevo)}</span>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    return `
+        <div class="historial-item tipo-${grupo.tipo_cambio}" data-tipo="${grupo.tipo_cambio}">
+            <div class="historial-card">
+                <div class="historial-header">
+                    <div class="historial-icono">
+                        <span class="material-symbols-rounded">${icono}</span>
+                    </div>
+                    <div class="historial-info">
+                        <div class="historial-tipo">${titulo}</div>
+                        <div class="historial-fecha">
+                            <span class="material-symbols-rounded" style="font-size: 14px;">schedule</span>
+                            ${fechaFormateada}
+                        </div>
+                        ${grupo.seccion ? `<span class="historial-seccion">${grupo.seccion}</span>` : ''}
+                    </div>
+                    <div class="historial-usuario">
+                        <span class="material-symbols-rounded" style="font-size: 16px;">person</span>
+                        ${grupo.usuario_nombre}
+                    </div>
+                </div>
+                ${cambiosHTML ? `
+                    <div class="historial-cambios">
+                        ${cambiosHTML}
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Formatear fecha para el historial
+ */
+function formatearFechaHistorial(fecha) {
+    const ahora = new Date();
+    const diferencia = ahora - fecha;
+    
+    // Menos de 1 minuto
+    if (diferencia < 60000) {
+        return 'Hace un momento';
+    }
+    
+    // Menos de 1 hora
+    if (diferencia < 3600000) {
+        const minutos = Math.floor(diferencia / 60000);
+        return `Hace ${minutos} minuto${minutos > 1 ? 's' : ''}`;
+    }
+    
+    // Menos de 24 horas
+    if (diferencia < 86400000) {
+        const horas = Math.floor(diferencia / 3600000);
+        return `Hace ${horas} hora${horas > 1 ? 's' : ''}`;
+    }
+    
+    // Menos de 7 días
+    if (diferencia < 604800000) {
+        const dias = Math.floor(diferencia / 86400000);
+        return `Hace ${dias} día${dias > 1 ? 's' : ''}`;
+    }
+    
+    // Fecha completa
+    return fecha.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+/**
+ * Escapar HTML para prevenir XSS
+ */
+function escaparHTML(texto) {
+    const div = document.createElement('div');
+    div.textContent = texto;
+    return div.innerHTML;
+}
+
+/**
+ * Actualizar paginación
+ */
+function actualizarPaginacion(paginaActual, totalRegistros, porPagina) {
+    const paginacion = document.getElementById('historialPaginacion');
+    const btnAnterior = document.getElementById('btnAnterior');
+    const btnSiguiente = document.getElementById('btnSiguiente');
+    const spanPagina = document.getElementById('paginaActual');
+    
+    if (!paginacion) return;
+    
+    const totalPaginas = Math.ceil(totalRegistros / porPagina);
+    
+    if (totalPaginas <= 1) {
+        paginacion.style.display = 'none';
+        return;
+    }
+    
+    paginacion.style.display = 'flex';
+    
+    if (btnAnterior) {
+        btnAnterior.disabled = paginaActual === 1;
+    }
+    
+    if (btnSiguiente) {
+        btnSiguiente.disabled = paginaActual >= totalPaginas;
+    }
+    
+    if (spanPagina) {
+        spanPagina.textContent = `Página ${paginaActual} de ${totalPaginas}`;
+    }
+    
+    historialPaginaActual = paginaActual;
+}
+
+/**
+ * Cargar página de historial
+ */
+async function cargarHistorialPagina(direccion) {
+    let nuevaPagina = historialPaginaActual;
+    
+    if (direccion === 'anterior') {
+        nuevaPagina = Math.max(1, historialPaginaActual - 1);
+    } else if (direccion === 'siguiente') {
+        nuevaPagina = historialPaginaActual + 1;
+    }
+    
+    await cargarHistorial(clienteId, nuevaPagina);
+}
+
+/**
+ * Llenar filtro de usuarios
+ */
+function llenarFiltroUsuarios(cambios) {
+    const filtroUsuario = document.getElementById('filtroUsuario');
+    
+    if (!filtroUsuario) return;
+    
+    // Obtener usuarios únicos
+    const usuarios = [...new Set(cambios.map(c => c.usuario_nombre))];
+    
+    // Limpiar opciones existentes (excepto "Todos")
+    filtroUsuario.innerHTML = '<option value="">Todos</option>';
+    
+    // Agregar usuarios
+    usuarios.forEach(usuario => {
+        const option = document.createElement('option');
+        option.value = usuario;
+        option.textContent = usuario;
+        filtroUsuario.appendChild(option);
+    });
+}
+
+/**
+ * Mostrar/ocultar filtros
+ */
+function filtrarHistorial() {
+    const filtros = document.getElementById('historialFiltros');
+    if (filtros) {
+        filtros.style.display = filtros.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+/**
+ * Aplicar filtros de historial
+ */
+async function aplicarFiltrosHistorial() {
+    try {
+        const tipoCambio = document.getElementById('filtroTipoCambio')?.value || '';
+        const usuario = document.getElementById('filtroUsuario')?.value || '';
+        const desde = document.getElementById('filtroDesde')?.value || '';
+        const hasta = document.getElementById('filtroHasta')?.value || '';
+        
+        // Construir query
+        let query = supabaseClient
+            .from('historial_cambios')
+            .select('*', { count: 'exact' })
+            .eq('cliente_id', clienteId)
+            .order('created_at', { ascending: false });
+        
+        if (tipoCambio) {
+            query = query.eq('tipo_cambio', tipoCambio);
+        }
+        
+        if (usuario) {
+            query = query.eq('usuario_nombre', usuario);
+        }
+        
+        if (desde) {
+            query = query.gte('created_at', desde + 'T00:00:00');
+        }
+        
+        if (hasta) {
+            query = query.lte('created_at', hasta + 'T23:59:59');
+        }
+        
+        const { data: cambios, error } = await query;
+        
+        if (error) throw error;
+        
+        // Renderizar resultados
+        const timeline = document.getElementById('historialTimeline');
+        
+        if (!cambios || cambios.length === 0) {
+            timeline.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-rounded">filter_list_off</span>
+                    <p>No se encontraron cambios con estos filtros</p>
+                    <small>Intenta ajustar los criterios de búsqueda</small>
+                </div>
+            `;
+            return;
+        }
+        
+        const cambiosAgrupados = agruparCambiosPorEvento(cambios);
+        renderizarTimeline(cambiosAgrupados);
+        
+        mostrarNotificacion(`🔍 ${cambios.length} resultado(s) encontrado(s)`, 'info');
+        
+    } catch (error) {
+        console.error('❌ Error al filtrar historial:', error);
+        mostrarNotificacion('❌ Error al filtrar', 'error');
+    }
+}
+
+/**
+ * Limpiar filtros
+ */
+function limpiarFiltrosHistorial() {
+    document.getElementById('filtroTipoCambio').value = '';
+    document.getElementById('filtroUsuario').value = '';
+    document.getElementById('filtroDesde').value = '';
+    document.getElementById('filtroHasta').value = '';
+    
+    cargarHistorial(clienteId);
+}
+
+/**
+ * Exportar historial a CSV
+ */
+async function exportarHistorial() {
+    try {
+        // Obtener TODO el historial (sin paginación)
+        const { data: cambios, error } = await supabaseClient
+            .from('historial_cambios')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (!cambios || cambios.length === 0) {
+            mostrarNotificacion('⚠️ No hay historial para exportar', 'warning');
+            return;
+        }
+        
+        // Crear CSV
+        const headers = ['Fecha', 'Tipo', 'Sección', 'Campo', 'Valor Anterior', 'Valor Nuevo', 'Usuario'];
+        const rows = cambios.map(c => [
+            new Date(c.created_at).toLocaleString('es-ES'),
+            c.tipo_cambio,
+            c.seccion || '',
+            c.campo_modificado,
+            c.valor_anterior || '',
+            c.valor_nuevo || '',
+            c.usuario_nombre
+        ]);
+        
+        const csv = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+        
+        // Descargar
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `historial_cliente_${clienteId}_${Date.now()}.csv`;
+        link.click();
+        
+        mostrarNotificacion('✅ Historial exportado correctamente', 'success');
+        
+    } catch (error) {
+        console.error('❌ Error al exportar historial:', error);
+        mostrarNotificacion('❌ Error al exportar', 'error');
+    }
 }
 
 // Exportar funciones para uso global
