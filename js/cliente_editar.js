@@ -2122,7 +2122,7 @@ function cancelarNota() {
     const textarea = document.getElementById('nuevaNota');
     if (textarea) textarea.value = '';
     
-    imagenesNotaSeleccionadas = [];
+    imagenesNotaSeleccionadas = []; 
     
     const preview = document.getElementById('imagenesPreview');
     if (preview) preview.innerHTML = '';
