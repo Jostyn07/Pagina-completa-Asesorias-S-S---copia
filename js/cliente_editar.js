@@ -268,7 +268,7 @@ async function cargarDatosCliente(id) {
         await aplicarPermisosEstadoMercado();
         capturarDatosOriginales(clienteData , polizaData);
     
-        if (document.querySelector('#historial.active')) {
+        if (document.querySelector('#tab-historial.active ')) {
             await cargarHistorial(id);
         }
         
@@ -1586,6 +1586,48 @@ async function handleSubmit(event) {
         
         // 4. Guardar documentos NUEVOS
         await guardarDocumentosNuevos(clienteId);
+
+        const datosClienteNuevos = {
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        email: formData.email,
+        telefono1: formData.telefono1 ? formData.telefono1.replace(/\D/g, '') : '',
+        fecha_nacimiento: formData.fechaNacimiento,
+        estado_migratorio: formData.estadoMigratorio,
+        direccion: formData.direccion,
+        ciudad: formData.ciudad,
+        estado: formData.estado,
+        codigo_postal: formData.codigoPostal,
+        genero: formData.genero,
+        ocupacion: formData.ocupacion || '',
+        nacionalidad: formData.nacionalidad || ''
+        };
+
+        const datosPolizaNuevos = {
+        compania: formData.compania,
+        plan: formData.plan,
+        prima: formData.prima || '0',
+        credito_fiscal: formData.creditoFiscal || '0',
+        fecha_efectividad: formData.displayFechaEfectividad || formData.fechaEfectividad,
+        fecha_inicial_cobertura: formData.fechaInicialCobertura || '',
+        fecha_final_cobertura: formData.fechaFinalCobertura || ''
+        };
+
+        // Comparar con datos originales
+        const cambiosCliente = compararCambios(datosOriginalesCliente, datosClienteNuevos, 'Información Personal');
+        const cambiosPoliza = compararCambios(datosOriginalesPoliza, datosPolizaNuevos, 'Póliza');
+
+        // Registrar si hay cambios
+        if (cambiosCliente.length > 0) {
+            await registrarCambio(clienteId, 'cliente_editado', 'Información Personal', cambiosCliente);
+        }
+
+        if (cambiosPoliza.length > 0) {
+            await registrarCambio(clienteId, 'poliza_editada', 'Póliza', cambiosPoliza);
+        }
+
+        // Actualizar datos originales
+        capturarDatosOriginales(datosClienteNuevos, datosPolizaNuevos);
         
         // Limpiar borrador
         localStorage.removeItem(`borrador_cliente_${clienteId}`);
@@ -3263,36 +3305,41 @@ function capturarDatosOriginales(cliente, poliza) {
 function compararCambios(datosOriginales, datosNuevos, seccion) {
     const cambios = [];
     
-    // Obtener todas las claves únicas
-    const todasLasClaves = new Set([
-        ...Object.keys(datosOriginales),
-        ...Object.keys(datosNuevos)
-    ]);
-    
-    todasLasClaves.forEach(campo => {
+    // Solo comparar campos que existen en datosNuevos
+    Object.keys(datosNuevos).forEach(campo => {
         const valorAnterior = datosOriginales[campo];
         const valorNuevo = datosNuevos[campo];
         
         // Ignorar campos de sistema
-        const camposIgnorados = ['id', 'created_at', 'updated_at', 'cliente_id'];
+        const camposIgnorados = ['id', 'created_at', 'updated_at', 'cliente_id', 'poliza_id'];
         if (camposIgnorados.includes(campo)) return;
         
-        // Normalizar valores nulos
-        const anterior = valorAnterior === null || valorAnterior === undefined ? '' : String(valorAnterior);
-        const nuevo = valorNuevo === null || valorNuevo === undefined ? '' : String(valorNuevo);
+        // Normalizar valores
+        const anterior = normalizarValor(valorAnterior);
+        const nuevo = normalizarValor(valorNuevo);
         
-        // Si hay diferencia, registrar
+        // Solo registrar si hay diferencia REAL
         if (anterior !== nuevo) {
             cambios.push({
                 campo: campo,
-                valorAnterior: anterior,
-                valorNuevo: nuevo,
+                valorAnterior: anterior || '(vacío)',
+                valorNuevo: nuevo || '(vacío)',
                 seccion: seccion
             });
         }
     });
     
     return cambios;
+}
+
+function normalizarValor(valor) {
+    if (valor === null || valor === undefined || valor === '') {
+        return '';
+    }
+    if (valor === 0) {
+        return '0';
+    }
+    return String(valor).trim();
 }
 
 /**
@@ -3339,7 +3386,7 @@ async function registrarCambio(clienteId, tipoCambio, seccion, cambios) {
         console.log(`✅ ${cambios.length} cambio(s) registrado(s) en historial`);
         
         // Recargar historial si estamos en ese tab
-        if (document.querySelector('#historial.active')) {
+        if (document.querySelector('#tab-historial.active')) {
             await cargarHistorial(clienteId);
         }
         
