@@ -494,12 +494,16 @@ body {
 }
 
 
-.display-efectividad input {
+.display-efectividad #displayFechaEfectividad {
     text-align: end;
     width: 80%;
-    background-color: none;
+    background-color: transparent !important;
     border: none;
     outline: none;
+    font-weight: 600;
+    color: var(--color-hover-primary);
+    font-family: 'Courier New', Courier, monospace;
+    padding: 0;
 }
 /* ============================================
    BOTONES

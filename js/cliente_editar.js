@@ -429,7 +429,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
         }
         
         // Displays de fechas en formato US
-        const displayEfectividad = document.getElementById('displayFechaEfectividad');
+        const displayEfectividad = document.getElementById('displayFechaEfectividad').value = formatoUS(poliza.fecha_efectividad) || '--/--/----'
         if (displayEfectividad && poliza.fecha_efectividad) {
             const fechaEfectividadUS = formatoUS(poliza.fecha_efectividad);
             displayEfectividad.textContent = fechaEfectividadUS;
