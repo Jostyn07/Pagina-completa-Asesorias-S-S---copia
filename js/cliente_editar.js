@@ -426,7 +426,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
         }
         
         // Displays de fechas en formato US
-        const displayEfectividad = document.getElementById('displayFechaEfectividad').value = formatoUS(poliza.fecha_efectividad) || null;
+        const displayEfectividad = document.getElementById('displayFechaEfectividad').value = formatoUS(poliza.fecha_efectividad) || '--/--/----'
         if (displayEfectividad && poliza.fecha_efectividad) {
             const fechaEfectividadUS = formatoUS(poliza.fecha_efectividad);
             displayEfectividad.textContent = fechaEfectividadUS;
@@ -1702,7 +1702,7 @@ async function actualizarPoliza(polizaId, formData) {
         agente_nombre: formData.agenteNombre || null,
         observaciones: formData.observaciones || null,
         documentos_pendientes: formData.documentosPendientes || '-',
-        fecha_plazo_documentos: formData.fechaPlazoDocumento || '--/--/----',
+        fecha_plazo_documentos: formData.fechaPlazoDocumento || null,
         updated_at: new Date().toISOString()
     };
     
