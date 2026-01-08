@@ -186,7 +186,8 @@ function validarInfoGeneral() {
         { id: 'codigoPostal', nombre: 'Código postal' },
         { id: 'compania', nombre: 'Compañía' },
         { id: 'plan', nombre: 'Plan' },
-        { id: 'prima', nombre: 'Prima' }
+        { id: 'prima', nombre: 'Prima' },
+        { id: 'alplica', nombre: 'Aplica' },
     ];
     
     for (const campo of camposRequeridos) {
