@@ -409,6 +409,8 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if(poliza.clave_seguridad) document.getElementById('claveSeguridad').value = poliza.clave_seguridad || '';
        if(poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza || '';
        if(poliza.documentos_pendientes) document.getElementById('documentosPendientes').value = poliza.documentos_pendientes;
+       if(poliza.agente35_estado) document.getElementById('agente35_estado').value = poliza.agente35_estado || '';
+       if(poliza.agente35_nota) document.getElementById('agente35_nota').value = poliza.agente35_nota || '';
         
         // Fechas de la póliza
         const fechaEfectividadInput = document.getElementById('fechaEfectividad');
@@ -446,6 +448,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
         }
 
         if(poliza.fecha_plazo_documentos) document.getElementById('fechaPlazoDocumento').value = poliza.fecha_plazo_documentos;
+
     }
     
     // DEPENDIENTES
@@ -1746,8 +1749,8 @@ async function actualizarPoliza(polizaId, formData) {
         observaciones: formData.observaciones || null,
         documentos_pendientes: formData.documentosPendientes || '-',
         fecha_plazo_documentos: formData.fechaPlazoDocumento || null,
-        agente35_nombre: formData.agente35_nombre || null,
-        agente35_nota: formData.agente35_nota || null,
+        agente35_estado: formData.agente35_estado || null,
+        agente35_notas: formData.agente35_nota || null,
         updated_at: new Date().toISOString()
     };
     
