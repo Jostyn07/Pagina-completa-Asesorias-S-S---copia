@@ -1571,6 +1571,8 @@ function obtenerBadgeAgente35(estado) {
     }
     
     const badges = {
+        'New aplication': 'New aplication',
+        'Policy change': 'Policy change',
         'Procesado': '<span class="badge-agente35 procesado">✓ Procesado</span>',
         'Pendiente': '<span class="badge-agente35 pendiente">⏳ Pendiente</span>',
         'Cambio necesario': '<span class="badge-agente35 cambio">⚠ Cambio necesario</span>'
