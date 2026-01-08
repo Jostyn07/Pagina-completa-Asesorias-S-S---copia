@@ -188,7 +188,7 @@ function validarInfoGeneral() {
         { id: 'plan', nombre: 'Plan' },
         { id: 'prima', nombre: 'Prima' },
         { id: 'aplica', nombre: 'Aplica' },
-        { id: 'operador', nombre: 'Operador' },
+        { id: 'operadorNombre', nombre: 'Operador' },
     ];
     
     for (const campo of camposRequeridos) {
