@@ -3401,6 +3401,7 @@ async function registrarCambio(clienteId, tipoCambio, seccion, cambios) {
 function formatearNombreCampo(campo) {
     const nombres = {
         // Cliente
+        'tipo_registro': 'Tipo de registro',
         'nombre': 'Nombre',
         'email': 'Email',
         'telefono': 'Teléfono',
@@ -3418,7 +3419,6 @@ function formatearNombreCampo(campo) {
         'numero_poliza': 'Número de Póliza',
         'compania': 'Compañía',
         'tipo_plan': 'Tipo de Plan',
-        'fecha_inicio': 'Fecha de Inicio',
         'fecha_vencimiento': 'Fecha de Vencimiento',
         'prima_mensual': 'Prima Mensual',
         'deducible': 'Deducible',
@@ -3498,6 +3498,7 @@ async function guardarCambiosConHistorial() {
  */
 function obtenerDatosFormularioCliente() {
     return {
+        tipo_registro: document.getElementById('tipoRegistro') || '',
         nombre: document.getElementById('nombre')?.value || '',
         email: document.getElementById('email')?.value || '',
         telefono: document.getElementById('telefono')?.value || '',
@@ -3521,7 +3522,6 @@ function obtenerDatosFormularioPoliza() {
         numero_poliza: document.getElementById('numeroPoliza')?.value || '',
         compania: document.getElementById('compania')?.value || '',
         tipo_plan: document.getElementById('tipoPlan')?.value || '',
-        fecha_inicio: document.getElementById('fechaInicio')?.value || null,
         fecha_vencimiento: document.getElementById('fechaVencimiento')?.value || null,
         prima_mensual: document.getElementById('primaMensual')?.value || '',
         deducible: document.getElementById('deducible')?.value || '',
