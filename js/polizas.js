@@ -76,7 +76,7 @@ async function cargarPolizas() {
                     email
                 )
             `)
-            .order('created_at', { ascending: false });
+            .order('updated_at', { ascending: false });
         
         // ✅ Filtrar directamente en la query por operador_nombre
         if (!esAdmin && nombreOperador) {
