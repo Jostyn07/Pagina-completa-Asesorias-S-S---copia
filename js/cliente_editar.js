@@ -378,6 +378,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if (cliente.telefono2) document.getElementById('telefono2').value = cliente.telefono2 || '';
        if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = formatoUS(cliente.fecha_nacimiento);
        if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio || '';
+       if (cliente.nombre_agente) document.getElementById('nombreAgente').value = cliente.nombre_agente || '';
         
         const ssnInput = document.getElementById('ssn');
         if (ssnInput && cliente.ssn) {
