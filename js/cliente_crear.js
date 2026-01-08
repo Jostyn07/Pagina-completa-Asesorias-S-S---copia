@@ -179,6 +179,7 @@ function validarInfoGeneral() {
         { id: 'telefono1', nombre: 'Teléfono' },
         { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
         { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'nacionalidad', nombre: 'Nacionalidad' },
         { id: 'direccion', nombre: 'Dirección' },
         { id: 'ciudad', nombre: 'Ciudad' },
         { id: 'estado', nombre: 'Estado' },
@@ -642,7 +643,7 @@ function crearTarjetaDependiente(count, dep) {
                     <div class="dependiente-avatar">${iniciales}</div>
                     <div class="dependiente-card-nombre">
                         <h4>${dep.nombres} ${dep.apellidos}</h4>
-                        <small>${edad} años • ${dep.sexo === 'masculino' ? 'Masculino' : 'Femenino'}</small>
+                        <small>${edad} años • ${dep.sexo === 'Masculino' ? 'Masculino' : 'Femenino'}</small>
                     </div>
                 </div>
                 <div class="dependiente-card-acciones">
@@ -893,12 +894,7 @@ function actualizarContadorDocumentos() {
 function enviarNota() {
     const textarea = document.getElementById('nuevaNota');
     const mensaje = textarea.value.trim();
-    
-    if (!mensaje && imagenesNotaSeleccionadas.length === 0) {
-        alert('Escribe un mensaje o adjunta una imagen');
-        return;
-    }
-    
+     
     const notaHTML = `
         <div class="nota-card">
             <div class="nota-header">
