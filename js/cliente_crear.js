@@ -1344,12 +1344,6 @@ async function crearCliente(formData) {
         const textarea = document.getElementById('nuevaNota');
         const mensaje = textarea ? textarea.value.trim() : '';
         
-        // Si no hay mensaje ni imágenes, saltar
-        if (!mensaje && imagenesNotaSeleccionadas.length === 0) {
-            alert('Escribe un mensaje o adjunta una imagen');
-            return;
-        }
-        
         try {
             // Obtener usuario actual
             const { data: { user } } = await supabaseClient.auth.getUser();
