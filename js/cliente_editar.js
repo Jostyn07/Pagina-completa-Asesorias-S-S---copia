@@ -447,7 +447,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
             displayFinal.textContent = fechaFinalUS;
         }
 
-        if(poliza.fecha_plazo_documentos) document.getElementById('fechaPlazoDocumento').value = poliza.fecha_plazo_documentos;
+        if(poliza.fecha_plazo_documentos) document.getElementById('fechaPlazoDocumento').value = formatoUS(poliza.fecha_plazo_documentos);
 
     }
     
@@ -2428,7 +2428,7 @@ async function cargarEstadoSeguimiento(polizaId) {
             
             // ===== 2) ESTADO EN MERCADO =====
             if (poliza.fecha_revision_mercado) {
-                document.getElementById('fechaRevisionMercado').value = formatoISO(poliza.fecha_revision_mercado);
+                document.getElementById('fechaRevisionMercado').value = formatoUS(poliza.fecha_revision_mercado);
             }
             if (poliza.estado_mercado) {
                 document.getElementById('estadoMercado').value = poliza.estado_mercado;
