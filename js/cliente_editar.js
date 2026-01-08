@@ -1746,6 +1746,8 @@ async function actualizarPoliza(polizaId, formData) {
         observaciones: formData.observaciones || null,
         documentos_pendientes: formData.documentosPendientes || '-',
         fecha_plazo_documentos: formData.fechaPlazoDocumento || null,
+        agente35_nombre: formData.agente35_nombre || null,
+        agente35_nota: formData.agente35_nota || null,
         updated_at: new Date().toISOString()
     };
     
@@ -1774,6 +1776,8 @@ async function actualizarPoliza(polizaId, formData) {
         polizaId = nuevaPoliza.id;
         console.log('✅ Póliza creada');
     }
+
+    obtenerDatosAgente35();
 }
 
 // ============================================
