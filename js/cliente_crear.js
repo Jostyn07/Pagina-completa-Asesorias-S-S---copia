@@ -187,7 +187,7 @@ function validarInfoGeneral() {
         { id: 'compania', nombre: 'Compañía' },
         { id: 'plan', nombre: 'Plan' },
         { id: 'prima', nombre: 'Prima' },
-        { id: 'alplica', nombre: 'Aplica' },
+        { id: 'aplica', nombre: 'Aplica' },
         { id: 'operador', nombre: 'Operador' },
     ];
     
