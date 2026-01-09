@@ -3347,7 +3347,40 @@ function normalizarValor(valor) {
     if (valor === 0) {
         return '0';
     }
-    return String(valor).trim();
+    
+    const valorStr = String(valor).trim();
+    
+    // Si es una fecha, normalizarla
+    if (esFecha(valorStr)) {
+        return normalizarFecha(valorStr);
+    }
+    
+    return valorStr;
+}
+
+function esFecha(str) {
+    const regexISO = /^\d{4}-\d{2}-\d{2}/;
+    const regexUS = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+    return regexISO.test(str) || regexUS.test(str);
+}
+
+function normalizarFecha(fecha) {
+    if (!fecha) return '';
+    
+    // Si es ISO, quitar hora
+    if (fecha.includes('-')) {
+        return fecha.split('T')[0];
+    }
+    
+    // Si es US, convertir a ISO
+    if (fecha.includes('/')) {
+        const [mes, dia, anio] = fecha.split('/');
+        const mesPad = mes.padStart(2, '0');
+        const diaPad = dia.padStart(2, '0');
+        return `${anio}-${mesPad}-${diaPad}`;
+    }
+    
+    return fecha;
 }
 
 /**
