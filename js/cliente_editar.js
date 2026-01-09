@@ -1630,6 +1630,8 @@ async function handleSubmit(event) {
             await registrarCambio(clienteId, 'poliza_editada', 'Póliza', cambiosPoliza);
         }
 
+        await guardarMetodoPago(clienteId);
+
         // Actualizar datos originales
         capturarDatosOriginales(datosClienteNuevos, datosPolizaNuevos);
         
