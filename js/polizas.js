@@ -718,13 +718,15 @@ function buscarPolizas(termino) {
             const compania = poliza.compania || '';
             const plan = poliza.plan || '';
             const estadoMercado = poliza.estado_mercado || '';
+            const operadorNombre = poliza.operador_nombre || '';
             
             return nombreCompleto.includes(termino) ||
                    telefono.includes(termino) ||
                    numeroPoliza.toLowerCase().includes(termino) ||
                    compania.toLowerCase().includes(termino) ||
                    plan.toLowerCase().includes(termino) ||
-                   estadoMercado.toLowerCase().includes(termino);
+                   estadoMercado.toLowerCase().includes(termino) ||
+                   operadorNombre.toLowerCase().includes(termino);
         });
     }
     

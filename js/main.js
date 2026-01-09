@@ -453,11 +453,7 @@ function openDatePicker() {
 // ============================================
 
 function crearNuevaPoliza() {
-    const confirmar = confirm('¿Deseas crear una nueva póliza?\n\nSerás redirigido al formulario de creación.');
-    
-    if (confirmar) {
-        window.location.href = './cliente_crear.html';
-    }
+    window.location.href = './cliente_crear.html';
 }
 
 // ============================================
