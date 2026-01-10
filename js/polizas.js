@@ -719,6 +719,7 @@ function buscarPolizas(termino) {
             const plan = poliza.plan || '';
             const estadoMercado = poliza.estado_mercado || '';
             const operadorNombre = poliza.operador_nombre || '';
+            const agente35Estado = poliza.agente35_estado || '';
             
             return nombreCompleto.includes(termino) ||
                    telefono.includes(termino) ||
@@ -726,7 +727,8 @@ function buscarPolizas(termino) {
                    compania.toLowerCase().includes(termino) ||
                    plan.toLowerCase().includes(termino) ||
                    estadoMercado.toLowerCase().includes(termino) ||
-                   operadorNombre.toLowerCase().includes(termino);
+                   operadorNombre.toLowerCase().includes(termino) ||
+                   agente35Estado.toLowerCase().includes(termino);
         });
     }
     
