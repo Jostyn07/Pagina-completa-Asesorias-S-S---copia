@@ -73,7 +73,9 @@ async function cargarPolizas() {
                     nombres,
                     apellidos,
                     telefono1,
-                    email
+                    email,
+                    tipo_registro,
+                    operador_nombre
                 )
             `)
             .order('updated_at', { ascending: false });
@@ -224,6 +226,7 @@ function renderizarTabla() {
         
         tr.innerHTML = `
             <td data-label="Póliza">${poliza.numero_poliza || '-'}</td>
+            <td data-label="Tipo de registro">${cliente?.tipo_registro || '-'}</td>
             <td data-label="Operador">${cliente?.operador_nombre || poliza?.operador_nombre || '-'}</td>
             <td class="td1" data-label="Cliente">
                 <div class="td1__flex">
@@ -285,6 +288,7 @@ function crearFilaPoliza(poliza) {
     return `
         <tr data-poliza-id="${poliza.id}" onclick="abrirDetalles(${poliza.id})" style="cursor: pointer;">
             <td data-label="Póliza">${poliza.numero_poliza || 'N/A'}</td>
+            <td data-label="Póliza">${cliente.tipo_registro || 'N/A'}</td>
             <td data-label="Operador">${poliza.operador_nombre || 'N/A'}</td>
             <td class="td1" data-label="Cliente">
                 <div class="td1__flex">
@@ -635,6 +639,7 @@ async function exportarExcel() {
             const cliente = poliza.cliente || {};
             return {
                 'Número Póliza': poliza.numero_poliza || '',
+                'Número Póliza': cliente.tipo_registro || '',
                 'Cliente': `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim(),
                 'Teléfono': cliente.telefono1 || '',
                 'Email': cliente.email || '',
@@ -715,6 +720,7 @@ function buscarPolizas(termino) {
             const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.toLowerCase();
             const telefono = cliente.telefono1 || '';
             const numeroPoliza = poliza.numero_poliza || '';
+            const tipoRegistro = cliente.tipo_registro || '';
             const compania = poliza.compania || '';
             const plan = poliza.plan || '';
             const estadoMercado = poliza.estado_mercado || '';
@@ -728,7 +734,8 @@ function buscarPolizas(termino) {
                    plan.toLowerCase().includes(termino) ||
                    estadoMercado.toLowerCase().includes(termino) ||
                    operadorNombre.toLowerCase().includes(termino) ||
-                   agente35Estado.toLowerCase().includes(termino);
+                   agente35Estado.toLowerCase().includes(termino) ||
+                   tipoRegistro.toLowerCase().includes(termino);
         });
     }
     
