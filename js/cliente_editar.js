@@ -2427,6 +2427,8 @@ async function cargarEstadoSeguimiento(polizaId) {
                 document.getElementById('estadoCompania').value = poliza.estado_compania;
                 actualizarBadgeEstado('badgeEstadoCompania', poliza.estado_compania);
             }
+
+            if (poliza.pagado_hasta) document.getElementById('pagadoHasta').value = poliza.pagado_hasta;
             
             // ===== 2) ESTADO EN MERCADO =====
             if (poliza.fecha_revision_mercado) {
@@ -2534,6 +2536,7 @@ async function guardarEstadoSeguimiento(polizaId) {
             fecha_revision_compania: document.getElementById('fechaRevisionCompania')?.value || null,
             nombre_agente_compania: document.getElementById('nombreAgenteCompania')?.value || null,
             estado_compania: document.getElementById('estadoCompania')?.value || null,
+            pagado_hasta: document.getElementById('pagadoHasta')?.value || null,
 
             updated_at: new Date().toISOString(),
         };
@@ -3571,6 +3574,7 @@ function obtenerDatosFormularioPoliza() {
         coaseguro: document.getElementById('coaseguro')?.value || '',
         maximo_bolsillo: document.getElementById('maximoBolsillo')?.value || '',
         estado_compania: document.getElementById('estadoCompania')?.value || '',
+        pagado_hasta: document.getElementById('pagadoHasta')?.value || '',
         estado_mercado: document.getElementById('estadoMercado')?.value || '',
         agente35_estado: document.getElementById('agente35Estado')?.value || '',
         agente35_notas: document.getElementById('agente35Notas')?.value || '',
