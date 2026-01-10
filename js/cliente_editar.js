@@ -2428,7 +2428,7 @@ async function cargarEstadoSeguimiento(polizaId) {
                 actualizarBadgeEstado('badgeEstadoCompania', poliza.estado_compania);
             }
 
-            if (poliza.pagado_hasta) document.getElementById('pagadoHasta').value = poliza.pagado_hasta;
+            if (poliza.pagado_hasta) document.getElementById('pagadoHasta').value = formatoUS(poliza.pagado_hasta);
             
             // ===== 2) ESTADO EN MERCADO =====
             if (poliza.fecha_revision_mercado) {
