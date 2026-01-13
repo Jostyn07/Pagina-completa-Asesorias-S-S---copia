@@ -893,9 +893,23 @@ function actualizarContadorDocumentos() {
 // NOTAS
 // ============================================
 
+let notasTemporales = [];
+
 function enviarNota() {
+
+
     const textarea = document.getElementById('nuevaNota');
     const mensaje = textarea.value.trim();
+
+    if (!mensaje) {
+        alert('⚠️ Por favor, escribe un mensaje antes de enviar.');
+        return;
+    }
+
+    notasTemporales.push({
+        mensaje: mensaje,
+        imagenes: [...imagenesNotaSeleccionadas]
+    });
      
     const notaHTML = `
         <div class="nota-card">
@@ -1343,78 +1357,27 @@ async function crearCliente(formData) {
     // ============================================
     // GUARDAR NOTAS
     // ============================================
-    async function guardarNotas(clienteId) {
-        const textarea = document.getElementById('nuevaNota');
-        const mensaje = textarea ? textarea.value.trim() : '';
-        
-        try {
-            // Obtener usuario actual
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            
-            if (!user) {
-                console.warn('No hay usuario autenticado, saltando notas');
-                return;
-            }
-            
-            // Preparar data de la nota
-            const notaData = {
-                cliente_id: clienteId,
-                mensaje: mensaje || null,
-                imagenes: imagenesNotaSeleccionadas.length > 0 ? imagenesNotaSeleccionadas : null,
-                usuario_email: user.email,
-                usuario_nombre: user.user_metadata?.nombre || user.email
-            };
-            
-            // Guardar nota
-            const { data: nuevaNota, error } = await supabaseClient
-                .from('notas')
-                .insert([notaData])
-                .select()
-                .single();
-            
-            if (error) throw error;
-            const notaHTML = `
-            <div class="nota-card" data-nota-id="${nuevaNota.id}">
-                <div class="nota-header">
-                    <div class="nota-info">
-                        <span class="nota-usuario">${nuevaNota.usuario_nombre}</span>
-                        <span class="nota-fecha">Ahora</span>
-                    </div>
-                    <button type="button" class="btn-remove-nota" onclick="confirmarEliminarNota('${nuevaNota.id}')">
-                        <span class="material-symbols-rounded">delete</span>
-                    </button>
-                </div>
-                <div class="nota-mensaje">${mensaje}</div>
-                ${imagenesNotaSeleccionadas.length > 0 ? `
-                    <div class="nota-imagenes">
-                        ${imagenesNotaSeleccionadas.map(img => `
-                            <img src="${img}" alt="Imagen" style="max-width: 150px; border-radius: 8px; margin: 5px;">
-                        `).join('')}
-                    </div>
-                ` : ''}
-            </div>
-            `;
-        
-            const thread = document.getElementById('notasThread');
-            const emptyState = thread.querySelector('.empty-state');
-            if (emptyState) emptyState.remove();
-            
-            thread.insertAdjacentHTML('afterbegin', notaHTML);
-            
-            // Limpiar formulario
-            if (textarea) textarea.value = '';
-            imagenesNotaSeleccionadas = [];
-            const preview = document.getElementById('imagenesPreview');
-            if (preview) preview.innerHTML = '';
-            
-            actualizarContadorNotas();
-            console.log('✅ Nota agregada');
-            
-        } catch (error) {
-            console.error('Error al guardar nota:', error);
-            // No lanzar error para no bloquear la creación del cliente
-        }
-    }
+async function guardarNotas(clienteId) {
+    if (notasTemporales.length === 0) return;
+    
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    
+    const notasData = notasTemporales.map(nota => ({
+        cliente_id: clienteId,
+        mensaje: nota.mensaje,
+        imagenes: nota.imagenes.length > 0 ? nota.imagenes : null,
+        usuario_email: user.email,
+        usuario_nombre: user.user_metadata?.nombre || user.email
+    }));
+    
+    const { error } = await supabaseClient
+        .from('notas')
+        .insert(notasData);
+    
+    if (error) throw error;
+    console.log(`✅ ${notasData.length} nota(s) guardadas`);
+    notasTemporales = [];
+}
     
     const { data: poliza, error: polizaError } = await supabaseClient
         .from('polizas')
