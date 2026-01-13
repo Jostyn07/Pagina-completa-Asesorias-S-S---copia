@@ -345,10 +345,12 @@
                                         <label>Estado Migratorio</label>
                                         <select id="filtroEstadoMigratorio">
                                             <option value="">Todos</option>
-                                            <option value="Ciudadano">Ciudadano</option>
-                                            <option value="Residente">Residente</option>
-                                            <option value="Visa">Visa</option>
-                                            <option value="Indocumentado">Indocumentado</option>
+                                            <option value="ciudadano">Ciudadano</option>
+                                            <option value="Residente Permanente">Residente Permanente</option>
+                                            <option value="Permiso de trabajo">Permiso de trabajo</option>
+                                            <option value="Asilo politico">Asilo politico</option>
+                                            <option value="I-94">I-94</option>
+                                            <option value="Otro">Otro</option>
                                         </select>
                                     </div>
                                 </div>
@@ -515,38 +517,42 @@
                 </div>
                 
                 <!-- Tabla de Pólizas -->
-                <table class="content__info-client">
-                    <thead class="thead">
-                        <tr>
-                            <th class="sortable" data-column="numero_poliza">Póliza</th>
-                            <th class="sortable" data-column="tipoRegistro">Tipo de registro</th>
-                            <th class="sortable" data-column="operador_nombre">Operador</th>
-                            <th class="sortable" data-column="cliente">Cliente</th>
-                            <th>Número de teléfono</th>
-                            <th class="sortable" data-column="estado_mercado">Estado<br>(Mercado)</th>
-                            <th class="sortable" data-column="agente35_estado">Estado<br>(Agente 3.5)</th>
-                            <th class="sortable" data-column="compania">Compañía</th>
-                            <th class="sortable" data-column="plan">Plan</th>
-                            <th class="sortable" data-column="prima">Prima</th>
-                            <th>Agente</th>
-                            <th class="sortable" data-column="fecha_efectividad">Efectividad</th>
-                            <th class="sortable" data-column="created_at">Creación</th>
-                            <th class="sortable" data-column="updated_at">Modificación</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-polizas">
-                        <!-- Los datos se cargarán dinámicamente -->
-                        <tr>
-                            <td colspan="12" style="text-align: center; padding: 40px;">
-                                <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
-                                    <div style="width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                                    <p style="color: #64748b; margin: 0;">Cargando pólizas...</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                
+                <div class="container-tabla">
+                    <table class="content__info-client">
+                        <thead class="thead">
+                            <tr>
+                                <th class="sortable" data-column="numero_poliza">Póliza</th>
+                                <th class="sortable" data-column="tipoRegistro">Tipo de registro</th>
+                                <th class="sortable" data-column="operador_nombre">Operador</th>
+                                <th class="sortable" data-column="cliente">Cliente</th>
+                                <th>Número de teléfono</th>
+                                <th class="sortable" data-column="estado_mercado">Estado<br>(Mercado)</th>
+                                <th class="sortable" data-column="fechaRevisionMercado">Fecha de revisión<br>(Mercado)</th>
+                                <th class="sortable" data-column="documentos">Documentos<br>(Mercado)</th>
+                                <th class="sortable" data-column="agente35_estado">Estado<br>(Agente 3.5)</th>
+                                <th class="sortable" data-column="compania">Compañía</th>
+                                <th class="sortable" data-column="plan">Plan</th>
+                                <th class="sortable" data-column="prima">Prima</th>
+                                <th>Agente</th>
+                                <th class="sortable" data-column="fecha_efectividad">Efectividad</th>
+                                <th class="sortable" data-column="created_at">Creación</th>
+                                <th class="sortable" data-column="updated_at">Modificación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-polizas">
+                            <!-- Los datos se cargarán dinámicamente -->
+                            <tr>
+                                <td colspan="12" style="text-align: center; padding: 40px;">
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                                        <div style="width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                                        <p style="color: #64748b; margin: 0;">Cargando pólizas...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
                 <!-- Controles de Navegación de Página -->
                 <div class="controls-row">
                     <div class="pagination-controls">

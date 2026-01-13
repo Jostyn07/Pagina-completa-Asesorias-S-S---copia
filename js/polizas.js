@@ -241,6 +241,8 @@ function renderizarTabla() {
                     ${poliza.estado_mercado || 'Pendiente'}
                 </span>
             </td>
+            <td data-label="Fecha de revisión (Mercado)">${formatoUS(poliza.fecha_revision_mercado)}</td>
+            <td data-label="Documentos">${poliza.documentos_pendientes}</td>
             <td data-label="Agente 3.5">${obtenerBadgeAgente35(poliza.agente35_estado)}</td>
             <td data-label="Compañía">${poliza.compania || '-'}</td>
             <td data-label="Plan">${poliza.plan || '-'}</td>
@@ -750,10 +752,10 @@ function buscarPolizas(termino) {
 function filtrarPorEstado(estado) {
     console.log('🔍 Filtrando por estado:', estado);
     
-    if (estado === 'activas') {
-        polizasFiltradas = todasLasPolizas.filter(p => p.estado_mercado === 'activo');
-    } else if (estado === 'canceladas') {
-        polizasFiltradas = todasLasPolizas.filter(p => p.estado_mercado === 'cancelado');
+    if (estado === 'Activas') {
+        polizasFiltradas = todasLasPolizas.filter(p => p.estado_mercado === 'Activo');
+    } else if (estado === 'Canceladas') {
+        polizasFiltradas = todasLasPolizas.filter(p => p.estado_mercado === 'Cancelado');
     } else if (estado === 'proximas') {
         polizasFiltradas = todasLasPolizas.filter(p => {
             if (!p.fecha_efectividad) return false;
@@ -1214,19 +1216,6 @@ style.textContent = `
 document.head.appendChild(style);
 
 // ============================================
-// LOG DE DESARROLLO
-// ============================================
-console.log('%c📋 Módulo de Pólizas Mejorado Cargado', 'color: #6366f1; font-size: 14px; font-weight: bold');
-console.log('Funcionalidades activas:');
-console.log('  ✓ Cargar pólizas desde Supabase');
-console.log('  ✓ Búsqueda en tiempo real');
-console.log('  ✓ Filtros por estado y año');
-console.log('  ✓ Paginación (10/25/50 por página)');
-console.log('  ✓ Ordenar por columnas');
-console.log('  ✓ Modal de detalles completos');
-console.log('  ✓ Exportar a Excel');
-
-// ============================================
 // NAVEGACIÓN
 // ============================================
 function crearNuevaPoliza() {
@@ -1398,8 +1387,10 @@ function abrirModalFiltros() {
         
         // Ocultar filtro de operador si no es admin
         const filtroOperadorGroup = document.getElementById('filtroOperadorGroup');
-        if (filtroOperadorGroup && !esAdministrador()) {
+        if (esAdministrador()) {
             filtroOperadorGroup.style.display = 'none';
+        } else {
+            filtroOperadorGroup.style.display = 'block';
         }
     }
 }
