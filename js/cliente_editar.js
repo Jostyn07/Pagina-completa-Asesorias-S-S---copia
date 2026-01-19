@@ -396,6 +396,8 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if (cliente.estado) document.getElementById('estado').value = cliente.estado || '';
        if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal || '';
        if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre || '';
+       if (cliente.venta_realizada_por) document.getElementById('ventaRealizadaPor').value = cliente.venta_realizada_por || '';
+
     }
     
     // DATOS DE LA PÓLIZA
@@ -1712,6 +1714,7 @@ async function actualizarCliente(id, formData) {
         estado: formData.estado,
         codigo_postal: formData.codigoPostal,
         operador_nombre: formData.operadorNombre || null,
+        venta_realizada_por: formData.ventaRealizadaPor || null,
         agente_nombre: formData.agenteNombre || null,
         updated_at: new Date().toISOString()
     };
@@ -1916,6 +1919,11 @@ async function cargarMetodoPago(clienteId) {
         if (usarMismaDireccion) {
             usarMismaDireccion.checked = metodos.usar_misma_direccion !== false;
         }
+
+        const tieneMetodoPago = document.getElementById('tieneMetodoPago');
+        if(metodos.tiene_metodo_pago == "Si") {
+            tieneMetodoPago.checked = metodos.tiene_metodo_pago === "Si";
+        }
         
         console.log(`✅ Método de pago cargado: ${metodos.tipo}`);
         
@@ -1936,10 +1944,21 @@ async function guardarMetodoPago(clienteId) {
         }
         
         const tipo = tipoSeleccionado.value;
+        const checkboxTieneMetodo = document.getElementById("tieneMetodoPago");
+        var tieneMetodoPago = ""
+        if (checkboxTieneMetodo.checked) {
+            tieneMetodoPago = "Si"
+        } else {
+            tieneMetodoPago = "No"
+        }
+
+        tieneMetodoPago
+
         let metodoPagoData = {
             cliente_id: clienteId,
             tipo: tipo,
             usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
+            tiene_metodo_pago: tieneMetodoPago,
             activo: true
         };
         
@@ -2588,6 +2607,10 @@ async function cargarSeguimientos(polizaId) {
             return;
         }
         
+        if (seguimientoEfectivo) {
+            seguimientoEfectivo = seguimientos.seguimiento_efectivo === "Si"
+        }
+        
         const container = document.getElementById('seguimientosContainer');
         if (!container) return;
         
@@ -2703,12 +2726,16 @@ async function guardarSeguimientoModal() {
         return;
     }
     
+    checkboxSeguimientoEfectivo = document.getElementById("seguimientoEfectivo");
+    seguimientoEfectivo = checkboxSeguimientoEfectivo.checked ? "Si" : "No"
+
     const segId = document.getElementById('modal_seg_id').value;
     const seguimiento = {
         poliza_id: polizaId,
         fecha_seguimiento: document.getElementById('modal_seg_fecha').value,
         medio_comunicacion: document.getElementById('modal_seg_medio').value,
-        observacion: document.getElementById('modal_seg_observacion').value
+        observacion: document.getElementById('modal_seg_observacion').value,
+        seguimiento_efectivo: seguimientoEfectivo
     };
     
     try {

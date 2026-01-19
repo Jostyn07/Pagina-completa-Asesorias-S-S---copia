@@ -1144,6 +1144,7 @@ function validarFormularioCompleto() {
         { id: 'plan', nombre: 'Plan' },
         { id: 'prima', nombre: 'Prima' },
         { id: 'operadorNombre', nombre: 'operador' },
+        { id: 'ventaRealizadaPor', nombre: 'Venta realizada por:' },
     ];
     
     for (const campo of camposRequeridos) {
@@ -1200,6 +1201,7 @@ async function crearCliente(formData) {
         estado: formData.estado,
         codigo_postal: formData.codigoPostal,
         operador_nombre: formData.operadorNombre || null,
+        operador_ventaRealizadaPor: formData.ventaRealizadaPor || null,
         agente_nombre: formData.portalNPN || null,
     };
     
