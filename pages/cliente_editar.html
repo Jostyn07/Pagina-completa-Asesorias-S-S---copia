@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/cliente.css">
     <link rel="stylesheet" href="../css/thumbnails_modal_styles.css">
-
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=paid" />
 </head>
 <body>
     <!-- SIDEBAR UNIFICADO -->
@@ -279,7 +279,9 @@
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label>SSN</label>
+                                <label>SSN
+                                <input type="checkbox" name="tieneSsn" id="tieneSsn" style="padding: 0px; margin-left: 45%; width: 5%; font-weight: bold;">Tiene SSN?
+                                </label>
                                 <input type="text" id="ssn" name="ssn" placeholder="XXX-XX-XXXX" maxlength="11">
                                 <span class="validation-message"></span>
                             </div>
@@ -669,7 +671,7 @@
                         Seguimiento
                     </button>
                     <button type="button" class="tab-btn-poliza" data-target="historial">
-                        <span class="material-sy mbols-rounded">history</span>
+                        <span class="material-symbols-rounded">history</span>
                         <span>Historial</span>
                     </button>
                 </div>
@@ -707,9 +709,108 @@
                                         <option value="Cancelado a P.C">Cancelado a P.C</option>
                                     </select>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-title">
+                                <span class="material-symbols-outlined">
+                                paid
+                                </span>                               
+                                <h2>Información de pagos</h2>
+                            </div>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Fecha de pago</label>
+                                    <input type="text" id="fechaPago" name="fechaPago" data-type="date">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="estadoPago">Estado del pago</label>
+                                    <select name="estadoPago" id="estadoPago">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="Pendiente confirmar">Pendiente confirmar</option>
+                                        <option value="Pagado">Pagado</option>
+                                        <option value="Pago declinado">Pago declinado</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
                                 <div class="form-group">
                                     <label for="pagadoHasta">Pagado hasta</label>
                                     <input type="text" name="pagadoHasta" id="pagadoHasta" data-type="date">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row">
+                                    <h2>Meses pagados</h2>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="pagoEnero">Enero
+                                    <input type="checkbox" name="pagoEnero" id="pagoEnero">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoFebrero">Febrero
+                                    <input type="checkbox" name="pagoFebrero" id="pagoFebrero">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoMarzo">Marzo
+                                    <input type="checkbox" name="pagoMarzo" id="pagoMarzo">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoAbril">Abril
+                                    <input type="checkbox" name="pagoAbril" id="pagoAbril">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoMayo">Mayo
+                                    <input type="checkbox" name="pagoMayo" id="pagoMayo">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoJunio">Junio
+                                    <input type="checkbox" name="pagoJunio" id="pagoJunio">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoJulio">Julio
+                                    <input type="checkbox" name="pagoJulio" id="pagoJulio">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoAgosto">Agosto
+                                    <input type="checkbox" name="pagoAgosto" id="pagoAgosto">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoSeptiembre">Septiembre
+                                    <input type="checkbox" name="pagoSeptiembre" id="pagoSeptiembre">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoOctubre">Octubre
+                                    <input type="checkbox" name="pagoOctubre" id="pagoOctubre">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoNoviembre">Noviembre
+                                    <input type="checkbox" name="pagoNoviembre" id="pagoNoviembre">
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pagoDiciembre">Diciembre
+                                    <input type="checkbox" name="pagoDiciembre" id="pagoDiciembre">
+                                    </label>
                                 </div>
                             </div>
                         </div>

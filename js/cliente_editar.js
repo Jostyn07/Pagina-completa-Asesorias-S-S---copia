@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     cargarInfoUsuario();
     
-    // ✅ CARGAR TODOS LOS DATOS
+    // CARGAR TODOS LOS DATOS
     try {
         await cargarDatosCliente(clienteId);
         await cargarDocumentos(clienteId);
@@ -384,7 +384,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
         if (ssnInput && cliente.ssn) {
             ssnInput.value = formatearSSN(cliente.ssn);
         }
-        
+       if (cliente.tiene_social) checkboxTieneSsn.checked = cliente.tiene_social === "Si"  
        if (cliente.ingreso_anual) document.getElementById('ingresos').value = cliente.ingreso_anual || 0;
        if (cliente.ocupacion) document.getElementById('ocupacion').value = cliente.ocupacion || '';
        if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad || '';
@@ -489,7 +489,7 @@ function agregarDependienteExistente(dep) {
         ssn: dep.ssn || '',
         estado_migratorio: dep.estado_migratorio || '',
         relacion: dep.relacion || '',
-        aplica: dep.aplica || ''
+        aplica: dep.aplica || '',
     };
     
     crearTarjetaDependiente(dependientesCount, dependiente, dep.id);
@@ -1236,7 +1236,6 @@ function verImagenCompleta(url) {
 // ============================================
 
 function inicializarTabs() {
-    // ✅ FIX ERROR #1: Agregar event listeners
     document.querySelectorAll('.tab-btn').forEach(button => {
         button.addEventListener('click', function() {
             const tabName = this.getAttribute('data-tab');
@@ -1256,7 +1255,6 @@ function cambiarTab(tabName) {
         tab.classList.remove('active');
     });
     
-    // ✅ FIX ERROR #2: Cambiar de '.tab-item' a '.tab-btn'
     document.querySelectorAll('.tab-btn').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -1593,6 +1591,9 @@ async function handleSubmit(event) {
         // 4. Guardar documentos NUEVOS
         await guardarDocumentosNuevos(clienteId);
 
+        // 5. Guardar metodo de pago
+        await guardarMetodoPago(clienteId);
+
         const datosClienteNuevos = {
         nombres: formData.nombres,
         apellidos: formData.apellidos,
@@ -1631,8 +1632,6 @@ async function handleSubmit(event) {
         if (cambiosPoliza.length > 0) {
             await registrarCambio(clienteId, 'poliza_editada', 'Póliza', cambiosPoliza);
         }
-
-        await guardarMetodoPago(clienteId);
 
         // Actualizar datos originales
         capturarDatosOriginales(datosClienteNuevos, datosPolizaNuevos);
@@ -1688,8 +1687,23 @@ function validarFormularioCompleto() {
 // ACTUALIZAR CLIENTE
 // ============================================
 
+const checkboxTieneSsn = document.getElementById('tieneSsn')
+
+document.getElementById('ssn').addEventListener("input", function () {
+    if (this.value.trim().length > 0) {
+        checkboxTieneSsn.checked = true;
+    } else {
+        checkboxTieneSsn.checked = false
+    }
+})
+
 async function actualizarCliente(id, formData) {
     console.log('🔄 Actualizando cliente...');
+
+    const checkboxTieneSsn = document.getElementById('tieneSsn')
+    var tieneSsn = ""
+
+    checkboxTieneSsn.checked ? tieneSsn = "Si" : tieneSsn = "No"
    
     const clienteData = {
         tipo_registro: formData.tipoRegistro,
@@ -1703,9 +1717,10 @@ async function actualizarCliente(id, formData) {
         fecha_nacimiento: formData.fechaNacimiento,
         estado_migratorio: formData.estadoMigratorio,
         ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
+        tiene_social: tieneSsn,
         ingreso_anual: parseFloat(formData.ingresos) || 0,
         ocupacion: formData.ocupacion || null,
-        nacionalidad: formData.nacionalidad || null, // ✅ CORREGIDO
+        nacionalidad: formData.nacionalidad || null, 
         aplica: formData.aplica,
         direccion: formData.direccion,
         casa_apartamento: formData.casaApartamento,
@@ -1789,7 +1804,7 @@ async function actualizarPoliza(polizaId, formData) {
 }
 
 // ============================================
-// ✅ ACTUALIZAR DEPENDIENTES (UPDATE + INSERT)
+// ACTUALIZAR DEPENDIENTES (UPDATE + INSERT)
 // ============================================
 
 async function actualizarDependientes(clienteId, formData) {
@@ -1899,7 +1914,7 @@ async function cargarMetodoPago(clienteId) {
             document.getElementById('nombreBanco').value = metodos.nombre_banco || '';
             document.getElementById('numeroCuenta').value = metodos.numero_cuenta || '';
             document.getElementById('routingNumber').value = metodos.routing_number || '';
-            document.getElementById('nombreCuentaBanco').value = metodos.nombre_cuenta || '';
+            document.getElementById('nombreCuenta').value = metodos.nombre_cuenta || '';
             
         } else if (metodos.tipo === 'tarjeta') {
             // Datos de tarjeta
@@ -1920,13 +1935,70 @@ async function cargarMetodoPago(clienteId) {
             usarMismaDireccion.checked = metodos.usar_misma_direccion !== false;
         }
 
+        // Checkbox tiene metodo de pago
         const tieneMetodoPago = document.getElementById('tieneMetodoPago');
         if(metodos.tiene_metodo_pago == "Si") {
             tieneMetodoPago.checked = metodos.tiene_metodo_pago === "Si";
         }
+
+        // Checkbox pago Enero
+        const pagoEnero = document.getElementById('pagoEnero');
+        metodos.pago_enero === "Si" ? pagoEnero.checked = metodos.pago_enero === "Si" : "";
+
+        // Checkbox pago Febrero
+        const pagoFebrero = document.getElementById('pagoFebrero');
+        metodos.pago_febrero === "Si" ? pagoFebrero.checked = metodos.pago_febrero === "Si" : "";
+
+        // Checkbox pago Marzo
+        const pagoMarzo = document.getElementById('pagoMarzo');
+        metodos.pago_marzo === "Si" ? pagoMarzo.checked = metodos.pago_marzo === "Si" : "";
+
+        // Checkbox pago Abril
+        const pagoAbril = document.getElementById('pagoAbril');
+        metodos.pago_abril === "Si" ? pagoAbril.checked = metodos.pago_abril === "Si" : "";
+
+        // Checkbox pago Mayo
+        const pagoMayo = document.getElementById('pagoMayo');
+        metodos.pago_mayo === "Si" ? pagoMayo.checked = metodos.pago_mayo === "Si" : "";
+
+        // Checkbox pago Junio
+        const pagoJunio = document.getElementById('pagoJunio');
+        metodos.pago_junio === "Si" ? pagoJunio.checked = metodos.pago_junio === "Si" : "";
+
+        // Checkbox pago Julio
+        const pagoJulio = document.getElementById('pagoJulio');
+        metodos.pago_julio === "Si" ? pagoJulio.checked = metodos.pago_julio === "Si" : "";
+
+        // Checkbox pago Agosto
+        const pagoAgosto = document.getElementById('pagoAgosto');
+        metodos.pago_agosto === "Si" ? pagoAgosto.checked = metodos.pago_agosto === "Si" : "";
+
+        // Checkbox pago Septiembre
+        const pagoSeptiembre = document.getElementById('pagoSeptiembre');
+        metodos.pago_septiembre === "Si" ? pagoSeptiembre.checked = metodos.pago_septiembre === "Si" : "";
+
+        // Checkbox pago Octubre
+        const pagoOctubre = document.getElementById('pagoOctubre');
+        metodos.pago_octubre === "Si" ? pagoOctubre.checked = metodos.pago_octubre === "Si" : "";
+
+        // Checkbox pago Noviembre
+        const pagoNoviembre = document.getElementById('pagoNoviembre');
+        metodos.pago_noviembre === "Si" ? pagoNoviembre.checked = metodos.pago_noviembre === "Si" : "";
+
+        // Checkbox pago Diciembre
+        const pagoDiciembre = document.getElementById('pagoDiciembre');
+        metodos.pago_diciembre === "Si" ? pagoDiciembre.checked = metodos.pago_diciembre === "Si" : "";
         
-        console.log(`✅ Método de pago cargado: ${metodos.tipo}`);
-        
+        // Fecha de pago
+        if (metodos.fecha_pago) {
+            document.getElementById('fechaPago').value = formatoUS(metodos.fecha_pago);
+        }
+
+        // Estado del pago
+        if (metodos.estado_pago) {
+            document.getElementById('estadoPago').value = metodos.estado_pago;
+        }
+
     } catch (error) {
         console.error('❌ Error al cargar método de pago:', error);
     }
@@ -1944,6 +2016,8 @@ async function guardarMetodoPago(clienteId) {
         }
         
         const tipo = tipoSeleccionado.value;
+
+        // Checkbox de "Tiene metodo de pago"
         const checkboxTieneMetodo = document.getElementById("tieneMetodoPago");
         var tieneMetodoPago = ""
         if (checkboxTieneMetodo.checked) {
@@ -1951,15 +2025,95 @@ async function guardarMetodoPago(clienteId) {
         } else {
             tieneMetodoPago = "No"
         }
-
         tieneMetodoPago
+
+        // Checkbox pago enero
+        const checkboxEnero = document.getElementById("pagoEnero")
+        var pagoEnero = ""
+        checkboxEnero.checked ? pagoEnero = "Si" :  pagoEnero = "No"
+
+        // Checkbox pago febrero
+        const checkboxFebrero = document.getElementById("pagoFebrero")
+        var pagoFebrero = ""
+        checkboxFebrero.checked ? pagoFebrero = "Si" :  pagoFebrero = "No"
+
+        // Checkbox pago marzo
+        const checkboxMarzo = document.getElementById("pagoMarzo")
+        var pagoMarzo = ""
+        checkboxMarzo.checked ? pagoMarzo = "Si" :  pagoMarzo = "No" 
+
+        // Checkbox pago abril
+        const checkboxAbril = document.getElementById("pagoAbril")
+        var pagoAbril = ""
+        checkboxAbril.checked ? pagoAbril = "Si" :  pagoAbril = "No"
+
+        // Checkbox pago mayo
+        const checkboxMayo = document.getElementById("pagoMayo")
+        var pagoMayo = ""
+        checkboxMayo.checked ? pagoMayo = "Si" :  pagoMayo = "No" 
+
+        // Checkbox pago junio
+        const checkboxJunio = document.getElementById("pagoJunio")
+        var pagoJunio = ""
+        checkboxJunio.checked ? pagoJunio = "Si" :  pagoJunio = "No" 
+
+        // Checkbox pago julio
+        const checkboxJulio = document.getElementById("pagoJulio")
+        var pagoJulio = ""
+        checkboxJulio.checked ? pagoJulio = "Si" :  pagoJulio = "No"
+
+        // Checkbox pago agosto
+        const checkboxAgosto = document.getElementById("pagoAgosto")
+        var pagoAgosto = ""
+        checkboxAgosto.checked ? pagoAgosto = "Si" :  pagoAgosto = "No"
+
+        // Checkbox pago septiembre
+        const checkboxSeptiembre = document.getElementById("pagoSeptiembre")
+        var pagoSeptiembre = ""
+        checkboxSeptiembre.checked ? pagoSeptiembre = "Si" :  pagoSeptiembre = "No" 
+
+        // Checkbox pago octubre
+        const checkboxOctubre = document.getElementById("pagoOctubre")
+        var pagoOctubre = ""
+        checkboxOctubre.checked ? pagoOctubre = "Si" :  pagoOctubre = "No" 
+
+        // Checkbox pago noviembre
+        const checkboxNoviembre = document.getElementById("pagoNoviembre")
+        var pagoNoviembre = ""
+        checkboxNoviembre.checked ? pagoNoviembre = "Si" :  pagoNoviembre = "No" 
+
+        // Checkbox pago diciembre
+        const checkboxDiciembre = document.getElementById("pagoDiciembre")
+        var pagoDiciembre = ""
+        checkboxDiciembre.checked ? pagoDiciembre = "Si" :  pagoDiciembre = "No" 
+
+        // fecha del pago
+        const fechaPago = document.getElementById('fechaPago').value
+
+        // Estado del pago
+        const estadoPago = document.getElementById('estadoPago').value
+
 
         let metodoPagoData = {
             cliente_id: clienteId,
             tipo: tipo,
             usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
             tiene_metodo_pago: tieneMetodoPago,
-            activo: true
+            activo: true,
+            pago_enero: pagoEnero,
+            pago_febrero: pagoFebrero,
+            pago_marzo: pagoMarzo,
+            pago_abril:pagoAbril,
+            pago_mayo: pagoMayo,
+            pago_junio: pagoJunio,
+            pago_julio: pagoJulio,
+            pago_agosto: pagoAgosto,
+            pago_septiembre: pagoSeptiembre,
+            pago_octubre: pagoOctubre,
+            pago_noviembre: pagoNoviembre,
+            pago_diciembre: pagoDiciembre,
+            fecha_pago: fechaPago,
+            estado_pago: estadoPago,
         };
         
         // Recopilar datos según el tipo
@@ -2054,7 +2208,7 @@ async function eliminarMetodoPago(clienteId) {
 }
 
 // ============================================
-// ✅ GUARDAR DOCUMENTOS NUEVOS (Solo los nuevos)
+// GUARDAR DOCUMENTOS NUEVOS
 // ============================================
 
 async function guardarDocumentosNuevos(clienteId) {
@@ -2066,7 +2220,7 @@ async function guardarDocumentosNuevos(clienteId) {
     for (let i = 1; i <= documentosCount; i++) {
         const elemento = document.getElementById(`documento-${i}`);
         if (!elemento) continue;
-        if (elemento.classList.contains('existente')) continue; // ✅ Saltar existentes
+        if (elemento.classList.contains('existente')) continue; 
         
         const fileInput = document.querySelector(`[name="doc_archivo_${i}"]`);
         const notasInput = document.querySelector(`[name="doc_notas_${i}"]`);
@@ -2217,7 +2371,7 @@ function cancelarNota() {
 }
 
 function previsualizarImagenesNota() {
-    const input = document.getElementById('notaImagen'); // ✅ ID correcto
+    const input = document.getElementById('notaImagen'); 
     
     if (!input || !input.files || input.files.length === 0) return;
     
@@ -2540,7 +2694,49 @@ document.addEventListener('DOMContentLoaded', function() {
             actualizarBadgeEstado('badgeEstadoDocumentos', this.value);
         });
     }
+    
+    const checkboxSeguimientoEfectivo = document.getElementById('seguimientoEfectivo');
+    if (checkboxSeguimientoEfectivo) {
+        checkboxSeguimientoEfectivo.addEventListener('change', async function() {
+            await actualizarComunicacionEfectiva(this.checked);
+        });
+    }
 });
+
+async function actualizarComunicacionEfectiva(esEfectivo) {
+    try {
+        // Verificar si hay seguimientos existentes
+        if (!seguimientosData || seguimientosData.length === 0) {
+            alert('⚠️ No hay seguimientos registrados. Agrega un seguimiento primero para marcar la comunicación como efectiva.');
+            // Revertir el checkbox
+            const checkbox = document.getElementById('seguimientoEfectivo');
+            if (checkbox) checkbox.checked = false;
+            return;
+        }
+        
+        // Actualizar el seguimiento más reciente
+        const ultimoSeguimiento = seguimientosData[0]; // El primero porque están ordenados desc
+        const nuevoValor = esEfectivo ? "Si" : "No";
+        
+        const { error } = await supabaseClient
+            .from('seguimientos')
+            .update({ seguimiento_efectivo: nuevoValor })
+            .eq('id', ultimoSeguimiento.id);
+        
+        if (error) throw error;
+        
+        // Actualizar en memoria
+        ultimoSeguimiento.seguimiento_efectivo = nuevoValor;
+        
+        console.log(`✅ Comunicación efectiva actualizada a: ${nuevoValor}`);
+        
+    } catch (error) {
+        console.error('❌ Error al actualizar comunicación efectiva:', error);
+        alert('Error al actualizar: ' + error.message);
+        // Revertir el checkbox en caso de error
+        await cargarSeguimientos(polizaId);
+    }
+}
 
 // ============================================
 // GUARDAR ESTADO Y SEGUIMIENTO
@@ -2607,8 +2803,14 @@ async function cargarSeguimientos(polizaId) {
             return;
         }
         
-        if (seguimientoEfectivo) {
-            seguimientoEfectivo = seguimientos.seguimiento_efectivo === "Si"
+        const checkboxSeguimientoEfectivo = document.getElementById("seguimientoEfectivo");
+        if (checkboxSeguimientoEfectivo && seguimientos && seguimientos.length > 0) {
+            // Verificar si ALGUNO de los seguimientos fue efectivo
+            const hayAlgunEfectivo = seguimientos.some(seg => seg.seguimiento_efectivo === "Si");
+            checkboxSeguimientoEfectivo.checked = hayAlgunEfectivo;
+            console.log('✅ Checkbox comunicación efectiva:', hayAlgunEfectivo ? 'Marcado' : 'Desmarcado');
+        } else if (checkboxSeguimientoEfectivo) {
+            checkboxSeguimientoEfectivo.checked = false;
         }
         
         const container = document.getElementById('seguimientosContainer');
@@ -2726,8 +2928,8 @@ async function guardarSeguimientoModal() {
         return;
     }
     
-    checkboxSeguimientoEfectivo = document.getElementById("seguimientoEfectivo");
-    seguimientoEfectivo = checkboxSeguimientoEfectivo.checked ? "Si" : "No"
+    const checkboxSeguimientoEfectivo = document.getElementById("seguimientoEfectivo");
+    const seguimientoEfectivo = checkboxSeguimientoEfectivo && checkboxSeguimientoEfectivo.checked ? "Si" : "No";
 
     const segId = document.getElementById('modal_seg_id').value;
     const seguimiento = {

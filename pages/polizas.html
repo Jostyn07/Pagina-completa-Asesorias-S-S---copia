@@ -353,6 +353,14 @@
                                             <option value="Otro">Otro</option>
                                         </select>
                                     </div>
+                                    <div class="filtro-group">
+                                        <label for="filtroTieneSsn">Tiene SSN?</label>
+                                        <select name="filtroTieneSsn" id="filtroTieneSsn">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="Si">Si</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -370,6 +378,16 @@
                                             <option value="Molina">Molina</option>
                                             <option value="Oscar">Oscar</option>
                                             <option value="United HealthCare">United HealthCare</option>
+                                        </select>
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Prima Mensual</label>
+                                        <select id="filtroPrima">
+                                            <option value="">Todos</option>
+                                            <option value="cero">Prima $0</option>
+                                            <option value="conPrima">Con prima (> $0)</option>
+                                            <option value="alta">Prima alta (> $100)</option>
+                                            <option value="sinAsignar">Sin prima asignada</option>
                                         </select>
                                     </div>
                                     <div class="filtro-group">
@@ -485,7 +503,6 @@
                                             type="date" 
                                             id="filtroSeguimientoDesde" 
                                             class="filter-input"
-                                            onchange="aplicarFiltros()"
                                         >
                                     </div>
 
@@ -498,7 +515,6 @@
                                             type="date" 
                                             id="filtroSeguimientoHasta" 
                                             class="filter-input"
-                                            onchange="aplicarFiltros()"
                                         >
                                     </div>
                                 </div>
@@ -524,8 +540,8 @@
                         <label>
                             Mostrar:
                             <select id="polizasPorPagina">
-                                <option value="10">10 por página</option>
-                                <option value="25" selected>25 por página</option>
+                                <option value="10" selected>10 por página</option>
+                                <option value="25">25 por página</option>
                                 <option value="50">50 por página</option>
                             </select>
                         </label>
@@ -543,9 +559,11 @@
                                 <th class="sortable" data-column="operador_nombre">Operador</th>
                                 <th class="sortable" data-column="cliente">Cliente</th>
                                 <th>Número de teléfono</th>
+                                <th>Estado migratorio</th>
+                                <th>SSN</th>
                                 <th class="sortable" data-column="estado_mercado">Estado<br>(Mercado)</th>
                                 <th class="sortable" data-column="fechaRevisionMercado">Fecha de revisión<br>(Mercado)</th>
-                                <th class="sortable" data-column="documentos">Documentos<br>(Mercado)</th>
+                                <th class="sortable" data-column="documentos">Documentos</th>
                                 <th class="sortable" data-column="agente35_estado">Estado<br>(Agente 3.5)</th>
                                 <th class="sortable" data-column="compania">Compañía</th>
                                 <th class="sortable" data-column="plan">Plan</th>
@@ -555,6 +573,7 @@
                                 <th class="sortable" data-column="created_at">Creación</th>
                                 <th class="sortable" data-column="updated_at">Modificación</th>
                                 <th class="sortable" data-column="ultimo_seguimiento">Último Seguimiento</th>
+                                <th class="sortable" data-column="seguimientoEfectivo">Seguimiento efectivo</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-polizas">

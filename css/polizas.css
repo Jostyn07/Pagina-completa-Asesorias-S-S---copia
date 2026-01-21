@@ -349,12 +349,42 @@ body {
 /* ============================================
    TABLA
    ============================================ */
-.content__info-client {
+
+/* ✅ NUEVO: Contenedor con scroll horizontal */
+.container-tabla {
     width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
     background-color: #fff;
     border-radius: 12px;
-    overflow: hidden;
     box-shadow: 0 3px 9px var(--color-shadow);
+}
+
+/* ✅ Barra de scroll personalizada */
+.container-tabla::-webkit-scrollbar {
+    height: 10px;
+}
+
+.container-tabla::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 5px;
+}
+
+.container-tabla::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 5px;
+}
+
+.container-tabla::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.content__info-client {
+    width: 100%;
+    min-width: max-content; /* ✅ Fuerza la tabla a expandirse */
+    background-color: #fff;
+    border-radius: 12px;
+    border-collapse: collapse;
 }
 
 .thead {
@@ -363,7 +393,7 @@ body {
 
 .thead tr {
     display: grid;
-    grid-template-columns: repeat(17, 1fr);
+    grid-template-columns: repeat(20, 150px); 
     padding: 15px;
     font-weight: 600;
     color: var(--color-text-primary);
@@ -375,9 +405,10 @@ body {
     font-size: 0.85rem;
 }
 
+/* ✅ CORREGIDO: Filas del body con el mismo ancho */
 tbody tr {
     display: grid;
-    grid-template-columns: repeat(17, 1fr);
+    grid-template-columns: repeat(20, 150px);
     padding: 15px;
     border-bottom: 1px solid var(--color-border-hr);
     transition: background-color 0.2s ease;
@@ -391,12 +422,14 @@ tbody tr:last-child {
     border-bottom: none;
 }
 
-tbody td {
+tbody td { 
     padding: 10px;
     color: var(--color-text-primary);
     font-size: 0.9rem;
     display: flex;
     align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis; /* ✅ Muestra "..." si el texto es muy largo */
 }
 
 .td1 {
@@ -466,7 +499,19 @@ tbody td {
         width: 100%;
     }
     
-    /* Tabla responsive */
+    /* ✅ CORREGIDO: Tabla responsive en móvil */
+    .container-tabla {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+    }
+    
+    /* Opción 1: Mantener scroll horizontal en móvil */
+    .thead tr,
+    tbody tr {
+        grid-template-columns: repeat(18, 120px); /* Columnas más pequeñas en móvil */
+    }
+    
+    /* Opción 2: Si prefieres cards en móvil, descomenta esto:
     .thead {
         display: none;
     }
@@ -482,6 +527,7 @@ tbody td {
     
     tbody td {
         padding: 5px 0;
+        white-space: normal;
     }
     
     tbody td::before {
@@ -492,6 +538,7 @@ tbody td {
         color: var(--color-text-placeholder);
         font-size: 0.8rem;
     }
+    */
 }
 
 @media (max-width: 480px) {
@@ -992,4 +1039,3 @@ tbody td {
         grid-template-columns: 1fr;
     }
 }
-

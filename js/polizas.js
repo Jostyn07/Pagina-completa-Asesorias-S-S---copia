@@ -4,7 +4,7 @@
 let todasLasPolizas = [];
 let polizasFiltradas = [];
 let paginaActual = 1;
-let polizasPorPagina = 25;
+let polizasPorPagina = 10;
 let ordenColumna = 'created_at';
 let ordenDireccion = 'desc';
 let polizaSeleccionada = null;
@@ -63,10 +63,7 @@ async function cargarPolizas() {
             .select(`
                 *,
                 cliente:clientes (*),
-                seguimientos(
-                    id,
-                    fecha_seguimiento
-                )
+                seguimientos(*)
             `)
             .order('updated_at', { ascending: false });
         
@@ -134,12 +131,13 @@ function renderizarTabla() {
 
     polizasPagina.forEach(poliza => {
         const cliente = poliza.cliente;
+        const seguimiento = poliza.seguimiento;
         
         let ultimoSeguimiento = [];
         if (poliza.seguimientos && poliza.seguimientos.length > 0) {
-            const fechas = poliza.seguimientos.map(seg => new Date(seg.fecha_seguimiento));
+            const fechas = poliza.seguimientos.map(seg => new Date(formatoUS(seg.fecha_seguimiento)));
             const fechaMayor = new Date(Math.max(...fechas));
-            ultimoSeguimiento = formatearFecha(fechaMayor);  
+            ultimoSeguimiento = formatoUS(fechaMayor);  
         }
 
         const tr = document.createElement('tr');
@@ -158,6 +156,8 @@ function renderizarTabla() {
                 </div>
             </td>
             <td data-label="Teléfono">${cliente?.telefono1 || '-'}</td>
+            <td data-label="Estado migratorio">${cliente?.estado_migratorio || '-'}</td>
+            <td data-label="Estado migratorio">${cliente?.ssn || 'No'}</td>
             <td data-label="Estado (Mercado)">  
                 <span class="badge-estado ${poliza.estado_mercado || 'pendiente'}">
                     ${poliza.estado_mercado || 'Pendiente'}
@@ -179,7 +179,15 @@ function renderizarTabla() {
         tbody.appendChild(tr);
     });
 }
-    
+
+function formatearSSN(valor) {
+    const numeros = valor.replace(/\D/g, '').slice(0, 9);
+    if (numeros.length === 0) return '';
+    if (numeros.length <= 3) return numeros;
+    if (numeros.length <= 5) return `${numeros.slice(0, 3)}-${numeros.slice(3)}`;
+    return `${numeros.slice(0, 3)}-${numeros.slice(3, 5)}-${numeros.slice(5, 9)}`;
+}
+
 // Calcular rango de paginación
 const inicio = (paginaActual - 1) * polizasPorPagina;
 const fin = inicio + polizasPorPagina;
@@ -1331,11 +1339,14 @@ function limpiarFiltros() {
     document.getElementById('filtroApellido').value = '';
     document.getElementById('filtroTelefono').value = '';
     document.getElementById('filtroEstadoMigratorio').value = '';
+    document.getElementById('filtroTieneSsn').value = '';
     document.getElementById('filtroCompania').value = '';
     document.getElementById('filtroTipoVenta').value = '';
     document.getElementById('filtroOperador').value = '';
     document.getElementById('filtroEstadoMercado').value = '';
     document.getElementById('filtroEstadoCompania').value = '';
+    document.getElementById('filtroPrima').value = '';
+
     
     // Limpiar fechas
     document.getElementById('filtroFechaRegistroDesde').value = '';
@@ -1364,7 +1375,9 @@ function aplicarFiltrosAvanzados() {
         apellido: document.getElementById('filtroApellido').value.toLowerCase(),
         telefono: document.getElementById('filtroTelefono').value.toLowerCase(),
         estadoMigratorio: document.getElementById('filtroEstadoMigratorio').value,
+        tieneSsn: document.getElementById('filtroTieneSsn').value,
         compania: document.getElementById('filtroCompania').value,
+        prima: document.getElementById('filtroPrima').value,
         tipoVenta: document.getElementById('filtroTipoVenta').value,
         operador: document.getElementById('filtroOperador').value,
         estadoMercado: document.getElementById('filtroEstadoMercado').value,
@@ -1407,9 +1420,33 @@ function aplicarFiltrosAvanzados() {
             return false;
         }
         
+        // Filtro ssn
+        if (filtros.tieneSsn && cliente.tiene_social !== filtros.tieneSsn) {
+            return false;
+        }
+
         // Filtro por compañía
         if (filtros.compania && poliza.compania !== filtros.compania) {
             return false;
+        }
+
+        if (filtros.prima) {
+            const prima = parseFloat(poliza.prima) || 0;
+            
+            switch (filtros.prima) {
+                case 'cero':
+                    if (prima !== 0) return false;
+                    break;
+                case 'conPrima':
+                    if (prima <= 0) return false;
+                    break;
+                case 'alta':
+                    if (prima <= 1500) return false;
+                    break;
+                case 'sinAsignar':
+                    if (poliza.prima !== null && poliza.prima !== '' && poliza.prima !== undefined) return false;
+                    break;
+            }
         }
         
         // Filtro por tipo de venta
@@ -1439,19 +1476,20 @@ function aplicarFiltrosAvanzados() {
         if (!filtrarPorRangoFecha(poliza.fecha_revision_mercado, filtros.fechaRevisionMercadoDesde, filtros.fechaRevisionMercadoHasta)) return false;
         if (!filtrarPorRangoFecha(poliza.fecha_revision_compania, filtros.fechaRevisionCompaniaDesde, filtros.fechaRevisionCompaniaHasta)) return false;
         if (filtros.fechaSeguimientoDesde || filtros.fechaSeguimientoHasta) {
+
+            if (!poliza.seguimientos || poliza.seguimientos.length === 0) {
+                return false
+            }
+
             const fechas = poliza.seguimientos.map(seg => new Date(seg.fecha_seguimiento));
             const fechaMasReciente = new Date(Math.max(...fechas));
 
             if(!filtrarPorRangoFecha(fechaMasReciente, filtros.fechaSeguimientoDesde, filtros.fechaSeguimientoHasta)) {
                 return false;
-            } else {
-                return false;
             }
         }       
         return true;
     });
-    
-    console.log(`✅ Filtros aplicados: ${polizasFiltradas.length} pólizas de ${todasLasPolizas.length}`);
     
     // Resetear paginación
     paginaActual = 1;
