@@ -39,7 +39,7 @@ async function handleLogin(event) {
     btnLogin.textContent = 'Iniciando sesión...';
     
     try {
-        console.log('🔐 Intentando login con Supabase...');
+        // console.log('🔐 Intentando login con Supabase...');
         
         // ==========================================
         // AUTENTICACIÓN REAL CON SUPABASE
@@ -50,7 +50,7 @@ async function handleLogin(event) {
         });
         
         if (authError) {
-            console.error('❌ Error de autenticación:', authError);
+            // console.error('❌ Error de autenticación:', authError);
             throw new Error('Credenciales incorrectas');
         }
         
@@ -66,11 +66,11 @@ async function handleLogin(event) {
             .single();
         
         if (userError || !userData) {
-            console.error('❌ Usuario no encontrado en BD:', userError);
+            // console.error('❌ Usuario no encontrado en BD:', userError);
             throw new Error('Usuario no encontrado en el sistema');
         }
         
-        console.log('✅ Datos del usuario obtenidos:', userData);
+        // console.log('✅ Datos del usuario obtenidos:', userData);
         
         // ==========================================
         // GUARDAR SESIÓN EN LOCALSTORAGE
@@ -91,9 +91,9 @@ async function handleLogin(event) {
         localStorage.setItem('usuario', JSON.stringify(sessionData));
         localStorage.setItem('supabase.auth.token', JSON.stringify(authData.session));
         
-        console.log('✅ Sesión guardada en localStorage');
-        console.log('👤 Usuario:', sessionData.nombre);
-        console.log('🎭 Rol:', sessionData.rol);
+        // console.log('✅ Sesión guardada en localStorage');
+        // console.log('👤 Usuario:', sessionData.nombre);
+        // console.log('🎭 Rol:', sessionData.rol);
         
         // ==========================================
         // REDIRIGIR AL HOME
@@ -103,7 +103,7 @@ async function handleLogin(event) {
         }, 500);
         
     } catch (error) {
-        console.error('❌ Error en login:', error);
+        // console.error('❌ Error en login:', error);
         alert(`Error al iniciar sesión: ${error.message}`);
         
         // Rehabilitar botón
@@ -143,7 +143,7 @@ async function verificarAutenticacion() {
         const usuarioData = localStorage.getItem('usuario');
         
         if (!usuarioData) {
-            console.log('❌ No hay sesión en localStorage');
+            // console.log('❌ No hay sesión en localStorage');
             redirigirALogin();
             return;
         }
@@ -154,7 +154,7 @@ async function verificarAutenticacion() {
         const { data: { session }, error } = await supabaseClient.auth.getSession();
         
         if (error || !session) {
-            console.log('❌ Sesión de Supabase expirada o inválida');
+            // console.log('❌ Sesión de Supabase expirada o inválida');
             redirigirALogin();
             return;
         }
@@ -168,13 +168,13 @@ async function verificarAutenticacion() {
             await refrescarToken();
         }
         
-        console.log('✅ Sesión válida');
-        console.log('👤 Usuario:', usuario.nombre);
-        console.log('🎭 Rol:', usuario.rol);
-        console.log('ID:', usuario.id)
+        // console.log('✅ Sesión válida');
+        // console.log('👤 Usuario:', usuario.nombre);
+        // console.log('🎭 Rol:', usuario.rol);
+        // console.log('ID:', usuario.id)
         
     } catch (error) {
-        console.error('❌ Error al verificar autenticación:', error);
+        // console.error('❌ Error al verificar autenticación:', error);
         redirigirALogin();
     }
 }
@@ -205,11 +205,11 @@ async function refrescarToken() {
             localStorage.setItem('usuario', JSON.stringify(usuarioActual));
             localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
             
-            console.log('✅ Token refrescado exitosamente');
+            // console.log('✅ Token refrescado exitosamente');
         }
         
     } catch (error) {
-        console.error('❌ Error al refrescar token:', error);
+        // console.error('❌ Error al refrescar token:', error);
         redirigirALogin();
     }
 }
@@ -227,13 +227,13 @@ async function cerrarSesion() {
         localStorage.removeItem('usuario');
         localStorage.removeItem('supabase.auth.token');
         
-        console.log('✅ Sesión cerrada');
+        // console.log('✅ Sesión cerrada');
         
         // Redirigir a login
         window.location.href = './login.html';
         
     } catch (error) {
-        console.error('❌ Error al cerrar sesión:', error);
+        // console.error('❌ Error al cerrar sesión:', error);
         // Limpiar de todas formas
         localStorage.clear();
         window.location.href = './login.html';
@@ -554,7 +554,7 @@ async function cerrarSesion() {
         window.location.href = '../index.html';
         
     } catch (error) {
-        console.error('Error al cerrar sesión:', error);
+        // console.error('Error al cerrar sesión:', error);
         alert('Error al cerrar sesión: ' + error.message);
     }
 }
@@ -568,13 +568,13 @@ async function cargarInfoUsuario() {
         if (error) throw error;
         
         if (!user) {
-            console.warn('⚠️ No hay usuario autenticado');
+            // console.warn('⚠️ No hay usuario autenticado');
             // Redirigir al login si no hay usuario
             window.location.href = '../index.html';
             return;
         }
         
-        console.log('✅ Usuario cargado:', user);
+        // console.log('✅ Usuario cargado:', user);
         
         // Extraer información del usuario
         const email = user.email || 'usuario@ejemplo.com';
@@ -617,10 +617,10 @@ async function cargarInfoUsuario() {
             userAvatar.alt = nombreCompleto;
         }
         
-        console.log('✅ Información de usuario actualizada');
+        // console.log('✅ Información de usuario actualizada');
         
     } catch (error) {
-        console.error('❌ Error al cargar info de usuario:', error);
+        // console.error('❌ Error al cargar info de usuario:', error);
         // No redirigir si es solo un error de carga
     }
 }

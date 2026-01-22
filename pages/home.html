@@ -215,10 +215,54 @@
             <div class="chart-card">
                 <h3>Pólizas efectivas cada mes</h3>
                 <p class="chart-subtitle">Número de pólizas vs. aplicantes agrupados por mes</p>
-                <div class="bar-chart">
-                    <p style="text-align: center; color: #94a3b8; padding: 50px 20px;">Gráfico en desarrollo</p>
+                <div class="controles-grafico">
+                    <label>
+                        <input type="radio" name="tipoGrafico" value="lineas" checked>
+                        Por mes
+                    </label>
+                    <label>
+                        <input type="radio" name="tipoGrafico" value="torta">
+                        Por operador
+                    </label>
+
+                    <!-- Checkbox para seleccion de tipo de registro -->
+                    <div class="filtros-tipo">
+                        <h4>Tipos de registro:</h4>
+                        <label>
+                            <input type="checkbox" name="tipoRegistro" value="nuevo" checked>
+                            Nuevo
+                        </label>
+                        <label>
+                            <input type="checkbox" name="tipoRegistro" value="Venta con registro" checked>
+                            Venta con registro
+                        </label>
+                        <label>
+                            <input type="checkbox" name="tipoRegistro" value="Renovacion" checked>
+                            Renovación
+                        </label>
+                        <label>
+                            <input type="checkbox" name="tipoRegistro" value="Cambio de vida" checked>
+                            Cambio de vida
+                        </label>
+                        <label>
+                            <input type="checkbox" name="tipoRegistro" value="Recuperada" checked>
+                            Recuperada
+                        </label>
+                    </div>
+
+                    <!-- Filtro de próximo mes -->
+                     <div class="filtro-mes">
+                        <label>
+                            <input type="checkbox" name="soloProximoMMes" id="soloProximoMes">
+                            Próximo mes
+                        </label>
+                     </div>
+                    <div class="bar-chart">
+                        <div id="chartLineas"></div>
+                    </div>
                 </div>
             </div>
+        
 
             <div class="chart-card">
                 <div class="card-header">
@@ -273,8 +317,16 @@
         </div>
     </main>
     
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <!-- Supabase y scripts propios -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
+    <script src="../js/permisos.js"></script>
     <script src="../js/main.js"></script>
+    <script src="../js/formatear_input_fechas.js"></script>
+    <script src="../js/home.js"></script>
+
 </body>
 </html>

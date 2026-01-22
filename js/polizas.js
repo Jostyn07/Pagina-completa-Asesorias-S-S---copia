@@ -141,7 +141,7 @@ function renderizarTabla() {
         }
 
         const tr = document.createElement('tr');
-        tr.onclick = () => mostrarDetallesPoliza(poliza);
+        // tr.onclick = () => mostrarDetallesPoliza(poliza);
         tr.style.cursor = 'pointer';
         
         tr.innerHTML = `
@@ -167,6 +167,7 @@ function renderizarTabla() {
             <td data-label="Documentos">${poliza.documentos_pendientes}</td>
             <td data-label="Agente 3.5">${obtenerBadgeAgente35(poliza.agente35_estado)}</td>
             <td data-label="Compañía">${poliza.compania || '-'}</td>
+            <td data-label="Compañía">${formatoUS(poliza.fecha_revision_compania) || '-'}</td>
             <td data-label="Plan">${poliza.plan || '-'}</td>
             <td data-label="Prima">$${poliza.prima || '0.00'}</td>
             <td data-label="Agente">${poliza.agente_nombre || '-'}</td>
@@ -216,7 +217,7 @@ function crearFilaPoliza(poliza) {
     const prima = poliza.prima ? `$${parseFloat(poliza.prima).toFixed(2)}` : '$0.00';
     
     // Badge de estado
-    const estadoBadge = obtenerBadgeEstado(poliza.estado_mercado || 'pendiente');
+    const estadoBadge = obtenerBadgeEstado(poliza.estado_mercado);
     
     return `
         <tr data-poliza-id="${poliza.id}" onclick="abrirDetalles(${poliza.id})" style="cursor: pointer;">
@@ -881,7 +882,7 @@ function obtenerBadgeEstado(estado) {
         'activo': '<span class="badge-estado activo">Activo</span>',
         'cancelado': '<span class="badge-estado cancelado">Cancelado</span>',
         'pendiente': '<span class="badge-estado pendiente">Pendiente</span>',
-        'proxima': '<span class="badge-estado proxima">Próxima</span>'
+        'proxima': '<span class="badge-estado proxima">Próxima</span>',
     };
     
     return estados[estado.toLowerCase()] || '<span class="badge-estado">Sin estado</span>';
@@ -993,6 +994,11 @@ style.textContent = `
     .badge-estado.proxima {
         background: rgba(33, 150, 243, 0.1);
         color: #2196f3;
+    }
+
+    .badge-estado.robado {
+        background: #7336;
+        color: #333;
     }
     
     /* Modal */
@@ -1345,6 +1351,7 @@ function limpiarFiltros() {
     document.getElementById('filtroOperador').value = '';
     document.getElementById('filtroEstadoMercado').value = '';
     document.getElementById('filtroEstadoCompania').value = '';
+    document.getElementById('estadoAgente35').value = '';
     document.getElementById('filtroPrima').value = '';
 
     
@@ -1382,6 +1389,7 @@ function aplicarFiltrosAvanzados() {
         operador: document.getElementById('filtroOperador').value,
         estadoMercado: document.getElementById('filtroEstadoMercado').value,
         estadoCompania: document.getElementById('filtroEstadoCompania').value,
+        estadoAgente35: document.getElementById('estadoAgente35').value,
         fechaRegistroDesde: document.getElementById('filtroFechaRegistroDesde').value,
         fechaRegistroHasta: document.getElementById('filtroFechaRegistroHasta').value,
         fechaEfectividadDesde: document.getElementById('filtroFechaEfectividadDesde').value,
@@ -1467,6 +1475,11 @@ function aplicarFiltrosAvanzados() {
         // Filtro por estado compañía
         if (filtros.estadoCompania && poliza.estado_compania !== filtros.estadoCompania) {
             return false;
+        }
+
+        // Filtro por estado en agente35
+        if (filtros.estadoAgente35 && poliza.agente35_estado !== filtros.estadoAgente35) {
+            return false
         }
         
         // Filtros de fechas

@@ -703,3 +703,68 @@ body {
 .dropdown-item:last-child {
     border-radius: 0 0 12px 12px;
 }
+
+/* Configuración de los graficos */
+
+.controles-grafico {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+
+.tipo-grafico, .filtros-tipo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tipo-grafico h4, .filtros-tipo h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.tipo-grafico label, .filtros-tipo label {
+    display: flex;;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.controles-grafico label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.controles-grafico input[type="radio"], .controles-grafico input[type="checkbox"] {
+    cursor: pointer;
+    width: 19px;
+    height: 18px;
+}
+
+/* Css para el checkbox de "Próximo mes */
+
+.filtro-mes {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #e8f4f8;
+    border-radius: 6px;
+}
+
+.filtro-mes label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}

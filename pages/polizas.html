@@ -7,6 +7,7 @@
     <title>Pólizas - S&S Asesorías</title>
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/polizas.css">
+    <link rel="stylesheet" href="../css/cliente.css">
     <style>
         /* Estilos adicionales para las mejoras */
         .controls-row {
@@ -393,10 +394,12 @@
                                     <div class="filtro-group">
                                         <label>Tipo de Venta</label>
                                         <select id="filtroTipoVenta">
-                                            <option value="">Todos</option>
-                                            <option value="Nueva">Nueva venta</option>
-                                            <option value="Renovacion">Renovación</option>
-                                            <option value="Cambio">Cambio de plan</option>
+                                            <option value="">Seleccionar...</option>
+                                            <option value="nuevo">Nuevo</option>
+                                            <option value="renovacion">Renovacion</option>
+                                            <option value="nueva con registro">Nueva con registro</option>
+                                            <option value="recuperada">Recuperada</option>
+                                            <option value="cambio de vida">Cambio de vida</option>
                                         </select>
                                     </div>
                                     <div class="filtro-group" id="filtroOperadorGroup">
@@ -447,6 +450,17 @@
                                             <option value="Suspendido">Suspendido</option>
                                         </select>
                                     </div>
+                                    <div class="filtro-group">
+                                        <label for="estadoAgente35">Estado agente 3.5</label>
+                                        <select name="estadoAgente35" id="estadoAgente35">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="Procesado">Procesado</option>
+                                            <option value="Pendiente">Pendiente</option>
+                                            <option value="New aplication">New aplication</option>
+                                            <option value="Policy change">Policy change</option>
+                                            <option value="Cambio necesario">Cambio necesario</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -454,68 +468,83 @@
                             <div class="filtro-section">
                                 <h3>📅 Fechas</h3>
                                 <div class="filtro-grid">
-                                    <div class="filtro-group">
-                                        <label>Fecha Registro Desde</label>
-                                        <input type="date" id="filtroFechaRegistroDesde">
-                                    </div>
-                                    <div class="filtro-group">
-                                        <label>Fecha Registro Hasta</label>
-                                        <input type="date" id="filtroFechaRegistroHasta">
-                                    </div>
-                                    <div class="filtro-group">
-                                        <label>Fecha Efectividad Desde</label>
-                                        <input type="date" id="filtroFechaEfectividadDesde">
-                                    </div>
-                                    <div class="filtro-group">
-                                        <label>Fecha Efectividad Hasta</label>
-                                        <input type="date" id="filtroFechaEfectividadHasta">
-                                    </div>
-                                    <div class="filtro-group">
-                                        <label>Fecha Cobertura Inicial Desde</label>
-                                        <input type="date" id="filtroFechaCoberturaInicialDesde">
-                                    </div>
-                                    <div class="filtro-group">
-                                        <label>Fecha Cobertura Inicial Hasta</label>
-                                        <input type="date" id="filtroFechaCoberturaInicialHasta">
-                                    </div>
-                                    <div class="filtro-group">
-                                        <label>Fecha Revisión Mercado Desde</label>
-                                        <input type="date" id="filtroFechaRevisionMercadoDesde">
-                                    </div>
-                                    <div class="filtro-group">
-                                        <label>Fecha Revisión Mercado Hasta</label>
-                                        <input type="date" id="filtroFechaRevisionMercadoHasta">
-                                    </div>
-                                    <div class="filtro-group">
-                                        <label>Fecha Revisión Compañía Desde</label>
-                                        <input type="date" id="filtroFechaRevisionCompaniaDesde">
-                                    </div>
-                                    <div class="filtro-group">
-                                        <label>Fecha Revisión Compañía Hasta</label>
-                                        <input type="date" id="filtroFechaRevisionCompaniaHasta">
-                                    </div>
-                                    <div class="filter-group">
-                                        <label for="filtroSeguimientoDesde">
-                                            <span class="material-symbols-rounded">calendar_month</span>
-                                            Seguimiento desde:
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            id="filtroSeguimientoDesde" 
-                                            class="filter-input"
-                                        >
+                                    <!-- Filtrar por fecha de registro -->
+                                    <div class="form-row fecha_cuadrado">
+                                        <h4>Filtrar por fecha de revisión</h4>
+                                        <div class="filtro-group">
+                                            <label>Fecha Registro Desde</label>
+                                            <input type="date" id="filtroFechaRegistroDesde">
+                                        </div>
+                                        <div class="filtro-group">
+                                            <label>Fecha Registro Hasta</label>
+                                            <input type="date" id="filtroFechaRegistroHasta">
+                                        </div>
                                     </div>
 
-                                    <div class="filter-group">
-                                        <label for="filtroSeguimientoHasta">
-                                            <span class="material-symbols-rounded">event</span>
-                                            Seguimiento hasta:
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            id="filtroSeguimientoHasta" 
-                                            class="filter-input"
-                                        >
+                                    <!--  Filtrar por fecha de efectividad -->
+                                    <div class="form-row fecha_cuadrado">
+                                        <h4>Filtrar por fecha de efectividad</h4>
+                                        <div class="filtro-group">
+                                            <label>Fecha Efectividad Desde</label>
+                                            <input type="date" id="filtroFechaEfectividadDesde">
+                                        </div>
+                                        <div class="filtro-group">
+                                            <label>Fecha Efectividad Hasta</label>
+                                            <input type="date" id="filtroFechaEfectividadHasta">
+                                        </div>
+                                    </div>
+
+                                    <!-- Filtrar por inicio de cobertura -->
+                                    <div class="form-row fecha_cuadrado">
+                                        <h4>Filtrar por inicio de cobertura</h4>
+                                        <div class="filtro-group">
+                                            <label>Fecha Cobertura Inicial Desde</label>
+                                            <input type="date" id="filtroFechaCoberturaInicialDesde">
+                                        </div>
+                                        <div class="filtro-group">
+                                            <label>Fecha Cobertura Inicial Hasta</label>
+                                            <input type="date" id="filtroFechaCoberturaInicialHasta">
+                                        </div>
+                                    </div>
+
+                                    <!-- Filtrar por revision en mercado -->
+                                    <div class="form-row fecha_cuadrado">
+                                        <h4>Filtar por revisión en mercado</h4>
+                                        <div class="filtro-group">
+                                            <label>Fecha Revisión Mercado Desde</label>
+                                            <input type="date" id="filtroFechaRevisionMercadoDesde">
+                                        </div>
+                                        <div class="filtro-group">
+                                            <label>Fecha Revisión Mercado Hasta</label>
+                                            <input type="date" id="filtroFechaRevisionMercadoHasta">
+                                        </div>
+                                    </div>
+
+                                    <!-- Filtrar por fecha de revision en compañia -->
+                                    <div class="form-row fecha_cuadrado">
+                                        <h4>Filtrar por revisión en compañía</h4>
+                                        <div class="filtro-group">
+                                            <label>Fecha Revisión Compañía Desde</label>
+                                            <input type="date" id="filtroFechaRevisionCompaniaDesde">
+                                        </div>
+                                        <div class="filtro-group">
+                                            <label>Fecha Revisión Compañía Hasta</label>
+                                            <input type="date" id="filtroFechaRevisionCompaniaHasta">
+                                        </div>
+                                    </div>
+
+                                    <!-- Filtrar por fecha de seguimiento -->
+                                    <div class="form-row fecha_cuadrado">
+                                        <h4>Filtrar por fecha de seguimiento</h4>
+                                        <div class="filtro-group">
+                                            <label for="filtroSeguimientoDesde">Seguimiento desde</label>
+                                            <input type="date" id="filtroSeguimientoDesde">
+                                        </div>
+
+                                        <div class="filtro-group">
+                                            <label for="filtroSeguimientoHasta">Seguimiento hasta</label>
+                                            <input type="date" id="filtroSeguimientoHasta">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -566,6 +595,7 @@
                                 <th class="sortable" data-column="documentos">Documentos</th>
                                 <th class="sortable" data-column="agente35_estado">Estado<br>(Agente 3.5)</th>
                                 <th class="sortable" data-column="compania">Compañía</th>
+                                <th>Fecha de revision en compañia</th>
                                 <th class="sortable" data-column="plan">Plan</th>
                                 <th class="sortable" data-column="prima">Prima</th>
                                 <th>Agente</th>
