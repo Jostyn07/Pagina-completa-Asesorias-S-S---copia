@@ -255,17 +255,17 @@
                         <div class="inf__cuadro" onclick="filtrarPorEstado('activas')">
                             <h2>Activas</h2>
                             <p>Total de pólizas activas</p>
-                            <span id="polizas-activas">0</span>
+                            <span id="polizasActivas">0</span>
                         </div>
                         <div class="inf__cuadro" onclick="filtrarPorEstado('canceladas')">
                             <h2>Canceladas</h2>
                             <p>Total de pólizas canceladas</p>
-                            <span id="polizas-canceladas">0</span>
+                            <span id="polizasCanceladas">0</span>
                         </div>
                         <div class="inf__cuadro" onclick="filtrarPorEstado('proximas')">
                             <h2>Próxima Efectividad</h2>
                             <p>Próxima efectividad</p>
-                            <span id="polizas-proximas">0</span>
+                            <span id="polizasProximas">0</span>
                         </div>
                     </div>
                 </div>
@@ -346,7 +346,7 @@
                                         <label>Estado Migratorio</label>
                                         <select id="filtroEstadoMigratorio">
                                             <option value="">Todos</option>
-                                            <option value="ciudadano">Ciudadano</option>
+                                            <option value="Ciudadano">Ciudadano</option>
                                             <option value="Residente Permanente">Residente Permanente</option>
                                             <option value="Permiso de trabajo">Permiso de trabajo</option>
                                             <option value="Asilo politico">Asilo politico</option>
@@ -375,10 +375,23 @@
                                             <option value="">Todas</option>
                                             <option value="Aetna">Aetna</option>
                                             <option value="Ambetter">Ambetter</option>
+                                            <option value="Ameri HealthCaritas Next">Ameri HealthCaritas Next</option>
+                                            <option value="Antidothe">Antidothe</option>
+                                            <option value="Athem">Anthem</option>
+                                            <option value="Baylor">Baylor</option>
+                                            <option value="Blue Cross and Blue Shield">Blue Cross and Blue Shield</option>
+                                            <option value="CareSource">CareSource</option>
+                                            <option value="Christus Health Plan">Christus Health Plan</option>
+                                            <option value="Cigna">Cigna</option>
+                                            <option value="Community Health Choice">Community Health Choice</option>
                                             <option value="Florida Blue">Florida Blue</option>
+                                            <option value="Harbor">Harbor</option>
+                                            <option value="Health Firts">Health Firts</option>
+                                            <option value="Imperial Insurance">Imperial Insurance</option>
                                             <option value="Molina">Molina</option>
                                             <option value="Oscar">Oscar</option>
                                             <option value="United HealthCare">United HealthCare</option>
+                                            <option value="WellPoint">WellPoint</option>
                                         </select>
                                     </div>
                                     <div class="filtro-group">
@@ -423,6 +436,26 @@
                                             <option value="Michell Suárez">Michell Suárez</option>
                                         </select>
                                     </div>
+                                    <div class="filtro-group">
+                                        <label>Documentos</label>
+                                        <select id="filtroDocumentos">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="Pendiente">Pendiente</option>
+                                            <option value="Incompleto">Incompleto</option>
+                                            <option value="A la espera de verificación">A la espera de verificación</option>
+                                            <option value="Rechazado">Rechazado</option>
+                                            <option value="Documentos completos">Documentos completos</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="filtro-group">
+                                        <label>Seguimiento efectivo</label>
+                                        <select id="filtroSeguimientoEfectivo">
+                                            <option value="">Todos</option>
+                                            <option value="Si">Sí</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -434,10 +467,14 @@
                                         <label>Estado en Mercado</label>
                                         <select id="filtroEstadoMercado">
                                             <option value="">Todos</option>
-                                            <option value="Pendiente">Pendiente</option>
                                             <option value="Activo">Activo</option>
+                                            <option value="Inactivo">Inactivo</option>
                                             <option value="Cancelado">Cancelado</option>
-                                            <option value="Suspendido">Suspendido</option>
+                                            <option value="Robado">Robado</option>
+                                            <option value="Doble póliza">Doble póliza</option>
+                                            <option value="Triple póliza">Triple póliza</option>
+                                            <option value="No registra">No registra</option>
+                                            <option value="Cancelado a P.C">Cancelado a P.C</option>
                                         </select>
                                     </div>
                                     <div class="filtro-group">
@@ -590,26 +627,28 @@
                                 <th>Número de teléfono</th>
                                 <th>Estado migratorio</th>
                                 <th>SSN</th>
-                                <th class="sortable" data-column="estado_mercado">Estado<br>(Mercado)</th>
+                                <th>Estado<br>(Mercado)</th>
                                 <th class="sortable" data-column="fechaRevisionMercado">Fecha de revisión<br>(Mercado)</th>
                                 <th class="sortable" data-column="documentos">Documentos</th>
+                                <th>Estado de documentos</th>
                                 <th class="sortable" data-column="agente35_estado">Estado<br>(Agente 3.5)</th>
                                 <th class="sortable" data-column="compania">Compañía</th>
                                 <th>Fecha de revision en compañia</th>
                                 <th class="sortable" data-column="plan">Plan</th>
                                 <th class="sortable" data-column="prima">Prima</th>
+                                <th>¿Tiene metodo de pago?</th>
                                 <th>Agente</th>
                                 <th class="sortable" data-column="fecha_efectividad">Efectividad</th>
                                 <th class="sortable" data-column="created_at">Creación</th>
                                 <th class="sortable" data-column="updated_at">Modificación</th>
                                 <th class="sortable" data-column="ultimo_seguimiento">Último Seguimiento</th>
-                                <th class="sortable" data-column="seguimientoEfectivo">Seguimiento efectivo</th>
+                                <th >Seguimiento efectivo</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-polizas">
                             <!-- Los datos se cargarán dinámicamente -->
                             <tr>
-                                <td colspan="17" style="text-align: center; padding: 40px;">
+                                <td colspan="23" style="text-align: center; padding: 40px;">
                                     <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
                                         <div style="width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite;"></div>
                                         <p style="color: #64748b; margin: 0;">Cargando pólizas...</p>
@@ -653,10 +692,11 @@
 
     <script src="../js/permisos.js"></script>
     
-    <script src="../js/polizas.js"></script>
-     
     <!-- 3. Funciones generales -->
     <script src="../js/main.js"></script>
+
+    <script src="../js/polizas.js"></script>
+
     
 </body>
 </html>

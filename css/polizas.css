@@ -393,10 +393,12 @@ body {
 
 .thead tr {
     display: grid;
-    grid-template-columns: repeat(21, 130px); 
+    grid-template-columns: repeat(23, 200px); 
     padding: 15px;
     font-weight: 600;
     color: var(--color-text-primary);
+    height: 80px;
+    
 }
 
 .thead th {
@@ -405,13 +407,16 @@ body {
     font-size: 0.85rem;
 }
 
-/* ✅ CORREGIDO: Filas del body con el mismo ancho */
 tbody tr {
     display: grid;
-    grid-template-columns: repeat(21, 130px);
+    grid-template-columns: repeat(23, 200px);
     padding: 15px;
     border-bottom: 1px solid var(--color-border-hr);
     transition: background-color 0.2s ease;
+    height: 50px;
+    white-space: nowrap; /* Evita el salto de línea */
+    overflow: hidden; /* Oculta el texto extra */
+    text-overflow: ellipsis; /* Añade los puntos */
 }
 
 tbody tr:hover {

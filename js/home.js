@@ -1,60 +1,148 @@
-// Inicio para la toma de información para el grafico
-
+// ============================================
+// VARIABLES GLOBALES
+// ============================================
 let chartActual = null;
 let polizasGlobales = null;
+let todasLasPolizas = []; // ✅ NUEVO: Todas las pólizas sin filtrar
+let filtrosActivos = {    // ✅ NUEVO: Estado de los filtros
+    estadoCompania: '',
+    operador: '',
+    documentos: '',
+    fechaDesde: '2026-01-01',
+    fechaHasta: '2026-12-31'
+};
 
+// ============================================
+// CARGA DE DATOS
+// ============================================
+
+/**
+ * Carga TODAS las pólizas de la base de datos (sin filtros hardcodeados)
+ */
 async function cargarPolizasParaGrafico() {
     try {
-        console.log("Cargando datos para grafico")
-        /* {data, error }: Destructuración (Extraer valores de un objeto*/
-        /* await: Espera a que termine una operación asicronica*/ 
-
+        console.log("📡 Cargando datos para gráfico...");
+        
+        // ✅ CARGAR TODAS las pólizas (sin filtros hardcodeados)
         const { data, error } = await supabaseClient
             .from('polizas')
             .select(`
                 *,
-            cliente:clientes (*)
+                cliente:clientes (*)
             `)
-        // ***ILIKE*** ignora mayusculas y minusculas
-        .ilike('agente35_estado', 'procesado') // La primera parte indica por cual columna se va a filtrar y la segunda indica cual sera el criterio
-        .not('fecha_efectividad', 'is', null) // Inidica que de la columna "Fecha efectividad" no se va a tomar los valores que digan "null"
-        // .not('tipo_registro', 'is', null)
-        .gte('fecha_efectividad', '2026-01-01') // Inidica que de la columna "Fecha efectividad" se va a tomar a partir del 01/01/2026
-        .lte('fecha_final_cobertura', '2026-12-31') // Inidica que de la columna "Fecha efectividad" se va a tomar hasta el 12/31/2026
-
+            .not('fecha_efectividad', 'is', null);
+        
         if (error) throw error;
-
-        console.log('Pólizas cargadas:', data.length);
-        console.log(data);
-
-        return data
+        
+        console.log('✅ Pólizas cargadas:', data.length);
+        
+        // Guardar TODAS las pólizas
+        todasLasPolizas = data || [];
+        
+        // Aplicar filtros iniciales
+        return aplicarFiltros();
+        
     } catch (error) {
-        console.log('Error:', error);
-        return[];
+        console.error('❌ Error:', error);
+        return [];
     }
 }
 
-// Aplicación del grafico
+/**
+ * Aplica los filtros seleccionados a todas las pólizas
+ */
+function aplicarFiltros() {
+    console.log('🔍 Aplicando filtros:', filtrosActivos);
+    
+    let polizasFiltradas = [...todasLasPolizas];
+    
+    // Filtro por estado de compañía
+    if (filtrosActivos.estadoCompania) {
+        polizasFiltradas = polizasFiltradas.filter(p => 
+            p.estado_mercado === filtrosActivos.estadoCompania
+        );
+    }
+    
+    // Filtro por operador
+    if (filtrosActivos.operador) {
+        polizasFiltradas = polizasFiltradas.filter(p => 
+            p.operador_nombre === filtrosActivos.operador
+        );
+    }
+    
+    // Filtro por documentos
+    if (filtrosActivos.documentos) {
+        polizasFiltradas = polizasFiltradas.filter(p => 
+            p.estado_documentos === filtrosActivos.documentos
+        );
+    }
+    
+    // Filtro por rango de fechas
+    polizasFiltradas = polizasFiltradas.filter(p => {
+        if (!p.fecha_efectividad) return false;
+        
+        const fechaEfectividad = p.fecha_efectividad.split('T')[0]; // yyyy-mm-dd
+        return fechaEfectividad >= filtrosActivos.fechaDesde && 
+               fechaEfectividad <= filtrosActivos.fechaHasta;
+    });
+    
+    // Filtrar también por fecha_final_cobertura dentro del rango
+    polizasFiltradas = polizasFiltradas.filter(p => {
+        if (!p.fecha_final_cobertura) return false;
+        
+        const fechaFinal = p.fecha_final_cobertura.split('T')[0];
+        return fechaFinal >= filtrosActivos.fechaDesde && 
+               fechaFinal <= filtrosActivos.fechaHasta;
+    });
+    
+    console.log(`✅ Filtradas: ${polizasFiltradas.length}/${todasLasPolizas.length} pólizas`);
+    
+    return polizasFiltradas;
+}
+
+/**
+ * Función llamada por el botón "Filtros"
+ * Captura los valores de los selectores y actualiza el gráfico
+ */
+function applyFilters() {
+    console.log('🔘 Botón "Filtros" presionado');
+    
+    // Capturar valores de los selectores
+    filtrosActivos.estadoCompania = document.getElementById('filtroEstadoCompania')?.value || '';
+    filtrosActivos.operador = document.getElementById('filterTypeOperador')?.value || '';
+    filtrosActivos.documentos = document.getElementById('filtroDocumentos')?.value || '';
+    
+    // Aplicar filtros
+    polizasGlobales = aplicarFiltros();
+    
+    // Actualizar estadísticas
+    const { totalPolizas, totalAplicantes } = calcularTotales(polizasGlobales);
+    actualizarEstadisticas(totalPolizas, totalAplicantes);
+    
+    // Actualizar gráfico
+    actualizarGrafico();
+    
+    // Mostrar notificación
+    mostrarNotificacion(`Filtros aplicados: ${polizasGlobales.length} pólizas encontradas`);
+}
+
+// ============================================
+// PROCESAMIENTO DE DATOS
+// ============================================
+
 function procesarDatosGraficos(polizas, tiposSeleccionados, soloProximoMes) {
-    // Preparando la estructura para el grafico de lineas
     const datosPorMes = {};
-    const meses = ['Enero','Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-
-    // Preparando estructura para grafico de torta
+    const meses = ['Enero','Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const datosPorOperador = {};
-
     let mesProximo = null;
 
     if (soloProximoMes) {
-        const ahora = new Date ();
+        const ahora = new Date();
         mesProximo = (ahora.getMonth() + 1) % 12;
     }
 
-    // Recorrer todas las polizas
     polizas.forEach(poliza => {
-        const cliente = poliza.cliente
-
-        // Saltar clientes que no tienen operador
+        const cliente = poliza.cliente;
 
         if (!tiposSeleccionados.includes(cliente?.tipo_registro)) {
             return;
@@ -64,114 +152,102 @@ function procesarDatosGraficos(polizas, tiposSeleccionados, soloProximoMes) {
         const mes = meses[fecha.getMonth()];
         const operador = poliza.operador_nombre;
 
-        // Filtar por proximo mes si esta activo
         if (soloProximoMes && fecha.getMonth() !== mesProximo) {
             return;
         }
 
-        // Para grafico de lineas por mes
-
-        // Si el operador no existe, se creara con todos los meses en 0
         if (!datosPorMes[operador]) {
             datosPorMes[operador] = {};
             meses.forEach(m => {
-                datosPorMes[operador][m] = 0  ; //Inicializa cada mes en 0
+                datosPorMes[operador][m] = 0;
             });
         }
 
-        // Incrementar el contador del mes correspondiente
         datosPorMes[operador][mes]++;
 
-        // Para el grafico de torta
         if (!datosPorOperador[operador]) {
             datosPorOperador[operador] = 0;
         }
         datosPorOperador[operador]++;
     });
 
-    console.log("Datos por mes: ", datosPorMes)
-    console.log("datos por operador:", datosPorOperador)
+    console.log("Datos por mes:", datosPorMes);
+    console.log("Datos por operador:", datosPorOperador);
 
-    return { datosPorMes, datosPorOperador }
+    return { datosPorMes, datosPorOperador };
 }
+
+// ============================================
+// GRÁFICOS
+// ============================================
 
 function crearGraficoLineas(datosPorMes) {
-if (chartActual) {
-    chartActual.destroy();
-}
+    if (chartActual) {
+        chartActual.destroy();
+    }
 
-    const meses = ['Enero','Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-
+    const meses = ['Enero','Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const series = [];
-
-    // Obtener todos los nombres de operadores
-    const operadores = Object.keys(datosPorMes)
+    const operadores = Object.keys(datosPorMes);
 
     for (const operador of operadores) {
-
-        // Extraer los valores de los 12 mesess en orden
-        const valores = []
-
+        const valores = [];
         for (const mes of meses) {
-        valores.push(datosPorMes[operador][mes])
+            valores.push(datosPorMes[operador][mes]);
         }
-
         series.push({
             name: operador,
             data: valores
         });
     }
-    console.log('Series para graficos: ', series)
 
-    // Configuración de APEXCHARTS
+    console.log('Series para gráficos:', series);
+
     const options = {
         series: series,
         chart: {
-            type: 'line', // Tipo de grafico de lineas
+            type: 'line',
             height: 500,
             width: 1000,
             toolbar: {
-                show: true // Botones para descargar, zoom, entre otros
+                show: true
             }
         },
         xaxis: {
-                categories: meses // Los meses en el eje x
+            categories: meses
         },
         yaxis: {
             title: {
-            text: 'Cantidad de polizas'
+                text: 'Cantidad de pólizas'
             }
         },
         title: {
-            text: 'Polizas procesadas por mes (2026)',
+            text: 'Pólizas procesadas por mes (2026)',
             width: 10
         }
     };
+
     const chart = new ApexCharts(document.querySelector("#chartLineas"), options);
-    chartActual = chart
+    chartActual = chart;
     chartActual.render();
 }
 
-// Grafico de tortas
 function crearGraficoTorta(datosPorOperador) {
     if (chartActual) {
         chartActual.destroy();
     }
 
-    // Preparar datos para el grafico de torta
     const labels = [];
     const data = [];
 
-    // Convertir el objeto en arrays separados
     for (const [operador, total] of Object.entries(datosPorOperador)) {
         labels.push(operador);
         data.push(total);
-    } 
-    
-    console.log('labels: ', labels);
-    console.log('Data: ', data);
+    }
 
-    // Configuración de ApexCharts para torta
+    console.log('Labels:', labels);
+    console.log('Data:', data);
+
     const options = {
         series: data,
         chart: {
@@ -181,7 +257,7 @@ function crearGraficoTorta(datosPorOperador) {
         },
         labels: labels,
         title: {
-            text:'Polizas realizadas por Operador (2026)',
+            text: 'Pólizas realizadas por Operador (2026)',
             align: 'center'
         },
         legend: {
@@ -190,9 +266,13 @@ function crearGraficoTorta(datosPorOperador) {
     };
 
     const chart = new ApexCharts(document.querySelector("#chartLineas"), options);
-    chartActual = chart
+    chartActual = chart;
     chartActual.render();
 }
+
+// ============================================
+// ACTUALIZACIÓN DE GRÁFICOS
+// ============================================
 
 function obtenerTiposSeleccionados() {
     const checkboxes = document.querySelectorAll('input[name="tipoRegistro"]:checked');
@@ -204,17 +284,13 @@ function obtenerTiposSeleccionados() {
 function actualizarGrafico() {
     const tiposSeleccionados = obtenerTiposSeleccionados();
 
-    // Si no hay checkbox marcado, no hacer nada
     if (tiposSeleccionados.length === 0) {
         console.log("No hay tipos seleccionados");
         return;
     }
 
     const soloProximoMes = document.getElementById('soloProximoMes')?.checked || false;
-
     const { datosPorMes, datosPorOperador } = procesarDatosGraficos(polizasGlobales, tiposSeleccionados, soloProximoMes);
-
-    // Verificar que tipo de grafico esta seleccionado
     const tipoGrafico = document.querySelector('input[name="tipoGrafico"]:checked')?.value || 'lineas';
 
     if (tipoGrafico === 'lineas') {
@@ -224,32 +300,37 @@ function actualizarGrafico() {
     }
 }
 
+// ============================================
+// EVENT LISTENERS
+// ============================================
+
 function inicializarEventListeners() {
-    // Event listener ara los checkboxes de tipo de registro
     const checkboxes = document.querySelectorAll('input[name="tipoRegistro"]');
     checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', actualizarGrafico)
+        checkbox.addEventListener('change', actualizarGrafico);
     });
 
     const radios = document.querySelectorAll('input[name="tipoGrafico"]');
     radios.forEach(radio => {
         radio.addEventListener('change', actualizarGrafico);
-    })
+    });
 
     const checkboxProximoMes = document.getElementById('soloProximoMes');
     if (checkboxProximoMes) {
-        checkboxProximoMes.addEventListener('change', actualizarGrafico)
+        checkboxProximoMes.addEventListener('change', actualizarGrafico);
     }
 }
 
+// ============================================
+// ESTADÍSTICAS
+// ============================================
+
 function calcularTotales(polizas) {
     const totalPolizas = polizas.length;
-
     const totalAplicantes = polizas.reduce((suma, poliza) => {
         const aplicantes = parseInt(poliza.aplicantes) || 0;
         return suma + aplicantes;
     }, 0);
-
     return { totalPolizas, totalAplicantes };
 }
 
@@ -265,37 +346,28 @@ function actualizarEstadisticas(totalPolizas, totalAplicantes) {
         const textoAplicantes = totalAplicantes === 1 ? 'Aplicante' : 'Aplicantes';
         elementoAplicantes.textContent = `${totalAplicantes} ${textoAplicantes}`;
     }
-    console.log('total poizas:', totalPolizas)
-    console.log('total aplicantes:', totalAplicantes)
+    console.log('Total pólizas:', totalPolizas);
+    console.log('Total aplicantes:', totalAplicantes);
 }
-
 
 // ============================================
 // UTILIDADES
 // ============================================
-/**
- * Convierte CUALQUIER formato de fecha a mm/dd/aaaa
- * SIN conversiones de zona horaria
- * @param {string|Date} fecha - Fecha en cualquier formato
- * @returns {string} Fecha en formato mm/dd/aaaa
- */
+
 function formatoUS(fecha) {
     if (!fecha) return '';
     
     try {
-        // Si es string en formato ISO (yyyy-mm-dd o yyyy-mm-ddTHH:MM:SS)
         if (typeof fecha === 'string' && fecha.includes('-')) {
-            const soloFecha = fecha.split('T')[0]; // Quitar hora si existe
+            const soloFecha = fecha.split('T')[0];
             const [anio, mes, dia] = soloFecha.split('-');
             return `${mes}/${dia}/${anio}`;
         }
         
-        // Si es string en formato US (mm/dd/yyyy)
         if (typeof fecha === 'string' && fecha.includes('/')) {
-            return fecha; // Ya está en formato US
+            return fecha;
         }
         
-        // Si es Date object (último recurso)
         if (fecha instanceof Date) {
             const anio = fecha.getFullYear();
             const mes = String(fecha.getMonth() + 1).padStart(2, '0');
@@ -310,28 +382,19 @@ function formatoUS(fecha) {
     }
 }
 
-/**
- * Convierte fecha a formato ISO (yyyy-mm-dd) para inputs type="date"
- * SIN conversiones de zona horaria
- * @param {string|Date} fecha - Fecha en cualquier formato
- * @returns {string} Fecha en formato yyyy-mm-dd
- */
 function formatoISO(fecha) {
     if (!fecha) return '';
     
     try {
-        // Si es string en formato ISO (yyyy-mm-dd o yyyy-mm-ddTHH:MM:SS)
         if (typeof fecha === 'string' && fecha.includes('-')) {
-            return fecha.split('T')[0]; // Ya está en ISO, solo quitar hora
+            return fecha.split('T')[0];
         }
         
-        // Si es string en formato US (mm/dd/yyyy)
         if (typeof fecha === 'string' && fecha.includes('/')) {
             const [mes, dia, anio] = fecha.split('/');
             return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
         }
         
-        // Si es Date object (último recurso)
         if (fecha instanceof Date) {
             const anio = fecha.getFullYear();
             const mes = String(fecha.getMonth() + 1).padStart(2, '0');
@@ -346,22 +409,60 @@ function formatoISO(fecha) {
     }
 }
 
+/**
+ * Muestra una notificación temporal
+ */
+function mostrarNotificacion(mensaje) {
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #6366f1;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        z-index: 10000;
+        font-size: 0.9rem;
+        animation: slideIn 0.3s ease;
+    `;
+    notif.textContent = mensaje;
+    
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+        notif.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
 
-// ====================================================================================
-// Sumatoria de pólizas
-// ====================================================================================
+// ============================================
+// INICIALIZACIÓN
+// ============================================
 
-
-
-// Ejecutar al cargar la pagina
 document.addEventListener('DOMContentLoaded', async function() {
+    // Cargar todas las pólizas
     polizasGlobales = await cargarPolizasParaGrafico();
     
-    // ✅ Calcular y actualizar estadísticas
+    // Calcular y actualizar estadísticas
     const { totalPolizas, totalAplicantes } = calcularTotales(polizasGlobales);
     actualizarEstadisticas(totalPolizas, totalAplicantes);
     
+    // Inicializar listeners
     inicializarEventListeners();
     actualizarGrafico();
+    
+    // ✅ Agregar listeners a los filtros (opcional: para debug)
+    document.getElementById('filtroEstadoCompania')?.addEventListener('change', () => {
+        console.log('Filtro de estado cambiado');
+    });
+    
+    document.getElementById('filterTypeOperador')?.addEventListener('change', () => {
+        console.log('Filtro de operador cambiado');
+    });
+    
+    document.getElementById('filtroDocumentos')?.addEventListener('change', () => {
+        console.log('Filtro de documentos cambiado');
+    });
 });
-

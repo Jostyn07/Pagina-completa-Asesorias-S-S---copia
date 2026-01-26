@@ -8,7 +8,8 @@ let polizasPorPagina = 10;
 let ordenColumna = 'created_at';
 let ordenDireccion = 'desc';
 let polizaSeleccionada = null;
-
+let filtrosActivos= null;
+let hayFiltrosActivos = false;
 // ============================================
 // INICIALIZACIÓN
 // ============================================
@@ -30,14 +31,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('✅ Módulo de pólizas mejorado cargado');
 });
 
-function esAdministrador() {
-    return rolUsuario === 'admin';
-}
-
-// Mostrar menú de archivados solo para admins
-if (esAdministrador()) {
-    document.getElementById('menuArchivados').style.display = 'flex';
-}
 
 async function cargarPolizas() {
     try {
@@ -49,11 +42,14 @@ async function cargarPolizas() {
         const { data: usuarioData } = await supabaseClient
             .from('usuarios')
             .select('id, nombre, rol, email')
-            .eq('email', user.email)
+            .ilike('email', user.email)
             .single();
         
-        const esAdmin = usuarioData?.rol === 'admin';
+        usuarioActual = usuarioData;
+        rolUsuario = usuarioData?.rol || 'operador';
         const nombreOperador = usuarioData?.nombre;
+        
+        const esAdmin = esAdministrador();
         
         console.log('👤 Usuario:', nombreOperador);
         console.log('🔐 Rol:', usuarioData?.rol, '| Admin:', esAdmin);
@@ -61,14 +57,55 @@ async function cargarPolizas() {
         let query = supabaseClient
             .from('polizas')
             .select(`
-                *,
-                cliente:clientes (*),
-                seguimientos(*)
+                id,
+                numero_poliza,
+                operador_nombre,
+                estado_mercado,
+                fecha_revision_mercado,
+                documentos_pendientes,
+                agente35_estado,
+                compania,
+                fecha_revision_compania,
+                plan,
+                prima,
+                agente_nombre,
+                fecha_efectividad,
+                fecha_inicial_cobertura,
+                fecha_final_cobertura,
+                created_at,
+                updated_at,
+                estado_documentos,
+                tipo_venta,
+                estado_compania,
+                fecha_revision_mercado,
+                fecha_revision_compania,
+                cliente:clientes (
+                    id,
+                    nombres,
+                    apellidos,
+                    telefono1,
+                    telefono2,
+                    email,
+                    direccion,
+                    ciudad,
+                    estado,
+                    codigo_postal,
+                    estado_migratorio,
+                    ssn,
+                    tipo_registro,
+                    operador_nombre,
+                    tiene_social
+                ),
+                seguimientos (
+                    fecha_seguimiento,
+                    seguimiento_efectivo,
+                    medio_comunicacion
+                )
             `)
             .order('updated_at', { ascending: false });
         
         if (!esAdmin && nombreOperador) {
-            query = query.eq('operador_nombre', nombreOperador);
+            query = query.ilike('operador_nombre', nombreOperador);
             console.log('🔒 Operador - Filtrando por nombre:', nombreOperador);
         } else {
             console.log('✅ Admin - Todas las pólizas');
@@ -86,9 +123,12 @@ async function cargarPolizas() {
         todasLasPolizas = data || [];
         polizasFiltradas = data || [];
         paginaActual = 1;
+
+        const estadisticas = calcularEstadisticas(todasLasPolizas);
+        actualizarTarjetas(estadisticas);
+        actualizarIndicadoresRol();
         
         renderizarTabla();
-        actualizarEstadisticas(data);
         actualizarPaginacion();
         
         mostrarIndicadorCarga(false);
@@ -132,20 +172,34 @@ function renderizarTabla() {
     polizasPagina.forEach(poliza => {
         const cliente = poliza.cliente;
         const seguimiento = poliza.seguimiento;
-        
-        let ultimoSeguimiento = [];
+        const metodos_pago = poliza.metodos_pago;
+
+        let ultimoSeguimiento = '';
+        let seguimientoEfectivo = '-';
+
         if (poliza.seguimientos && poliza.seguimientos.length > 0) {
+            // Calcular último seguimiento (fecha más reciente)
             const fechas = poliza.seguimientos.map(seg => new Date(formatoUS(seg.fecha_seguimiento)));
             const fechaMayor = new Date(Math.max(...fechas));
-            ultimoSeguimiento = formatoUS(fechaMayor);  
+            ultimoSeguimiento = formatoUS(fechaMayor);
+            
+            // Obtener el seguimiento efectivo del último seguimiento
+            const ultimoSeg = poliza.seguimientos.find(seg => {
+                const fechaSeg = new Date(formatoUS(seg.fecha_seguimiento));
+                return fechaSeg.getTime() === fechaMayor.getTime();
+            });
+            
+            if (ultimoSeg) {
+                seguimientoEfectivo = ultimoSeg.seguimiento_efectivo || '-';
+            }
         }
 
         const tr = document.createElement('tr');
-        // tr.onclick = () => mostrarDetallesPoliza(poliza);
+        tr.onclick = () => abrirDetalles(poliza.id);
         tr.style.cursor = 'pointer';
         
         tr.innerHTML = `
-            <td data-label="Póliza">${poliza.numero_poliza || '-'}</td>
+            <td data-label="Póliza">${poliza.numero_poliza || '-'} </td>
             <td data-label="Tipo de registro">${cliente?.tipo_registro || '-'}</td>
             <td data-label="Operador">${cliente?.operador_nombre || poliza?.operador_nombre || '-'}</td>
             <td class="td1" data-label="Cliente">
@@ -165,16 +219,19 @@ function renderizarTabla() {
             </td>
             <td data-label="Fecha de revisión (Mercado)">${formatoUS(poliza.fecha_revision_mercado)}</td>
             <td data-label="Documentos">${poliza.documentos_pendientes}</td>
+            <td data-label="Estado documentos">${poliza.estado_documentos || 'Pendiente información'} </td>
             <td data-label="Agente 3.5">${obtenerBadgeAgente35(poliza.agente35_estado)}</td>
             <td data-label="Compañía">${poliza.compania || '-'}</td>
             <td data-label="Compañía">${formatoUS(poliza.fecha_revision_compania) || '-'}</td>
             <td data-label="Plan">${poliza.plan || '-'}</td>
             <td data-label="Prima">$${poliza.prima || '0.00'}</td>
+            <td data-label="Prima">${metodos_pago?.tiene_metodo_pago || '-'}</td>
             <td data-label="Agente">${poliza.agente_nombre || '-'}</td>
             <td data-label="Efectividad">${formatoUS(poliza.fecha_efectividad)}</td>
             <td data-label="Creación">${formatoUS(poliza.created_at)}</td>
             <td data-label="Modificación">${formatearFechaHora(poliza.updated_at)}</td>
             <td data-label="Último seguimiento">${ultimoSeguimiento}</td>
+            <td data-label="Seguimiento efectivo">${seguimientoEfectivo}</td>
         `;
         
         tbody.appendChild(tr);
@@ -190,15 +247,15 @@ function formatearSSN(valor) {
 }
 
 // Calcular rango de paginación
-const inicio = (paginaActual - 1) * polizasPorPagina;
-const fin = inicio + polizasPorPagina;
-const polizasPagina = polizasFiltradas.slice(inicio, fin);
+// const inicio = (paginaActual - 1) * polizasPorPagina;
+// const fin = inicio + polizasPorPagina;
+// const polizasPagina = polizasFiltradas.slice(inicio, fin);
 
-// Generar filas
-polizasPagina.forEach(poliza => {
-    const fila = crearFilaPoliza(poliza);
-    tbody.innerHTML += fila;
-});
+// // Generar filas
+// polizasPagina.forEach(poliza => {
+//     const fila = crearFilaPoliza(poliza);
+//     tbody.innerHTML += fila;
+// });
 
 
 // ============================================
@@ -267,6 +324,7 @@ async function abrirDetalles(polizaId) {
         
         polizaSeleccionada = poliza;
         const cliente = poliza.cliente || {};
+        const seguimiento = poliza.seguimientos || {};
         
         // Rellenar modal
         const contenido = `
@@ -307,6 +365,17 @@ async function abrirDetalles(polizaId) {
                         </div>
                     </div>
                 </div>
+
+                <!-- Medio de Comunicación -->
+                <div class="detalle-seccion" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 4px solid #10b981;">
+                    <h3><span class="material-symbols-rounded">chat</span> Comunicación</h3>
+                    <div class="detalle-grid">
+                        <div class="detalle-item">
+                            <label>Medio de contacto preferido</label>
+                            <p><strong style="color: #10b981; font-size: 1.1rem;">${seguimiento?.medio_comunicacion || 'No especificado'}</strong></p>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Información de la Póliza -->
                 <div class="detalle-seccion">
@@ -333,12 +402,12 @@ async function abrirDetalles(polizaId) {
                             <p>$${parseFloat(poliza.credito_fiscal || 0).toFixed(2)}</p>
                         </div>
                         <div class="detalle-item">
-                            <label>Estado</label>
+                            <label>Estado en mercado</label>
                             <p>${obtenerBadgeEstado(poliza.estado_mercado || 'pendiente')}</p>
                         </div>
                         <div class="detalle-item">
-                            <label>Estado</label>
-                            <p>${obtenerBadgeEstado(poliza.estado_mercado || 'pendiente')}</p>
+                            <label>Estado en compania</label>
+                            <p>${obtenerBadgeEstado(poliza.estado_compania || 'pendiente')}</p>
                         </div>
                     </div>
                 </div>
@@ -384,7 +453,7 @@ async function abrirDetalles(polizaId) {
                         </div>
                         <div class="detalle-item">
                             <label>Tipo de venta</label>
-                            <p>${poliza.tipo_venta || 'N/A'}</p>
+                            <p>${poliza.tipo_registro || 'N/A'}</p>
                         </div>
                         ${poliza.enlace_poliza ? `
                         <div class="detalle-item full-width">
@@ -395,7 +464,7 @@ async function abrirDetalles(polizaId) {
                         ${poliza.observaciones ? `
                         <div class="detalle-item full-width">
                             <label>Observaciones</label>
-                            <p>${poliza.observaciones}</p>
+                            <p>${poliza .observaciones}</p>
                         </div>
                         ` : ''}
                     </div>
@@ -735,7 +804,7 @@ function aplicarFiltros() {
 // ESTADÍSTICAS
 // ============================================
 function actualizarEstadisticas(polizas) {
-    const activas = polizas.filter(p => p.estado_mercado === 'activo').length;
+    const activas = polizas.filter(p => p.estado_mercado === 'Activo').length;
     const canceladas = polizas.filter(p => p.estado_mercado === 'cancelado').length;
     const proximas = polizas.filter(p => {
         if (!p.fecha_efectividad) return false;
@@ -745,13 +814,162 @@ function actualizarEstadisticas(polizas) {
         return diasDiferencia > 0 && diasDiferencia <= 30;
     }).length;
     
-    const elementoActivas = document.getElementById('polizas-activas');
-    const elementoCanceladas = document.getElementById('polizas-canceladas');
-    const elementoProximas = document.getElementById('polizas-proximas');
+    const elementoActivas = document.getElementById('polizasActivas');
+    const elementoCanceladas = document.getElementById('polizasCanceladas');
+    const elementoProximas = document.getElementById('polizasProximas');
     
     if (elementoActivas) elementoActivas.textContent = activas;
     if (elementoCanceladas) elementoCanceladas.textContent = canceladas;
     if (elementoProximas) elementoProximas.textContent = proximas;
+}
+
+function calcularTotales(polizas) {
+    const totalPolizas = polizas.length;
+    
+    // Inicializamos contadores
+    let activas = 0;
+    let canceladas = 0;
+
+    polizas.forEach(poliza => {
+        // Contar por estado (ajusta los nombres 'Procesado' o 'Cancelado' según tu BD)
+        const estado = poliza.agente35_estado ? poliza.agente35_estado.toLowerCase() : '';
+        
+        if (estado === 'procesado') {
+            activas++;
+        } else if (estado === 'cancelado' || estado === 'terminated') {
+            canceladas++;
+        }
+    });
+
+    return { totalPolizas, totalAplicantes, activas, canceladas };
+}
+
+function actualizarEstadisticas(totales) {
+    const elementoActivas = document.getElementById('polizas-activas');
+    if (elementoActivas) {
+        elementoActivas.textContent = `${totales.activas} ${totales.activas === 1 ? 'Póliza' : 'Pólizas'}`;
+    }
+
+    const elementoCanceladas = document.getElementById('polizas-canceladas');
+    if (elementoCanceladas) {
+        elementoCanceladas.textContent = `${totales.canceladas} ${totales.canceladas === 1 ? 'Póliza' : 'Pólizas'}`;
+    }
+}
+
+function actualizarContadoresEstados(polizas) {
+    let activas = 0;
+    let canceladas = 0;
+
+    polizas.forEach(poliza => {
+        // Normalizamos el texto para evitar errores de mayúsculas
+        const estado = (poliza.estado_mercado || "").toLowerCase();
+        
+        if (estado === 'activo') {
+            activas++;
+        } else if (estado === 'cancelado' || estado === 'robado' || estado === 'Cancelado a P.C') {
+            canceladas++;
+        }
+    });
+
+    // Actualizar el DOM
+    const elActivas = document.getElementById('polizasActivas');
+    const elCanceladas = document.getElementById('polizasCanceladas');
+
+    if (elActivas) elActivas.textContent = `${activas}`;
+    if (elCanceladas) elCanceladas.textContent = `${canceladas}`;
+}
+
+function actualizarIndicadoresRol() {
+    const tarjetas = document.querySelectorAll('.inf__cuadro');
+
+    tarjetas.forEach(tarjeta => {
+        // Buscar si ya tiene indicador
+        let indicador = tarjeta.querySelector('.indicador-rol');
+
+        // Si no es admin, adgregar indicador
+        if (!esAdministrador()) {
+            if (!indicador) {
+                indicador = document.createElement('small');
+                indicador.className = 'indicador-rol';
+                indicador.style.cssText = `
+                    display: block;
+                    font-size: 0.75rem;
+                    color: #64748b;
+                    margin-top: 4px;
+                    font-style: italic;
+                `;
+                indicador.textContent = `(Solo tus pólizas)`
+
+                // Ìnsertar despues del <p>
+                const p = tarjeta.querySelector('p');
+                if (p) {
+                    p.after(indicador)
+                }
+            }
+        } else {
+            if (indicador) {
+                indicador.remove()
+            }
+        }
+    })
+}
+
+function calcularEstadisticas(polizas) {
+    let activas = 0;
+    let canceladas = 0;
+    let proximas = 0;
+    
+    const hoy = new Date();
+    
+    polizas.forEach(poliza => {
+        const estadoMercado = (poliza.estado_mercado || '').toLowerCase();
+        
+        if (estadoMercado === 'activo') {
+            activas++;
+        }
+        
+        if (estadoMercado === 'cancelado' || 
+            estadoMercado === 'robado' || 
+            estadoMercado === 'cancelado a p.c') {
+            canceladas++;
+        }
+        
+        if (poliza.fecha_efectividad) {
+            const fechaEfectividad = new Date(poliza.fecha_efectividad);
+            const diasDiferencia = Math.ceil((fechaEfectividad - hoy) / (1000 * 60 * 60 * 24));
+            
+            if (diasDiferencia > 0 && diasDiferencia <= 30) {
+                proximas++;
+            }
+        }
+    });
+    
+    return { activas, canceladas, proximas };
+}
+
+function actualizarTarjetas(estadisticas) {
+    const elActivas = document.getElementById('polizasActivas');
+    if (elActivas) {
+        elActivas.textContent = estadisticas.activas;
+    } else {
+        console.warn('⚠️ Elemento polizasActivas no encontrado');
+    }
+    
+    const elCanceladas = document.getElementById('polizasCanceladas');
+    if (elCanceladas) {
+        elCanceladas.textContent = estadisticas.canceladas;
+    } else {
+        console.warn('⚠️ Elemento polizasCanceladas no encontrado');
+    }
+    
+    const elProximas = document.getElementById('polizasProximas');
+    if (elProximas) {
+        elProximas.textContent = estadisticas.proximas;
+    } else {
+        console.warn('⚠️ Elemento polizasProximas no encontrado');
+    }
+    
+    console.log('📊 Estadísticas:', estadisticas);
 }
 
 // ============================================
@@ -895,7 +1113,7 @@ function mostrarIndicadorCarga(mostrar) {
     if (mostrar) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="12" style="text-align: center; padding: 40px;">
+                <td colspan="23" style="text-align: center; padding: 40px;">
                     <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
                         <div style="width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite;"></div>
                         <p style="color: #64748b; margin: 0;">Cargando pólizas...</p>
@@ -912,7 +1130,7 @@ function mostrarError(mensaje) {
     
     tbody.innerHTML = `
         <tr>
-            <td colspan="12" style="text-align: center; padding: 40px;">
+            <td colspan="23" style="text-align: center; padding: 40px;">
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; color: #ef4444;">
                     <span class="material-symbols-rounded" style="font-size: 48px;">error</span>
                     <p style="font-size: 1.1rem; margin: 0;">${mensaje}</p>
@@ -1149,6 +1367,21 @@ style.textContent = `
             max-height: 95vh;
         }
     }
+
+        @keyframes slideInRight {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    #indicadorFiltrosActivos button:hover {
+        background: rgba(255,255,255,0.3);
+    }
 `;
 document.head.appendChild(style);
 
@@ -1322,13 +1555,13 @@ function abrirModalFiltros() {
     if (modal) {
         modal.style.display = 'flex';
         
-        // Ocultar filtro de operador si no es admin
-        const filtroOperadorGroup = document.getElementById('filtroOperadorGroup');
-        if (esAdministrador()) {
-            filtroOperadorGroup.style.display = 'none';
-        } else {
-            filtroOperadorGroup.style.display = 'block';
-        }
+        // // Ocultar filtro de operador si no es admin
+        // const filtroOperadorGroup = document.getElementById('filtroOperadorGroup');
+        // if (esAdministrador()) {
+        //     filtroOperadorGroup.style.display = 'none';
+        // } else {
+        //     filtroOperadorGroup.style.display = 'block';
+        // }
     }
 }
 
@@ -1340,6 +1573,12 @@ function cerrarModalFiltros() {
 }
 
 function limpiarFiltros() {
+    console.log('🧹 Limpiando filtros...');
+    
+    // ✅ Resetear estado de filtros
+    filtrosActivos = null;
+    hayFiltrosActivos = false;
+    
     // Limpiar todos los campos
     document.getElementById('filtroNombre').value = '';
     document.getElementById('filtroApellido').value = '';
@@ -1353,7 +1592,7 @@ function limpiarFiltros() {
     document.getElementById('filtroEstadoCompania').value = '';
     document.getElementById('estadoAgente35').value = '';
     document.getElementById('filtroPrima').value = '';
-
+    document.getElementById('filtroDocumentos').value = '';
     
     // Limpiar fechas
     document.getElementById('filtroFechaRegistroDesde').value = '';
@@ -1368,16 +1607,85 @@ function limpiarFiltros() {
     document.getElementById('filtroFechaRevisionCompaniaHasta').value = '';
     document.getElementById('filtroFechaSeguimientoDesde').value = '';
     document.getElementById('filtroFechaSeguimientoHasta').value = '';
+    document.getElementById('filtroSeguimientoEfectivo').value = '';
     
-    // Aplicar filtros vacíos (mostrar todo)
-    aplicarFiltrosAvanzados();
+    // ✅ Restaurar todas las pólizas
+    polizasFiltradas = todasLasPolizas;
+    paginaActual = 1;
+    
+    renderizarTabla();
+    actualizarPaginacion();
+    
+    // ✅ Actualizar indicador visual
+    actualizarIndicadorFiltros();
+    
+    console.log('✅ Filtros limpiados');
+}
+
+function actualizarIndicadorFiltros() {
+    // Buscar o crear indicador
+    let indicador = document.getElementById('indicadorFiltrosActivos');
+    
+    if (!indicador) {
+        // Crear indicador si no existe
+        indicador = document.createElement('div');
+        indicador.id = 'indicadorFiltrosActivos';
+        indicador.style.cssText = `
+            display: none;
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #6366f1;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            z-index: 1000;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideInRight 0.3s ease;
+        `;
+        
+        indicador.innerHTML = `
+            <span class="material-symbols-rounded" style="font-size: 20px;">filter_alt</span>
+            <span>Filtros activos: <strong id="contadorResultados">0</strong></span>
+            <button onclick="limpiarFiltros()" style="
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                padding: 4px 12px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.85rem;
+                margin-left: 8px;
+            ">
+                Limpiar
+            </button>
+        `;
+        
+        document.body.appendChild(indicador);
+    }
+    
+    const contadorResultados = document.getElementById('contadorResultados');
+    
+    if (hayFiltrosActivos) {
+        indicador.style.display = 'flex';
+        if (contadorResultados) {
+            contadorResultados.textContent = `${polizasFiltradas.length}/${todasLasPolizas.length}`;
+        }
+    } else {
+        indicador.style.display = 'none';
+    }
 }
 
 function aplicarFiltrosAvanzados() {
     console.log('🔍 Aplicando filtros avanzados...');
     
-    // Obtener valores de filtros
-    const filtros = {
+    // ✅ Obtener y GUARDAR valores de filtros
+    filtrosActivos = {
         nombre: document.getElementById('filtroNombre').value.toLowerCase(),
         apellido: document.getElementById('filtroApellido').value.toLowerCase(),
         telefono: document.getElementById('filtroTelefono').value.toLowerCase(),
@@ -1387,6 +1695,7 @@ function aplicarFiltrosAvanzados() {
         prima: document.getElementById('filtroPrima').value,
         tipoVenta: document.getElementById('filtroTipoVenta').value,
         operador: document.getElementById('filtroOperador').value,
+        documentos: document.getElementById('filtroDocumentos').value,
         estadoMercado: document.getElementById('filtroEstadoMercado').value,
         estadoCompania: document.getElementById('filtroEstadoCompania').value,
         estadoAgente35: document.getElementById('estadoAgente35').value,
@@ -1401,47 +1710,85 @@ function aplicarFiltrosAvanzados() {
         fechaRevisionCompaniaDesde: document.getElementById('filtroFechaRevisionCompaniaDesde').value,
         fechaRevisionCompaniaHasta: document.getElementById('filtroFechaRevisionCompaniaHasta').value,
         fechaSeguimientoDesde: document.getElementById('filtroSeguimientoDesde').value,
-        fechaSeguimientoHasta: document.getElementById('filtroSeguimientoHasta').value
+        fechaSeguimientoHasta: document.getElementById('filtroSeguimientoHasta').value,
+        seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo').value
     };
+    
+    // ✅ Verificar si hay algún filtro activo
+    hayFiltrosActivos = Object.values(filtrosActivos).some(valor => valor !== '' && valor !== null);
     
     // Filtrar pólizas
     polizasFiltradas = todasLasPolizas.filter(poliza => {
         const cliente = poliza.cliente || {};
         
         // Filtro por nombre
-        if (filtros.nombre && !cliente.nombres?.toLowerCase().includes(filtros.nombre)) {
+        if (filtrosActivos.nombre && !cliente.nombres?.toLowerCase().includes(filtrosActivos.nombre)) {
             return false;
         }
         
         // Filtro por apellido
-        if (filtros.apellido && !cliente.apellidos?.toLowerCase().includes(filtros.apellido)) {
+        if (filtrosActivos.apellido && !cliente.apellidos?.toLowerCase().includes(filtrosActivos.apellido)) {
             return false;
         }
         
         // Filtro por teléfono
-        if (filtros.telefono && !cliente.telefono1?.toLowerCase().includes(filtros.telefono)) {
+        if (filtrosActivos.telefono && !cliente.telefono1?.toLowerCase().includes(filtrosActivos.telefono)) {
             return false;
         }
         
         // Filtro por estado migratorio
-        if (filtros.estadoMigratorio && cliente.estado_migratorio !== filtros.estadoMigratorio) {
+        if (filtrosActivos.estadoMigratorio && cliente.estado_migratorio !== filtrosActivos.estadoMigratorio) {
             return false;
         }
         
         // Filtro ssn
-        if (filtros.tieneSsn && cliente.tiene_social !== filtros.tieneSsn) {
+        if (filtrosActivos.tieneSsn && cliente.tiene_social !== filtrosActivos.tieneSsn) {
             return false;
         }
 
         // Filtro por compañía
-        if (filtros.compania && poliza.compania !== filtros.compania) {
+        if (filtrosActivos.compania && poliza.compania !== filtrosActivos.compania) {
             return false;
         }
 
-        if (filtros.prima) {
+        if (filtrosActivos.documentos) {
+            const estadoDoc = (poliza.estado_documentos || '').toLowerCase().trim();
+            const filtroDoc = filtrosActivos.documentos.toLowerCase().trim();
+            
+            console.log('🔍 Comparando documentos:', {
+                'BD': `"${poliza.estado_documentos}"`,
+                'BD (limpio)': `"${estadoDoc}"`,
+                'Filtro': `"${filtroDoc}"`,
+                'Match': estadoDoc === filtroDoc
+            });
+            
+            if (estadoDoc !== filtroDoc) {
+                return false;
+            }
+        }
+
+        // Filtro por seguimiento efectivo
+        if (filtrosActivos.seguimientoEfectivo) {
+            if (!poliza.seguimientos || poliza.seguimientos.length === 0) {
+                return false;
+            }
+
+            const seguimientoOrdenado = [...poliza.seguimientos].sort((a, b) => 
+                new Date(b.fecha_seguimiento) - new Date(a.fecha_seguimiento)
+            );
+            
+            const ultimoSeg = seguimientoOrdenado[0];
+            const seguimientoEfectivoPoliza = ultimoSeg?.seguimiento_efectivo || '';
+
+            if (seguimientoEfectivoPoliza !== filtrosActivos.seguimientoEfectivo) {
+                return false;
+            }
+        }
+
+        if (filtrosActivos.prima) {
             const prima = parseFloat(poliza.prima) || 0;
             
-            switch (filtros.prima) {
+            switch (filtrosActivos.prima) {
                 case 'cero':
                     if (prima !== 0) return false;
                     break;
@@ -1458,46 +1805,46 @@ function aplicarFiltrosAvanzados() {
         }
         
         // Filtro por tipo de venta
-        if (filtros.tipoVenta && poliza.tipo_venta !== filtros.tipoVenta) {
+        if (filtrosActivos.tipoVenta && poliza.tipo_venta !== filtrosActivos.tipoVenta) {
             return false;
         }
         
         // Filtro por operador (solo para admins)
-        if (filtros.operador && poliza.operador_nombre !== filtros.operador) {
+        if (filtrosActivos.operador && poliza.operador_nombre !== filtrosActivos.operador) {
             return false;
         }
         
         // Filtro por estado mercado
-        if (filtros.estadoMercado && poliza.estado_mercado !== filtros.estadoMercado) {
+        if (filtrosActivos.estadoMercado && poliza.estado_mercado !== filtrosActivos.estadoMercado) {
             return false;
         }
         
         // Filtro por estado compañía
-        if (filtros.estadoCompania && poliza.estado_compania !== filtros.estadoCompania) {
+        if (filtrosActivos.estadoCompania && poliza.estado_compania !== filtrosActivos.estadoCompania) {
             return false;
         }
 
         // Filtro por estado en agente35
-        if (filtros.estadoAgente35 && poliza.agente35_estado !== filtros.estadoAgente35) {
-            return false
+        if (filtrosActivos.estadoAgente35 && poliza.agente35_estado !== filtrosActivos.estadoAgente35) {
+            return false;
         }
         
         // Filtros de fechas
-        if (!filtrarPorRangoFecha(poliza.created_at, filtros.fechaRegistroDesde, filtros.fechaRegistroHasta)) return false;
-        if (!filtrarPorRangoFecha(poliza.fecha_efectividad, filtros.fechaEfectividadDesde, filtros.fechaEfectividadHasta)) return false;
-        if (!filtrarPorRangoFecha(poliza.fecha_inicial_cobertura, filtros.fechaCoberturaInicialDesde, filtros.fechaCoberturaInicialHasta)) return false;
-        if (!filtrarPorRangoFecha(poliza.fecha_revision_mercado, filtros.fechaRevisionMercadoDesde, filtros.fechaRevisionMercadoHasta)) return false;
-        if (!filtrarPorRangoFecha(poliza.fecha_revision_compania, filtros.fechaRevisionCompaniaDesde, filtros.fechaRevisionCompaniaHasta)) return false;
-        if (filtros.fechaSeguimientoDesde || filtros.fechaSeguimientoHasta) {
+        if (!filtrarPorRangoFecha(poliza.created_at, filtrosActivos.fechaRegistroDesde, filtrosActivos.fechaRegistroHasta)) return false;
+        if (!filtrarPorRangoFecha(poliza.fecha_efectividad, filtrosActivos.fechaEfectividadDesde, filtrosActivos.fechaEfectividadHasta)) return false;
+        if (!filtrarPorRangoFecha(poliza.fecha_inicial_cobertura, filtrosActivos.fechaCoberturaInicialDesde, filtrosActivos.fechaCoberturaInicialHasta)) return false;
+        if (!filtrarPorRangoFecha(poliza.fecha_revision_mercado, filtrosActivos.fechaRevisionMercadoDesde, filtrosActivos.fechaRevisionMercadoHasta)) return false;
+        if (!filtrarPorRangoFecha(poliza.fecha_revision_compania, filtrosActivos.fechaRevisionCompaniaDesde, filtrosActivos.fechaRevisionCompaniaHasta)) return false;
+        if (filtrosActivos.fechaSeguimientoDesde || filtrosActivos.fechaSeguimientoHasta) {
 
             if (!poliza.seguimientos || poliza.seguimientos.length === 0) {
-                return false
+                return false;
             }
 
             const fechas = poliza.seguimientos.map(seg => new Date(seg.fecha_seguimiento));
             const fechaMasReciente = new Date(Math.max(...fechas));
 
-            if(!filtrarPorRangoFecha(fechaMasReciente, filtros.fechaSeguimientoDesde, filtros.fechaSeguimientoHasta)) {
+            if(!filtrarPorRangoFecha(fechaMasReciente, filtrosActivos.fechaSeguimientoDesde, filtrosActivos.fechaSeguimientoHasta)) {
                 return false;
             }
         }       
@@ -1511,9 +1858,15 @@ function aplicarFiltrosAvanzados() {
     renderizarTabla();
     actualizarPaginacion();
     
+    // ✅ Actualizar indicador visual
+    actualizarIndicadorFiltros();
+    
     // Cerrar modal
     cerrarModalFiltros();
+    
+    console.log(`✅ Filtros aplicados. Resultados: ${polizasFiltradas.length}/${todasLasPolizas.length}`);
 }
+
 
 // Función auxiliar para filtrar por rango de fechas
 function filtrarPorRangoFecha(fecha, desde, hasta) {
