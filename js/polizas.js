@@ -1605,8 +1605,8 @@ function limpiarFiltros() {
     document.getElementById('filtroFechaRevisionMercadoHasta').value = '';
     document.getElementById('filtroFechaRevisionCompaniaDesde').value = '';
     document.getElementById('filtroFechaRevisionCompaniaHasta').value = '';
-    document.getElementById('filtroFechaSeguimientoDesde').value = '';
-    document.getElementById('filtroFechaSeguimientoHasta').value = '';
+    document.getElementById('filtroSeguimientoDesde').value = '';
+    document.getElementById('filtroSeguimientoHasta').value = '';
     document.getElementById('filtroSeguimientoEfectivo').value = '';
     
     // ✅ Restaurar todas las pólizas

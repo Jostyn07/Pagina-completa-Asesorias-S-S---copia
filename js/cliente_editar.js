@@ -368,6 +368,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
     // DATOS DEL CLIENTE
     if (cliente) {
        if (cliente.tipo_registro) document.getElementById('tipoRegistro').value = cliente.tipo_registro || '';
+       if (cliente.tipo_registro) document.getElementById('casoEspecial').value = cliente.caso_especial || '';
        if (cliente.fecha_registro) document.getElementById('fechaRegistro').value = formatoUS(cliente.fecha_registro);
        document.getElementById('aplicantes').value = poliza.aplicantes || 1;
        if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres || '';
@@ -1707,6 +1708,7 @@ async function actualizarCliente(id, formData) {
    
     const clienteData = {
         tipo_registro: formData.tipoRegistro,
+        caso_especial: formData.casoEspecial,
         fecha_registro: formData.fechaRegistro,
         nombres: formData.nombres,
         apellidos: formData.apellidos,
@@ -2112,7 +2114,7 @@ async function guardarMetodoPago(clienteId) {
             pago_octubre: pagoOctubre,
             pago_noviembre: pagoNoviembre,
             pago_diciembre: pagoDiciembre,
-            fecha_pago: fechaPago,
+            fecha_pago: fechaPago || null,
             estado_pago: estadoPago,
         };
         
@@ -3774,6 +3776,7 @@ async function guardarCambiosConHistorial() {
 function obtenerDatosFormularioCliente() {
     return {
         tipo_registro: document.getElementById('tipoRegistro') || '',
+        tipo_registro: document.getElementById('casoEspecial') || '',
         nombre: document.getElementById('nombre')?.value || '',
         email: document.getElementById('email')?.value || '',
         telefono: document.getElementById('telefono')?.value || '',

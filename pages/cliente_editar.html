@@ -217,6 +217,12 @@
                                 <small class="helper-text">Generada automáticamente</small>
                             </div>
                         </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="casoEspecial">Caso especial</label>
+                                <input type="text" name="casoEspecial" id="casoEspecial">
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label>Aplicantes <span class="required">*</span></label>
                             <input type="number" id="aplicantes" name="aplicantes" placeholder="1" min="1" max="99" value="1" required>
@@ -476,6 +482,7 @@
                                     <option value="Isacar González">Isacar González</option>
                                     <option value="Jorge Puerto">Jorge Puerto</option>
                                     <option value="Josuad Aragón">Josuad Aragón</option>
+                                    <option value="Jostyn Aragon">Jostyn Aragón</option>
                                     <option value="Joycee Caceres">Joycee Caceres</option>
                                     <option value="Juan Ospino">Juan Ospino</option>
                                     <option value="Juan Jimenez">Juan Jimenez</option>
@@ -534,6 +541,7 @@
                                     <option value="Joycee Caceres">Joycee Caceres</option>
                                     <option value="Juan Ospino">Juan Ospino</option>
                                     <option value="Juan Jimenez">Juan Jimenez</option>
+                                    <option value="Jostyn Aragon">Jostyn Aragón</option>
                                     <option value="Julieth Garcia">Julieth Garcia</option>
                                     <option value="Kevin Marino">Kevin Marino</option>
                                     <option value="Laura Restrepo">Laura Restrepo</option>
@@ -701,12 +709,12 @@
                                     <label for="estadoCompania">Estado</label>
                                     <select name="estadoCompania" id="estadoCompania">
                                         <option value="">Seleccionar...</option>
-                                        <option value="activo">Activo</option>
-                                        <option value="cancelado">Cancelado</option>
-                                        <option value="inactivo">Inactivo</option>
-                                        <option value="pre-member">Pre-member</option>
-                                        <option value="no registra aún">No registra aún</option>
-                                        <option value="cancelado a P.C">Cancelado a P.C</option>
+                                        <option value="Activo">Activo</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                        <option value="Inactivo">Inactivo</option>
+                                        <option value="Pre-member">Pre-member</option>
+                                        <option value="No registra aún">No registra aún</option>
+                                        <option value="Cancelado a P.C">Cancelado a P.C</option>
                                     </select>
                                 </div>
                             </div>
@@ -833,27 +841,35 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Fecha de revisión</label>
-                                    <input type="text" id="fechaRevisionMercado" name="fechaRevisionMercado">
+                                    <input type="text" id="fechaRevisionMercado" name="fechaRevisionMercado" data-type="date">
                                 </div>
                                 <div class="form-group">
                                     <label>Estado en mercado</label>
                                     <select name="estadoMercado" id="estadoMercado">
                                         <option value="">Seleccionar...</option>
-                                        <option value="activo">Activo</option>
-                                        <option value="inactivo">Inactivo</option>
-                                        <option value="cancelado">Cancelado</option>
-                                        <option value="robado">Robado</option>
-                                        <option value="doble póliza">Doble póliza</option>
-                                        <option value="triple póliza">Triple póliza</option>
-                                        <option value="no registra">No registra</option>
-                                        <option value="cancelado a P.C">Cancelado a P.C</option>
+                                        <option value="Activo">Activo</option>
+                                        <option value="Inactivo">Inactivo</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                        <option value="Robado">Robado</option>
+                                        <option value="Doble póliza">Doble póliza</option>
+                                        <option value="Triple póliza">Triple póliza</option>
+                                        <option value="No registra">No registra</option>
+                                        <option value="Cancelado a P.C">Cancelado a P.C</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Agente</label>
-                                    <input type="text" name="nombreAgenteMercado" id="nombreAgenteMercado" placeholder="Ej: Joel Nieves - 19952518">
+                                    <select name="nombreAgenteCompania" id="nombreAgenteCompania">
+                                        <option value="Sebastian Guichardo">Sebastian Guichardo - 20497412</option>
+                                        <option value="Benigno Aquino Reyes">Benigno Aquino Reyes - 21344017</option>
+                                        <option value="Mari Carmen Mejia Suero">Mari Carmen Mejia Suero - 21283514</option>
+                                        <option value="Joel Nieves">Joel Nieves - 19952518</option>
+                                        <option value="Jose Nicolas Ramirez">Jose Nicolas Ramirez - 20533134</option>
+                                        <option value="Wildeiby Castillo">Wildeiby Castillo - 20497356</option>
+                                        <option value="Freddy Baez">Freddy Baez - 21270313</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label>
@@ -864,18 +880,7 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Estado de documentos</label>
-                                    <select name="estadoDocumentos" id="estadoDocumentos">
-                                        <option value="">Seleccionar...</option>
-                                        <option value="Pendiente">Pendiente</option>
-                                        <option value="Incompleto">Incompleto</option>
-                                        <option value="A la espera de verificación">A la espera de verificación</option>
-                                        <option value="Rechazado">Rechazado</option>
-                                        <option value="Documentos completos">Documentos completos</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="documentosPendientes">Documentos Pendientes</label>
+                                    <label for="documentosPendientes">Documentos solicitados</label>
                                     <select name="documentosPendientes" id="documentosPendientes">
                                         <option value="">Seleccionar...</option>
                                         <option value="Documentos completos">Documentos completos</option>
@@ -888,6 +893,19 @@
                                         <option value="Income, estado migratorio y carta de rechazo medicaid">Income, estado migratorio y carta de rechazo medicaid</option>
                                     </select>
                                 </div>
+
+                                <div class="form-group">
+                                    <label>Estado de documentos</label>
+                                    <select name="estadoDocumentos" id="estadoDocumentos">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="Incompleto">Incompleto</option>
+                                        <option value="A la espera de verificación">A la espera de verificación</option>
+                                        <option value="Rechazado">Rechazado</option>
+                                        <option value="Documentos completos">Documentos completos</option>
+                                    </select>
+                                </div>
+
                                 <div class="form-group">
                                     <label for="fechaPlazoDocumento">Fecha de plazo de documento</label>
                                     <input type="text" name="fechaPlazoDocumento" id="fechaPlazoDocumento" data-type="date">
@@ -926,8 +944,9 @@
                                     <select id="agente35_estado" name="agente35_estado">
                                         <option value="">Seleccionar estado</option>
                                         <option value="Procesado">Procesado</option>
-                                        <option value="Pendiente">Pendiente</option>
-                                        <option value="New aplication">New aplication</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                        <option value="pendiente">Pendiente</option>
+                                        <option value="New application">New application</option>
                                         <option value="Policy change">Policy change</option>
                                         <option value="Cambio necesario">Cambio necesario</option>
                                     </select>

@@ -1201,7 +1201,7 @@ async function crearCliente(formData) {
         estado: formData.estado,
         codigo_postal: formData.codigoPostal,
         operador_nombre: formData.operadorNombre || null,
-        operador_ventaRealizadaPor: formData.ventaRealizadaPor || null,
+        venta_realizada_por: formData.ventaRealizadaPor || null,
         agente_nombre: formData.portalNPN || null,
     };
     
@@ -1390,6 +1390,40 @@ async function guardarNotas(clienteId) {
     if (polizaError) throw polizaError;
     
     console.log('✅ Póliza creada:', poliza.id);
+
+    try {
+        await enviarAGoogleSheets({
+            nombreOperador: formData.operadorNombre || '',
+            fecha: formData.fechaRegistro || new Date().toISOString().split('T')[0],
+            tipoVenta: formData.tipoRegistro || '',
+            clave: formData.claveSeguridad || '',
+            parentesco: '',
+            nombre: formData.nombres || '',
+            apellidos: formData.apellidos || '',
+            sexo: formData.genero || '',
+            correo: formData.email || '',
+            telefono1: formData.telefono1 || '',
+            telefono2: formData.telefono2 || '',
+            fechaNacimiento: formData.fechaNacimiento || '',
+            estatus: 'Activo',
+            social: formData.ssn || '',
+            ingresos: formData.ingresos || '',
+            ocupacion: formData.ocupacion || '',
+            nacionalidad: formData.nacionalidad || '',
+            aplica: formData.aplica || '',
+            cantidadDependientes: dependientesCount.toString(),
+            direccion: `${formData.direccion}, ${formData.casaApartamento || ''}`.trim(),
+            compania: formData.compania || '',
+            plan: formData.plan || '',
+            creditoFiscal: formData.creditoFiscal || '',
+            prima: formData.prima || '',
+            link: formData.enlacePoliza || '',
+            observacion: ''
+        });
+        console.log('✅ Datos enviados a Google Sheets correctamente');
+    } catch (errorSheets) {
+        console.error('⚠️ Error al enviar a Google Sheets:', errorSheets);
+    }
     
     localStorage.removeItem('borrador_cliente');
     clearInterval(autosaveTimer);
