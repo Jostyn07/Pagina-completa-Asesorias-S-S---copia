@@ -10,6 +10,271 @@ let ordenDireccion = 'desc';
 let polizaSeleccionada = null;
 let filtrosActivos= null;
 let hayFiltrosActivos = false;
+let filtroAnioActivado = false;
+
+
+// ============================================
+// PERSISTENCIA DE FILTROS EN LOCALSTORAGE
+// ============================================
+const FILTROS_STORAGE_KEY = 'ss_polizas_filtros';
+
+function guardarFiltrosEnStorage() {
+    try {
+        const datos = {
+            // Flag: solo true si el usuario interactuó con los checkboxes de año
+            filtroAnioActivado: filtroAnioActivado,
+
+            // Buscador rápido
+            busqueda: document.getElementById('searchInput')?.value || '',
+
+            // Checkboxes de año
+            anio2025: document.getElementById('2025')?.checked || false,
+            anio2026: document.getElementById('2026')?.checked || false,
+
+            // Pólizas por página
+            porPagina: document.getElementById('polizasPorPagina')?.value || '10',
+
+            // Campos del modal avanzado
+            nombre: document.getElementById('filtroNombre')?.value || '',
+            apellido: document.getElementById('filtroApellido')?.value || '',
+            telefono: document.getElementById('filtroTelefono')?.value || '',
+            estadoMigratorio: document.getElementById('filtroEstadoMigratorio')?.value || '',
+            tieneSsn: document.getElementById('filtroTieneSsn')?.value || '',
+            compania: document.getElementById('filtroCompania')?.value || '',
+            prima: document.getElementById('filtroPrima')?.value || '',
+            tipoVenta: document.getElementById('filtroTipoVenta')?.value || '',
+            operador: document.getElementById('filtroOperador')?.value || '',
+            documentos: document.getElementById('filtroDocumentos')?.value || '',
+            seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo')?.value || '',
+            estadoMercado: document.getElementById('filtroEstadoMercado')?.value || '',
+            estadoCompania: document.getElementById('filtroEstadoCompania')?.value || '',
+            estadoAgente35: document.getElementById('estadoAgente35')?.value || '',
+
+            // Fechas
+            fechaRegistroDesde: document.getElementById('filtroFechaRegistroDesde')?.value || '',
+            fechaRegistroHasta: document.getElementById('filtroFechaRegistroHasta')?.value || '',
+            fechaEfectividadDesde: document.getElementById('filtroFechaEfectividadDesde')?.value || '',
+            fechaEfectividadHasta: document.getElementById('filtroFechaEfectividadHasta')?.value || '',
+            fechaCoberturaInicialDesde: document.getElementById('filtroFechaCoberturaInicialDesde')?.value || '',
+            fechaCoberturaInicialHasta: document.getElementById('filtroFechaCoberturaInicialHasta')?.value || '',
+            fechaRevisionMercadoDesde: document.getElementById('filtroFechaRevisionMercadoDesde')?.value || '',
+            fechaRevisionMercadoHasta: document.getElementById('filtroFechaRevisionMercadoHasta')?.value || '',
+            fechaRevisionCompaniaDesde: document.getElementById('filtroFechaRevisionCompaniaDesde')?.value || '',
+            fechaRevisionCompaniaHasta: document.getElementById('filtroFechaRevisionCompaniaHasta')?.value || '',
+            fechaSeguimientoDesde: document.getElementById('filtroSeguimientoDesde')?.value || '',
+            fechaSeguimientoHasta: document.getElementById('filtroSeguimientoHasta')?.value || '',
+        };
+
+        localStorage.setItem(FILTROS_STORAGE_KEY, JSON.stringify(datos));
+    } catch (error) {
+        console.warn('⚠️ No se pudieron guardar los filtros en localStorage:', error);
+    }
+}
+
+function eliminarFiltrosDeStorage() {
+    try {
+        localStorage.removeItem(FILTROS_STORAGE_KEY);
+    } catch (error) {
+        console.warn('⚠️ No se pudo limpiar filtros de localStorage:', error);
+    }
+}
+
+function restaurarFiltrosDesdeStorage() {
+    let datos;
+
+    // 1. Leer y parsear de forma segura
+    try {
+        const raw = localStorage.getItem(FILTROS_STORAGE_KEY);
+        if (!raw) return; // No hay filtros guardados, nada que hacer
+        datos = JSON.parse(raw);
+    } catch (error) {
+        // JSON corrupto: borrarlo y salir sin romper nada
+        console.warn('⚠️ Filtros en localStorage corruptos, se borrarán:', error);
+        eliminarFiltrosDeStorage();
+        return;
+    }
+
+    // 2. Rellenar el DOM con los valores guardados
+    const set = (id, valor) => {
+        const el = document.getElementById(id);
+        if (el) el.value = valor || '';
+    };
+    const setChecked = (id, valor) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = !!valor;
+    };
+
+    // Buscador y paginación
+    set('searchInput', datos.busqueda);
+    set('polizasPorPagina', datos.porPagina);
+    if (datos.porPagina) polizasPorPagina = parseInt(datos.porPagina, 10);
+
+    // Checkboxes de año
+    setChecked('2025', datos.anio2025);
+    setChecked('2026', datos.anio2026);
+
+    // Modal avanzado
+    set('filtroNombre', datos.nombre);
+    set('filtroApellido', datos.apellido);
+    set('filtroTelefono', datos.telefono);
+    set('filtroEstadoMigratorio', datos.estadoMigratorio);
+    set('filtroTieneSsn', datos.tieneSsn);
+    set('filtroCompania', datos.compania);
+    set('filtroPrima', datos.prima);
+    set('filtroTipoVenta', datos.tipoVenta);
+    set('filtroOperador', datos.operador);
+    set('filtroDocumentos', datos.documentos);
+    set('filtroSeguimientoEfectivo', datos.seguimientoEfectivo);
+    set('filtroEstadoMercado', datos.estadoMercado);
+    set('filtroEstadoCompania', datos.estadoCompania);
+    set('estadoAgente35', datos.estadoAgente35);
+
+    // Fechas
+    set('filtroFechaRegistroDesde', datos.fechaRegistroDesde);
+    set('filtroFechaRegistroHasta', datos.fechaRegistroHasta);
+    set('filtroFechaEfectividadDesde', datos.fechaEfectividadDesde);
+    set('filtroFechaEfectividadHasta', datos.fechaEfectividadHasta);
+    set('filtroFechaCoberturaInicialDesde', datos.fechaCoberturaInicialDesde);
+    set('filtroFechaCoberturaInicialHasta', datos.fechaCoberturaInicialHasta);
+    set('filtroFechaRevisionMercadoDesde', datos.fechaRevisionMercadoDesde);
+    set('filtroFechaRevisionMercadoHasta', datos.fechaRevisionMercadoHasta);
+    set('filtroFechaRevisionCompaniaDesde', datos.fechaRevisionCompaniaDesde);
+    set('filtroFechaRevisionCompaniaHasta', datos.fechaRevisionCompaniaHasta);
+    set('filtroSeguimientoDesde', datos.fechaSeguimientoDesde);
+    set('filtroSeguimientoHasta', datos.fechaSeguimientoHasta);
+
+    // 3. Reconstruir filtrosActivos para que el sistema sepa que hay filtros vivos
+    filtrosActivos = {
+        nombre: datos.nombre?.toLowerCase() || '',
+        apellido: datos.apellido?.toLowerCase() || '',
+        telefono: datos.telefono?.toLowerCase() || '',
+        estadoMigratorio: datos.estadoMigratorio || '',
+        tieneSsn: datos.tieneSsn || '',
+        compania: datos.compania || '',
+        prima: datos.prima || '',
+        tipoVenta: datos.tipoVenta || '',
+        operador: datos.operador || '',
+        documentos: datos.documentos || '',
+        seguimientoEfectivo: datos.seguimientoEfectivo || '',
+        estadoMercado: datos.estadoMercado || '',
+        estadoCompania: datos.estadoCompania || '',
+        estadoAgente35: datos.estadoAgente35 || '',
+        fechaRegistroDesde: datos.fechaRegistroDesde || '',
+        fechaRegistroHasta: datos.fechaRegistroHasta || '',
+        fechaEfectividadDesde: datos.fechaEfectividadDesde || '',
+        fechaEfectividadHasta: datos.fechaEfectividadHasta || '',
+        fechaCoberturaInicialDesde: datos.fechaCoberturaInicialDesde || '',
+        fechaCoberturaInicialHasta: datos.fechaCoberturaInicialHasta || '',
+        fechaRevisionMercadoDesde: datos.fechaRevisionMercadoDesde || '',
+        fechaRevisionMercadoHasta: datos.fechaRevisionMercadoHasta || '',
+        fechaRevisionCompaniaDesde: datos.fechaRevisionCompaniaDesde || '',
+        fechaRevisionCompaniaHasta: datos.fechaRevisionCompaniaHasta || '',
+        fechaSeguimientoDesde: datos.fechaSeguimientoDesde || '',
+        fechaSeguimientoHasta: datos.fechaSeguimientoHasta || '',
+    };
+
+    // 4. Determinar si hay filtros activos realmente (para el indicador visual)
+    const hayAvanzados = Object.values(filtrosActivos).some(v => v !== '');
+    const hayAnios = datos.anio2025 || datos.anio2026;
+    const hayBusqueda = !!datos.busqueda;
+    hayFiltrosActivos = hayAvanzados || hayBusqueda;
+
+    // 5. Aplicar el filtrado sobre todasLasPolizas
+    // (en este punto todasLasPolizas ya está lleno porque esta función
+    //  se llama desde dentro de cargarPolizas(), después de recibir los datos)
+
+    let resultado = [...todasLasPolizas];
+
+    // Filtro de buscador rápido
+    if (datos.busqueda) {
+        const termino = datos.busqueda.toLowerCase();
+        resultado = resultado.filter(poliza => {
+            const cliente = poliza.cliente || {};
+            const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.toLowerCase();
+            return nombreCompleto.includes(termino) ||
+                (cliente.telefono1 || '').includes(termino) ||
+                (poliza.numero_poliza || '').toLowerCase().includes(termino) ||
+                (poliza.compania || '').toLowerCase().includes(termino) ||
+                (poliza.plan || '').toLowerCase().includes(termino) ||
+                (poliza.estado_mercado || '').toLowerCase().includes(termino) ||
+                (poliza.operador_nombre || '').toLowerCase().includes(termino);
+        });
+    }
+
+    // Filtro de checkboxes de año
+    // Solo se aplica si el usuario interactuó explícitamente con los checkboxes
+    if (datos.filtroAnioActivado && hayAnios) {
+        const anios = [];
+        if (datos.anio2025) anios.push('2025');
+        if (datos.anio2026) anios.push('2026');
+        resultado = resultado.filter(poliza => {
+            if (!poliza.fecha_efectividad) return false;
+            const anio = new Date(poliza.fecha_efectividad).getFullYear().toString();
+            return anios.includes(anio);
+        });
+    }
+
+    // Filtros avanzados (si hay alguno activo)
+    if (hayAvanzados) {
+        resultado = resultado.filter(poliza => {
+            const cliente = poliza.cliente || {};
+
+            if (filtrosActivos.nombre && !cliente.nombres?.toLowerCase().includes(filtrosActivos.nombre)) return false;
+            if (filtrosActivos.apellido && !cliente.apellidos?.toLowerCase().includes(filtrosActivos.apellido)) return false;
+            if (filtrosActivos.telefono && !cliente.telefono1?.toLowerCase().includes(filtrosActivos.telefono)) return false;
+            if (filtrosActivos.estadoMigratorio && cliente.estado_migratorio !== filtrosActivos.estadoMigratorio) return false;
+            if (filtrosActivos.tieneSsn && cliente.tiene_social !== filtrosActivos.tieneSsn) return false;
+            if (filtrosActivos.compania && poliza.compania !== filtrosActivos.compania) return false;
+            if (filtrosActivos.tipoVenta && poliza.tipo_venta !== filtrosActivos.tipoVenta) return false;
+            if (filtrosActivos.operador && poliza.operador_nombre !== filtrosActivos.operador) return false;
+            if (filtrosActivos.estadoMercado && poliza.estado_mercado !== filtrosActivos.estadoMercado) return false;
+            if (filtrosActivos.estadoCompania && poliza.estado_compania !== filtrosActivos.estadoCompania) return false;
+            if (filtrosActivos.estadoAgente35 && poliza.agente35_estado !== filtrosActivos.estadoAgente35) return false;
+
+            if (filtrosActivos.documentos) {
+                const estadoDoc = (poliza.estado_documentos || '').toLowerCase().trim();
+                if (estadoDoc !== filtrosActivos.documentos.toLowerCase().trim()) return false;
+            }
+
+            if (filtrosActivos.prima) {
+                const prima = parseFloat(poliza.prima) || 0;
+                if (filtrosActivos.prima === 'cero' && prima !== 0) return false;
+                if (filtrosActivos.prima === 'conPrima' && prima <= 0) return false;
+                if (filtrosActivos.prima === 'alta' && prima <= 1500) return false;
+                if (filtrosActivos.prima === 'sinAsignar' && poliza.prima !== null && poliza.prima !== '' && poliza.prima !== undefined) return false;
+            }
+
+            if (filtrosActivos.seguimientoEfectivo) {
+                if (!poliza.seguimientos || poliza.seguimientos.length === 0) return false;
+                const ultimoSeg = [...poliza.seguimientos].sort((a, b) =>
+                    new Date(b.fecha_seguimiento) - new Date(a.fecha_seguimiento)
+                )[0];
+                if ((ultimoSeg?.seguimiento_efectivo || '') !== filtrosActivos.seguimientoEfectivo) return false;
+            }
+
+            if (!filtrarPorRangoFecha(poliza.created_at, filtrosActivos.fechaRegistroDesde, filtrosActivos.fechaRegistroHasta)) return false;
+            if (!filtrarPorRangoFecha(poliza.fecha_efectividad, filtrosActivos.fechaEfectividadDesde, filtrosActivos.fechaEfectividadHasta)) return false;
+            if (!filtrarPorRangoFecha(poliza.fecha_inicial_cobertura, filtrosActivos.fechaCoberturaInicialDesde, filtrosActivos.fechaCoberturaInicialHasta)) return false;
+            if (!filtrarPorRangoFecha(poliza.fecha_revision_mercado, filtrosActivos.fechaRevisionMercadoDesde, filtrosActivos.fechaRevisionMercadoHasta)) return false;
+            if (!filtrarPorRangoFecha(poliza.fecha_revision_compania, filtrosActivos.fechaRevisionCompaniaDesde, filtrosActivos.fechaRevisionCompaniaHasta)) return false;
+
+            if (filtrosActivos.fechaSeguimientoDesde || filtrosActivos.fechaSeguimientoHasta) {
+                if (!poliza.seguimientos || poliza.seguimientos.length === 0) return false;
+                const fechas = poliza.seguimientos.map(s => new Date(s.fecha_seguimiento));
+                const fechaMasReciente = new Date(Math.max(...fechas));
+                if (!filtrarPorRangoFecha(fechaMasReciente, filtrosActivos.fechaSeguimientoDesde, filtrosActivos.fechaSeguimientoHasta)) return false;
+            }
+
+            return true;
+        });
+    }
+
+    polizasFiltradas = resultado;
+    actualizarIndicadorFiltros();
+
+    console.log(`🔄 Filtros restaurados. Resultado: ${polizasFiltradas.length}/${todasLasPolizas.length}`);
+}
+
 // ============================================
 // INICIALIZACIÓN
 // ============================================
@@ -127,6 +392,9 @@ async function cargarPolizas() {
         const estadisticas = calcularEstadisticas(todasLasPolizas);
         actualizarTarjetas(estadisticas);
         actualizarIndicadoresRol();
+
+        // Si hay filtros guardados en localStorage, los restaura y reemplaza polizasFiltradas
+        restaurarFiltrosDesdeStorage();
         
         renderizarTabla();
         actualizarPaginacion();
@@ -507,6 +775,8 @@ function configurarPaginacion() {
             paginaActual = 1;
             renderizarTabla();
             actualizarPaginacion();
+            guardarFiltrosEnStorage();
+
         });
     }
 }
@@ -711,6 +981,7 @@ function configurarBusqueda() {
     inputBusqueda.addEventListener('input', function(e) {
         const termino = e.target.value.toLowerCase().trim();
         buscarPolizas(termino);
+        guardarFiltrosEnStorage();
     });
 }
 
@@ -745,6 +1016,8 @@ function buscarPolizas(termino) {
     paginaActual = 1;
     renderizarTabla();
     actualizarPaginacion();
+    guardarFiltrosEnStorage();
+
 }
 
 // ============================================
@@ -795,9 +1068,12 @@ function aplicarFiltros() {
         });
     }
     
+    filtroAnioActivado = true;
     paginaActual = 1;
     renderizarTabla();
     actualizarPaginacion();
+    guardarFiltrosEnStorage();
+
 }
 
 // ============================================
@@ -1578,6 +1854,8 @@ function limpiarFiltros() {
     // ✅ Resetear estado de filtros
     filtrosActivos = null;
     hayFiltrosActivos = false;
+    filtroAnioActivado = false;
+
     
     // Limpiar todos los campos
     document.getElementById('filtroNombre').value = '';
@@ -1618,6 +1896,9 @@ function limpiarFiltros() {
     
     // ✅ Actualizar indicador visual
     actualizarIndicadorFiltros();
+
+    // Borrar filtros guardados en localStorage
+    eliminarFiltrosDeStorage();
     
     console.log('✅ Filtros limpiados');
 }
@@ -1863,6 +2144,9 @@ function aplicarFiltrosAvanzados() {
     
     // Cerrar modal
     cerrarModalFiltros();
+
+    // Guardar filtros en localStorage para persistirlos
+    guardarFiltrosEnStorage();
     
     console.log(`✅ Filtros aplicados. Resultados: ${polizasFiltradas.length}/${todasLasPolizas.length}`);
 }
