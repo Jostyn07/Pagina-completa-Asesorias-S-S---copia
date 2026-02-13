@@ -327,34 +327,33 @@
 
             <div class="chart-card">
                 <div class="card-header">
-                    <h3>Clasificación de agentes (Top 5)</h3>
-                    <a href="#" class="link-more">+ Ver más</a>
+                    <h3>Clasificación de agentes</h3>
                 </div>
-                <p class="chart-subtitle">Agentes con más ventas este mes / año</p>
-                <table class="agents-table">
-                    <thead>
-                        <tr>
-                            <th>Operador</th>
-                            <th>Pólizas</th>
-                            <th>Aplicantes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <div class="agent-cell">
-                                    <span class="agent-avatar">J</span>
-                                    <div>
-                                        <p class="agent-name">Jostyn Aragón</p>
-                                        <span class="badge-gold">1er lugar</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>1 <span class="material-symbols-rounded icon-small">shield</span></td>
-                            <td>1 <span class="material-symbols-rounded icon-small">groups</span></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <p class="chart-subtitle">Ranking de operadores según el período seleccionado</p>
+
+                <!-- Tabs -->
+                <div class="clasificacion-tabs">
+                    <button class="tab-btn active" onclick="cambiarTabClasificacion('ventas', this)">
+                        <span class="material-symbols-rounded">trending_up</span>
+                        Ventas
+                    </button>
+                    <button class="tab-btn" onclick="cambiarTabClasificacion('recuperadas', this)">
+                        <span class="material-symbols-rounded">autorenew</span>
+                        Recuperadas
+                    </button>
+                    <button class="tab-btn" onclick="cambiarTabClasificacion('compania', this)">
+                        <span class="material-symbols-rounded">verified_user</span>
+                        Activos (Compañía)
+                    </button>
+                </div>
+
+                <!-- Contenido del tab activo -->
+                <div id="clasificacion-contenido">
+                    <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                        <div style="width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div>
+                        <p>Cargando...</p>
+                    </div>
+                </div>
             </div>
         </div>
 

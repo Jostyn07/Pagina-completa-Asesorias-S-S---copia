@@ -122,6 +122,9 @@ function applyFilters() {
     // Actualizar gráfico
     actualizarGrafico();
     
+    // Actualizar clasificación de agentes con los nuevos filtros
+    renderizarClasificacion(tabClasificacionActual);
+
     // Mostrar notificación
     mostrarNotificacion(`Filtros aplicados: ${polizasGlobales.length} pólizas encontradas`);
 }
@@ -438,6 +441,158 @@ function mostrarNotificacion(mensaje) {
 }
 
 // ============================================
+// CLASIFICACIÓN DE AGENTES - TABS
+// ============================================
+
+let tabClasificacionActual = 'ventas';
+
+function cambiarTabClasificacion(tab, btn) {
+    // Actualizar botones
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    tabClasificacionActual = tab;
+    renderizarClasificacion(tab);
+}
+
+function calcularClasificacionVentas() {
+    const tiposVenta = ['Nuevo', 'Nueva con registro'];
+    const conteo = {};
+
+    // Usa todasLasPolizas y aplica solo filtro de fecha_efectividad
+    (todasLasPolizas || []).forEach(poliza => {
+        // Filtrar por rango de fechas usando solo fecha_efectividad
+        if (poliza.fecha_efectividad) {
+            const fecha = poliza.fecha_efectividad.split('T')[0];
+            if (fecha < filtrosActivos.fechaDesde || fecha > filtrosActivos.fechaHasta) return;
+        }
+
+        const tipo = (poliza.tipo_venta || '').toLowerCase().trim();
+        if (!tiposVenta.includes(tipo)) return;
+
+        const operador = poliza.operador_nombre || 'Sin asignar';
+        conteo[operador] = (conteo[operador] || 0) + 1;
+    });
+
+    return Object.entries(conteo)
+        .sort((a, b) => b[1] - a[1])
+        .map(([nombre, total]) => ({ nombre, total }));
+}
+
+function calcularClasificacionRecuperadas() {
+    const conteo = {};
+
+    // Usa todasLasPolizas y aplica solo filtro de fecha_efectividad
+    (todasLasPolizas || []).forEach(poliza => {
+        // Filtrar por rango de fechas usando solo fecha_efectividad
+        if (poliza.fecha_efectividad) {
+            const fecha = poliza.fecha_efectividad.split('T')[0];
+            if (fecha < filtrosActivos.fechaDesde || fecha > filtrosActivos.fechaHasta) return;
+        }
+
+        const tipo = (poliza.tipo_venta || '').toLowerCase().trim();
+        if (tipo !== 'Recuperada') return;
+
+        const operador = poliza.operador_nombre || 'Sin asignar';
+        conteo[operador] = (conteo[operador] || 0) + 1;
+    });
+
+    return Object.entries(conteo)
+        .sort((a, b) => b[1] - a[1])
+        .map(([nombre, total]) => ({ nombre, total }));
+}
+
+function calcularClasificacionCompania() {
+    // Activos por operador según revisión en compañía
+    // Sin restricción de fechas ni de rol — todos ven a todos
+    const conteo = {};
+
+    (todasLasPolizas || []).forEach(poliza => {
+        const estadoCompania = (poliza.estado_compania || '').toLowerCase().trim();
+        if (estadoCompania !== 'Activo') return;
+
+        const operador = poliza.operador_nombre || 'Sin asignar';
+        conteo[operador] = (conteo[operador] || 0) + 1;
+    });
+
+    return Object.entries(conteo)
+        .sort((a, b) => b[1] - a[1])
+        .map(([nombre, total]) => ({ nombre, total }));
+}
+
+function renderizarClasificacion(tab) {
+    const contenedor = document.getElementById('clasificacion-contenido');
+    if (!contenedor) return;
+
+    let filas = [];
+    let columnaLabel = '';
+
+    if (tab === 'ventas') {
+        filas = calcularClasificacionVentas();
+        columnaLabel = 'Operador';
+    } else if (tab === 'recuperadas') {
+        filas = calcularClasificacionRecuperadas();
+        columnaLabel = 'Operador';
+    } else if (tab === 'compania') {
+        filas = calcularClasificacionCompania();
+        columnaLabel = 'Operador';
+    }
+
+    if (filas.length === 0) {
+        contenedor.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                <span class="material-symbols-rounded" style="font-size: 40px; opacity: 0.3;">search_off</span>
+                <p style="margin-top: 10px;">Sin datos para este período</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Calcular total general para mostrar porcentaje
+    const totalGeneral = filas.reduce((sum, f) => sum + f.total, 0);
+
+    const rankClass = (i) => {
+        if (i === 0) return 'rank-1';
+        if (i === 1) return 'rank-2';
+        if (i === 2) return 'rank-3';
+        return 'rank-other';
+    };
+
+    const hilasHTML = filas.map((fila, i) => `
+        <tr>
+            <td>
+                <span class="rank-badge ${rankClass(i)}">${i + 1}</span>
+                <span class="agente-nombre">${fila.nombre}</span>
+            </td>
+            <td>
+                <span class="total-badge">${fila.total}</span>
+            </td>
+            <td style="color: #94a3b8; font-size: 0.85rem;">
+                ${Math.round((fila.total / totalGeneral) * 100)}%
+            </td>
+        </tr>
+    `).join('');
+
+    contenedor.innerHTML = `
+        <table class="clasificacion-table">
+            <thead>
+                <tr>
+                    <th>${columnaLabel}</th>
+                    <th>Pólizas</th>
+                    <th>% del total</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${hilasHTML}
+            </tbody>
+        </table>
+        <p style="text-align: right; font-size: 0.8rem; color: #94a3b8; margin-top: 10px; padding-right: 12px;">
+            Total: <strong>${totalGeneral}</strong>
+        </p>
+    `;
+}
+
+// ============================================
 // INICIALIZACIÓN
 // ============================================
 
@@ -452,8 +607,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Inicializar listeners
     inicializarEventListeners();
     actualizarGrafico();
+
+    // Renderizar tab inicial de clasificación
+    renderizarClasificacion(tabClasificacionActual);
     
-    // ✅ Agregar listeners a los filtros (opcional: para debug)
+    // Agregar listeners a los filtros (opcional: para debug)
     document.getElementById('filtroEstadoCompania')?.addEventListener('change', () => {
         console.log('Filtro de estado cambiado');
     });
