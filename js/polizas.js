@@ -122,28 +122,6 @@ function restaurarFiltrosDesdeStorage() {
     set('filtroTelefono', datos.telefono);
     set('filtroEstadoMigratorio', datos.estadoMigratorio);
     set('filtroTieneSsn', datos.tieneSsn);
-    // Filtro por método de pago
-    if (filtrosActivos.tieneMetodoPago) {
-        const metodosPago = cliente.metodos_pago;
-        
-        if (filtrosActivos.tieneMetodoPago === 'Si') {
-            // Tiene método confirmado
-            if (!metodosPago || metodosPago.length === 0 || metodosPago[0]?.tiene_metodo_pago !== 'Si') {
-                return false;
-            }
-        }
-        
-        if (filtrosActivos.tieneMetodoPago === 'No') {
-            // NO tiene método: sin registro O registro con 'No'
-            const tieneRegistro = metodosPago && metodosPago.length > 0;
-            const esNo = tieneRegistro && metodosPago[0]?.tiene_metodo_pago === 'No';
-            const sinRegistro = !tieneRegistro;
-            
-            if (!esNo && !sinRegistro) {
-                return false;
-            }
-        }
-    }
     if (datos.companias && Array.isArray(datos.companias)) {
         document.querySelectorAll('#panelCompanias input[type="checkbox"]').forEach(cb => {
             cb.checked = datos.companias.includes(cb.value)
@@ -163,6 +141,7 @@ function restaurarFiltrosDesdeStorage() {
     set('filtroEstadoMercado', datos.estadoMercado);
     set('filtroEstadoCompania', datos.estadoCompania);
     set('estadoAgente35', datos.estadoAgente35);
+    set('filtroTieneMetodoPago', datos?.tieneMetodoPago)
 
     // Fechas
     set('filtroFechaEfectividadDesde', datos.fechaEfectividadDesde);
@@ -187,7 +166,7 @@ function restaurarFiltrosDesdeStorage() {
         telefono: datos.telefono?.toLowerCase() || '',
         estadoMigratorio: datos.estadoMigratorio || '',
         tieneSsn: datos.tieneSsn || '',
-        tieneMetodoPago: datos.tieneMetodoPago || '',
+        tieneMetodoPago: datos?.tieneMetodoPago || '',
         companias: datos.companias || [],
         prima: datos.prima || '',
         tiposVenta: datos.tiposVenta || [],
