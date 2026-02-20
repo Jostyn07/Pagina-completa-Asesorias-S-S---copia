@@ -358,6 +358,15 @@
                                             <option value="No">No</option>
                                         </select>
                                     </div>
+
+                                    <div class="filtro-group">
+                                        <label for="filtroTieneMetodoPago">Tiene metodo de pago?</label>
+                                        <select name="filtroTieneMetodoPago" id="filtroTieneMetodoPago">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="Si">Si</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -366,29 +375,100 @@
                                 <h3>📄 Información de la Póliza</h3>
                                 <div class="filtro-grid">
                                     <div class="filtro-group">
-                                        <label>Compañía</label>
-                                        <select id="filtroCompania">
-                                            <option value="">Todas</option>
-                                            <option value="Aetna">Aetna</option>
-                                            <option value="Ambetter">Ambetter</option>
-                                            <option value="Ameri HealthCaritas Next">Ameri HealthCaritas Next</option>
-                                            <option value="Antidothe">Antidothe</option>
-                                            <option value="Athem">Anthem</option>
-                                            <option value="Baylor">Baylor</option>
-                                            <option value="Blue Cross and Blue Shield">Blue Cross and Blue Shield</option>
-                                            <option value="CareSource">CareSource</option>
-                                            <option value="Christus Health Plan">Christus Health Plan</option>
-                                            <option value="Cigna">Cigna</option>
-                                            <option value="Community Health Choice">Community Health Choice</option>
-                                            <option value="Florida Blue">Florida Blue</option>
-                                            <option value="Harbor">Harbor</option>
-                                            <option value="Health Firts">Health Firts</option>
-                                            <option value="Imperial Insurance">Imperial Insurance</option>
-                                            <option value="Molina">Molina</option>
-                                            <option value="Oscar">Oscar</option>
-                                            <option value="United HealthCare">United HealthCare</option>
-                                            <option value="WellPoint">WellPoint</option>
-                                        </select>
+                                        <label>Compañías</label>
+                                        <div class="dropdown-filter">
+                                            <button type="button" class="dropdown-trigger" id="triggerCompanias" onclick="toggleDropdownCompanias(event)">
+                                                <span id="textoCompanias">Seleccionar compañías...</span>
+                                                <span class="material-symbols-rounded">expand_more</span>
+                                            </button>
+                                            <div class="dropdown-panel" id="panelCompanias">
+                                                <div class="dropdown-search">
+                                                    <input type="text" id="buscarCompania" placeholder="Buscar..." onkeyup="filtrarCompanias()">
+                                                </div>
+                                                <div class="checkbox-list-scroll">
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Aetna">
+                                                        <span>Aetna</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Ambetter">
+                                                        <span>Ambetter</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Ameri HealthCaritas Next">
+                                                        <span>Ameri HealthCaritas Next</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Antidothe">
+                                                        <span>Antidothe</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Anthem">
+                                                        <span>Anthem</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Baylor">
+                                                        <span>Baylor</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Blue Cross and Blue Shield">
+                                                        <span>Blue Cross and Blue Shield</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="CareSource">
+                                                        <span>CareSource</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Christus Health Plan">
+                                                        <span>Christus Health Plan</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Cigna">
+                                                        <span>Cigna</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Community Health Choice">
+                                                        <span>Community Health Choice</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Florida Blue">
+                                                        <span>Florida Blue</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Harbor">
+                                                        <span>Harbor</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Health Firts">
+                                                        <span>Health Firts</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Imperial Insurance">
+                                                        <span>Imperial Insurance</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Molina">
+                                                        <span>Molina</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="Oscar">
+                                                        <span>Oscar</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="United HealthCare">
+                                                        <span>United HealthCare</span>
+                                                    </label>
+                                                    <label class="checkbox-item">
+                                                        <input type="checkbox" value="WellPoint">
+                                                        <span>WellPoint</span>
+                                                    </label>
+                                                </div>
+                                                <div class="dropdown-actions">
+                                                    <button type="button" class="btn-dropdown-clear" onclick="limpiarCompanias()">Limpiar</button>
+                                                    <button type="button" class="btn-dropdown-close" onclick="cerrarDropdownCompanias()">Cerrar</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="filtro-group">
                                         <label>Prima Mensual</label>
@@ -402,14 +482,28 @@
                                     </div>
                                     <div class="filtro-group">
                                         <label>Tipo de Venta</label>
-                                        <select id="filtroTipoVenta">
-                                            <option value="">Seleccionar...</option>
-                                            <option value="nuevo">Nuevo</option>
-                                            <option value="renovacion">Renovacion</option>
-                                            <option value="nueva con registro">Nueva con registro</option>
-                                            <option value="recuperada">Recuperada</option>
-                                            <option value="cambio de vida">Cambio de vida</option>
-                                        </select>
+                                        <div class="dropdown-filter">
+                                            <button type="button" class="dropdown-trigger" id="triggerTipoVentas" onclick="toggleDropdownTipoVentas(event)">
+                                                <span id="textoTipoVentas">Seleccionar tipo de venta</span>
+                                                <span class="material-symbols-rounded">expand_more</span>
+                                            </button>
+                                            <div class="dropdown-panel" id="panelTipoVentas">
+                                                <div class="dropdown-search">
+                                                    <input type="text" id="buscarTipoVentas" placeholder="Buscar..." onkeyup="filtrarTipoVentas()">
+                                                </div>
+                                                <div class="checkbox-list-scroll">
+                                                    <label class="checkbox-item"><input type="checkbox" value="Nuevo">Nuevo</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Renovacion">Renovación</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Nueva con registro">Nueva con registro</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Recuperada">Recuperada</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Cambio de vida">Cambio de vida</label>
+                                                </div>
+                                                <div class="dropdown-actions">
+                                                    <button type="button" class="btn-dropdown-clear" onclick="limpiarTipoVentas()">Limpiar</button>
+                                                    <button type="button" class="btn-dropdown-close" onclick="cerrarDropdownTipoVentas()">Cerrar</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="filtro-group" id="filtroOperadorGroup">
                                         <label>Operador (Solo Admin)</label>
@@ -505,14 +599,14 @@
                                 <div class="filtro-grid">
                                     <!-- Filtrar por fecha de registro -->
                                     <div class="form-row fecha_cuadrado">
-                                        <h4>Filtrar por fecha de revisión</h4>
+                                        <h4>Filtrar por plazo de documentos</h4>
                                         <div class="filtro-group">
                                             <label>Fecha Registro Desde</label>
-                                            <input type="date" id="filtroFechaRegistroDesde">
+                                            <input type="date" id="filtroFechaPlazoDocumentosDesde">
                                         </div>
                                         <div class="filtro-group">
                                             <label>Fecha Registro Hasta</label>
-                                            <input type="date" id="filtroFechaRegistroHasta">
+                                            <input type="date" id="filtroFechaPlazoDocumentosHasta">
                                         </div>
                                     </div>
 
@@ -565,6 +659,19 @@
                                         <div class="filtro-group">
                                             <label>Fecha Revisión Compañía Hasta</label>
                                             <input type="date" id="filtroFechaRevisionCompaniaHasta">
+                                        </div>
+                                    </div>
+
+                                    <!-- Filtrar por fecha de pago -->
+                                    <div class="form-row fecha_cuadrado">
+                                        <h4>Filtrar por fecha de pago</h4>
+                                        <div class="filtro-group">
+                                            <label>Fecha de ultimo pago Desde</label>
+                                            <input type="date" id="filtroFechaUltimoPagoDesde">
+                                        </div>
+                                        <div class="filtro-group">
+                                            <label>Fecha de ultimo pago Hasta</label>
+                                            <input type="date" id="filtroFechaUltimoPagoHasta">
                                         </div>
                                     </div>
 
@@ -629,11 +736,13 @@
                                 <th class="sortable" data-column="fechaRevisionMercado">Fecha de revisión<br>(Mercado)</th>
                                 <th class="sortable" data-column="documentos">Documentos</th>
                                 <th>Estado de documentos</th>
+                                <th class="sortable" data-column="Fecha del plazo de documentos">Fecha del plazo de documentos</th>
                                 <th class="sortable" data-column="agente35_estado">Estado<br>(Agente 3.5)</th>
                                 <th class="sortable" data-column="compania">Compañía</th>
                                 <th>Fecha de revision en compañia</th>
                                 <th class="sortable" data-column="plan">Plan</th>
                                 <th class="sortable" data-column="prima">Prima</th>
+                                <th>Fecha de ultimo pago</th>
                                 <th>¿Tiene metodo de pago?</th>
                                 <th>Agente</th>
                                 <th class="sortable" data-column="fecha_efectividad">Efectividad</th>

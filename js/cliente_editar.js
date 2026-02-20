@@ -17,9 +17,7 @@ const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 // ============================================
 // INICIALIZACIÓN
 // ============================================
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('✏️ Modo: EDITAR CLIENTE');
-    
+document.addEventListener('DOMContentLoaded', async function() {    
     // Obtener ID de la URL
     const urlParams = new URLSearchParams(window.location.search);
     clienteId = urlParams.get('id');
@@ -29,9 +27,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.location.href = './polizas.html';
         return;
     }
-    
-    console.log('📋 Cliente ID:', clienteId);
-    
+        
     inicializarFormulario();
     inicializarTabs();
     inicializarValidacionTiempoReal();
@@ -45,14 +41,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         await cargarDocumentos(clienteId);
         await cargarNotas(clienteId);
         
-        console.log('✅ Todos los datos cargados correctamente');
     } catch (error) {
         console.error('❌ Error al cargar datos:', error);
     }
     
     document.getElementById('clienteForm').addEventListener('submit', handleSubmit);
     
-    console.log('✅ Formulario de edición inicializado');
+    // ===========================================
+    // Robado -> Estado en mercado
+    // ===========================================
+
+        const containtAgenteExterno = document.getElementById('containtAgenteExterno')
+        const estadoMercadoInput = document.getElementById('estadoMercado')
+
+        function cargarRobado() {
+            console.log(estadoMercadoInput.value)
+            if(estadoMercadoInput.value == 'Robado' || estadoMercadoInput.value == 'Doble poliza') {
+                containtAgenteExterno.style.display = 'block';
+            } else {
+                containtAgenteExterno.style.display = 'none';
+            }
+        }
+
+    estadoMercadoInput.addEventListener('change', cargarRobado)
+
+    cargarRobado()
 });
 
 function inicializarFormulario() {
@@ -176,9 +189,6 @@ async function aplicarPermisosEstadoMercado() {
         if (badgeAdmin) badgeAdmin.style.display = 'inline-flex';
         if (mensajeNoAdmin) mensajeNoAdmin.style.display = 'block';
         
-        console.log('⚠️ Estado en Mercado bloqueado - Solo Administradores');
-    } else {
-        console.log('✅ Administrador - Acceso completo a Estado en Mercado');
     }
 }
 
@@ -189,9 +199,7 @@ async function aplicarPermisosEstadoMercado() {
 async function cargarDatosCliente(id) {
     try {
         await cargarRolUsuario();
-                
-        console.log('📡 Cargando datos del cliente:', id);
-        
+                        
         // Mostrar indicador de carga
         const btnSubmit = document.querySelector('.btn-submit');
         const textoOriginal = btnSubmit?.innerHTML;
@@ -212,7 +220,6 @@ async function cargarDatosCliente(id) {
 
         await cargarMetodoPago(clienteId);
 
-        console.log('✅ Cliente cargado:', clienteData);
         
         // Cargar póliza
         const { data: polizasData, error: polizasError } = await supabaseClient
@@ -225,7 +232,6 @@ async function cargarDatosCliente(id) {
         const polizaData = polizasData && polizasData.length > 0 ? polizasData[0] : null;
         if (polizaData) {
             polizaId = polizaData.id;
-            console.log('✅ Póliza cargada:', polizaId);
 
             await cargarEstadoSeguimiento(polizaId);
         }
@@ -238,7 +244,6 @@ async function cargarDatosCliente(id) {
             .order('created_at', { ascending: true });
         
         if (dependientesError) console.warn('⚠️ Error al cargar dependientes:', dependientesError);
-        console.log(`✅ ${dependientesData?.length || 0} dependientes cargados`);
         
         // Cargar notas
         const { data: notasData, error: notasError } = await supabaseClient
@@ -248,7 +253,6 @@ async function cargarDatosCliente(id) {
             .order('created_at', { ascending: false });
         
         if (notasError) console.warn('⚠️ Error al cargar notas:', notasError);
-        console.log(`✅ ${notasData?.length || 0} notas cargadas`);
         
         // En la sección donde cargas los datos de la póliza
 
@@ -272,7 +276,6 @@ async function cargarDatosCliente(id) {
             await cargarHistorial(id);
         }
         
-        console.log('✅ Datos cargados correctamente');
         
     } catch (error) {
         console.error('❌ Error al cargar cliente:', error);
@@ -363,7 +366,6 @@ function formatoISO(fecha) {
 // ============================================
 
 function rellenarFormulario(cliente, poliza, dependientes, notas) {
-    console.log('📝 Rellenando formulario...');
     
     // DATOS DEL CLIENTE
     if (cliente) {
@@ -414,7 +416,6 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if(poliza.documentos_pendientes) document.getElementById('documentosPendientes').value = poliza.documentos_pendientes;
        if(poliza.agente35_estado) document.getElementById('agente35_estado').value = poliza.agente35_estado || '';
        if(poliza.agente35_nota) document.getElementById('agente35_nota').value = poliza.agente35_nota || '';
-        
         // Fechas de la póliza
         const fechaEfectividadInput = document.getElementById('fechaEfectividad');
         if (fechaEfectividadInput && poliza.fecha_efectividad) {
@@ -460,13 +461,6 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
             agregarDependienteExistente(dep);
         });
     }
-    
-    // NOTAS
-    if (notas && notas.length > 0) {
-        mostrarNotasExistentes(notas);
-    }
-    
-    console.log('✅ Formulario rellenado');
 }
 
 // ============================================
@@ -727,16 +721,12 @@ async function eliminarDependienteCard(count, depId) {
     try {
         // Si tiene depId, es un dependiente de BD
         if (depId) {
-            console.log('🗑️ Eliminando dependiente de BD:', depId);
-            
             const { error } = await supabaseClient
                 .from('dependientes')
                 .delete()
                 .eq('id', depId);
             
             if (error) throw error;
-            
-            console.log('✅ Dependiente eliminado de BD');
         }
         
         // Remover del DOM
@@ -783,8 +773,6 @@ function actualizarContadorDependientes() {
 
 async function cargarDocumentos(clienteId) {
     try {
-        console.log('📥 Cargando documentos...');
-        
         const { data: documentos, error } = await supabaseClient
             .from('documentos')
             .select('*')
@@ -803,7 +791,6 @@ async function cargarDocumentos(clienteId) {
                     <small>Haz clic en "Agregar Documento" para comenzar</small>
                 </div>
             `;
-            console.log('✅ Sin documentos');
             return;
         }
         
@@ -838,9 +825,7 @@ async function cargarDocumentos(clienteId) {
             `;
             container.insertAdjacentHTML('beforeend', docHTML);
         });
-        
-        console.log(`✅ ${documentos.length} documento(s) cargado(s)`);
-        
+                
     } catch (error) {
         console.error('❌ Error al cargar documentos:', error);
     }
@@ -900,9 +885,7 @@ async function confirmarEliminarDocumento(docId) {
                 }
             }, 300);
         }
-        
-        console.log('✅ Documento eliminado');
-        
+                
     } catch (error) {
         console.error('Error al eliminar documento:', error);
         alert('Error al eliminar el documento: ' + error.message);
@@ -1005,8 +988,6 @@ function actualizarContadorDocumentos() {
 
 async function cargarNotas(clienteId) {
     try {
-        console.log('📥 Cargando notas...');
-        
         const { data: notas, error } = await supabaseClient
             .from('notas')
             .select('*')
@@ -1024,7 +1005,6 @@ async function cargarNotas(clienteId) {
                     <p>No hay notas aún</p>
                 </div>
             `;
-            console.log('✅ Sin notas');
             return;
         }
         
@@ -1066,17 +1046,12 @@ async function cargarNotas(clienteId) {
         });
         
         actualizarContadorNotas();
-        console.log(`✅ ${notas.length} nota(s) cargada(s)`);
         
     } catch (error) {
         console.error('❌ Error al cargar notas:', error);
     }
 }
 
-function mostrarNotasExistentes(notas) {
-    // Esta función ya no se usa porque cargarNotas() hace todo
-    console.log('mostrarNotasExistentes llamada (deprecada)');
-}
 
 async function agregarNota(clienteId) {
     const textarea = document.getElementById('nuevaNota');
@@ -1177,7 +1152,6 @@ async function agregarNota(clienteId) {
         }
         
         mostrarNotificacion('✅ Nota agregada correctamente', 'success');
-        console.log('✅ Nota agregada');
         
     } catch (error) {
         console.error('❌ Error al agregar nota:', error);
@@ -1212,7 +1186,6 @@ async function confirmarEliminarNota(notaId) {
         }
         
         actualizarContadorNotas();
-        console.log('✅ Nota eliminada');
         
     } catch (error) {
         console.error('Error al eliminar nota:', error);
@@ -1247,7 +1220,6 @@ function inicializarTabs() {
     // Tab por defecto
     cambiarTab('info-general');
     
-    console.log('✅ Tabs inicializados correctamente');
 }
 
 function cambiarTab(tabName) {
@@ -1541,7 +1513,6 @@ function guardarBorradorSilencioso() {
     try {
         const formData = obtenerDatosFormulario();
         localStorage.setItem(`borrador_cliente_${clienteId}`, JSON.stringify(formData));
-        console.log('💾 Borrador guardado automáticamente');
     } catch (error) {
         console.error('Error al guardar borrador:', error);
     }
@@ -1558,8 +1529,6 @@ function guardarBorrador() {
 
 async function handleSubmit(event) {
     event.preventDefault();
-    
-    console.log('📤 Iniciando actualización...');
     
     if (!validarFormularioCompleto()) {
         alert('Por favor, completa todos los campos requeridos correctamente.');
@@ -1699,8 +1668,6 @@ document.getElementById('ssn').addEventListener("input", function () {
 })
 
 async function actualizarCliente(id, formData) {
-    console.log('🔄 Actualizando cliente...');
-
     const checkboxTieneSsn = document.getElementById('tieneSsn')
     var tieneSsn = ""
 
@@ -1743,7 +1710,6 @@ async function actualizarCliente(id, formData) {
     
     if (clienteError) throw clienteError;
     
-    console.log('✅ Cliente actualizado');
 }
 
 // ============================================
@@ -1751,7 +1717,6 @@ async function actualizarCliente(id, formData) {
 // ============================================
 
 async function actualizarPoliza(polizaId, formData) {
-    console.log('🔄 Actualizando póliza...');
     
     const polizaData = {
         aplicantes: parseInt(document.getElementById('aplicantes').value) || 1,
@@ -1784,7 +1749,6 @@ async function actualizarPoliza(polizaId, formData) {
             .eq('id', polizaId);
         
         if (error) throw error;
-        console.log('✅ Póliza actualizada');
     } else {
         // Crear nueva póliza
         const numeroPoliza = await generarNumeroPoliza();
@@ -1799,7 +1763,6 @@ async function actualizarPoliza(polizaId, formData) {
         
         if (error) throw error;
         polizaId = nuevaPoliza.id;
-        console.log('✅ Póliza creada');
     }
 
     obtenerDatosAgente35();
@@ -1810,7 +1773,6 @@ async function actualizarPoliza(polizaId, formData) {
 // ============================================
 
 async function actualizarDependientes(clienteId, formData) {
-    console.log('💾 Actualizando dependientes...');
     
     const dependientesActualizar = [];
     const dependientesInsertar = [];
@@ -1873,14 +1835,11 @@ async function actualizarDependientes(clienteId, formData) {
         if (error) throw error;
     }
     
-    console.log(`✅ ${dependientesActualizar.length} dependiente(s) actualizado(s)`);
-    console.log(`✅ ${dependientesInsertar.length} dependiente(s) nuevo(s)`);
 }
 
 // CARGAR MÉTODO DE PAGO EXISTENTE
 async function cargarMetodoPago(clienteId) {
     try {
-        console.log('💳 Cargando método de pago...');
         
         const { data: metodos, error } = await supabaseClient
             .from('metodos_pago')
@@ -1892,14 +1851,12 @@ async function cargarMetodoPago(clienteId) {
         if (error) {
             if (error.code === 'PGRST116') {
                 // No hay método de pago registrado
-                console.log('ℹ️ Sin método de pago registrado');
                 return;
             }
             throw error;
         }
         
         if (!metodos) {
-            console.log('ℹ️ Sin método de pago');
             return;
         }
         
@@ -2013,7 +1970,6 @@ async function guardarMetodoPago(clienteId) {
         const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
         
         if (!tipoSeleccionado) {
-            console.log('ℹ️ Sin método de pago seleccionado');
             return;
         }
         
@@ -2165,7 +2121,6 @@ async function guardarMetodoPago(clienteId) {
             
             if (errorUpdate) throw errorUpdate;
             
-            console.log('✅ Método de pago actualizado');
             
         } else {
             // INSERTAR nuevo método
@@ -2175,7 +2130,6 @@ async function guardarMetodoPago(clienteId) {
             
             if (errorInsert) throw errorInsert;
             
-            console.log('✅ Método de pago guardado');
         }
         
     } catch (error) {
@@ -2200,7 +2154,6 @@ async function eliminarMetodoPago(clienteId) {
         // Limpiar formulario
         limpiarMetodoPago();
         
-        console.log('✅ Método de pago eliminado');
         alert('Método de pago eliminado correctamente');
         
     } catch (error) {
@@ -2214,7 +2167,6 @@ async function eliminarMetodoPago(clienteId) {
 // ============================================
 
 async function guardarDocumentosNuevos(clienteId) {
-    console.log('💾 Guardando documentos nuevos...');
     
     const documentosGuardados = [];
     
@@ -2276,7 +2228,6 @@ async function guardarDocumentosNuevos(clienteId) {
         
         if (error) throw error;
         
-        console.log(`✅ ${documentosGuardados.length} documento(s) nuevo(s) guardado(s)`);
     }
 }
 
@@ -2468,7 +2419,6 @@ async function cargarInfoUsuario() {
             return;
         }
         
-        console.log('✅ Usuario cargado:', user);
         
         // Extraer información del usuario
         const email = user.email || 'usuario@ejemplo.com';
@@ -2511,7 +2461,6 @@ async function cargarInfoUsuario() {
             userAvatar.alt = nombreCompleto;
         }
         
-        console.log('✅ Información de usuario actualizada');
         
     } catch (error) {
         console.error('❌ Error al cargar info de usuario:', error);
@@ -2580,7 +2529,6 @@ let seguimientosData = [];
 
 async function cargarEstadoSeguimiento(polizaId) {
     try {
-        console.log('📊 Cargando estado y seguimiento...');
         
         const { data: poliza, error } = await supabaseClient
             .from('polizas')
@@ -2621,7 +2569,7 @@ async function cargarEstadoSeguimiento(polizaId) {
                 actualizarBadgeEstado('badgeEstadoDocumentos', poliza.estado_documentos);
             }
             
-            console.log('✅ Estado y seguimiento cargado');
+            if (poliza.agente_externo_mercado) document.getElementById('agenteExterno').value = poliza.agente_externo_mercado;
         }
         
         // Cargar seguimientos
@@ -2730,7 +2678,6 @@ async function actualizarComunicacionEfectiva(esEfectivo) {
         // Actualizar en memoria
         ultimoSeguimiento.seguimiento_efectivo = nuevoValor;
         
-        console.log(`✅ Comunicación efectiva actualizada a: ${nuevoValor}`);
         
     } catch (error) {
         console.error('❌ Error al actualizar comunicación efectiva:', error);
@@ -2746,7 +2693,6 @@ async function actualizarComunicacionEfectiva(esEfectivo) {
 
 async function guardarEstadoSeguimiento(polizaId) {
     try {
-        console.log('💾 Guardando estado y seguimiento...');
         
         const estadoData = {
             // 1) Estado en Compañía
@@ -2764,10 +2710,7 @@ async function guardarEstadoSeguimiento(polizaId) {
             estadoData.nombre_agente_mercado = document.getElementById('nombreAgenteMercado')?.value || null;
             estadoData.observacion_mercado = document.getElementById('observacionMercado')?.value || null;
             estadoData.estado_documentos = document.getElementById('estadoDocumentos')?.value || null;
-            
-            console.log('✅ Admin - Guardando Estado en Mercado');
-        } else {
-            console.log('⚠️ Operador - Estado en Mercado NO se guardará');
+            if(containtAgenteExterno) estadoData.agente_externo_mercado = document.getElementById('agenteExterno')?.value || null;
         }
                 
         const { error } = await supabaseClient
@@ -2777,7 +2720,6 @@ async function guardarEstadoSeguimiento(polizaId) {
         
         if (error) throw error;
         
-        console.log('✅ Estado y seguimiento guardado');
         
         // Registrar cambio en historial
         await registrarCambioEstado(polizaId, estadoData);
@@ -2810,7 +2752,6 @@ async function cargarSeguimientos(polizaId) {
             // Verificar si ALGUNO de los seguimientos fue efectivo
             const hayAlgunEfectivo = seguimientos.some(seg => seg.seguimiento_efectivo === "Si");
             checkboxSeguimientoEfectivo.checked = hayAlgunEfectivo;
-            console.log('✅ Checkbox comunicación efectiva:', hayAlgunEfectivo ? 'Marcado' : 'Desmarcado');
         } else if (checkboxSeguimientoEfectivo) {
             checkboxSeguimientoEfectivo.checked = false;
         }
@@ -2952,7 +2893,6 @@ async function guardarSeguimientoModal() {
             
             if (error) throw error;
             
-            console.log('✅ Seguimiento actualizado');
         } else {
             // INSERTAR nuevo
             const { error } = await supabaseClient
@@ -2961,7 +2901,6 @@ async function guardarSeguimientoModal() {
             
             if (error) throw error;
             
-            console.log('✅ Seguimiento creado');
         }
         
         // Recargar seguimientos
@@ -3024,7 +2963,6 @@ async function eliminarSeguimiento(segId) {
             }, 300);
         }
         
-        console.log('✅ Seguimiento eliminado');
         
     } catch (error) {
         console.error('Error al eliminar seguimiento:', error);
@@ -3281,7 +3219,6 @@ function inicializarSubPestanas() {
         });
     });
     
-    console.log('✅ Sub-pestañas de seguimiento inicializadas');
 }
 
 /**
@@ -3349,7 +3286,6 @@ function cargarAgente35(poliza) {
         inputActualizadoPor.value = poliza.agente35_actualizado_por || 'Sin actualizar';
     }
     
-    console.log('✅ Datos de Agente 3.5 cargados');
 }
 
 /**
@@ -3540,7 +3476,6 @@ function capturarDatosOriginales(cliente, poliza) {
     datosOriginalesCliente = JSON.parse(JSON.stringify(cliente || {}));
     datosOriginalesPoliza = JSON.parse(JSON.stringify(poliza || {}));
     
-    console.log('📸 Datos originales capturados');
 }
 
 /**
@@ -3660,7 +3595,6 @@ async function registrarCambio(clienteId, tipoCambio, seccion, cambios) {
         
         if (error) throw error;
         
-        console.log(`✅ ${cambios.length} cambio(s) registrado(s) en historial`);
         
         // Recargar historial si estamos en ese tab
         if (document.querySelector('#tab-historial.active')) {
@@ -3762,7 +3696,6 @@ async function guardarCambiosConHistorial() {
             mostrarNotificacion('ℹ️ No hay cambios para guardar', 'info');
         }
         
-        console.log('✅ Cambios guardados y registrados en historial');
         
     } catch (error) {
         console.error('❌ Error al guardar cambios:', error);
@@ -3854,7 +3787,6 @@ async function registrarNotaAgregada(clienteId, mensaje) {
                 usuario_email: user.email
             }]);
         
-        console.log('✅ Nota agregada registrada en historial');
     } catch (error) {
         console.error('❌ Error al registrar nota en historial:', error);
     }
@@ -3885,7 +3817,6 @@ async function registrarNotaEliminada(clienteId, notaId) {
                 usuario_email: user.email
             }]);
         
-        console.log('✅ Nota eliminada registrada en historial');
     } catch (error) {
         console.error('❌ Error al registrar eliminación en historial:', error);
     }
@@ -3913,7 +3844,6 @@ async function registrarCambioOperador(clienteId, operadorAnterior, operadorNuev
  */
 async function cargarHistorial(clienteId, pagina = 1) {
     try {
-        console.log('📥 Cargando historial...');
         
         // Mostrar loading
         const timeline = document.getElementById('historialTimeline');
@@ -3973,7 +3903,6 @@ async function cargarHistorial(clienteId, pagina = 1) {
         // Llenar filtro de usuarios
         llenarFiltroUsuarios(cambios);
         
-        console.log(`✅ ${cambios.length} cambio(s) en historial cargados`);
         
     } catch (error) {
         console.error('❌ Error al cargar historial:', error);
@@ -4382,19 +4311,3 @@ window.cargarAgente35 = cargarAgente35;
 window.obtenerDatosAgente35 = obtenerDatosAgente35;
 window.obtenerBadgeAgente35 = obtenerBadgeAgente35;
 window.formatearFechaHora = formatearFechaHora;
-
-// ============================================
-// LOG FINAL
-// ============================================
-
-console.log('%c✏️ CLIENTE_EDITAR.JS COMPLETO Y CORREGIDO', 'color: #00a8e8; font-size: 16px; font-weight: bold');
-console.log('%c✅ Todas las correcciones aplicadas:', 'color: #4caf50; font-weight: bold');
-console.log('  ✓ Funciones movidas FUERA de actualizarCliente()');
-console.log('  ✓ Sistema de modal para dependientes');
-console.log('  ✓ Tarjetas visuales para dependientes');
-console.log('  ✓ actualizarDependientes() con UPDATE + INSERT');
-console.log('  ✓ Campo sexo corregido (dep_sexo)');
-console.log('  ✓ Campo nacionalidad corregido');
-console.log('  ✓ DOMContentLoaded con async');
-console.log('  ✓ Carga completa de datos al inicio');
-console.log('  ✓ guardarDocumentosNuevos() solo sube nuevos');

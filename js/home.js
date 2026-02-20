@@ -59,7 +59,7 @@ function aplicarFiltros() {
     // Filtro por estado de compañía
     if (filtrosActivos.estadoCompania) {
         polizasFiltradas = polizasFiltradas.filter(p => 
-            p.estado_mercado === filtrosActivos.estadoCompania
+            p.estado_compania === filtrosActivos.estadoCompania
         );
     }
     
