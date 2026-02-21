@@ -50,6 +50,7 @@ function guardarFiltrosEnStorage() {
             estadoMercado: document.getElementById('filtroEstadoMercado')?.value || '',
             estadoCompania: document.getElementById('filtroEstadoCompania')?.value || '',
             estadoAgente35: document.getElementById('estadoAgente35')?.value || '',
+            estado: document.getElementById('filtroEstado')?.value || '',
 
             // Fechas
             fechaEfectividadDesde: document.getElementById('filtroFechaEfectividadDesde')?.value || '',
@@ -140,6 +141,7 @@ function restaurarFiltrosDesdeStorage() {
     set('filtroSeguimientoEfectivo', datos.seguimientoEfectivo);
     set('filtroEstadoMercado', datos.estadoMercado);
     set('filtroEstadoCompania', datos.estadoCompania);
+    set('filtroEstado', datos.estado);
     set('estadoAgente35', datos.estadoAgente35);
     set('filtroTieneMetodoPago', datos?.tieneMetodoPago)
 
@@ -175,6 +177,7 @@ function restaurarFiltrosDesdeStorage() {
         seguimientoEfectivo: datos.seguimientoEfectivo || '',
         estadoMercado: datos.estadoMercado || '',
         estadoCompania: datos.estadoCompania || '',
+        estado: datos.estado || '',
         estadoAgente35: datos.estadoAgente35 || '',
         fechaRegistroDesde: datos.fechaRegistroDesde || '',
         fechaRegistroHasta: datos.fechaRegistroHasta || '',
@@ -252,6 +255,7 @@ function restaurarFiltrosDesdeStorage() {
             if (filtrosActivos.operador && poliza.operador_nombre !== filtrosActivos.operador) return false;
             if (filtrosActivos.estadoMercado && poliza.estado_mercado !== filtrosActivos.estadoMercado) return false;
             if (filtrosActivos.estadoCompania && poliza.estado_compania !== filtrosActivos.estadoCompania) return false;
+            if (filtrosActivos.estado && cliente.estado !== filtrosActivos.estado) return false;
             if (filtrosActivos.estadoAgente35 && poliza.agente35_estado !== filtrosActivos.estadoAgente35) return false;
 
             if (filtrosActivos.documentos) {
@@ -1927,6 +1931,7 @@ function limpiarFiltros() {
     document.getElementById('filtroOperador').value = '';
     document.getElementById('filtroEstadoMercado').value = '';
     document.getElementById('filtroEstadoCompania').value = '';
+    document.getElementById('filtroEstado').value = '';
     document.getElementById('estadoAgente35').value = '';
     document.getElementById('filtroPrima').value = '';
     document.getElementById('filtroDocumentos').value = '';
@@ -2210,6 +2215,7 @@ function aplicarFiltrosAvanzados() {
         documentos: document.getElementById('filtroDocumentos').value,
         estadoMercado: document.getElementById('filtroEstadoMercado').value,
         estadoCompania: document.getElementById('filtroEstadoCompania').value,
+        estado: document.getElementById('filtroEstado').value,
         estadoAgente35: document.getElementById('estadoAgente35').value,
         fechaEfectividadDesde: document.getElementById('filtroFechaEfectividadDesde').value,
         fechaEfectividadHasta: document.getElementById('filtroFechaEfectividadHasta').value,
@@ -2363,6 +2369,11 @@ function aplicarFiltrosAvanzados() {
         
         // Filtro por estado compañía
         if (filtrosActivos.estadoCompania && poliza.estado_compania !== filtrosActivos.estadoCompania) {
+            return false;
+        }
+
+        // Filtro por estado
+        if (filtrosActivos.estado && cliente.estado !== filtrosActivos.estado) {
             return false;
         }
 

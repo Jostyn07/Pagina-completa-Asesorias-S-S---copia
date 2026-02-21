@@ -215,32 +215,6 @@ async function refrescarToken() {
 }
 
 // ============================================
-// CERRAR SESIÓN
-// ============================================
-
-async function cerrarSesion() {
-    try {
-        // Cerrar sesión en Supabase
-        await supabaseClient.auth.signOut();
-        
-        // Limpiar localStorage
-        localStorage.removeItem('usuario');
-        localStorage.removeItem('supabase.auth.token');
-        
-        // console.log('✅ Sesión cerrada');
-        
-        // Redirigir a login
-        window.location.href = './login.html';
-        
-    } catch (error) {
-        // console.error('❌ Error al cerrar sesión:', error);
-        // Limpiar de todas formas
-        localStorage.clear();
-        window.location.href = './login.html';
-    }
-}
-
-// ============================================
 // OBTENER USUARIO ACTUAL
 // ============================================
 
