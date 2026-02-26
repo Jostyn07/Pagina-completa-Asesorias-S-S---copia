@@ -29,10 +29,10 @@ async function cargarRolUsuario() {
         usuarioActual = user;
         rolUsuario = usuario.rol || 'operador';
         
-        console.log('✅ Usuario:', usuario.email);
-        console.log('✅ Nombre:', usuario.nombre);
-        console.log('✅ Rol:', rolUsuario);
-        console.log('✅ ID:', usuario.id);
+        ;
+        ;
+        ;
+        ;
         
         return rolUsuario;
         

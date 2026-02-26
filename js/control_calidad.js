@@ -9,7 +9,7 @@ const AUTOSAVE_DELAY = 30000; // 30 segundos
 // INICIALIZACIÓN
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎯 Iniciando Control de Calidad...');
+    ;
     
     // Obtener usuario actual
     usuarioActual = obtenerUsuario();
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Iniciar autoguardado
     iniciarAutoguardado();
     
-    console.log('✅ Control de Calidad inicializado');
+    ;
 });
 
 // ============================================
@@ -221,7 +221,7 @@ async function guardarEvaluacionEnSupabase(formData) {
         autor_nombre: usuarioActual.nombre || 'Evaluador'
     };
     
-    console.log('💾 Guardando evaluación:', evaluacionData);
+    ;
     
     const { data, error } = await supabaseClient
         .from('evaluaciones_calidad')
@@ -237,7 +237,7 @@ async function guardarEvaluacionEnSupabase(formData) {
         throw error;
     }
     
-    console.log('✅ Evaluación guardada:', data);
+    ;
     return data;
 }
 
@@ -291,7 +291,7 @@ function guardarBorrador(esAutomatico = false) {
         mostrarNotificacion('💾 Borrador guardado', 'success');
     }
     
-    console.log('💾 Borrador guardado');
+    ;
 }
 
 function cargarBorrador() {
@@ -334,7 +334,7 @@ function cargarBorrador() {
             }
         }
         
-        console.log('📋 Borrador cargado');
+        ;
         mostrarNotificacion('📋 Borrador cargado exitosamente', 'success');
         
     } catch (error) {
@@ -479,11 +479,11 @@ window.addEventListener('beforeunload', function(e) {
 // ============================================
 // LOG DE DESARROLLO
 // ============================================
-console.log('%c🎯 Control de Calidad Cargado', 'color: #2563eb; font-size: 14px; font-weight: bold');
-console.log('Funcionalidades activas:');
-console.log('  ✓ Formulario completo de evaluación');
-console.log('  ✓ Validaciones en tiempo real');
-console.log('  ✓ Autoguardado de borrador cada 30 segundos');
-console.log('  ✓ Integración con Supabase');
-console.log('  ✓ Prevención de pérdida de datos');
-console.log('  ✓ Feedback estructurado');
+;
+;
+;
+;
+;
+;
+;
+;

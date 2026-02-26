@@ -61,7 +61,7 @@ function inicializarModalImagenes() {
             }
         });
         
-        console.log('✅ Modal de imágenes inicializado');
+        ;
     }
 }
 
@@ -257,7 +257,7 @@ async function mostrarNotasConThumbnails(notas) {
         thread.appendChild(notaHTML);
     });
     
-    console.log(`✅ ${notas.length} nota(s) renderizada(s) con thumbnails`);
+    ;
 }
 
 /**
@@ -291,7 +291,7 @@ function agregarEventosClickImagenes() {
         }
     });
     
-    console.log('✅ Eventos de clic agregados a imágenes');
+    ;
 }
 
 // ============================================

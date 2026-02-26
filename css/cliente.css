@@ -496,7 +496,7 @@ body {
 }
 
 
-.display-efectividad #displayFechaEfectividad {
+.display-efectividad #displayFechaEfectividad, #displayFechaFinal {
     text-align: end;
     width: 80%;
     background-color: transparent !important;

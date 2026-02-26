@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const estadoMercadoInput = document.getElementById('estadoMercado')
 
         function cargarRobado() {
-            console.log(estadoMercadoInput.value)
+            
             if(estadoMercadoInput.value == 'Robado' || estadoMercadoInput.value == 'Doble poliza') {
                 containtAgenteExterno.style.display = 'block';
             } else {
@@ -168,7 +168,11 @@ async function aplicarPermisosEstadoMercado() {
         'fechaRevisionMercado',
         'estadoMercado',
         'nombreAgenteMercado',
-        'estadoDocumentos'
+        'estadoDocumentos',
+        'documentosPendientes',
+        'fechaPlazoDocumento',
+        'seguimientoEfectivo',
+        'tipoRegistro'
     ];
     
     if (!esAdministrador()) {
@@ -373,6 +377,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if (cliente.tipo_registro) document.getElementById('casoEspecial').value = cliente.caso_especial || '';
        if (cliente.fecha_registro) document.getElementById('fechaRegistro').value = formatoUS(cliente.fecha_registro);
        document.getElementById('aplicantes').value = poliza.aplicantes || 1;
+       if (cliente.tipo_modificacion) document.getElementById('tipoModificacion').value = cliente?.tipo_modificacion || '';
        if (cliente.nombres) document.getElementById('nombres').value = cliente.nombres || '';
        if (cliente.apellidos) document.getElementById('apellidos').value = cliente.apellidos || '';
        if (cliente.genero) document.getElementById('genero').value = cliente.genero || '';
@@ -445,7 +450,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
             displayInicial.textContent = fechaInicialUS;
         }
 
-        const displayFinal = document.getElementById('displayFechaFinal');
+        const displayFinal = document.getElementById('displayFechaFinal').value = formatoUS(poliza.fecha_final_cobertura) || '--/--/----';
         if (displayFinal && poliza.fecha_final_cobertura) {
             const fechaFinalUS = formatoUS(poliza.fecha_final_cobertura);
             displayFinal.textContent = fechaFinalUS;
@@ -1569,6 +1574,7 @@ async function handleSubmit(event) {
         apellidos: formData.apellidos,
         email: formData.email,
         telefono1: formData.telefono1 ? formData.telefono1.replace(/\D/g, '') : '',
+        telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : '',
         fecha_nacimiento: formData.fechaNacimiento,
         estado_migratorio: formData.estadoMigratorio,
         direccion: formData.direccion,
@@ -1577,7 +1583,15 @@ async function handleSubmit(event) {
         codigo_postal: formData.codigoPostal,
         genero: formData.genero,
         ocupacion: formData.ocupacion || '',
-        nacionalidad: formData.nacionalidad || ''
+        nacionalidad: formData.nacionalidad || '',
+        ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : '',
+        ingreso_anual: formData.ingresos || '',
+        tipo_registro: formData.tipoRegistro || '',
+        tipo_modificacion: formData.tipoModificacion || '',
+        aplica: formData.aplica || '',
+        casa_apartamento: formData.casaApartamento || '',
+        condado: formData.condado || '',
+        po_box: formData.poBox || ''
         };
 
         const datosPolizaNuevos = {
@@ -1587,8 +1601,22 @@ async function handleSubmit(event) {
         credito_fiscal: formData.creditoFiscal || '0',
         fecha_efectividad: formData.displayFechaEfectividad || formData.fechaEfectividad,
         fecha_inicial_cobertura: formData.fechaInicialCobertura || '',
-        fecha_final_cobertura: formData.fechaFinalCobertura || ''
-        };
+        fecha_final_cobertura: formData.displayFechaFinal || formData.fechaFinalCobertura || '',
+        estado_mercado: formData.estadoMercado || '',
+        estado_compania: formData.estadoCompania || '',
+        estado_documentos: formData.estadoDocumentos || '',
+        agente35_estado: formData.agente35_estado || '',
+        operador_nombre: formData.operadorNombre || '',
+        member_id: formData.memberId || '',
+        portal_npn: formData.portalNpn || '',
+        clave_seguridad: formData.claveSeguridad || '',
+        enlace_poliza: formData.enlacePoliza || '',
+        pagado_hasta: formData.pagadoHasta || '',
+        nombre_agente_mercado: formData.nombreAgenteMercado || '',
+        fecha_revision_mercado: formData.fechaRevisionMercado || '',
+        fecha_plazo_documentos: formData.fechaPlazoDocumento || '',
+        documentos_pendientes: formData.documentosPendientes || '',
+        };  
 
         // Comparar con datos originales
         const cambiosCliente = compararCambios(datosOriginalesCliente, datosClienteNuevos, 'Información Personal');
@@ -1610,7 +1638,6 @@ async function handleSubmit(event) {
         localStorage.removeItem(`borrador_cliente_${clienteId}`);
         clearInterval(autosaveTimer);
         
-        alert('✅ Cliente y póliza actualizados correctamente');
         window.location.href = './polizas.html';
         
     } catch (error) {
@@ -1677,6 +1704,7 @@ async function actualizarCliente(id, formData) {
         tipo_registro: formData.tipoRegistro,
         caso_especial: formData.casoEspecial,
         fecha_registro: formData.fechaRegistro,
+        tipo_modificacion: formData.tipoModificacion,
         nombres: formData.nombres,
         apellidos: formData.apellidos,
         genero: formData.genero,
@@ -1726,7 +1754,7 @@ async function actualizarPoliza(polizaId, formData) {
         credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
         fecha_efectividad: formData.displayFechaEfectividad || formData.fechaEfectividad,
         fecha_inicial_cobertura: formData.fechaInicialCobertura,
-        fecha_final_cobertura: formData.fechaFinalCobertura,
+        fecha_final_cobertura: formData.displayFechaFinal || formData.fechaFinalCobertura,
         member_id: formData.memberId || null,
         portal_npn: formData.portalNpn || null,
         clave_seguridad: formData.claveSeguridad || null,
@@ -2900,7 +2928,13 @@ async function guardarSeguimientoModal() {
                 .insert([seguimiento]);
             
             if (error) throw error;
-            
+            // Registrar en historial
+            await registrarCambio(clienteId, 'seguimiento_agregado', 'Seguimientos', [{
+                campo: 'Nuevo Seguimiento',
+                valorAnterior: '',
+                valorNuevo: `${seguimiento.fecha_seguimiento} - ${seguimiento.medio_comunicacion}`,
+                seccion: 'Seguimientos'
+            }]);
         }
         
         // Recargar seguimientos
@@ -2947,12 +2981,29 @@ async function eliminarSeguimiento(segId) {
     if (!confirm('¿Eliminar este seguimiento?')) return;
     
     try {
+        // Obtener datos antes de eliminar
+        const { data: seg } = await supabaseClient
+            .from('seguimientos')
+            .select('*')
+            .eq('id', segId)
+            .single();
+
         const { error } = await supabaseClient
             .from('seguimientos')
             .delete()
             .eq('id', segId);
         
         if (error) throw error;
+
+        // Registrar en historial
+        if (seg) {
+            await registrarCambio(clienteId, 'seguimiento_eliminado', 'Seguimientos', [{
+                campo: 'Seguimiento Eliminado',
+                valorAnterior: `${seg.fecha_seguimiento} - ${seg.medio_comunicacion}`,
+                valorNuevo: '',
+                seccion: 'Seguimientos'
+            }]);
+        }
         
         // Animar eliminación
         const card = document.querySelector(`[data-seg-id="${segId}"]`);
@@ -2962,7 +3013,6 @@ async function eliminarSeguimiento(segId) {
                 cargarSeguimientos(polizaId);
             }, 300);
         }
-        
         
     } catch (error) {
         console.error('Error al eliminar seguimiento:', error);
@@ -3502,7 +3552,7 @@ function compararCambios(datosOriginales, datosNuevos, seccion) {
             cambios.push({
                 campo: campo,
                 valorAnterior: anterior || '(vacío)',
-                valorNuevo: nuevo || '(vacío)',
+                valorNuevo: esFecha(nuevo)? formatoUS(nuevo) : (nuevo || '(vacío)'),
                 seccion: seccion
             });
         }
@@ -3615,7 +3665,8 @@ function formatearNombreCampo(campo) {
         'tipo_registro': 'Tipo de registro',
         'nombre': 'Nombre',
         'email': 'Email',
-        'telefono': 'Teléfono',
+        'telefono1': 'Teléfono 1',
+        'telefono2': 'Teléfono 2',
         'direccion': 'Dirección',
         'ciudad': 'Ciudad',
         'estado': 'Estado',
@@ -3625,6 +3676,14 @@ function formatearNombreCampo(campo) {
         'ocupacion': 'Ocupación',
         'notas_personales': 'Notas Personales',
         'operador_asignado': 'Operador Asignado',
+        'ssn': 'SSN',
+        'ingreso_anual': 'Ingresos',
+        'tipo_registro': 'Tipo de registro',
+        'tipo_modificacion': 'Tipo de modifiación',
+        'aplia': 'Aplica',
+        'casa_apartamento': 'Casa o apartamento',
+        'condado': 'Condado',
+        'po_box': 'POBox',
         
         // Póliza
         'numero_poliza': 'Número de Póliza',
@@ -3639,7 +3698,19 @@ function formatearNombreCampo(campo) {
         'estado_mercado': 'Estado (Mercado)',
         'agente35_estado': 'Estado Agente 3.5',
         'agente35_notas': 'Notas Agente 3.5',
-        'observaciones': 'Observaciones'
+        'observaciones': 'Observaciones',
+        'estado_documentos': 'Estado documentos',
+        'operador_nombre': 'Operador nombre',
+        'member_id': 'Member ID',
+        'portal_npn': 'Portal NPN',
+        'clave_seguridad': 'Clave de seguridad',
+        'enlace_poliza': 'Enlace de la póliza',
+        'pagado_hasta': 'Pagado hasta',
+        'nombre_agente_mercado': 'Nombre del agente (Mercado)',
+        'fecha_revision_mercado': 'Fecha de revisión en mercado',
+        'documentos_pendientes': 'Documentos solicitados',
+        'Nuevo Seguimiento': 'Nuevo Seguimiento',
+        'Seguimiento Eliminado': 'Seguimiento Eliminado',
     };
     
     return nombres[campo] || campo.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -3984,7 +4055,9 @@ function crearItemHistorial(grupo) {
         'estado_cambiado': 'swap_horiz',
         'nota_agregada': 'add_comment',
         'nota_eliminada': 'delete',
-        'asignacion_cambiada': 'person_add'
+        'asignacion_cambiada': 'person_add',
+        'seguimiento_agregado': 'add_circle',
+        'seguimiento_eliminado': 'remove_circle',
     };
     
     const icono = iconos[grupo.tipo_cambio] || 'edit';
@@ -3996,7 +4069,9 @@ function crearItemHistorial(grupo) {
         'estado_cambiado': 'Estado Cambiado',
         'nota_agregada': 'Nota Agregada',
         'nota_eliminada': 'Nota Eliminada',
-        'asignacion_cambiada': 'Operador Cambiado'
+        'asignacion_cambiada': 'Operador Cambiado',
+        'seguimiento_agregado': 'Seguimiento Agregado',
+        'seguimiento_eliminado': 'Seguimiento Eliminado',
     };
     
     const titulo = titulos[grupo.tipo_cambio] || 'Cambio Realizado';

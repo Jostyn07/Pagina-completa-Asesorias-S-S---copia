@@ -17,7 +17,7 @@ const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 // INICIALIZACIÓN
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📝 Modo: CREAR NUEVO CLIENTE');
+    ;
     
     inicializarFormulario();
     inicializarTabs();
@@ -233,7 +233,7 @@ function calcularFechasAutomaticas() {
     // Calcular fechas al cargar la página
     calcularYMostrarFechas();
     
-    console.log('📅 Fechas calculadas automáticamente');
+    ;
 }
 
 function calcularYMostrarFechas() {
@@ -271,10 +271,10 @@ function calcularYMostrarFechas() {
     if (inputFinal) inputFinal.value = convertirAFormatoISO(fechaFinalUS);
     if (inputEfectividad) inputEfectividad.value = convertirAFormatoISO(fechaEfectividadUS);
     
-    console.log('Fechas calculadas:');
-    console.log('  Inicial:', fechaInicialUS, '→', convertirAFormatoISO(fechaInicialUS));
-    console.log('  Final:', fechaFinalUS, '→', convertirAFormatoISO(fechaFinalUS));
-    console.log('  Efectividad:', fechaEfectividadUS, '→', convertirAFormatoISO(fechaEfectividadUS));
+    ;
+    ;
+    ;
+    ;
 }
 
 /**
@@ -1039,7 +1039,7 @@ function inicializarAutoguardado() {
         guardarBorradorSilencioso();
     }, AUTOSAVE_INTERVAL);
     
-    console.log('💾 Autoguardado activado (cada 30 segundos)');
+    ;
 }
 
 function guardarBorradorSilencioso() {
@@ -1054,7 +1054,7 @@ function guardarBorradorSilencioso() {
         }, 2000);
     }
     
-    console.log('💾 Borrador guardado automáticamente');
+    ;
 }
 
 function cargarBorradorAutomatico() {
@@ -1063,7 +1063,7 @@ function cargarBorradorAutomatico() {
         try {
             const datos = JSON.parse(borrador);
             rellenarFormularioDesdeObj(datos);
-            console.log('✅ Borrador cargado');
+            ;
         } catch (error) {
             console.error('Error al cargar borrador:', error);
         }
@@ -1096,7 +1096,7 @@ function rellenarFormularioDesdeObj(datos) {
 async function handleSubmit(event) {
     event.preventDefault();
     
-    console.log('📤 Iniciando proceso de guardado...');
+    ;
     
     if (!validarFormularioCompleto()) {
         alert('Por favor, completa todos los campos requeridos correctamente.');
@@ -1174,7 +1174,7 @@ function obtenerUsuarioEmail() {
 // ============================================
 
 async function crearCliente(formData) {
-    console.log('📝 Creando cliente...');
+    ;
     
     const clienteData = {
         tipo_registro: formData.tipoRegistro,
@@ -1213,7 +1213,7 @@ async function crearCliente(formData) {
     
     if (clienteError) throw clienteError;
     
-    console.log('✅ Cliente creado:', cliente.id);
+    ;
     
     // Guardar dependientes
     await guardarDependientes(cliente.id, formData);
@@ -1283,7 +1283,7 @@ async function crearCliente(formData) {
             
             if (error) throw error;
             
-            console.log(`✅ ${dependientes.length} dependiente(s) guardado(s)`);
+            ;
         }
     }
     // =============================================
@@ -1352,7 +1352,7 @@ async function crearCliente(formData) {
             
             if (error) throw error;
             
-            console.log(`✅ ${documentosGuardados.length} documento(s) guardado(s)`);
+            ;
         }
     }
 
@@ -1377,7 +1377,7 @@ async function guardarNotas(clienteId) {
         .insert(notasData);
     
     if (error) throw error;
-    console.log(`✅ ${notasData.length} nota(s) guardadas`);
+    ;
     notasTemporales = [];
 }
     
@@ -1389,7 +1389,7 @@ async function guardarNotas(clienteId) {
     
     if (polizaError) throw polizaError;
     
-    console.log('✅ Póliza creada:', poliza.id);
+    ;
 
     try {
         await enviarAGoogleSheets({
@@ -1420,7 +1420,7 @@ async function guardarNotas(clienteId) {
             link: formData.enlacePoliza || '',
             observacion: ''
         });
-        console.log('✅ Datos enviados a Google Sheets correctamente');
+        ;
     } catch (errorSheets) {
         console.error('⚠️ Error al enviar a Google Sheets:', errorSheets);
     }
@@ -1533,7 +1533,7 @@ async function cargarInfoUsuario() {
             return;
         }
         
-        console.log('✅ Usuario cargado:', user);
+        ;
         
         // Extraer información del usuario
         const email = user.email || 'usuario@ejemplo.com';
@@ -1576,7 +1576,7 @@ async function cargarInfoUsuario() {
             userAvatar.alt = nombreCompleto;
         }
         
-        console.log('✅ Información de usuario actualizada');
+        ;
         
     } catch (error) {
         console.error('❌ Error al cargar info de usuario:', error);

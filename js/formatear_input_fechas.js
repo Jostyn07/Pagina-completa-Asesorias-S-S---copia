@@ -36,7 +36,7 @@ function inicializarFormateoFechas() {
         });
     });
     
-    console.log(`✅ Formateo automático activado en ${inputs.length} campos de fecha`);
+    ;
 }
 
 /**

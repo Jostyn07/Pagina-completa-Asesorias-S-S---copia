@@ -24,7 +24,7 @@ async function cargarUsuarios() {
             return;
         }
         
-        console.log('📋 Cargando usuarios...');
+        ;
         
         const { data, error } = await supabaseClient
             .from('usuarios')
@@ -34,7 +34,7 @@ async function cargarUsuarios() {
         if (error) throw error;
         
         usuarios = data || [];
-        console.log(`✅ ${usuarios.length} usuarios cargados`);
+        ;
         
         renderizarTabla();
         

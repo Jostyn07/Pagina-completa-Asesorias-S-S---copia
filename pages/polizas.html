@@ -345,7 +345,7 @@
                                     <div class="filtro-group">
                                         <label for="filtroTieneSsn">Tiene SSN?</label>
                                         <select name="filtroTieneSsn" id="filtroTieneSsn">
-                                            <option value="">Seleccionar...</option>
+                                            <option value="">Todos</option>
                                             <option value="Si">Si</option>
                                             <option value="No">No</option>
                                         </select>
@@ -355,7 +355,7 @@
                                     <div class="filtro-group">
                                         <label for="filtroTieneMetodoPago">¿Tiene metodo de pago?</label>
                                         <select name="filtroTieneMetodoPago" id="filtroTieneMetodoPago">
-                                            <option value="">Seleccionar...</option>
+                                            <option value="">Todos</option>
                                             <option value="Si">Si</option>
                                             <option value="No">No</option>
                                         </select>
@@ -528,6 +528,15 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="filtro-group">
+                                        <label for="tipoModifiacion">Tipo de modifiación</label>
+                                        <select name="tipoModificacion" id="tipoModificacion">
+                                            <option value="">Todos</option>
+                                            <option value="Recuperada">Recuperada</option>
+                                            <option value="Cambio de vida">Cambio de vida</option>
+                                            <option value="Cancelada">Cancelada</option>
+                                        </select>
+                                    </div>
                                     <div class="filtro-group" id="filtroOperadorGroup">
                                         <label>Operador (Solo Admin)</label>
                                         <select id="filtroOperador">
@@ -552,10 +561,20 @@
                                     <div class="filtro-group">
                                         <label>Documentos</label>
                                         <select id="filtroDocumentos">
-                                            <option value="">Seleccionar...</option>
+                                            <option value="">Todos</option>
                                             <option value="Pendiente">Pendiente</option>
-                                            <option value="Incompleto">Incompleto</option>
-                                            <option value="A la espera de verificación">A la espera de verificación</option>
+                                            <option value="Incompleto (Ciudadania)">Incompleto (Ciudadania)</option>
+                                            <option value="Incompleto (Estado migratorio)">Incompleto (Estado migratorio)</option>
+                                            <option value="Incompleto (Income)">Incompleto (Income)</option>
+                                            <option value="Incompleto (Medicaid)">Incompleto (Medicaid)</option>
+                                            <option value="Incompleto (SSN)">Incompleto (SSN)</option>
+                                            <option value="Incompleto (Cobertura medica)">Incompleto (Cobertura medica)</option>
+                                            <option value="Incompleto (Income y estado migratorio)">Incompleto (Income y estado migratorio)</option>
+                                            <option value="Incompleto (SSN e income)">SSN e income</option>
+                                            <option value="Incompleto (Ciudadania y SSN)">Incompleto (Ciudadania y SSN)</option>
+                                            <option value="Incompleto (Income y estado migratorio y SSN)">Incompleto (Income y estado migratorio y SSN)</option>
+                                            <option value="Incompleto (Income y estado migratorio y Ciudadania)">Incompleto (Income y estado migratorio y Ciudadania)</option>
+                                            <option value="Incompleto (A la espera de verificación)">Incompleto (A la espera de verificación)</option>
                                             <option value="Rechazado">Rechazado</option>
                                             <option value="Documentos completos">Documentos completos</option>
                                         </select>
@@ -567,6 +586,21 @@
                                             <option value="">Todos</option>
                                             <option value="Si">Sí</option>
                                             <option value="No">No</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="filtro-group">
+                                        <label for="agenteMercado">Agente (Mercado)</label>
+                                        <select name="agenteMercado" id="agenteMercado">
+                                            <option value="">Todos</option>
+                                            <option value="__null__">Pendiente</option>
+                                            <option value="Benigno Aquino Reyes - 21344017">Benigno Aquino Reyes - 21344017</option>
+                                            <option value="Sebastian Guichardo - 20497412">Sebastian Guichardo - 20497412</option>
+                                            <option value="Leslie Lopez - 20464969">Leslie Lopez - 20464969</option>
+                                            <option value="Mari Carmen Mejia Suero - 21283514">Mari Carmen Mejia Suero - 21283514</option>
+                                            <option value="Joel Nieves - 19952518">Joel Nieves - 19952518</option>
+                                            <option value="Sebastian Guichardo - 20497412">Sebastian Guichardo - 20497412</option>
+                                            <option value="Jose Nicolas Ramirez - 20533134">Jose Nicolas Ramirez - 20533134</option>
                                         </select>
                                     </div>
                                 </div>
@@ -584,10 +618,11 @@
                                             <option value="Inactivo">Inactivo</option>
                                             <option value="Cancelado">Cancelado</option>
                                             <option value="Robado">Robado</option>
-                                            <option value="Doble póliza">Doble póliza</option>
+                                            <option value="Doble poliza">Doble póliza</option>
                                             <option value="Triple póliza">Triple póliza</option>
                                             <option value="No registra">No registra</option>
                                             <option value="Cancelado a P.C">Cancelado a P.C</option>
+                                            <option value="__null__">Pendiente</option>
                                         </select>
                                     </div>
                                     <div class="filtro-group">
@@ -605,7 +640,7 @@
                                     <div class="filtro-group">
                                         <label for="estadoAgente35">Estado agente 3.5</label>
                                         <select name="estadoAgente35" id="estadoAgente35">
-                                            <option value="">Seleccionar...</option>
+                                            <option value="">Todos</option>
                                             <option value="Procesado">Procesado</option>
                                             <option value="Pendiente">Pendiente</option>
                                             <option value="New aplication">New aplication</option>
@@ -750,6 +785,8 @@
                             <tr>
                                 <th class="sortable" data-column="numero_poliza">Póliza</th>
                                 <th class="sortable" data-column="tipoRegistro">Tipo de registro</th>
+                                <th>Tipo de modificación</th>
+                                <th>Agente (Mercado)</th>
                                 <th class="sortable" data-column="operador_nombre">Operador</th>
                                 <th class="sortable" data-column="cliente">Cliente</th>
                                 <th>Número de teléfono</th>

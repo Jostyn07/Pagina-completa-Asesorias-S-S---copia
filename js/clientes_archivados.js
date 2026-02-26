@@ -7,7 +7,7 @@ let clientesArchivados = [];
 // Cargar clientes archivados
 async function cargarClientesArchivados() {
     try {
-        console.log('📦 Cargando clientes archivados...');
+        ;
         
         // Verificar que sea admin
         await cargarRolUsuario();
@@ -27,7 +27,7 @@ async function cargarClientesArchivados() {
         if (error) throw error;
         
         clientesArchivados = data || [];
-        console.log(`✅ ${clientesArchivados.length} clientes archivados cargados`);
+        ;
         
         renderizarTablaArchivados();
         

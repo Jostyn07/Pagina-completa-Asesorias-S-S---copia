@@ -45,7 +45,7 @@ function inicializarPegarImagenes() {
         }
     });
     
-    console.log('✅ Funcionalidad de pegar imagenes inicializada');
+    ;
 }
 
 /**

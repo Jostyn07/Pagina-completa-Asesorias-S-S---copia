@@ -9,7 +9,7 @@ let evaluacionesFiltradas = [];
 // INICIALIZACIÓN
 // ============================================
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('📋 Iniciando historial de evaluaciones...');
+    ;
     
     // Obtener usuario actual
     usuarioActual = obtenerUsuario();
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Cargar evaluaciones
     await cargarEvaluaciones();
     
-    console.log('✅ Historial de evaluaciones cargado');
+    ;
 });
 
 // ============================================
@@ -95,7 +95,7 @@ async function cargarOperadoresFiltro() {
 // ============================================
 async function cargarEvaluaciones() {
     try {
-        console.log('🔄 Cargando evaluaciones desde Supabase...');
+        ;
         
         let query = supabaseClient
             .from('evaluaciones_calidad')
@@ -120,7 +120,7 @@ async function cargarEvaluaciones() {
         
         evaluacionesFiltradas = [...todasEvaluaciones];
         
-        console.log(`✅ ${todasEvaluaciones.length} evaluaciones cargadas`);
+        ;
         
         // Renderizar evaluaciones
         renderizarEvaluaciones();
@@ -637,10 +637,10 @@ function formatearFechaRelativa(fecha) {
 // ============================================
 // LOG DE DESARROLLO
 // ============================================
-console.log('%c📋 Historial de Evaluaciones Cargado', 'color: #2563eb; font-size: 14px; font-weight: bold');
-console.log('Funcionalidades activas:');
-console.log('  ✓ Ver historial de evaluaciones');
-console.log('  ✓ Filtrar por resultado, período y operador');
-console.log('  ✓ Ver detalles completos de cada evaluación');
-console.log('  ✓ Control de permisos por rol (admin vs operador)');
-console.log('  ✓ Estadísticas en tiempo real');
+;
+;
+;
+;
+;
+;
+;

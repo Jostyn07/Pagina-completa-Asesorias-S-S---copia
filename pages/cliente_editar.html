@@ -191,7 +191,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Tipo de registro <span class="required">*</span></label>
-                                <select id="tipoRegistro" name="tipoRegistro" required>
+                                <select id="tipoRegistro" name="tipoRegistro">
                                     <option value="">Selecciona...</option>
                                     <option value="Nuevo">Nuevo</option>
                                     <option value="Venta con registro">Venta con Registro</option>
@@ -205,6 +205,16 @@
                                 <input type="text" id="fechaRegistro" name="fechaRegistro" readonly value="">
                                 <span class="input-icon">🔒</span>
                                 <small class="helper-text">Generada automáticamente</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tipoModificacion">Tipo de modificación</label>
+                                <select name="tipoModificacion" id="tipoModificacion">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Recuperada">Recuperada</option>
+                                    <option value="Cambio de vida">Cambio de vida</option>
+                                    <option value="Cancelada">Cancelada</option>
+                                </select>
                             </div>
                         </div>
                         <div class="form-row">
@@ -472,7 +482,7 @@
                                     <option value="Isacar González">Isacar González</option>
                                     <option value="Jorge Puerto">Jorge Puerto</option>
                                     <option value="Josuad Aragón">Josuad Aragón</option>
-                                    <option value="Jostyn Aragon">Jostyn Aragón</option>
+                                    <option value="Jostyn Aragón">Jostyn Aragón</option>
                                     <option value="Joycee Caceres">Joycee Caceres</option>
                                     <option value="Juan Ospino">Juan Ospino</option>
                                     <option value="Juan Jimenez">Juan Jimenez</option>
@@ -598,7 +608,7 @@
                                         </div>
                                         <div class="date-display">
                                             <label>Fecha final cobertura:</label>
-                                            <span id="displayFechaFinal">--/--/----</span>
+                                            <input type="text" id="displayFechaFinal" data-type="date" name="displayFechaFinal">
                                         </div>
                                         <div class="date-display display-efectividad">
                                             <label>Fecha efectividad:</label>
@@ -691,7 +701,17 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Nombre del agente</label>
-                                    <input type="text" name="nombreAgenteCompania" id="nombreAgenteCompania">
+                                    <select name="nombreAgenteCompania" id="nombreAgenteCompania">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Benigno Aquino Reyes - 21344017">Benigno Aquino Reyes - 21344017</option>
+                                        <option value="Sebastian Guichardo - 20497412">Sebastian Guichardo - 20497412</option>
+                                        <option value="Leslie Lopez - 20464969">Leslie Lopez - 20464969</option>
+                                        <option value="Mari Carmen Mejia Suero - 21283514">Mari Carmen Mejia Suero - 21283514</option>
+                                        <option value="Joel Nieves - 19952518">Joel Nieves - 19952518</option>
+                                        <option value="Sebastian Guichardo - 20497412">Sebastian Guichardo - 20497412</option>
+                                        <option value="Jose Nicolas Ramirez - 20533134">Jose Nicolas Ramirez - 20533134</option>
+                                        <option value="Wildeiby Castillo - 20497356">Wildeiby Castillo - 20497356</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-row">
@@ -851,14 +871,16 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Agente</label>
-                                    <select name="nombreAgenteCompania" id="nombreAgenteCompania">
-                                        <option value="Sebastian Guichardo">Sebastian Guichardo - 20497412</option>
-                                        <option value="Benigno Aquino Reyes">Benigno Aquino Reyes - 21344017</option>
-                                        <option value="Mari Carmen Mejia Suero">Mari Carmen Mejia Suero - 21283514</option>
-                                        <option value="Joel Nieves">Joel Nieves - 19952518</option>
-                                        <option value="Jose Nicolas Ramirez">Jose Nicolas Ramirez - 20533134</option>
-                                        <option value="Wildeiby Castillo">Wildeiby Castillo - 20497356</option>
-                                        <option value="Freddy Baez">Freddy Baez - 21270313</option>
+                                    <select name="nombreAgenteMercado" id="nombreAgenteMercado">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Benigno Aquino Reyes - 21344017">Benigno Aquino Reyes - 21344017</option>
+                                        <option value="Sebastian Guichardo - 20497412">Sebastian Guichardo - 20497412</option>
+                                        <option value="Leslie Lopez - 20464969">Leslie Lopez - 20464969</option>
+                                        <option value="Mari Carmen Mejia Suero - 21283514">Mari Carmen Mejia Suero - 21283514</option>
+                                        <option value="Joel Nieves - 19952518">Joel Nieves - 19952518</option>
+                                        <option value="Sebastian Guichardo - 20497412">Sebastian Guichardo - 20497412</option>
+                                        <option value="Jose Nicolas Ramirez - 20533134">Jose Nicolas Ramirez - 20533134</option>
+                                        <option value="Wildeiby Castillo - 20497356">Wildeiby Castillo - 20497356</option>
                                     </select>
                                 </div>
                                 <div class="form-group" style="display: none;" id="containtAgenteExterno">
@@ -873,12 +895,18 @@
                                         <option value="">Seleccionar...</option>
                                         <option value="Documentos completos">Documentos completos</option>
                                         <option value="Income">Income</option>
+                                        <option value="SSN">SSN</option>
                                         <option value="Estado migratorio">Estado migratorio</option>
+                                        <option value="Ciudadania">Ciudadania</option>
                                         <option value="carta de rechazo medicaid">Carta de rechazo medicaid</option>
                                         <option value="Income y estado migratorio">Income y estado migratorio</option>
                                         <option value="Income y carta de rechazo medicaid">Income y carta de rechazo medicaid</option>
+                                        <option value="Income y SSN">Income y SSN</option>
                                         <option value="Estado migratorio y carta de rechazo">Estado migratorio y carta de rechazo</option>
+                                        <option value="Estado migratorio y SSN">Estado migratorio y SSN</option>
                                         <option value="Income, estado migratorio y carta de rechazo medicaid">Income, estado migratorio y carta de rechazo medicaid</option>
+                                        <option value="Income, estado migratorio, carta de rechazo medicaid y SSN">Income, estado migratorio y carta de rechazo medicaid</option>
+                                        <option value="Income, estado migratorio y SSN">Income, estado migratorio y SSN</option>
                                     </select>
                                 </div>
 
@@ -888,7 +916,18 @@
                                         <option value="">Seleccionar...</option>
                                         <option value="Pendiente">Pendiente</option>
                                         <option value="Incompleto">Incompleto</option>
-                                        <option value="A la espera de verificación">A la espera de verificación</option>
+                                        <option value="Incompleto (Ciudadania)">Incompleto (Ciudadania)</option>
+                                        <option value="Incompleto (Estado migratorio)">Incompleto (Estado migratorio)</option>
+                                        <option value="Incompleto (Income)">Incompleto (Income)</option>
+                                        <option value="Incompleto (Medicaid)">Incompleto (Medicaid)</option>
+                                        <option value="Incompleto (SSN)">Incompleto (SSN)</option>
+                                        <option value="Incompleto (Cobertura medica)">Incompleto (Cobertura medica)</option>
+                                        <option value="Incompleto (Income y estado migratorio)">Incompleto (Income y estado migratorio)</option>
+                                        <option value="Incompleto (SSN e income)">Incompleto (SSN e income)</option>
+                                        <option value="Incompleto (Ciudadania y SSN)">Incompleto (Ciudadania y SSN)</option>
+                                        <option value="Incompleto (Income y estado migratorio y SSN)">Incompleto (Income y estado migratorio y SSN)</option>
+                                        <option value="Incompleto (Income y estado migratorio y Ciudadania)">Incompleto (Income y estado migratorio y Ciudadania)</option>
+                                        <option value="Incompleto (A la espera de verificación)">Incompleto (A la espera de verificación)</option>
                                         <option value="Rechazado">Rechazado</option>
                                         <option value="Documentos completos">Documentos completos</option>
                                     </select>
@@ -1358,6 +1397,8 @@
                                 <option value="nota_agregada">Nota Agregada</option>
                                 <option value="nota_eliminada">Nota Eliminada</option>
                                 <option value="asignacion_cambiada">Asignación Cambiada</option>
+                                <option value="seguimiento_agregado">Seguimiento Agregado</option>
+                                <option value="seguimiento_eliminado">Seguimiento Eliminado</option>
                             </select>
                         </div>
 

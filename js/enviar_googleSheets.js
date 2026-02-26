@@ -61,7 +61,7 @@ async function enviarAGoogleSheets(datosFormulario) {
 
         // Nota: Con mode 'no-cors', no podemos leer la respuesta
         // Asumimos que funcionó si no hubo error
-        console.log('✅ Datos enviados a Google Sheets');
+        ;
         return { success: true, message: 'Datos enviados correctamente' };
 
     } catch (error) {
@@ -153,7 +153,7 @@ function mostrarMensaje(mensaje, tipo) {
     alert(mensaje);
     
     // O usar un toast/notificación más elegante
-    // console.log(`${tipo.toUpperCase()}: ${mensaje}`);
+    // ;
 }
 
 // ============================================

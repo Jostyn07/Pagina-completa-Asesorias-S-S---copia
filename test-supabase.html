@@ -210,7 +210,7 @@
 
             // Inicializar
             function init() {
-                console.log('🚀 Inicializando aplicación...');
+                ;
                 
                 // Verificar CDN
                 if (typeof window.supabase === 'undefined') {
@@ -229,7 +229,7 @@
                         throw new Error('Cliente no se creó correctamente');
                     }
                     
-                    console.log('✅ Cliente de Supabase creado correctamente');
+                    ;
                     document.getElementById('clientStatus').textContent = '✅ Cliente: Creado y funcional';
                     document.getElementById('urlStatus').textContent = `✅ URL: ${CONFIG.url}`;
                     
@@ -263,7 +263,7 @@
             // Tests
             async function testConexion() {
                 try {
-                    console.log('🔍 Probando conexión...');
+                    ;
                     
                     if (!client) {
                         throw new Error('Cliente no inicializado');
@@ -297,7 +297,7 @@
 
             async function listarUsuarios() {
                 try {
-                    console.log('📋 Listando usuarios...');
+                    ;
 
                     const { data, error } = await client
                         .from('usuarios')
@@ -485,8 +485,8 @@
             };
         })();
 
-        console.log('%c🗄️ Test Supabase Cargado', 'color: #10b981; font-size: 20px; font-weight: bold');
-        console.log('%c✅ Sin conflictos - Listo para usar', 'color: #10b981; font-size: 14px');
+        ;
+        ;
     </script>
 </body>
 </html>

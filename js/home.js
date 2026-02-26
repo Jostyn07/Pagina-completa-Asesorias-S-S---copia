@@ -21,7 +21,7 @@ let filtrosActivos = {    // ✅ NUEVO: Estado de los filtros
  */
 async function cargarPolizasParaGrafico() {
     try {
-        console.log("📡 Cargando datos para gráfico...");
+        ;
         
         // ✅ CARGAR TODAS las pólizas (sin filtros hardcodeados)
         const { data, error } = await supabaseClient
@@ -34,7 +34,7 @@ async function cargarPolizasParaGrafico() {
         
         if (error) throw error;
         
-        console.log('✅ Pólizas cargadas:', data.length);
+        ;
         
         // Guardar TODAS las pólizas
         todasLasPolizas = data || [];
@@ -52,7 +52,7 @@ async function cargarPolizasParaGrafico() {
  * Aplica los filtros seleccionados a todas las pólizas
  */
 function aplicarFiltros() {
-    console.log('🔍 Aplicando filtros:', filtrosActivos);
+    ;
     
     let polizasFiltradas = [...todasLasPolizas];
     
@@ -95,7 +95,7 @@ function aplicarFiltros() {
                fechaFinal <= filtrosActivos.fechaHasta;
     });
     
-    console.log(`✅ Filtradas: ${polizasFiltradas.length}/${todasLasPolizas.length} pólizas`);
+    ;
     
     return polizasFiltradas;
 }
@@ -105,7 +105,7 @@ function aplicarFiltros() {
  * Captura los valores de los selectores y actualiza el gráfico
  */
 function applyFilters() {
-    console.log('🔘 Botón "Filtros" presionado');
+    ;
     
     // Capturar valores de los selectores
     filtrosActivos.estadoCompania = document.getElementById('filtroEstadoCompania')?.value || '';
@@ -174,8 +174,8 @@ function procesarDatosGraficos(polizas, tiposSeleccionados, soloProximoMes) {
         datosPorOperador[operador]++;
     });
 
-    console.log("Datos por mes:", datosPorMes);
-    console.log("Datos por operador:", datosPorOperador);
+    ;
+    ;
 
     return { datosPorMes, datosPorOperador };
 }
@@ -204,7 +204,7 @@ function crearGraficoLineas(datosPorMes) {
         });
     }
 
-    console.log('Series para gráficos:', series);
+    ;
 
     const options = {
         series: series,
@@ -248,8 +248,8 @@ function crearGraficoTorta(datosPorOperador) {
         data.push(total);
     }
 
-    console.log('Labels:', labels);
-    console.log('Data:', data);
+    ;
+    ;
 
     const options = {
         series: data,
@@ -280,7 +280,7 @@ function crearGraficoTorta(datosPorOperador) {
 function obtenerTiposSeleccionados() {
     const checkboxes = document.querySelectorAll('input[name="tipoRegistro"]:checked');
     const tipos = Array.from(checkboxes).map(cb => cb.value);
-    console.log('Tipos seleccionados:', tipos);
+    ;
     return tipos;
 }
 
@@ -288,7 +288,7 @@ function actualizarGrafico() {
     const tiposSeleccionados = obtenerTiposSeleccionados();
 
     if (tiposSeleccionados.length === 0) {
-        console.log("No hay tipos seleccionados");
+        ;
         return;
     }
 
@@ -349,8 +349,8 @@ function actualizarEstadisticas(totalPolizas, totalAplicantes) {
         const textoAplicantes = totalAplicantes === 1 ? 'Aplicante' : 'Aplicantes';
         elementoAplicantes.textContent = `${totalAplicantes} ${textoAplicantes}`;
     }
-    console.log('Total pólizas:', totalPolizas);
-    console.log('Total aplicantes:', totalAplicantes);
+    ;
+    ;
 }
 
 // ============================================
@@ -613,14 +613,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Agregar listeners a los filtros (opcional: para debug)
     document.getElementById('filtroEstadoCompania')?.addEventListener('change', () => {
-        console.log('Filtro de estado cambiado');
+        ;
     });
     
     document.getElementById('filterTypeOperador')?.addEventListener('change', () => {
-        console.log('Filtro de operador cambiado');
+        ;
     });
     
     document.getElementById('filtroDocumentos')?.addEventListener('change', () => {
-        console.log('Filtro de documentos cambiado');
+        ;
     });
 });

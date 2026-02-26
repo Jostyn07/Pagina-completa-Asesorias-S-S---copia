@@ -39,7 +39,7 @@ async function handleLogin(event) {
     btnLogin.textContent = 'Iniciando sesión...';
     
     try {
-        // console.log('🔐 Intentando login con Supabase...');
+        // ;
         
         // ==========================================
         // AUTENTICACIÓN REAL CON SUPABASE
@@ -54,7 +54,7 @@ async function handleLogin(event) {
             throw new Error('Credenciales incorrectas');
         }
         
-        console.log('✅ Autenticación exitosa:', authData);
+        ;
         
         // ==========================================
         // OBTENER DATOS DEL USUARIO DE LA BD
@@ -70,7 +70,7 @@ async function handleLogin(event) {
             throw new Error('Usuario no encontrado en el sistema');
         }
         
-        // console.log('✅ Datos del usuario obtenidos:', userData);
+        // ;
         
         // ==========================================
         // GUARDAR SESIÓN EN LOCALSTORAGE
@@ -91,9 +91,9 @@ async function handleLogin(event) {
         localStorage.setItem('usuario', JSON.stringify(sessionData));
         localStorage.setItem('supabase.auth.token', JSON.stringify(authData.session));
         
-        // console.log('✅ Sesión guardada en localStorage');
-        // console.log('👤 Usuario:', sessionData.nombre);
-        // console.log('🎭 Rol:', sessionData.rol);
+        // ;
+        // ;
+        // ;
         
         // ==========================================
         // REDIRIGIR AL HOME
@@ -143,7 +143,7 @@ async function verificarAutenticacion() {
         const usuarioData = localStorage.getItem('usuario');
         
         if (!usuarioData) {
-            // console.log('❌ No hay sesión en localStorage');
+            // ;
             redirigirALogin();
             return;
         }
@@ -154,7 +154,7 @@ async function verificarAutenticacion() {
         const { data: { session }, error } = await supabaseClient.auth.getSession();
         
         if (error || !session) {
-            // console.log('❌ Sesión de Supabase expirada o inválida');
+            // ;
             redirigirALogin();
             return;
         }
@@ -164,14 +164,14 @@ async function verificarAutenticacion() {
         const expiraEn = session.expires_at - ahora;
         
         if (expiraEn < 300) { // 5 minutos
-            console.log('⚠️ Token por expirar, refrescando...');
+            ;
             await refrescarToken();
         }
         
-        // console.log('✅ Sesión válida');
-        // console.log('👤 Usuario:', usuario.nombre);
-        // console.log('🎭 Rol:', usuario.rol);
-        // console.log('ID:', usuario.id)
+        // ;
+        // ;
+        // ;
+        // 
         
     } catch (error) {
         // console.error('❌ Error al verificar autenticación:', error);
@@ -205,7 +205,7 @@ async function refrescarToken() {
             localStorage.setItem('usuario', JSON.stringify(usuarioActual));
             localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
             
-            // console.log('✅ Token refrescado exitosamente');
+            // ;
         }
         
     } catch (error) {
@@ -548,7 +548,7 @@ async function cargarInfoUsuario() {
             return;
         }
         
-        // console.log('✅ Usuario cargado:', user);
+        // ;
         
         // Extraer información del usuario
         const email = user.email || 'usuario@ejemplo.com';
@@ -591,7 +591,7 @@ async function cargarInfoUsuario() {
             userAvatar.alt = nombreCompleto;
         }
         
-        // console.log('✅ Información de usuario actualizada');
+        // ;
         
     } catch (error) {
         // console.error('❌ Error al cargar info de usuario:', error);
