@@ -2328,7 +2328,9 @@ function cancelarFormulario() {
 // ============================================
 
 async function enviarNota() {
+    let enviarNota1 = document.getElementById("enviarNota1")
     await agregarNota(clienteId);
+    enviarNota.disabled
 }
 
 async function eliminarNota(notaId) {
