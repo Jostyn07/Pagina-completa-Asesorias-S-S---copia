@@ -3,8 +3,8 @@
 // ============================================
 let chartActual = null;
 let polizasGlobales = null;
-let todasLasPolizas = []; // ✅ NUEVO: Todas las pólizas sin filtrar
-let filtrosActivos = {    // ✅ NUEVO: Estado de los filtros
+let todasLasPolizas = []; 
+let filtrosActivos = {    
     estadoCompania: '',
     operador: '',
     documentos: '',
@@ -23,7 +23,7 @@ async function cargarPolizasParaGrafico() {
     try {
         ;
         
-        // ✅ CARGAR TODAS las pólizas (sin filtros hardcodeados)
+        //  CARGAR TODAS las pólizas (sin filtros hardcodeados)
         const { data, error } = await supabaseClient
             .from('polizas')
             .select(`
@@ -456,9 +456,8 @@ function cambiarTabClasificacion(tab, btn) {
 }
 
 function calcularClasificacionVentas() {
-    const tiposVenta = ['Nuevo', 'Nueva con registro'];
+    const tiposVenta = ['nuevo', 'nueva con registro'];
     const conteo = {};
-
     // Usa todasLasPolizas y aplica solo filtro de fecha_efectividad
     (todasLasPolizas || []).forEach(poliza => {
         // Filtrar por rango de fechas usando solo fecha_efectividad
@@ -467,9 +466,8 @@ function calcularClasificacionVentas() {
             if (fecha < filtrosActivos.fechaDesde || fecha > filtrosActivos.fechaHasta) return;
         }
 
-        const tipo = (poliza.tipo_venta || '').toLowerCase().trim();
+        const tipo = (poliza.cliente?.tipo_registro || '').toLowerCase().trim();
         if (!tiposVenta.includes(tipo)) return;
-
         const operador = poliza.operador_nombre || 'Sin asignar';
         conteo[operador] = (conteo[operador] || 0) + 1;
     });
@@ -490,8 +488,8 @@ function calcularClasificacionRecuperadas() {
             if (fecha < filtrosActivos.fechaDesde || fecha > filtrosActivos.fechaHasta) return;
         }
 
-        const tipo = (poliza.tipo_venta || '').toLowerCase().trim();
-        if (tipo !== 'Recuperada') return;
+        const tipo = (poliza.cliente?.tipo_modificacion || '').toLowerCase().trim();
+        if (tipo !== 'recuperada') return;
 
         const operador = poliza.operador_nombre || 'Sin asignar';
         conteo[operador] = (conteo[operador] || 0) + 1;
@@ -500,16 +498,16 @@ function calcularClasificacionRecuperadas() {
     return Object.entries(conteo)
         .sort((a, b) => b[1] - a[1])
         .map(([nombre, total]) => ({ nombre, total }));
+        
 }
-
 function calcularClasificacionCompania() {
     // Activos por operador según revisión en compañía
     // Sin restricción de fechas ni de rol — todos ven a todos
     const conteo = {};
 
     (todasLasPolizas || []).forEach(poliza => {
-        const estadoCompania = (poliza.estado_compania || '').toLowerCase().trim();
-        if (estadoCompania !== 'Activo') return;
+        const estadoCompania = (poliza.estado_mercado || '').toLowerCase().trim();
+        if (estadoCompania !== 'activo') return;
 
         const operador = poliza.operador_nombre || 'Sin asignar';
         conteo[operador] = (conteo[operador] || 0) + 1;
