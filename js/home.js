@@ -154,6 +154,7 @@ function procesarDatosGraficos(polizas, tiposSeleccionados, soloProximoMes) {
         const fecha = new Date(formatoUS(poliza.fecha_efectividad));
         const mes = meses[fecha.getMonth()];
         const operador = poliza.operador_nombre;
+        if (!operador || operador === 'Jostyn Aragón' || operador === 'Jostyn Aragon') return;
 
         if (soloProximoMes && fecha.getMonth() !== mesProximo) {
             return;
@@ -469,6 +470,7 @@ function calcularClasificacionVentas() {
         const tipo = (poliza.cliente?.tipo_registro || '').toLowerCase().trim();
         if (!tiposVenta.includes(tipo)) return;
         const operador = poliza.operador_nombre || 'Sin asignar';
+        if (operador === 'Jostyn Aragón' || operador === 'Jostyn Aragon') return;
         conteo[operador] = (conteo[operador] || 0) + 1;
     });
 
@@ -492,6 +494,7 @@ function calcularClasificacionRecuperadas() {
         if (tipo !== 'recuperada') return;
 
         const operador = poliza.operador_nombre || 'Sin asignar';
+        if (operador === 'Jostyn Aragón' || operador === 'Jostyn Aragon') return;
         conteo[operador] = (conteo[operador] || 0) + 1;
     });
 
@@ -510,6 +513,7 @@ function calcularClasificacionCompania() {
         if (estadoCompania !== 'activo') return;
 
         const operador = poliza.operador_nombre || 'Sin asignar';
+        if (operador === 'Jostyn Aragón' || operador === 'Jostyn Aragon') return;
         conteo[operador] = (conteo[operador] || 0) + 1;
     });
 
