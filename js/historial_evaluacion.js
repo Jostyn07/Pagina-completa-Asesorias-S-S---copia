@@ -634,13 +634,23 @@ function formatearFechaRelativa(fecha) {
     }
 }
 
-// ============================================
-// LOG DE DESARROLLO
-// ============================================
-;
-;
-;
-;
-;
-;
-;
+async function cargarDatosOperador() {
+    const { data: operadores, error } = await supabaseClient
+    .from('usuarios')
+    .select('id, nombre')
+    .eq('rol', 'operador')
+    .eq('activo', true)
+    .order('nombre', { ascending: true });
+
+    const select = document.getElementById('filtroOperador');
+    if (select && operadores) {
+        select.innerHTML = `<option value="">Todos</option>`;
+
+        operadores.forEach(op => {
+            select.innerHTML += `<option value="${op.nombre}">${op.nombre}</option>`
+        })
+    }
+}
+
+// Cargar datos de operadores para filtro
+cargarDatosOperador();

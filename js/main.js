@@ -79,7 +79,7 @@ async function handleLogin(event) {
             id: userData.id,
             nombre: userData.nombre,
             email: userData.email,
-            rol: userData.rol,  // ⭐ IMPORTANTE: Guardamos el ROL
+            rol: userData.rol,  
             activo: userData.activo,
             loginTime: new Date().toISOString(),
             // También guardamos el token de Supabase
@@ -90,10 +90,6 @@ async function handleLogin(event) {
         
         localStorage.setItem('usuario', JSON.stringify(sessionData));
         localStorage.setItem('supabase.auth.token', JSON.stringify(authData.session));
-        
-        // ;
-        // ;
-        // ;
         
         // ==========================================
         // REDIRIGIR AL HOME
@@ -168,10 +164,6 @@ async function verificarAutenticacion() {
             await refrescarToken();
         }
         
-        // ;
-        // ;
-        // ;
-        // 
         
     } catch (error) {
         // console.error('❌ Error al verificar autenticación:', error);

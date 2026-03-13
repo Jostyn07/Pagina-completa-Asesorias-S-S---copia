@@ -3719,64 +3719,6 @@ function formatearNombreCampo(campo) {
 }
 
 /**
- * Función para guardar cambios con registro en historial
- * MODIFICAR la función guardarCambios() existente
- */
-async function guardarCambiosConHistorial() {
-    try {
-        // 1. Obtener datos actuales del formulario
-        const datosCliente = obtenerDatosFormularioCliente();
-        const datosPoliza = obtenerDatosFormularioPoliza();
-        
-        // 2. Comparar con datos originales
-        const cambiosCliente = compararCambios(datosOriginalesCliente, datosCliente, 'Información Personal');
-        const cambiosPoliza = compararCambios(datosOriginalesPoliza, datosPoliza, 'Póliza');
-        
-        // 3. Guardar en la base de datos (función original)
-        const { error: errorCliente } = await supabaseClient
-            .from('clientes')
-            .update(datosCliente)
-            .eq('id', clienteId);
-        
-        if (errorCliente) throw errorCliente;
-        
-        if (datosPoliza && Object.keys(datosPoliza).length > 0) {
-            const { error: errorPoliza } = await supabaseClient
-                .from('polizas')
-                .update(datosPoliza)
-                .eq('cliente_id', clienteId);
-            
-            if (errorPoliza) throw errorPoliza;
-        }
-        
-        // 4. Registrar cambios en historial
-        if (cambiosCliente.length > 0) {
-            await registrarCambio(clienteId, 'cliente_editado', 'Información Personal', cambiosCliente);
-        }
-        
-        if (cambiosPoliza.length > 0) {
-            await registrarCambio(clienteId, 'poliza_editada', 'Póliza', cambiosPoliza);
-        }
-        
-        // 5. Actualizar datos originales para la próxima edición
-        capturarDatosOriginales(datosCliente, datosPoliza);
-        
-        // 6. Mostrar mensaje de éxito
-        const totalCambios = cambiosCliente.length + cambiosPoliza.length;
-        if (totalCambios > 0) {
-            mostrarNotificacion(`✅ Guardado correctamente (${totalCambios} cambio${totalCambios > 1 ? 's' : ''})`, 'success');
-        } else {
-            mostrarNotificacion('ℹ️ No hay cambios para guardar', 'info');
-        }
-        
-        
-    } catch (error) {
-        console.error('❌ Error al guardar cambios:', error);
-        mostrarNotificacion('❌ Error al guardar: ' + error.message, 'error');
-    }
-}
-
-/**
  * Obtener datos del formulario de cliente
  */
 function obtenerDatosFormularioCliente() {

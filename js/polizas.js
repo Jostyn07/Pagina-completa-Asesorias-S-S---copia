@@ -41,10 +41,10 @@ function guardarFiltrosEnStorage() {
             estadoMigratorio: document.getElementById('filtroEstadoMigratorio')?.value || '',
             tieneSsn: document.getElementById('filtroTieneSsn')?.value || '',
             tieneMetodoPago: document.getElementById('filtroTieneMetodoPago')?.value || '',
-            companias: Array.from(document.querySelectorAll('#panelCompanias input:checked')).map(cb => cb.value),
+            companias: Array.from(document.querySelectorAll('#panelCompanias input:checked'))?.map(cb => cb.value),
             prima: document.getElementById('filtroPrima')?.value || '',
             filtroTipoModificacion: document.getElementById('tipoModificacion')?.value || '',
-            tiposVenta: Array.from(document.querySelectorAll('#panelTipoVentas input:checked')).map(cb => cb.value),
+            tiposVenta: Array.from(document.querySelectorAll('#panelTipoVentas input:checked'))?.map(cb => cb.value),
             operador: document.getElementById('filtroOperador')?.value || '',
             documentos: document.getElementById('filtroDocumentos')?.value || '',
             seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo')?.value || '',
@@ -65,10 +65,10 @@ function guardarFiltrosEnStorage() {
             fechaRevisionCompaniaHasta: document.getElementById('filtroFechaRevisionCompaniaHasta')?.value || '',
             fechaSeguimientoDesde: document.getElementById('filtroSeguimientoDesde')?.value || '',
             fechaSeguimientoHasta: document.getElementById('filtroSeguimientoHasta')?.value || '',
-            fechaUltimoPagoDesde: document.getElementById('filtroFechaUltimoPagoDesde').value || '',
-            fechaUltimoPagoHasta: document.getElementById('filtroFechaUltimoPagoHasta').value || '',
-            PlazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosDesde').value || '',
-            PlazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosHasta').value || '',
+            fechaUltimoPagoDesde: document.getElementById('filtroFechaUltimoPagoDesde')?.value || '',
+            fechaUltimoPagoHasta: document.getElementById('filtroFechaUltimoPagoHasta')?.value || '',
+            PlazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosDesde')?.value || '',
+            PlazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosHasta')?.value || '',
         };
 
         localStorage.setItem(FILTROS_STORAGE_KEY, JSON.stringify(datos));
@@ -1106,6 +1106,7 @@ function buscarPolizas(termino) {
 
 }
 
+
 // ============================================
 // FILTROS
 // ============================================
@@ -1115,7 +1116,8 @@ function filtrarPorEstado(estado) {
     if (estado === 'Activas') {
         polizasFiltradas = todasLasPolizas.filter(p => p.estado_mercado === 'Activo');
     } else if (estado === 'Canceladas') {
-        polizasFiltradas = todasLasPolizas.filter(p => p.estado_mercado === 'Cancelado');
+        const estadosCancelados = ['Cancelado', 'Robado', 'Cancelado a P.C', 'Doble póliza', 'Triple póliza'];
+        polizasFiltradas = todasLasPolizas.filter(p => estadosCancelados.includes(p.estado_mercado));
     } else if (estado === 'proximas') {
         polizasFiltradas = todasLasPolizas.filter(p => {
             if (!p.fecha_efectividad) return false;
@@ -1125,10 +1127,12 @@ function filtrarPorEstado(estado) {
             return diasDiferencia > 0 && diasDiferencia <= 30;
         });
     }
-    
+
+    hayFiltrosActivos = true
     paginaActual = 1;
     renderizarTabla();
     actualizarPaginacion();
+    actualizarIndicadorFiltros();
 }
 
 function aplicarFiltros() {
@@ -1931,7 +1935,7 @@ function cerrarModalFiltros() {
 function limpiarFiltros() {
     ;
     
-    // ✅ Resetear estado de filtros
+    //  Resetear estado de filtros
     filtrosActivos = null;
     hayFiltrosActivos = false;
     filtroAnioActivado = false;
@@ -1980,14 +1984,14 @@ function limpiarFiltros() {
     document.getElementById('filtroFechaPlazoDocumentosDesde').value = '';
     document.getElementById('filtroFechaPlazoDocumentosHasta').value = '';
     
-    // ✅ Restaurar todas las pólizas
+    //  Restaurar todas las pólizas
     polizasFiltradas = todasLasPolizas;
     paginaActual = 1;
     
     renderizarTabla();
     actualizarPaginacion();
     
-    // ✅ Actualizar indicador visual
+    //  Actualizar indicador visual
     actualizarIndicadorFiltros();
 
     // Borrar filtros guardados en localStorage
@@ -2262,7 +2266,7 @@ function aplicarFiltrosAvanzados() {
         plazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosHasta').value
     };
     
-    // ✅ Verificar si hay algún filtro activo
+    //  Verificar si hay algún filtro activo
     hayFiltrosActivos = Object.values(filtrosActivos).some(valor => valor !== '' && valor !== null);
     
     // Filtrar pólizas
@@ -2453,7 +2457,7 @@ function aplicarFiltrosAvanzados() {
     renderizarTabla();
     actualizarPaginacion();
     
-    // ✅ Actualizar indicador visual
+    //  Actualizar indicador visual
     actualizarIndicadorFiltros();
     
     // Cerrar modal
@@ -2462,7 +2466,6 @@ function aplicarFiltrosAvanzados() {
     // Guardar filtros en localStorage para persistirlos
     guardarFiltrosEnStorage();
     
-    ;
 }
 
 
@@ -2515,3 +2518,24 @@ function obtenerBadgeAgente35(estado) {
     
     return badges[estado] || '<span class="badge-agente35 sin-estado">-</span>';
 }
+
+async function cargarDatosOperador() {
+    const { data: operadores, error } = await supabaseClient
+    .from('usuarios')
+    .select('id, nombre')
+    .eq('rol', 'operador')
+    .eq('activo', true)
+    .order('nombre', { ascending: true });
+
+    const select = document.getElementById('filtroOperador');
+    if (select && operadores) {
+        select.innerHTML = `<option value="">Todos</option>`;
+
+        operadores.forEach(op => {
+            select.innerHTML += `<option value="${op.nombre}">${op.nombre}</option>`
+        })
+    }
+}
+
+// Cargar datos de operadores para filtro
+cargarDatosOperador();
