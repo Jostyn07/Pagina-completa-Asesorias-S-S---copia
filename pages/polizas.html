@@ -292,7 +292,7 @@
                                     placeholder="Buscar por nombre, póliza, teléfono..."
                                 >
                                 <button type="button" class="button__bar btn__filtrar" onclick="abrirModalFiltros()">
-                                    Filtrar
+                                    Filtros Avanzados
                                 </button>
                             </div>
                         </div>
@@ -499,7 +499,8 @@
                                             <option value="">Todos</option>
                                             <option value="cero">Prima $0</option>
                                             <option value="conPrima">Con prima (> $0)</option>
-                                            <option value="alta">Prima alta (> $100)</option>
+                                            <option value="menosD1Dolar">Primas menores a 1 dolar (< $1)</option>
+                                            <option value="alta">Prima mayores a 1 dolar (> $1)</option>
                                             <option value="sinAsignar">Sin prima asignada</option>
                                         </select>
                                     </div>
@@ -635,6 +636,7 @@
                                             <option value="Pre-member">Pre-member</option>
                                             <option value="No registra aún">No registra aún</option>
                                             <option value="Cancelado a P.C">Cancelado a P.C</option>
+                                            <option value="__null__">Pendiente</option>
                                         </select>
                                     </div>
                                     <div class="filtro-group">
@@ -772,6 +774,9 @@
                                 <option value="10" selected>10 por página</option>
                                 <option value="25">25 por página</option>
                                 <option value="50">50 por página</option>
+                                <option value="100">100 por página</option>
+                                <option value="200">200 por página</option>
+                                <option value="300">300 por página</option>
                             </select>
                         </label>
                         <span id="infoPaginacion" style="color: #64748b; font-size: 0.9rem;">Mostrando 0-0 de 0</span>

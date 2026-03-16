@@ -1520,20 +1520,17 @@ async function cerrarSesion() {
 
 // Cargar información del usuario
 async function cargarInfoUsuario() {
+    if (!user) {
+        console.warn('⚠️ No hay usuario autenticado');
+        // Redirigir al login si no hay usuario
+        window.location.href = '../index.html';
+        return;
+    }
     try {
         // Obtener usuario autenticado
         const { data: { user }, error } = await supabaseClient.auth.getUser();
         
-        if (error) throw error;
-        
-        if (!user) {
-            console.warn('⚠️ No hay usuario autenticado');
-            // Redirigir al login si no hay usuario
-            window.location.href = '../index.html';
-            return;
-        }
-        
-        ;
+        if (error) throw error;      
         
         // Extraer información del usuario
         const email = user.email || 'usuario@ejemplo.com';
@@ -1625,11 +1622,6 @@ function generarColorDesdeTexto(texto) {
     const index = Math.abs(hash) % colores.length;
     return colores[index];
 }
-
-// Llamar al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-    cargarInfoUsuario();
-});
 
 // ============================================
 // CANCELAR

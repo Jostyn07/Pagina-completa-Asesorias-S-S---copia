@@ -279,8 +279,8 @@ function restaurarFiltrosDesdeStorage() {
             if (filtrosActivos.estadoAgente35 && poliza.agente35_estado !== filtrosActivos.estadoAgente35) return false;
 
             if (filtrosActivos.documentos) {
-                const estadoDoc = (poliza.estado_documentos || '').toLowerCase().trim();
-                if (estadoDoc !== filtrosActivos.documentos.toLowerCase().trim()) return false;
+                const estadoDoc = (poliza.estado_documentos || '');
+                if (estadoDoc !== filtrosActivos.documentos) return false;
             }
 
             if (filtrosActivos.prima) {
@@ -898,7 +898,7 @@ function paginaAnterior() {
         paginaActual--;
         renderizarTabla();
         actualizarPaginacion();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 200, behavior: 'smooth' });
     }
 }
 
@@ -908,7 +908,7 @@ function paginaSiguiente() {
         paginaActual++;
         renderizarTabla();
         actualizarPaginacion();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 200, behavior: 'smooth' });
     }
 }
 
@@ -1467,6 +1467,7 @@ function obtenerBadgeEstado(estado) {
     const estados = {
         'activo': '<span class="badge-estado activo">Activo</span>',
         'cancelado': '<span class="badge-estado cancelado">Cancelado</span>',
+        'canceladoPc': '<span class="badge-estado cancelado a P.C">Cancelado a P.C</span>',
         'pendiente': '<span class="badge-estado pendiente">Pendiente</span>',
         'proxima': '<span class="badge-estado proxima">Próxima</span>',
     };
@@ -1566,12 +1567,17 @@ style.textContent = `
         background: rgba(76, 175, 80, 0.1);
         color: #4caf50;
     }
-    
-    .badge-estado.cancelado {
-        background: rgba(244, 67, 54, 0.1);
-        color: #f44336;
+
+    .badge-estado.CanceladoPc {
+        background: #700;
+        color: #222;
     }
     
+    .badge-estado.Cancelado {
+        background: rgb(255, 191, 179, 0.8);
+        color: #222;
+    }
+
     .badge-estado.pendiente {
         background: rgba(255, 152, 0, 0.1);
         color: #ff9800;
@@ -1582,9 +1588,14 @@ style.textContent = `
         color: #2196f3;
     }
 
-    .badge-estado.robado {
-        background: #7336;
-        color: #333;
+    .badge-estado.Robado {
+        background: rgb(255, 191, 179, 0.8);
+        color: #222;
+    }
+    
+    .badge-estado.Doble Poliza {
+        background: rgb(255, 191, 179, 0.8);
+        color: #222;
     }
     
     /* Modal */
@@ -2330,15 +2341,8 @@ function aplicarFiltrosAvanzados() {
         }
 
         if (filtrosActivos.documentos) {
-            const estadoDoc = (poliza.estado_documentos || '').toLowerCase().trim();
-            const filtroDoc = filtrosActivos.documentos.toLowerCase().trim();
-            
-            console.log('🔍 Comparando documentos:', {
-                'BD': `"${poliza.estado_documentos}"`,
-                'BD (limpio)': `"${estadoDoc}"`,
-                'Filtro': `"${filtroDoc}"`,
-                'Match': estadoDoc === filtroDoc
-            });
+            const estadoDoc = (poliza.estado_documentos || '');
+            const filtroDoc = filtrosActivos.documentos;
             
             if (estadoDoc !== filtroDoc) {
                 return false;
@@ -2377,8 +2381,11 @@ function aplicarFiltrosAvanzados() {
                 case 'conPrima':
                     if (prima <= 0) return false;
                     break;
+                case 'menosD1Dolar':
+                    if (prima <= 0 || prima >= 1) return false;
+                    break;
                 case 'alta':
-                    if (prima <= 1500) return false;
+                    if (prima <= 1) return false;
                     break;
                 case 'sinAsignar':
                     if (poliza.prima !== null && poliza.prima !== '' && poliza.prima !== undefined) return false;
@@ -2412,8 +2419,13 @@ function aplicarFiltrosAvanzados() {
         }
         
         // Filtro por estado compañía
-        if (filtrosActivos.estadoCompania && poliza.estado_compania !== filtrosActivos.estadoCompania) {
-            return false;
+        if (filtrosActivos.estadoCompania) {
+            if (filtrosActivos.estadoCompania === '__null__') {
+                if (poliza.estado_compania !== null && poliza.estado_compania !== '' && poliza.estado_compania !== undefined) return false;
+            } else {
+                poliza.estado_compania !== filtrosActivos.estadoCompania
+                return false
+            }
         }
 
         // Filtro por estado
