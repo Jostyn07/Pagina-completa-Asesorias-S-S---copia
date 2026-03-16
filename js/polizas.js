@@ -2551,3 +2551,31 @@ async function cargarDatosOperador() {
 
 // Cargar datos de operadores para filtro
 cargarDatosOperador();
+
+async function aplicarPermisosEstadoMercado() {
+    const camposEstadoMercado = [
+        'crearNuevaPoliza1'
+    ];
+    
+    if (!esAdministrador()) {
+        // Deshabilitar campos
+        camposEstadoMercado.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.disabled = true;
+                field.classList.add('campo-bloqueado');
+                field.style.cursor = 'not-allowed';
+            }
+        });
+        
+        // Mostrar badge y mensaje de solo admin
+        const badgeAdmin = document.getElementById('badgeAdminMercado');
+        const mensajeNoAdmin = document.getElementById('mensajeNoAdmin');
+        
+        if (badgeAdmin) badgeAdmin.style.display = 'inline-flex';
+        if (mensajeNoAdmin) mensajeNoAdmin.style.display = 'block';
+        
+    }
+}
+
+aplicarPermisosEstadoMercado()

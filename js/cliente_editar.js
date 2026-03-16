@@ -2729,7 +2729,7 @@ async function guardarEstadoSeguimiento(polizaId) {
             nombre_agente_compania: document.getElementById('nombreAgenteCompania')?.value || null,
             estado_compania: document.getElementById('estadoCompania')?.value || null,
             pagado_hasta: document.getElementById('pagadoHasta')?.value || null,
-
+            
             updated_at: new Date().toISOString(),
         };
             // 2) Estado en Mercado
@@ -3563,7 +3563,7 @@ function compararCambios(datosOriginales, datosNuevos, seccion) {
 }
 
 function normalizarValor(valor) {
-    if (valor === null || valor === undefined || valor === '') {
+    if (valor === null || valor === undefined || valor === '' || valor === '-') {
         return '';
     }
     if (valor === 0) {
