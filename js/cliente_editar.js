@@ -1991,93 +1991,16 @@ async function cargarMetodoPago(clienteId) {
 }
 
 // GUARDAR O ACTUALIZAR MÉTODO DE PAGO
+// GUARDAR O ACTUALIZAR MÉTODO DE PAGO
 async function guardarMetodoPago(clienteId) {
     try {
-        // Verificar si hay un método seleccionado
         const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
-        
-        if (!tipoSeleccionado) {
-            return;
-        }
-        
-        const tipo = tipoSeleccionado.value;
+        const tipo = tipoSeleccionado ? tipoSeleccionado.value : null;
 
-        // Checkbox de "Tiene metodo de pago"
         const checkboxTieneMetodo = document.getElementById("tieneMetodoPago");
-        var tieneMetodoPago = ""
-        if (checkboxTieneMetodo.checked) {
-            tieneMetodoPago = "Si"
-        } else {
-            tieneMetodoPago = "No"
-        }
-        tieneMetodoPago
+        const tieneMetodoPago = checkboxTieneMetodo?.checked ? "Si" : "No";
 
-        // Checkbox pago enero
-        const checkboxEnero = document.getElementById("pagoEnero")
-        var pagoEnero = ""
-        checkboxEnero.checked ? pagoEnero = "Si" :  pagoEnero = "No"
-
-        // Checkbox pago febrero
-        const checkboxFebrero = document.getElementById("pagoFebrero")
-        var pagoFebrero = ""
-        checkboxFebrero.checked ? pagoFebrero = "Si" :  pagoFebrero = "No"
-
-        // Checkbox pago marzo
-        const checkboxMarzo = document.getElementById("pagoMarzo")
-        var pagoMarzo = ""
-        checkboxMarzo.checked ? pagoMarzo = "Si" :  pagoMarzo = "No" 
-
-        // Checkbox pago abril
-        const checkboxAbril = document.getElementById("pagoAbril")
-        var pagoAbril = ""
-        checkboxAbril.checked ? pagoAbril = "Si" :  pagoAbril = "No"
-
-        // Checkbox pago mayo
-        const checkboxMayo = document.getElementById("pagoMayo")
-        var pagoMayo = ""
-        checkboxMayo.checked ? pagoMayo = "Si" :  pagoMayo = "No" 
-
-        // Checkbox pago junio
-        const checkboxJunio = document.getElementById("pagoJunio")
-        var pagoJunio = ""
-        checkboxJunio.checked ? pagoJunio = "Si" :  pagoJunio = "No" 
-
-        // Checkbox pago julio
-        const checkboxJulio = document.getElementById("pagoJulio")
-        var pagoJulio = ""
-        checkboxJulio.checked ? pagoJulio = "Si" :  pagoJulio = "No"
-
-        // Checkbox pago agosto
-        const checkboxAgosto = document.getElementById("pagoAgosto")
-        var pagoAgosto = ""
-        checkboxAgosto.checked ? pagoAgosto = "Si" :  pagoAgosto = "No"
-
-        // Checkbox pago septiembre
-        const checkboxSeptiembre = document.getElementById("pagoSeptiembre")
-        var pagoSeptiembre = ""
-        checkboxSeptiembre.checked ? pagoSeptiembre = "Si" :  pagoSeptiembre = "No" 
-
-        // Checkbox pago octubre
-        const checkboxOctubre = document.getElementById("pagoOctubre")
-        var pagoOctubre = ""
-        checkboxOctubre.checked ? pagoOctubre = "Si" :  pagoOctubre = "No" 
-
-        // Checkbox pago noviembre
-        const checkboxNoviembre = document.getElementById("pagoNoviembre")
-        var pagoNoviembre = ""
-        checkboxNoviembre.checked ? pagoNoviembre = "Si" :  pagoNoviembre = "No" 
-
-        // Checkbox pago diciembre
-        const checkboxDiciembre = document.getElementById("pagoDiciembre")
-        var pagoDiciembre = ""
-        checkboxDiciembre.checked ? pagoDiciembre = "Si" :  pagoDiciembre = "No" 
-
-        // fecha del pago
-        const fechaPago = document.getElementById('fechaPago').value
-
-        // Estado del pago
-        const estadoPago = document.getElementById('estadoPago').value
-
+        const getMes = (id) => document.getElementById(id)?.checked ? "Si" : "No";
 
         let metodoPagoData = {
             cliente_id: clienteId,
@@ -2085,80 +2008,68 @@ async function guardarMetodoPago(clienteId) {
             usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
             tiene_metodo_pago: tieneMetodoPago,
             activo: true,
-            pago_enero: pagoEnero,
-            pago_febrero: pagoFebrero,
-            pago_marzo: pagoMarzo,
-            pago_abril:pagoAbril,
-            pago_mayo: pagoMayo,
-            pago_junio: pagoJunio,
-            pago_julio: pagoJulio,
-            pago_agosto: pagoAgosto,
-            pago_septiembre: pagoSeptiembre,
-            pago_octubre: pagoOctubre,
-            pago_noviembre: pagoNoviembre,
-            pago_diciembre: pagoDiciembre,
-            fecha_pago: fechaPago || null,
-            estado_pago: estadoPago,
+            pago_enero: getMes('pagoEnero'),
+            pago_febrero: getMes('pagoFebrero'),
+            pago_marzo: getMes('pagoMarzo'),
+            pago_abril: getMes('pagoAbril'),
+            pago_mayo: getMes('pagoMayo'),
+            pago_junio: getMes('pagoJunio'),
+            pago_julio: getMes('pagoJulio'),
+            pago_agosto: getMes('pagoAgosto'),
+            pago_septiembre: getMes('pagoSeptiembre'),
+            pago_octubre: getMes('pagoOctubre'),
+            pago_noviembre: getMes('pagoNoviembre'),
+            pago_diciembre: getMes('pagoDiciembre'),
+            fecha_pago: document.getElementById('fechaPago')?.value || null,
+            estado_pago: document.getElementById('estadoPago')?.value || null,
         };
-        
-        // Recopilar datos según el tipo
+
+        // Datos de banco (si aplica)
         if (tipo === 'banco') {
             metodoPagoData.nombre_banco = document.getElementById('nombreBanco')?.value || null;
             metodoPagoData.numero_cuenta = document.getElementById('numeroCuenta')?.value || null;
             metodoPagoData.routing_number = document.getElementById('routingNumber')?.value || null;
             metodoPagoData.nombre_cuenta = document.getElementById('nombreCuenta')?.value || null;
-            
-            // Limpiar campos de tarjeta
             metodoPagoData.numero_tarjeta = null;
             metodoPagoData.nombre_tarjeta = null;
             metodoPagoData.fecha_expiracion = null;
             metodoPagoData.cvv = null;
             metodoPagoData.tipo_tarjeta = null;
-            
         } else if (tipo === 'tarjeta') {
             metodoPagoData.numero_tarjeta = document.getElementById('numeroTarjeta')?.value || null;
             metodoPagoData.nombre_tarjeta = document.getElementById('nombreTarjeta')?.value || null;
             metodoPagoData.fecha_expiracion = document.getElementById('fechaExpiracion')?.value || null;
             metodoPagoData.cvv = document.getElementById('cvv')?.value || null;
             metodoPagoData.tipo_tarjeta = document.getElementById('tipoTarjeta')?.value || null;
-            
-            // Limpiar campos de banco
             metodoPagoData.nombre_banco = null;
             metodoPagoData.numero_cuenta = null;
             metodoPagoData.routing_number = null;
             metodoPagoData.nombre_cuenta = null;
         }
-        
-        // Verificar si ya existe un método de pago para este cliente
+
+        // Buscar si ya existe
         const { data: existente, error: errorBuscar } = await supabaseClient
             .from('metodos_pago')
             .select('id')
             .eq('cliente_id', clienteId)
             .eq('activo', true)
             .maybeSingle();
-        
+
         if (errorBuscar) throw errorBuscar;
-        
+
         if (existente) {
-            // ACTUALIZAR método existente
-            const { error: errorUpdate } = await supabaseClient
+            const { error } = await supabaseClient
                 .from('metodos_pago')
                 .update(metodoPagoData)
                 .eq('id', existente.id);
-            
-            if (errorUpdate) throw errorUpdate;
-            
-            
+            if (error) throw error;
         } else {
-            // INSERTAR nuevo método
-            const { error: errorInsert } = await supabaseClient
+            const { error } = await supabaseClient
                 .from('metodos_pago')
                 .insert([metodoPagoData]);
-            
-            if (errorInsert) throw errorInsert;
-            
+            if (error) throw error;
         }
-        
+
     } catch (error) {
         console.error('❌ Error al guardar método de pago:', error);
         throw error;
