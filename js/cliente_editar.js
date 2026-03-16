@@ -443,7 +443,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
             displayEfectividad.textContent = fechaEfectividadUS;
         }
 
-        const displayInicial = document.getElementById('displayFechaInicial');
+        const displayInicial = document.getElementById('displayFechaInicial').value = formatoUS(poliza.fecha_inicial_cobertura) || '--/--/----'
         if (displayInicial && poliza.fecha_inicial_cobertura) {
             const fechaInicialUS = formatoUS(poliza.fecha_inicial_cobertura);
             displayInicial.textContent = fechaInicialUS;
