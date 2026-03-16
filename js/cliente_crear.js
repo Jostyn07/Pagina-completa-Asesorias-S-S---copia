@@ -1245,7 +1245,7 @@ async function crearCliente(formData) {
         agente_nombre: formData.portalNPN || null,
         estado_compania: 'pendiente',
         estado_mercado: 'pendiente',
-        agente35_estado: 'Policy change',
+        agente35_estado: 'Procesado',
     };
 
     // ============================================
