@@ -171,7 +171,6 @@ async function aplicarPermisosEstadoMercado() {
         'estadoDocumentos',
         'documentosPendientes',
         'fechaPlazoDocumento',
-        'seguimientoEfectivo',
         'tipoRegistro'
     ];
     
