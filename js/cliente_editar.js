@@ -172,7 +172,8 @@ async function aplicarPermisosEstadoMercado() {
         'documentosPendientes',
         'fechaPlazoDocumento',
         'seguimientoEfectivo',
-        'tipoRegistro'
+        'tipoRegistro',
+        'crearNuevaPoliza1'
     ];
     
     if (!esAdministrador()) {
