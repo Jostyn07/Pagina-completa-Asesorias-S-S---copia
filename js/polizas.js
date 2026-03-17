@@ -2526,8 +2526,8 @@ function obtenerBadgeAgente35(estado) {
         'Procesado': '<span class="badge-agente35 procesado">✓ Procesado</span>',
         'Pendiente': '<span class="badge-agente35 pendiente">⏳ Pendiente</span>',
         'Cambio necesario': '<span class="badge-agente35 cambio">⚠ Cambio necesario</span>',
-        'Termination request': 'span class="badge-agente35 termination">Termination Request</span>',
-        'Cancelado': 'span class="badge-agente35 cancelado">Cancelado</span>'
+        'Termination request': '<span class="badge-agente35 termination">Termination Request</span>',
+        'Cancelado': '<span class="badge-agente35 cancelado">Cancelado</span>'
     };
     
     return badges[estado] || '<span class="badge-agente35 sin-estado">-</span>';
