@@ -426,7 +426,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
             fechaEfectividadInput.value = formatoUS(poliza.fecha_efectividad);
         }
         
-        const fechaInicialInput = document.getElementById('fechaInicialCobertura');
+        const fechaInicialInput = document.getElementById('displayFechaInicial');
         if (fechaInicialInput && poliza.fecha_inicial_cobertura) {
             fechaInicialInput.value = formatoUS(poliza.fecha_inicial_cobertura);
         }
@@ -1599,7 +1599,7 @@ async function handleSubmit(event) {
         prima: formData.prima || '0',
         credito_fiscal: formData.creditoFiscal || '0',
         fecha_efectividad: formData.displayFechaEfectividad || formData.fechaEfectividad,
-        fecha_inicial_cobertura: formData.fechaInicialCobertura || '',
+        fecha_inicial_cobertura: formData.displayFechaInicial || '',
         fecha_final_cobertura: formData.displayFechaFinal || formData.fechaFinalCobertura || '',
         estado_mercado: formData.estadoMercado || '',
         estado_compania: formData.estadoCompania || '',
@@ -1752,7 +1752,7 @@ async function actualizarPoliza(polizaId, formData) {
         prima: parseFloat(formData.prima) || 0,
         credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
         fecha_efectividad: formData.displayFechaEfectividad || formData.fechaEfectividad,
-        fecha_inicial_cobertura: formData.fechaInicialCobertura,
+        fecha_inicial_cobertura: formData.displayFechaInicial || null,
         fecha_final_cobertura: formData.displayFechaFinal || formData.fechaFinalCobertura,
         member_id: formData.memberId || null,
         portal_npn: formData.portalNpn || null,
