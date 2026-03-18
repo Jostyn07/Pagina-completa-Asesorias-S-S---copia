@@ -422,6 +422,7 @@ async function cargarPolizas() {
                 pagado_hasta,
                 fecha_plazo_documentos,
                 nombre_agente_mercado,
+                clave_seguridad,
                 cliente:clientes (
                     id,
                     nombres,
@@ -713,6 +714,12 @@ async function abrirDetalles(polizaId) {
                             <label>Teléfono 2</label>
                             <p>${cliente.telefono2 || 'N/A'}</p>
                         </div>
+
+                        <div class="detalle-item">
+                            <label>Clave de seguridad</label>
+                            <p>${poliza.clave_seguridad || 'N/A'}</p>
+                        </div>
+
                         <div class="detalle-item full-width">
                             <label>Dirección</label>
                             <p>${cliente.direccion || 'N/A'}, ${cliente.ciudad || ''}, ${cliente.estado || ''} ${cliente.codigo_postal || ''}</p>
@@ -800,10 +807,6 @@ async function abrirDetalles(polizaId) {
                         <div class="detalle-item">
                             <label>Portal NPN</label>
                             <p>${poliza.portal_npn || 'N/A'}</p>
-                        </div>
-                        <div class="detalle-item">
-                            <label>Clave de seguridad</label>
-                            <p>${poliza.clave_seguridad || 'N/A'}</p>
                         </div>
                         <div class="detalle-item">
                             <label>Tipo de venta</label>
