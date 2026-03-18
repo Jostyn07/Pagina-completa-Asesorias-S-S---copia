@@ -1585,16 +1585,13 @@ async function handleSubmit(event) {
         nacionalidad: formData.nacionalidad || '',
         ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : '',
         ingreso_anual: formData.ingresos || '',
+        tipo_registro: formData.tipoRegistro || '',
         tipo_modificacion: formData.tipoModificacion || '',
         aplica: formData.aplica || '',
         casa_apartamento: formData.casaApartamento || '',
         condado: formData.condado || '',
         po_box: formData.poBox || ''
         };
-
-        if (esAdministrador()) {
-        datosClienteNuevos.tipo_registro = formData.tipoRegistro || '';
-        }
 
         const datosPolizaNuevos = {
         compania: formData.compania,
@@ -1604,7 +1601,9 @@ async function handleSubmit(event) {
         fecha_efectividad: formData.displayFechaEfectividad || formData.fechaEfectividad,
         fecha_inicial_cobertura: formData.displayFechaInicial || '',
         fecha_final_cobertura: formData.displayFechaFinal || formData.fechaFinalCobertura || '',
+        estado_mercado: formData.estadoMercado || '',
         estado_compania: formData.estadoCompania || '',
+        estado_documentos: formData.estadoDocumentos || '',
         agente35_estado: formData.agente35_estado || '',
         operador_nombre: formData.operadorNombre || '',
         member_id: formData.memberId || '',
@@ -1612,16 +1611,11 @@ async function handleSubmit(event) {
         clave_seguridad: formData.claveSeguridad || '',
         enlace_poliza: formData.enlacePoliza || '',
         pagado_hasta: formData.pagadoHasta || '',
+        nombre_agente_mercado: formData.nombreAgenteMercado || '',
+        fecha_revision_mercado: formData.fechaRevisionMercado || '',
+        fecha_plazo_documentos: formData.fechaPlazoDocumento || '',
+        documentos_pendientes: formData.documentosPendientes || '',
         };  
-
-        if (esAdministrador()) {
-        datosPolizaNuevos.estado_mercado = formData.estadoMercado || '';
-        datosPolizaNuevos.estado_documentos = formData.estadoDocumentos || '';
-        datosPolizaNuevos.nombre_agente_mercado = formData.nombreAgenteMercado || '';
-        datosPolizaNuevos.fecha_revision_mercado = formData.fechaRevisionMercado || '';
-        datosPolizaNuevos.documentos_pendientes = formData.documentosPendientes || '';
-        datosPolizaNuevos.fecha_plazo_documentos = formData.fechaPlazoDocumento || '';
-}
 
         // Comparar con datos originales
         const cambiosCliente = compararCambios(datosOriginalesCliente, datosClienteNuevos, 'Información Personal');
