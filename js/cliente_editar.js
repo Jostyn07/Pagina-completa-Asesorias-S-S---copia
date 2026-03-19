@@ -1535,7 +1535,6 @@ async function handleSubmit(event) {
     event.preventDefault();
     
     if (!validarFormularioCompleto()) {
-        mostrarNotificacion('Por favor, completa todos los campos requeridos correctamente.');
         return;
     }
     
@@ -1673,7 +1672,7 @@ function validarFormularioCompleto() {
         { id: 'compania', nombre: 'Compañía' },
         { id: 'plan', nombre: 'Plan' },
         { id: 'prima', nombre: 'Prima' },
-        { id: 'operador', nombre: 'Operador' }
+        { id: 'operadorNombre', nombre: 'Operador' }
     ];
 
     const faltantes = []
