@@ -1535,7 +1535,7 @@ async function handleSubmit(event) {
     event.preventDefault();
     
     if (!validarFormularioCompleto()) {
-        alert('Por favor, completa todos los campos requeridos correctamente.');
+        mostrarNotificacion('Por favor, completa todos los campos requeridos correctamente.');
         return;
     }
     
@@ -1656,30 +1656,50 @@ async function handleSubmit(event) {
 
 function validarFormularioCompleto() {
     const camposRequeridos = [
+        {id: 'tipoRegistro', nombre: 'tipoRegistro'},
         { id: 'nombres', nombre: 'Nombres' },
         { id: 'apellidos', nombre: 'Apellidos' },
+        { id: 'genero', nombre: 'Genero' },
         { id: 'email', nombre: 'Email' },
         { id: 'telefono1', nombre: 'Teléfono' },
         { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
-        { id: 'genero', nombre: 'Género' },
         { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'nacionalidad', nombre: 'Nacionalidad' },
         { id: 'direccion', nombre: 'Dirección' },
+        { id: 'condado', nombre: 'Condado' },
         { id: 'ciudad', nombre: 'Ciudad' },
         { id: 'estado', nombre: 'Estado' },
         { id: 'codigoPostal', nombre: 'Código postal' },
         { id: 'compania', nombre: 'Compañía' },
-        { id: 'plan', nombre: 'Plan' }
+        { id: 'plan', nombre: 'Plan' },
+        { id: 'prima', nombre: 'Prima' },
+        { id: 'operador', nombre: 'Operador' }
     ];
+
+    const faltantes = []
     
     for (const campo of camposRequeridos) {
         const elemento = document.getElementById(campo.id);
         if (!elemento || !elemento.value || elemento.value.trim() === '') {
-            console.error(`Campo requerido vacío: ${campo.nombre}`);
-            alert(`El campo "${campo.nombre}" es requerido`);
-            elemento?.focus();
-            cambiarTab('info-general');
-            return false;
+            faltantes.push(campo)
         }
+    }
+
+    if (faltantes.length > 0) {
+        // cambiar a la ventana de visat general
+        cambiarTab('info-general');
+
+        setTimeout(() => {
+            const primerCampo = document.getElementById(faltantes[0].id);
+            if (primerCampo) {
+                primerCampo.focus();
+                primerCampo.scrollIntoView({ behavior: 'smooth', block: 'center'});
+            }
+        }, 100);
+        // Mostrar todos los campos faltantes
+        const nombres = faltantes.map(f => `${f.nombre}`).join('\n');
+        mostrarNotificacion(`Faltan los siguientes campos requeridos: \n\n${nombres}`);
+        return false
     }
     
     return true;
