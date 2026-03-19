@@ -1175,3 +1175,6 @@ tbody td {
 .btn-dropdown-close:hover {
     background: #4f46e5;
 }
+.btn-exportar {
+    color: #333 !important;
+}

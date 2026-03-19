@@ -458,6 +458,11 @@ async function cargarPolizas() {
         } else {
             ;
         }
+
+        const btnExportar = document.getElementById('btnExportar');
+        if (btnExportar && esAdmin) {
+            btnExportar.style.display = 'inline-flex';
+        }
         
         const { data, error } = await query;
         
@@ -994,62 +999,99 @@ function actualizarIndicadoresOrden() {
 // ============================================
 async function exportarExcel() {
     try {
-        ;
-        
-        // Preparar datos
+        if (!esAdministrador()) {
+            mostrarNotificacion('Solo administradores pueden exportar', 'error');
+            return;
+        }
+
         const datos = polizasFiltradas.map(poliza => {
             const cliente = poliza.cliente || {};
-            return {
-                'Número Póliza': poliza.numero_poliza || '',
-                'Número Póliza': cliente.tipo_registro || '',
-                'Cliente': `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim(),
-                'Teléfono': cliente.telefono1 || '',
-                'Email': cliente.email || '',
-                'Estado': poliza.estado_mercado || '',
-                'Compañía': poliza.compania || '',
-                'Plan': poliza.plan || '',
-                'Prima': parseFloat(poliza.prima || 0).toFixed(2),
-                'Crédito Fiscal': parseFloat(poliza.credito_fiscal || 0).toFixed(2),
-                'Fecha Efectividad': poliza.fecha_efectividad || '',
-                'Fecha Creación': poliza.created_at ? poliza.created_at.split('T')[0] : ''
-            };
+            return [
+                poliza.numero_poliza || '',
+                cliente.tipo_registro || '',
+                cliente.tipo_modificacion || '',
+                `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim(),
+                cliente.telefono1 || '',
+                cliente.telefono2 || '',
+                cliente.email || '',
+                cliente.estado_migratorio || '',
+                cliente.ssn || '',
+                poliza.operador_nombre || '',
+                poliza.compania || '',
+                poliza.plan || '',
+                parseFloat(poliza.prima || 0).toFixed(2),
+                parseFloat(poliza.credito_fiscal || 0).toFixed(2),
+                poliza.estado_mercado || '',
+                poliza.estado_compania || '',
+                poliza.estado_documentos || '',
+                poliza.documentos_pendientes || '',
+                poliza.agente35_estado || '',
+                poliza.nombre_agente_mercado || '',
+                poliza.member_id || '',
+                poliza.portal_npn || '',
+                poliza.clave_seguridad || '',
+                poliza.fecha_efectividad ? formatoUS(poliza.fecha_efectividad) : '',
+                poliza.fecha_inicial_cobertura ? formatoUS(poliza.fecha_inicial_cobertura) : '',
+                poliza.fecha_final_cobertura ? formatoUS(poliza.fecha_final_cobertura) : '',
+                poliza.pagado_hasta ? formatoUS(poliza.pagado_hasta) : '',
+                poliza.fecha_revision_mercado ? formatoUS(poliza.fecha_revision_mercado) : '',
+                poliza.fecha_revision_compania ? formatoUS(poliza.fecha_revision_compania) : '',
+                poliza.fecha_plazo_documentos ? formatoUS(poliza.fecha_plazo_documentos) : '',
+                poliza.enlace_poliza || '',
+                poliza.observaciones || '',
+                poliza.created_at ? formatoUS(poliza.created_at) : ''
+            ];
         });
-        
-        // Crear CSV
-        const headers = Object.keys(datos[0]);
-        let csv = headers.join(',') + '\n';
-        
+
+        const headers = [
+            'N° Póliza', 'Tipo Registro', 'Tipo Modificación', 'Cliente',
+            'Teléfono 1', 'Teléfono 2', 'Email', 'Estado Migratorio', 'SSN',
+            'Operador', 'Compañía', 'Plan', 'Prima', 'Crédito Fiscal',
+            'Estado Mercado', 'Estado Compañía', 'Estado Documentos',
+            'Documentos Pendientes', 'Agente 3.5', 'Agente Mercado',
+            'Member ID', 'Portal NPN', 'Clave Seguridad',
+            'Fecha Efectividad', 'Fecha Inicial Cobertura', 'Fecha Final Cobertura',
+            'Pagado Hasta', 'Revisión Mercado', 'Revisión Compañía',
+            'Plazo Documentos', 'Enlace Póliza', 'Observaciones', 'Fecha Creación'
+        ];
+
+        // Crear libro de Excel con XML (formato xlsx simplificado via HTML table)
+        let tabla = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+        tabla += '<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Pólizas</x:Name><x:WorksheetOptions><x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>';
+        tabla += '<body><table border="1">';
+
+        // Headers con estilo
+        tabla += '<tr>';
+        headers.forEach(h => {
+            tabla += `<th style="background-color:#4472C4; color:white; font-weight:bold; padding:8px; text-align:center; font-family:Arial; font-size:11px;">${h}</th>`;
+        });
+        tabla += '</tr>';
+
+        // Datos
         datos.forEach(fila => {
-            const valores = headers.map(header => {
-                let valor = fila[header];
-                // Escapar comas y comillas
-                if (typeof valor === 'string' && (valor.includes(',') || valor.includes('"'))) {
-                    valor = `"${valor.replace(/"/g, '""')}"`;
-                }
-                return valor;
+            tabla += '<tr>';
+            fila.forEach(celda => {
+                const valor = String(celda).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                tabla += `<td style="padding:4px; font-family:Arial; font-size:10px; mso-number-format:'\\@';">${valor}</td>`;
             });
-            csv += valores.join(',') + '\n';
+            tabla += '</tr>';
         });
-        
-        // Crear blob y descargar
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+        tabla += '</table></body></html>';
+
+        // Descargar
+        const blob = new Blob([tabla], { type: 'application/vnd.ms-excel;charset=utf-8;' });
         const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        
+        link.href = URL.createObjectURL(blob);
         const fecha = new Date().toISOString().split('T')[0];
-        link.setAttribute('href', url);
-        link.setAttribute('download', `polizas_${fecha}.csv`);
+        link.download = `polizas_${fecha}.xls`;
         link.style.visibility = 'hidden';
-        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        ;
-        
-        // Mostrar notificación
-        mostrarNotificacion('Excel exportado correctamente', 'success');
-        
+
+        mostrarNotificacion(`Excel exportado: ${datos.length} pólizas`, 'success');
+
     } catch (error) {
         console.error('❌ Error al exportar:', error);
         mostrarNotificacion('Error al exportar: ' + error.message, 'error');
