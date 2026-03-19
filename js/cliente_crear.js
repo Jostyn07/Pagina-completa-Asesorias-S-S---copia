@@ -1147,15 +1147,30 @@ function validarFormularioCompleto() {
         { id: 'ventaRealizadaPor', nombre: 'Venta realizada por:' },
     ];
     
+    const faltantes = []
+    
     for (const campo of camposRequeridos) {
         const elemento = document.getElementById(campo.id);
         if (!elemento || !elemento.value || elemento.value.trim() === '') {
-            console.error(`Campo requerido vacío: ${campo.nombre}`);
-            alert(`El campo "${campo.nombre}" es requerido`);
-            elemento?.focus();
-            cambiarTab('info-general');
-            return false;
+            faltantes.push(campo)
         }
+    }
+
+    if (faltantes.length > 0) {
+        // cambiar a la ventana de visat general
+        cambiarTab('info-general');
+
+        setTimeout(() => {
+            const primerCampo = document.getElementById(faltantes[0].id);
+            if (primerCampo) {
+                primerCampo.focus();
+                primerCampo.scrollIntoView({ behavior: 'smooth', block: 'center'});
+            }
+        }, 100);
+        // Mostrar todos los campos faltantes
+        const nombres = faltantes.map(f => `${f.nombre}`).join('\n');
+        mostrarNotificacion(`Faltan los siguientes campos requeridos: \n\n${nombres}`);
+        return false
     }
     
     return true;
