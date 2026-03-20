@@ -4,10 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Calidad - S&S Asesorías</title>
+    <script>
+    const t = localStorage.getItem('ss_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    </script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/control_calidad.css">
+    <link rel="stylesheet" href="../css/darkmode.css">
 </head>
 <body>
     <!-- SIDEBAR UNIFICADO -->
@@ -66,15 +71,9 @@
         </nav>
 
         <div class="sidebar-footer">
-            <div class="dark-mode-toggle" onclick="toggleDarkMode()">
-                <div class="dark-mode-label">
-                    <span class="material-symbols-rounded">dark_mode</span>
-                    <span>Modo Oscuro</span>
-                </div>
-                <div class="toggle-switch" id="darkModeSwitch">
-                    <div class="toggle-circle"></div>
-                </div>
-            </div>
+        <button id="btnDarkMode" class="theme-toggle" onclick="toggleDarkMode()" title="Cambiar tema">
+            <span class="material-symbols-rounded">dark_mode</span>
+        </button>
         </div>
     </aside>
 

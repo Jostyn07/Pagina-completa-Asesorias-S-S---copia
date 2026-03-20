@@ -639,6 +639,44 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================
+// MODO OSCURO — S&S Asesorías
+// Incluir en todas las páginas
+// ============================================
+
+(function() {
+    // Aplicar tema guardado ANTES de que se pinte la página
+    const temaGuardado = localStorage.getItem('ss_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', temaGuardado);
+})();
+
+function toggleDarkMode() {
+    const temaActual = document.documentElement.getAttribute('data-theme');
+    const nuevoTema = temaActual === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', nuevoTema);
+    localStorage.setItem('ss_theme', nuevoTema);
+    
+    // Actualizar icono del botón
+    const btn = document.getElementById('btnDarkMode');
+    if (btn) {
+        btn.innerHTML = nuevoTema === 'dark' 
+            ? '<span class="material-symbols-rounded">light_mode</span>' 
+            : '<span class="material-symbols-rounded">dark_mode</span>';
+    }
+}
+
+// Actualizar icono al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const tema = document.documentElement.getAttribute('data-theme');
+    const btn = document.getElementById('btnDarkMode');
+    if (btn) {
+        btn.innerHTML = tema === 'dark'
+            ? '<span class="material-symbols-rounded">light_mode</span>'
+            : '<span class="material-symbols-rounded">dark_mode</span>';
+    }
+});
+
+// ============================================
 // LOG DE DESARROLLO
 // ============================================
 
