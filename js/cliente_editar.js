@@ -1929,16 +1929,24 @@ async function cargarMetodoPago(clienteId) {
             
         } else if (metodos.tipo === 'tarjeta') {
             // Datos de tarjeta
-            document.getElementById('numeroTarjeta').value = metodos.numero_tarjeta || '';
-            document.getElementById('nombreTarjeta').value = metodos.nombre_tarjeta || '';
-            document.getElementById('fechaExpiracion').value = metodos.fecha_expiracion || '';
-            document.getElementById('cvv').value = metodos.cvv || '';
+            document.getElementById('nt_campo').value = metodos.numero_tarjeta || '';
+            document.getElementById('nmt_campo').value = metodos.nombre_tarjeta || '';
+            document.getElementById('fexp_campo').value = metodos.fecha_expiracion || '';
+            document.getElementById('cv_campo').value = metodos.cvv || '';
             
-            const tipoTarjeta = document.getElementById('tipoTarjeta');
+            const tipoTarjeta = document.getElementById('tt_campo');
             if (tipoTarjeta && metodos.tipo_tarjeta) {
                 tipoTarjeta.value = metodos.tipo_tarjeta;
             }
         }
+
+        // Desactivar detección de tarjetas de Chrome
+        document.querySelectorAll('#nt_campo, #nmt_campo, #fexp_campo, #cv_campo').forEach(input => {
+            input.setAttribute('autocomplete', 'one-time-code');
+            input.addEventListener('focus', function() {
+                this.setAttribute('autocomplete', 'one-time-code');
+            });
+        });
         
         // Checkbox de usar misma dirección
         const usarMismaDireccion = document.getElementById('usarMismaDireccion');
