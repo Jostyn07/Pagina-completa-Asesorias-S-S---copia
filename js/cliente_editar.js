@@ -2069,11 +2069,11 @@ async function guardarMetodoPago(clienteId) {
             metodoPagoData.cvv = null;
             metodoPagoData.tipo_tarjeta = null;
         } else if (tipo === 'tarjeta') {
-            metodoPagoData.numero_tarjeta = document.getElementById('numeroTarjeta')?.value || null;
-            metodoPagoData.nombre_tarjeta = document.getElementById('nombreTarjeta')?.value || null;
-            metodoPagoData.fecha_expiracion = document.getElementById('fechaExpiracion')?.value || null;
-            metodoPagoData.cvv = document.getElementById('cvv')?.value || null;
-            metodoPagoData.tipo_tarjeta = document.getElementById('tipoTarjeta')?.value || null;
+            metodoPagoData.numero_tarjeta = document.getElementById('nt_campo')?.value || null;
+            metodoPagoData.nombre_tarjeta = document.getElementById('nmt_campo')?.value || null;
+            metodoPagoData.fecha_expiracion = document.getElementById('fexp_campo')?.value || null;
+            metodoPagoData.cvv = document.getElementById('cv_campo')?.value || null;
+            metodoPagoData.tipo_tarjeta = document.getElementById('tt_campo')?.value || null;
             metodoPagoData.nombre_banco = null;
             metodoPagoData.numero_cuenta = null;
             metodoPagoData.routing_number = null;
