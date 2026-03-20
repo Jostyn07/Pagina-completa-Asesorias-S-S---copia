@@ -1789,7 +1789,7 @@ async function actualizarPoliza(polizaId, formData) {
         documentos_pendientes: formData.documentosPendientes || '-',
         fecha_plazo_documentos: formData.fechaPlazoDocumento || null,
         agente35_estado: formData.agente35_estado || null,
-        agente35_notas: formData.agente35_nota || null,
+        agente35_notas: formData.agente35_notas || null,
         updated_at: new Date().toISOString()
     };
     
