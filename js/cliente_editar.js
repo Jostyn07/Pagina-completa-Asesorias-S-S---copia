@@ -2101,6 +2101,13 @@ async function guardarMetodoPago(clienteId) {
     }
 }
 
+document.querySelectorAll('#numeroTarjeta, #nombreTarjeta, #fechaExpiracion, #cvv, #tipoTarjeta').forEach(input => {
+    input.setAttribute('autocomplete', 'one-time-code');
+    input.addEventListener('focus', function() {
+        this.setAttribute('autocomplete', 'one-time-code');
+    });
+});
+
 // ELIMINAR MÉTODO DE PAGO
 async function eliminarMetodoPago(clienteId) {
     try {
