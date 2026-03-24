@@ -3039,7 +3039,7 @@ function formatearEstado(estado) {
     return textos[estado] || estado;
 }
 
-async function registrarCambioEstado(polizaId, estadoData) {
+async function registrarCambioEstado(clienteId, estadoData) {
     try {
         // Obtener estado anterior
         const { data: polizaAnterior } = await supabaseClient

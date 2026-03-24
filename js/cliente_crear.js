@@ -631,7 +631,7 @@ function crearTarjetaDependiente(count, dep) {
         <div class="dependiente-card" id="dependiente-${count}">
             
             <!-- Inputs ocultos para el submit -->
-            <input type="hidden" name="dep_nombres_${count}" value="${dep.nombres}">
+            <input type="hidden" name="dep_nombres_${count}" value="${dep.nombres}">No
             <input type="hidden" name="dep_apellidos_${count}" value="${dep.apellidos}">
             <input type="hidden" name="dep_fecha_nacimiento_${count}" value="${dep.fecha_nacimiento}">
             <input type="hidden" name="dep_sexo_${count}" value="${dep.sexo}">
