@@ -540,3 +540,4 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 
 [data-theme="dark"] .total-badge {color: #333 !important;}
 [data-theme="dark"] .historial-usuario {color: #333 !important;}
+[data-theme="dark"] #modalContenido p {color: #fff !important;}
