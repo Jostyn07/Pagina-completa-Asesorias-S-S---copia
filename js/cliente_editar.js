@@ -1611,6 +1611,7 @@ async function handleSubmit(event) {
         clave_seguridad: formData.claveSeguridad || '',
         enlace_poliza: formData.enlacePoliza || '',
         pagado_hasta: formData.pagadoHasta || '',
+        observacion_pagos: formData.observacionPago || '',
         };  
 
         if (esAdministrador()) {
@@ -2524,6 +2525,8 @@ async function cargarEstadoSeguimiento(polizaId) {
             }
 
             if (poliza.pagado_hasta) document.getElementById('pagadoHasta').value = formatoUS(poliza.pagado_hasta);
+
+            if (poliza.observacion_pagos) document.getElementById('observacionPago').value = poliza.observacion_pagos;
             
             // ===== 2) ESTADO EN MERCADO =====
             if (poliza.fecha_revision_mercado) {
@@ -2672,6 +2675,7 @@ async function guardarEstadoSeguimiento(polizaId) {
             nombre_agente_compania: document.getElementById('nombreAgenteCompania')?.value || null,
             estado_compania: document.getElementById('estadoCompania')?.value || null,
             pagado_hasta: document.getElementById('pagadoHasta')?.value || null,
+            observacion_pagos: document.getElementById('observacionPago')?.value || null,
             
             updated_at: new Date().toISOString(),
         };
@@ -3650,6 +3654,7 @@ function formatearNombreCampo(campo) {
         'clave_seguridad': 'Clave de seguridad',
         'enlace_poliza': 'Enlace de la póliza',
         'pagado_hasta': 'Pagado hasta',
+        'observacion_pagos': 'Observaciones de pago',
         'nombre_agente_mercado': 'Nombre del agente (Mercado)',
         'fecha_revision_mercado': 'Fecha de revisión en mercado',
         'documentos_pendientes': 'Documentos solicitados',
@@ -3697,10 +3702,11 @@ function obtenerDatosFormularioPoliza() {
         maximo_bolsillo: document.getElementById('maximoBolsillo')?.value || '',
         estado_compania: document.getElementById('estadoCompania')?.value || '',
         pagado_hasta: document.getElementById('pagadoHasta')?.value || '',
+        observacion_pagos: document.getElementById('observacionPago')?.value || '',
         estado_mercado: document.getElementById('estadoMercado')?.value || '',
         agente35_estado: document.getElementById('agente35Estado')?.value || '',
         agente35_notas: document.getElementById('agente35Notas')?.value || '',
-        observaciones: document.getElementById('observaciones')?.value || ''
+        observaciones: document.getElementById('observaciones')?.value || '',
     };
 }
 
