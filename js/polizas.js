@@ -197,8 +197,8 @@ function restaurarFiltrosDesdeStorage() {
         fechaRevisionCompaniaHasta: datos.fechaRevisionCompaniaHasta || '',
         fechaUltimoPagoDesde: datos.fechaUltimoPagoDesde || '',
         fechaUltimoPagoHasta: datos.fechaUltimoPagoHasta || '',
-        fechaSeguimientoDesde: datos.plazoDocumentosDesde || '',
-        fechaSeguimientoHasta: datos.plazoDocumentosHasta || '',
+        fechaSeguimientoDesde: datos.fechaSeguimientoDesde  || '',
+        fechaSeguimientoHasta: datos.fechaSeguimientoHasta  || '',
     };
 
     // 4. Determinar si hay filtros activos realmente (para el indicador visual)
@@ -447,7 +447,8 @@ async function cargarPolizas() {
                 seguimientos (
                     fecha_seguimiento,
                     seguimiento_efectivo,
-                    medio_comunicacion
+                    medio_comunicacion,
+                    observacion
                 )
             `)
             .order('updated_at', { ascending: false });
@@ -684,7 +685,11 @@ async function abrirDetalles(polizaId) {
         
         polizaSeleccionada = poliza;
         const cliente = poliza.cliente || {};
-        const seguimiento = poliza.seguimientos || {};
+        const seguimientos = poliza.seguimientos || [];
+        const seguimiento = seguimientos.length > 0 
+            ? [...seguimientos].sort((a, b) => new Date(b.fecha_seguimiento) - new Date(a.fecha_seguimiento))[0] 
+            : {};
+        console.log('Seguimiento más reciente:', seguimiento);
         
         // Rellenar modal
         const contenido = `
@@ -737,9 +742,23 @@ async function abrirDetalles(polizaId) {
                     <h3><span class="material-symbols-rounded">chat</span> Comunicación</h3>
                     <div class="detalle-grid">
                         <div class="detalle-item">
-                            <label>Medio de contacto preferido</label>
+                            <label>Medio de contacto (último)</label>
                             <p><strong style="color: #10b981; font-size: 1.1rem;">${seguimiento?.medio_comunicacion || 'No especificado'}</strong></p>
                         </div>
+                        ${(poliza.seguimientos && poliza.seguimientos.length > 0) ? `
+                        <div class="detalle-item full-width">
+                            <label>Notas de seguimiento (${poliza.seguimientos.length})</label>
+                            ${[...poliza.seguimientos].sort((a, b) => new Date(b.fecha_seguimiento) - new Date(a.fecha_seguimiento)).slice(0,3).map(seg => `
+                                <div style="padding: 8px 12px; margin-bottom: 6px; background: rgba(16,185,129,0.08); border-radius: 6px; border-left: 3px solid #10b981;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b; margin-bottom: 4px;">
+                                        <span>${seg.medio_comunicacion || '-'}</span>
+                                        <span>${seg.fecha_seguimiento ? formatoUS(seg.fecha_seguimiento) : '-'}</span>
+                                    </div>
+                                    <p style="margin: 0; font-size: 0.9rem;">${seg.observacion || 'Sin nota'}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
                 
