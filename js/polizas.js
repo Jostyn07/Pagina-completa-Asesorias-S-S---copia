@@ -307,12 +307,12 @@ function restaurarFiltrosDesdeStorage() {
             if(filtrosActivos.nullRevisionMercado && poliza.fecha_revision_mercado !== null) return false;
             if(filtrosActivos.nullFechRevCompania && poliza.fecha_revision_compania !== null) return false;
             if(filtrosActivos.nullFechaPago && poliza.pagado_hasta !== null) return false;
-            if (nullFechaSeguimiento) {
-                const tieneSeguimientos = poliza.seguimientos && poliza.seguimietos.length > 0
-                if (tieneSeguimientos) {
-                    return false
-                }
-            }
+            // if (nullFechaSeguimiento) {
+            //     const tieneSeguimientos = poliza.seguimientos && poliza.seguimietos.length > 0
+            //     if (tieneSeguimientos) {
+            //         return false
+            //     }
+            // }
 
             if (filtrosActivos.documentos) {
                 const estadoDoc = (poliza.estado_documentos || '');
