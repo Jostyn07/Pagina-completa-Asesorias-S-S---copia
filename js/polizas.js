@@ -154,13 +154,13 @@ function restaurarFiltrosDesdeStorage() {
     set('filtroEstadoCompania', datos.estadoCompania);
     set('filtroEstado', datos.estado);
     set('estadoAgente35', datos.estadoAgente35);
-    set('nullPlazoDocumentos', datos.nullPlazoDocumentos);
-    set('nullFechaEfectividad', datos.nullFechaEfectividad);
-    set('nullInicioCobertura', datos.nullInicioCobertura);
-    set('nullRevisionMercado', datos.nullRevisionMercado);
-    set('nullFechRevCompania', datos.nullFechRevCompania);
-    set('nullFechaPago', datos.nullFechaPago);
-    set('nullFechaSeguimiento', datos.nullFechaSeguimiento);
+    setChecked('nullFechaEfectividad', datos.nullFechaEfectividad);
+    setChecked('nullInicioCobertura', datos.nullInicioCobertura);
+    setChecked('nullRevisionMercado', datos.nullRevisionMercado);
+    setChecked('nullFechRevCompania', datos.nullFechRevCompania);
+    setChecked('nullFechaPago', datos.nullFechaPago);
+    setChecked('nullFechaSeguimiento', datos.nullFechaSeguimiento);
+    setChecked('nullPlazoDocumentos', datos.nullPlazoDocumentos);
     set('filtroTieneMetodoPago', datos?.tieneMetodoPago)
 
     // Fechas
@@ -724,16 +724,14 @@ async function abrirDetalles(polizaId) {
         const seguimientos = poliza.seguimientos || [];
         const seguimiento = seguimientos.length > 0 
             ? [...seguimientos].sort((a, b) => new Date(b.fecha_seguimiento) - new Date(a.fecha_seguimiento))[0] 
-            : {};
-        console.log('Seguimiento más reciente:', seguimiento);
-        
+            : {};        
         // Rellenar modal
         const contenido = `
             <div class="modal-header">
                 <h2>
                     <span class="material-symbols-rounded">description</span>
                     ${poliza.numero_poliza || 'N/A'}
-                </h2>
+                </h2>   
                 <button class="btn-close-modal" onclick="cerrarModal()">
                     <span class="material-symbols-rounded">close</span>
                 </button>
@@ -2580,12 +2578,12 @@ function aplicarFiltrosAvanzados() {
         if (filtrosActivos.nullRevisionMercado && poliza.fecha_revision_mercado !== null) return false;
         if (filtrosActivos.nullFechRevCompania && poliza.fecha_revision_compania !== null) return false;
         if (filtrosActivos.nullFechaPago && poliza.pagado_hasta !== null) return false;
-        if (nullFechaSeguimiento) {
-            const tieneSeguimientos = poliza.seguimientos && poliza.seguimientos.length > 0
-            if (tieneSeguimientos) {
-                return false
-            }
-        };
+        // if (nullFechaSeguimiento) {
+        //     const tieneSeguimientos = poliza.seguimientos && poliza.seguimientos.length > 0
+        //     if (tieneSeguimientos) {
+        //         return false
+        //     }
+        // };
 
         return true;
     });
