@@ -34,7 +34,7 @@ function guardarFiltrosEnStorage() {
             // Pólizas por página
             porPagina: document.getElementById('polizasPorPagina')?.value || '10',
 
-            // Campos del modal avanzado
+            // Campos del modal avanzado - Se obtienen los datos
             nombre: document.getElementById('filtroNombre')?.value || '',
             apellido: document.getElementById('filtroApellido')?.value || '',
             telefono: document.getElementById('filtroTelefono')?.value || '',
@@ -52,6 +52,13 @@ function guardarFiltrosEnStorage() {
             estadoMercado: document.getElementById('filtroEstadoMercado')?.value || '',
             estadoCompania: document.getElementById('filtroEstadoCompania')?.value || '',
             estadoAgente35: document.getElementById('estadoAgente35')?.value || '',
+            nullPlazoDocumentos: document.getElementById('nullPlazoDocumentos')?.checked || '',
+            nullFechaEfectividad: document.getElementById('nullFechaEfectividad')?.checked || '',
+            nullInicioCobertura: document.getElementById('nullInicioCobertura')?.checked || '',
+            nullRevisionMercado: document.getElementById('nullRevisionMercado')?.checked || '',
+            nullFechRevCompania: document.getElementById('nullFechRevCompania')?.checked || '',
+            nullFechaPago: document.getElementById('nullFechaPago')?.checked || '',
+            nullFechaSeguimiento: document.getElementById('nullFechaSeguimiento')?.checked || '',
             estado: document.getElementById('filtroEstado')?.value || '',
 
             // Fechas
@@ -67,7 +74,7 @@ function guardarFiltrosEnStorage() {
             fechaSeguimientoHasta: document.getElementById('filtroSeguimientoHasta')?.value || '',
             fechaUltimoPagoDesde: document.getElementById('filtroFechaUltimoPagoDesde')?.value || '',
             fechaUltimoPagoHasta: document.getElementById('filtroFechaUltimoPagoHasta')?.value || '',
-            PlazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosDesde')?.value || '',
+            plazoDocumentosDesde: document.getElementById('filtroFechaPlazoDocumentosDesde')?.value || '',
             PlazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosHasta')?.value || '',
         };
 
@@ -147,6 +154,13 @@ function restaurarFiltrosDesdeStorage() {
     set('filtroEstadoCompania', datos.estadoCompania);
     set('filtroEstado', datos.estado);
     set('estadoAgente35', datos.estadoAgente35);
+    set('nullPlazoDocumentos', datos.nullPlazoDocumentos);
+    set('nullFechaEfectividad', datos.nullFechaEfectividad);
+    set('nullInicioCobertura', datos.nullInicioCobertura);
+    set('nullRevisionMercado', datos.nullRevisionMercado);
+    set('nullFechRevCompania', datos.nullFechRevCompania);
+    set('nullFechaPago', datos.nullFechaPago);
+    set('nullFechaSeguimiento', datos.nullFechaSeguimiento);
     set('filtroTieneMetodoPago', datos?.tieneMetodoPago)
 
     // Fechas
@@ -185,6 +199,13 @@ function restaurarFiltrosDesdeStorage() {
         estadoCompania: datos.estadoCompania || '',
         estado: datos.estado || '',
         estadoAgente35: datos.estadoAgente35 || '',
+        nullPlazoDocumentos: datos.nullPlazoDocumentos || '',
+        nullFechaEfectividad: datos.nullFechaEfectividad || '',
+        nullInicioCobertura: datos.nullInicioCobertura || '',
+        nullRevisionMercado: datos.nullRevisionMercado || '',
+        nullFechRevCompania: datos.nullFechRevCompania || '',
+        nullFechaPago: datos.nullFechaPago || '',
+        nullFechaSeguimiento: datos.nullFechaSeguimiento || '',
         fechaRegistroDesde: datos.fechaRegistroDesde || '',
         fechaRegistroHasta: datos.fechaRegistroHasta || '',
         fechaEfectividadDesde: datos.fechaEfectividadDesde || '',
@@ -277,6 +298,21 @@ function restaurarFiltrosDesdeStorage() {
             if (filtrosActivos.estadoCompania && poliza.estado_compania !== filtrosActivos.estadoCompania) return false;
             if (filtrosActivos.estado && cliente.estado !== filtrosActivos.estado) return false;
             if (filtrosActivos.estadoAgente35 && poliza.agente35_estado !== filtrosActivos.estadoAgente35) return false;
+
+            // Null
+
+            if(filtrosActivos.nullPlazoDocumentos && poliza.fecha_plazo_documentos !== null) return false;
+            if(filtrosActivos.nullFechaEfectividad && poliza.fecha_efectividad !== null) return false;
+            if(filtrosActivos.nullInicioCobertura && poliza.fecha_inicial_cobertura !== null) return false;
+            if(filtrosActivos.nullRevisionMercado && poliza.fecha_revision_mercado !== null) return false;
+            if(filtrosActivos.nullFechRevCompania && poliza.fecha_revision_compania !== null) return false;
+            if(filtrosActivos.nullFechaPago && poliza.pagado_hasta !== null) return false;
+            if (nullFechaSeguimiento) {
+                const tieneSeguimientos = poliza.seguimientos && poliza.seguimietos.length > 0
+                if (tieneSeguimientos) {
+                    return false
+                }
+            }
 
             if (filtrosActivos.documentos) {
                 const estadoDoc = (poliza.estado_documentos || '');
@@ -2037,6 +2073,13 @@ function limpiarFiltros() {
     document.getElementById('filtroEstadoCompania').value = '';
     document.getElementById('filtroEstado').value = '';
     document.getElementById('estadoAgente35').value = '';
+    document.getElementById('nullPlazoDocumentos').checked = false;
+    document.getElementById('nullFechaEfectividad').checked = false;
+    document.getElementById('nullInicioCobertura').checked = false;
+    document.getElementById('nullRevisionMercado').checked = false;
+    document.getElementById('nullFechRevCompania').checked = false;
+    document.getElementById('nullFechaPago').checked = false;
+    document.getElementById('nullFechaSeguimiento').checked = false;
     document.getElementById('filtroPrima').value = '';
     document.getElementById('tipoModificacion').value = '';
     document.getElementById('filtroDocumentos').value = '';
@@ -2324,6 +2367,12 @@ function aplicarFiltrosAvanzados() {
         estadoCompania: document.getElementById('filtroEstadoCompania').value,
         estado: document.getElementById('filtroEstado').value,
         estadoAgente35: document.getElementById('estadoAgente35').value,
+        nullPlazoDocumentos: document.getElementById('nullPlazoDocumentos').checked,
+        nullFechaEfectividad: document.getElementById('nullFechaEfectividad').checked,
+        nullInicioCobertura: document.getElementById('nullInicioCobertura').checked,
+        nullRevisionMercado: document.getElementById('nullRevisionMercado').checked,
+        nullFechRevCompania: document.getElementById('nullFechRevCompania').checked,
+        nullFechaPago: document.getElementById('nullFechaPago').checked,
         fechaEfectividadDesde: document.getElementById('filtroFechaEfectividadDesde').value,
         fechaEfectividadHasta: document.getElementById('filtroFechaEfectividadHasta').value,
         fechaCoberturaInicialDesde: document.getElementById('filtroFechaCoberturaInicialDesde').value,
@@ -2522,7 +2571,22 @@ function aplicarFiltrosAvanzados() {
             if(!filtrarPorRangoFecha(fechaMasReciente, filtrosActivos.fechaSeguimientoDesde, filtrosActivos.fechaSeguimientoHasta)) {
                 return false;
             }
-        }       
+        }
+        
+        // Filtros null
+        if (filtrosActivos.nullPlazoDocumentos && poliza.fecha_plazo_documentos !== null) return false;
+        if (filtrosActivos.nullFechaEfectividad && poliza.fecha_efectividad !== null) return false;
+        if (filtrosActivos.nullInicioCobertura && poliza.fecha_inicial_cobertura !== null) return false;
+        if (filtrosActivos.nullRevisionMercado && poliza.fecha_revision_mercado !== null) return false;
+        if (filtrosActivos.nullFechRevCompania && poliza.fecha_revision_compania !== null) return false;
+        if (filtrosActivos.nullFechaPago && poliza.pagado_hasta !== null) return false;
+        if (nullFechaSeguimiento) {
+            const tieneSeguimientos = poliza.seguimientos && poliza.seguimientos.length > 0
+            if (tieneSeguimientos) {
+                return false
+            }
+        };
+
         return true;
     });
     
@@ -2615,6 +2679,11 @@ async function cargarDatosOperador() {
     }
 }
 
+const null1 = document.getElementById("nullPlazoDocumentos")
+
+document.getElementById('nullPlazoDocumentos').addEventListener("click", function() {
+    console.log(null1.checked)
+})
 // Cargar datos de operadores para filtro
 cargarDatosOperador();
 

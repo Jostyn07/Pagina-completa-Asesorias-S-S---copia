@@ -659,7 +659,11 @@
                                 <div class="filtro-grid">
                                     <!-- Filtrar por fecha de registro -->
                                     <div class="form-row fecha_cuadrado">
-                                        <h4>Filtrar por plazo de documentos</h4>
+                                        <div class="filtro-group-row">
+                                            <h4>Filtrar por plazo de documentos</h4>
+                                            <label for="nullPlazoDocumentos">Sin revisión</label>
+                                            <input type="checkbox" id="nullPlazoDocumentos" name="nullPlazoDocumentos">
+                                        </div>
                                         <div class="filtro-group">
                                             <label>Fecha Registro Desde</label>
                                             <input type="date" id="filtroFechaPlazoDocumentosDesde">
@@ -672,7 +676,11 @@
 
                                     <!--  Filtrar por fecha de efectividad -->
                                     <div class="form-row fecha_cuadrado">
-                                        <h4>Filtrar por fecha de efectividad</h4>
+                                        <div class="filtro-group-row">
+                                            <h4>Filtrar por fecha de efectividad</h4>
+                                            <label for="nullFechaEfectividad">Sin revisión</label>
+                                            <input type="checkbox" id="nullFechaEfectividad">
+                                        </div>
                                         <div class="filtro-group">
                                             <label>Fecha Efectividad Desde</label>
                                             <input type="date" id="filtroFechaEfectividadDesde">
@@ -685,7 +693,11 @@
 
                                     <!-- Filtrar por inicio de cobertura -->
                                     <div class="form-row fecha_cuadrado">
-                                        <h4>Filtrar por inicio de cobertura</h4>
+                                        <div class="filtro-group-row">
+                                            <h4>Filtrar por inicio de cobertura</h4>
+                                            <label for="nullInicioCobertura">Sin revisión</label>
+                                            <input type="checkbox" name="nullInicioCobertura" id="nullInicioCobertura">
+                                        </div>
                                         <div class="filtro-group">
                                             <label>Fecha Cobertura Inicial Desde</label>
                                             <input type="date" id="filtroFechaCoberturaInicialDesde">
@@ -698,7 +710,12 @@
 
                                     <!-- Filtrar por revision en mercado -->
                                     <div class="form-row fecha_cuadrado">
-                                        <h4>Filtar por revisión en mercado</h4>
+                                        <div class="filtro-group-row">
+                                            <h4>Filtar por revisión en mercado</h4>
+                                            <label for="nullRevisionMercado">Sin revision</label>
+                                            <input type="checkbox" name="nullRevisionMercado" id="nullRevisionMercado">
+
+                                        </div>
                                         <div class="filtro-group">
                                             <label>Fecha Revisión Mercado Desde</label>
                                             <input type="date" id="filtroFechaRevisionMercadoDesde">
@@ -711,7 +728,11 @@
 
                                     <!-- Filtrar por fecha de revision en compañia -->
                                     <div class="form-row fecha_cuadrado">
-                                        <h4>Filtrar por revisión en compañía</h4>
+                                        <div class="filtro-group-row">
+                                            <h4>Filtrar por revisión en compañía</h4>
+                                            <label for="">Sin revision</label>
+                                            <input type="checkbox" name="nullFechRevCompania" id="nullFechRevCompania">
+                                        </div>
                                         <div class="filtro-group">
                                             <label>Fecha Revisión Compañía Desde</label>
                                             <input type="date" id="filtroFechaRevisionCompaniaDesde">
@@ -724,7 +745,11 @@
 
                                     <!-- Filtrar por fecha de pago -->
                                     <div class="form-row fecha_cuadrado">
-                                        <h4>Filtrar por fecha de pago</h4>
+                                        <div class="filtro-group-row">
+                                            <h4>Filtrar por fecha de pago</h4>
+                                            <label for="nullFechaPago">Sin pago</label>
+                                            <input type="checkbox" name="nullFechaPago" id="nullFechaPago">
+                                        </div>
                                         <div class="filtro-group">
                                             <label>Fecha de ultimo pago Desde</label>
                                             <input type="date" id="filtroFechaUltimoPagoDesde">
@@ -737,7 +762,11 @@
 
                                     <!-- Filtrar por fecha de seguimiento -->
                                     <div class="form-row fecha_cuadrado">
-                                        <h4>Filtrar por fecha de seguimiento</h4>
+                                        <div class="filtro-group-row">
+                                            <h4>Filtrar por fecha de seguimiento</h4>
+                                            <label for="nullFechaSeguimiento">Sin seguimiento</label>
+                                            <input type="checkbox" name="nullFechaSeguimiento" id="nullFechaSeguimiento">
+                                        </div>
                                         <div class="filtro-group">
                                             <label for="filtroSeguimientoDesde">Seguimiento desde</label>
                                             <input type="date" id="filtroSeguimientoDesde">

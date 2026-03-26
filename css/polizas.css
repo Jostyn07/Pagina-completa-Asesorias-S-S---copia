@@ -1178,3 +1178,15 @@ tbody td {
 .btn-exportar {
     color: #333 !important;
 }
+
+.filtro-group-row {
+    display: flex;
+    gap: 10px
+}
+
+.filtro-group-row label {
+    font-size: 12px; 
+    align-self: center;
+    text-align: center;
+    color: #555;
+}
