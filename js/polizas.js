@@ -76,6 +76,8 @@ function guardarFiltrosEnStorage() {
             fechaUltimoPagoHasta: document.getElementById('filtroFechaUltimoPagoHasta')?.value || '',
             plazoDocumentosDesde: document.getElementById('filtroFechaPlazoDocumentosDesde')?.value || '',
             PlazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosHasta')?.value || '',
+            fechaModificacionDesde: document.getElementById('filtroModificacionDesde')?.value || '',
+            fechaModificacionHasta: document.getElementById('filtroModificacionHasta')?.value || '',
         };
 
         localStorage.setItem(FILTROS_STORAGE_KEY, JSON.stringify(datos));
@@ -178,6 +180,8 @@ function restaurarFiltrosDesdeStorage() {
     set('filtroSeguimientoHasta', datos.fechaSeguimientoHasta);
     set('filtroFechaPlazoDocumentosDesde', datos.plazoDocumentosDesde);
     set('filtroFechaPlazoDocumentosHasta', datos.plazoDocumentosHasta);
+    set('filtroModificacionDesde', datos.filtroModificacionDesde);
+    set('filtroModificacionhasta', datos.filtroModificacionHasta);
 
     // 3. Reconstruir filtrosActivos para que el sistema sepa que hay filtros vivos
     filtrosActivos = {
@@ -342,6 +346,7 @@ function restaurarFiltrosDesdeStorage() {
             if (!filtrarPorRangoFecha(poliza.fecha_revision_compania, filtrosActivos.fechaRevisionCompaniaDesde, filtrosActivos.fechaRevisionCompaniaHasta)) return false;
             if (!filtrarPorRangoFecha(poliza.pagado_hasta, filtrosActivos.fechaUltimoPagoDesde, filtrosActivos.fechaUltimoPagoHasta)) return false;
             if (!filtrarPorRangoFecha(poliza.fecha_plazo_documentos, filtrosActivos.plazoDocumentosDesde, filtrosActivos.plazoDocumentosHasta)) return false;
+            if (!filtrarPorRangoFecha(poliza.updated_at, filtrosActivos.filtroModificacionDesde, filtrosActivos.filtroModificacionHasta)) return false;
 
             if (filtrosActivos.fechaSeguimientoDesde || filtrosActivos.fechaSeguimientoHasta) {
                 if (!poliza.seguimientos || poliza.seguimientos.length === 0) return false;
@@ -2385,7 +2390,9 @@ function aplicarFiltrosAvanzados() {
         fechaSeguimientoHasta: document.getElementById('filtroSeguimientoHasta').value,
         seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo').value,
         plazoDocumentosDesde: document.getElementById('filtroFechaPlazoDocumentosDesde').value,
-        plazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosHasta').value
+        plazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosHasta').value,
+        filtroModificacionDesde: document.getElementById('filtroModificacionDesde').value,
+        filtroModificacionHasta: document.getElementById('filtroModificacionHasta').value
     };
     
     //  Verificar si hay algún filtro activo
@@ -2557,6 +2564,7 @@ function aplicarFiltrosAvanzados() {
         if (!filtrarPorRangoFecha(poliza.fecha_revision_compania, filtrosActivos.fechaRevisionCompaniaDesde, filtrosActivos.fechaRevisionCompaniaHasta)) return false;
         if (!filtrarPorRangoFecha(poliza.pagado_hasta, filtrosActivos.fechaUltimoPagoDesde, filtrosActivos.fechaUltimoPagoHasta)) return false
         if (!filtrarPorRangoFecha(poliza.fecha_plazo_documentos, filtrosActivos.plazoDocumentosDesde, filtrosActivos.plazoDocumentosHasta)) return false
+        if (!filtrarPorRangoFecha(poliza.updated_at, filtrosActivos.filtroModificacionDesde, filtrosActivos.filtroModificacionHasta)) return false
         if (filtrosActivos.fechaSeguimientoDesde || filtrosActivos.fechaSeguimientoHasta) {
 
             if (!poliza.seguimientos || poliza.seguimientos.length === 0) {
