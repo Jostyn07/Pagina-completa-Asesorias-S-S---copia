@@ -646,7 +646,7 @@ function renderizarTabla() {
             <td data-label="Efectividad">${formatoUS(poliza.fecha_efectividad)}</td>
             <td data-label="Creación">${formatoUS(poliza.created_at)}</td>
             <td data-label="Modificación">${formatearFechaHora(poliza.updated_at)}</td>
-            <td data-label="Modificación">${poliza.modificado_por_nombre || '-'}</td>
+            <td data-label="Modificación realizada por">${poliza.modificado_por_nombre || '-'}</td>
             <td data-label="Último seguimiento">${ultimoSeguimiento}</td>
             <td data-label="Seguimiento efectivo">${seguimientoEfectivo}</td>
         `;
