@@ -38,43 +38,70 @@ async function cargarClientesArchivados() {
 }
 
 // Renderizar tabla
-function renderizarTablaArchivados() {
-    const tbody = document.getElementById('tablaArchivados');
-    
-    if (!tbody) return;
-    
-    if (clientesArchivados.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 40px;">
-                    <span class="material-symbols-rounded" style="font-size: 48px; opacity: 0.3;">inventory_2</span>
-                    <p>No hay clientes archivados</p>
-                </td>
-            </tr>
-        `;
+function renderizarTablaArchivados(lista = clientesArchivados) {
+    const contenedor = document.getElementById('tablaArchivados');
+    const contador = document.getElementById('contadorArchivados');
+
+    if (contador) contador.textContent = `${lista.length} cliente${lista.length !== 1 ? 's' : ''}`;
+
+    if (!contenedor) return;
+
+    if (lista.length === 0) {
+        contenedor.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-rounded">inventory_2</span>
+                <p>No hay clientes archivados</p>
+            </div>`;
         return;
     }
-    
-    tbody.innerHTML = '';
-    
-    clientesArchivados.forEach(cliente => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${cliente.nombres} ${cliente.apellido}</td>
-            <td>${cliente.telefono1 || '-'}</td>
-            <td>${cliente.email || '-'}</td>
-            <td>${cliente.archivado_por || '-'}</td>
-            <td>${cliente.archivado_fecha ? new Date(cliente.archivado_fecha).toLocaleDateString('es-ES') : '-'}</td>
-            <td>${cliente.motivo_archivo || '-'}</td>
-            <td>
+
+    contenedor.innerHTML = lista.map(cliente => {
+        const nombre = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim();
+        const iniciales = nombre.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+        const fecha = cliente.archivado_fecha
+            ? new Date(cliente.archivado_fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
+            : '-';
+
+        return `
+        <div class="card-archivado">
+            <div class="card-top">
+                <div class="card-avatar">${iniciales}</div>
+                <div>
+                    <div class="card-nombre">
+                        <a href="./cliente_editar.html?id=${cliente.id}&modo=ver" style="text-decoration:none; color:inherit; cursor:pointer;">
+                            ${nombre}
+                        </a>
+                    </div>
+                    <div class="card-email">${cliente.email || '-'}</div>
+                </div>
+            </div>
+            <div class="card-details">
+                <div class="card-detail-item">
+                    <label>Teléfono</label>
+                    <span>${cliente.telefono1 || '-'}</span>
+                </div>
+                <div class="card-detail-item">
+                    <label>Archivado por</label>
+                    <span>${cliente.archivado_por || '-'}</span>
+                </div>
+                <div class="card-detail-item">
+                    <label>Fecha</label>
+                    <span>${fecha}</span>
+                </div>
+            </div>
+            ${cliente.motivo_archivo ? `
+            <div class="card-motivo">
+                <span class="material-symbols-rounded">info</span>
+                ${cliente.motivo_archivo}
+            </div>` : ''}
+            <div class="card-footer">
                 <button class="btn-restaurar" onclick="restaurarCliente('${cliente.id}')">
                     <span class="material-symbols-rounded">unarchive</span>
                     Restaurar
                 </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+            </div>
+        </div>`;
+    }).join('');
 }
 
 // Restaurar cliente
@@ -112,40 +139,13 @@ async function restaurarCliente(clienteId) {
 // Buscar
 function buscarArchivados() {
     const busqueda = document.getElementById('searchArchivados').value.toLowerCase();
-    
-    if (!busqueda) {
-        renderizarTablaArchivados();
-        return;
-    }
-    
-    const filtrados = clientesArchivados.filter(c => 
+    const filtrados = !busqueda ? clientesArchivados : clientesArchivados.filter(c =>
         c.nombres?.toLowerCase().includes(busqueda) ||
-        c.apellido?.toLowerCase().includes(busqueda) ||
+        c.apellidos?.toLowerCase().includes(busqueda) ||
         c.telefono1?.includes(busqueda) ||
         c.email?.toLowerCase().includes(busqueda)
     );
-    
-    const tbody = document.getElementById('tablaArchivados');
-    tbody.innerHTML = '';
-    
-    filtrados.forEach(cliente => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${cliente.nombres} ${cliente.apellido}</td>
-            <td>${cliente.telefono1 || '-'}</td>
-            <td>${cliente.email || '-'}</td>
-            <td>${cliente.archivado_por || '-'}</td>
-            <td>${cliente.archivado_fecha ? new Date(cliente.archivado_fecha).toLocaleDateString('es-ES') : '-'}</td>
-            <td>${cliente.motivo_archivo || '-'}</td>
-            <td>
-                <button class="btn-restaurar" onclick="restaurarCliente('${cliente.id}')">
-                    <span class="material-symbols-rounded">unarchive</span>
-                    Restaurar
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+    renderizarTablaArchivados(filtrados);
 }
 
 // Cargar al iniciar

@@ -238,6 +238,7 @@ function restaurarFiltrosDesdeStorage() {
     if (datos.busqueda) {
         const termino = datos.busqueda.toLowerCase();
         resultado = resultado.filter(poliza => {
+            if (poliza.cliente?.archivado === true) return false;
             const cliente = poliza.cliente || {};
             const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.toLowerCase();
             return nombreCompleto.includes(termino) ||
@@ -257,6 +258,7 @@ function restaurarFiltrosDesdeStorage() {
         if (datos.anio2025) anios.push('2025');
         if (datos.anio2026) anios.push('2026');
         resultado = resultado.filter(poliza => {
+            if (poliza.cliente?.archivado === true) return false;
             if (!poliza.fecha_efectividad) return false;
             const anio = new Date(poliza.fecha_efectividad).getFullYear().toString();
             return anios.includes(anio);
@@ -267,7 +269,7 @@ function restaurarFiltrosDesdeStorage() {
     if (hayAvanzados) {
         resultado = resultado.filter(poliza => {
             const cliente = poliza.cliente || {};
-
+            if (poliza.cliente?.archivado === true) return false;
             if (filtrosActivos.nombre && !cliente.nombres?.toLowerCase().includes(filtrosActivos.nombre)) return false;
             if (filtrosActivos.apellido && !cliente.apellidos?.toLowerCase().includes(filtrosActivos.apellido)) return false;
             if (filtrosActivos.telefono && !cliente.telefono1?.toLowerCase().includes(filtrosActivos.telefono)) return false;
@@ -463,6 +465,8 @@ async function cargarPolizas() {
                 pagado_hasta,
                 fecha_plazo_documentos,
                 nombre_agente_mercado,
+                modificado_por_nombre,
+                modificado_por_email,
                 clave_seguridad,
                 cliente:clientes (
                     id,
@@ -481,6 +485,7 @@ async function cargarPolizas() {
                     tipo_modificacion,
                     operador_nombre,
                     tiene_social,
+                    archivado,
                     metodos_pago (
                         tiene_metodo_pago
                     )
@@ -515,11 +520,20 @@ async function cargarPolizas() {
         
         ;
 
-        todasLasPolizas = data || [];
-        polizasFiltradas = data || [];
+        todasLasPolizas = (data || []).filter(p => !p.cliente?.archivado);
+        polizasFiltradas = (data || []).filter(p => !p.cliente?.archivado);
         paginaActual = 1;
 
         const estadisticas = calcularEstadisticas(todasLasPolizas);
+        const nombresUnicos = [...new Set(todasLasPolizas
+            .map(p => p.modificado_por_nombre)
+            .filter(Boolean))].sort();
+
+        const selectModificadoPor = document.getElementById('filtroModificadoPor');
+        selectModificadoPor.innerHTML = '<option value="">Todos</option>';
+        nombresUnicos.forEach(nombre => {
+            selectModificadoPor.innerHTML += `<option value="${nombre}">${nombre}</option>`;
+        });
         actualizarTarjetas(estadisticas);
         actualizarIndicadoresRol();
 
@@ -632,6 +646,7 @@ function renderizarTabla() {
             <td data-label="Efectividad">${formatoUS(poliza.fecha_efectividad)}</td>
             <td data-label="Creación">${formatoUS(poliza.created_at)}</td>
             <td data-label="Modificación">${formatearFechaHora(poliza.updated_at)}</td>
+            <td data-label="Modificación">${poliza.modificado_por_nombre || '-'}</td>
             <td data-label="Último seguimiento">${ultimoSeguimiento}</td>
             <td data-label="Seguimiento efectivo">${seguimientoEfectivo}</td>
         `;
@@ -1179,6 +1194,7 @@ function buscarPolizas(termino) {
         polizasFiltradas = todasLasPolizas;
     } else {
         polizasFiltradas = todasLasPolizas.filter(poliza => {
+            if (poliza.cliente?.archivado === true) return false;
             const cliente = poliza.cliente || {};
             const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.toLowerCase();
             const telefono = cliente.telefono1 || '';
@@ -1255,6 +1271,7 @@ function aplicarFiltros() {
         polizasFiltradas = todasLasPolizas;
     } else {
         polizasFiltradas = todasLasPolizas.filter(poliza => {
+            if (poliza.cliente?.archivado === true) return false;
             if (!poliza.fecha_efectividad) return false;
             const año = new Date(poliza.fecha_efectividad).getFullYear().toString();
             return años.includes(año);
@@ -1920,7 +1937,8 @@ async function cerrarSesion() {
 async function cargarInfoUsuario() {
     try {
         // Obtener usuario autenticado
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const user = session?.user;
                 
         if (!user) {
             console.warn('⚠️ No hay usuario autenticado');
@@ -2071,6 +2089,7 @@ function limpiarFiltros() {
     });
     actualizarTextoTipoVentas();
     document.getElementById('filtroOperador').value = '';
+    document.getElementById('filtroModificadoPor').value = '';
     document.getElementById('filtroEstadoMercado').value = '';
     document.getElementById('agenteMercado').value = '';
     document.getElementById('filtroEstadoCompania').value = '';
@@ -2364,6 +2383,7 @@ function aplicarFiltrosAvanzados() {
         filtroTipoModificacion: document.getElementById('tipoModificacion').value,
         tiposVenta: Array.from(document.querySelectorAll('#panelTipoVentas input:checked')).map(cb => cb.value),
         operador: document.getElementById('filtroOperador').value,
+        modificadoPor: document.getElementById('filtroModificadoPor').value,
         documentos: document.getElementById('filtroDocumentos').value,
         filtroAgenteMercado: document.getElementById('agenteMercado').value,
         estadoMercado: document.getElementById('filtroEstadoMercado').value,
@@ -2400,6 +2420,7 @@ function aplicarFiltrosAvanzados() {
     
     // Filtrar pólizas
     polizasFiltradas = todasLasPolizas.filter(poliza => {
+        if (poliza.cliente?.archivado === true) return false;
         const cliente = poliza.cliente || {};
         
         // Filtro por nombre
@@ -2520,6 +2541,11 @@ function aplicarFiltrosAvanzados() {
         
         // Filtro por operador (solo para admins)
         if (filtrosActivos.operador && poliza.operador_nombre !== filtrosActivos.operador) {
+            return false;
+        }
+
+        // Filtro por quién modificó
+        if (filtrosActivos.modificadoPor && poliza.modificado_por_nombre !== filtrosActivos.modificadoPor) {
             return false;
         }
         

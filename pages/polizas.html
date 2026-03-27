@@ -180,6 +180,11 @@
                     <span class="material-symbols-rounded">archive</span>
                     <span>Clientes Archivados</span>
                 </a>
+                
+                <a href="./clientes_archivados.html" class="menu-item" id="menuArchivados">
+                    <span class="material-symbols-rounded">inventory_2</span>
+                    <span>Archivados</span>
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -542,21 +547,12 @@
                                         <label>Operador (Solo Admin)</label>
                                         <select id="filtroOperador">
                                             <option value="">Todos</option>
-                                            <!-- <option value="Jostyn Aragón">Jostyn Aragón</option>
-                                            <option value="Ana Pedroza">Ana Pedroza</option>
-                                            <option value="Edgar Sanchez">Edgar Sanchez</option>
-                                            <option value="Steffy Fontanilla">Steffy Fontanilla</option>
-                                            <option value="Laura Restrepo">Laura Restrepo</option>
-                                            <option value="Lisney Monsalvo">Lisney Monsalvo</option>
-                                            <option value="Daniel Orellano">Daniel Orellano</option>
-                                            <option value="Daniela Severiche">Daniela Severiche</option>
-                                            <option value="Luisa Narváez">Luisa Narváez</option>
-                                            <option value="Lizeth Escorcia">Lizeth Escorcia</option>
-                                            <option value="Elaine Sánchez">Elaine Sánchez</option>
-                                            <option value="Kevin Marin1o">Kevin Marino</option>
-                                            <option value="Lean Barrios">Lean Barrios</option>
-                                            <option value="Eduardo Oliva">Eduardo Oliva</option>
-                                            <option value="Michell Suárez">Michell Suárez</option> -->
+                                        </select>
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Modificado por</label>
+                                        <select id="filtroModificadoPor">
+                                            <option value="">Todos</option>
                                         </select>
                                     </div>
                                     <div class="filtro-group">
@@ -863,6 +859,7 @@
                                 <th class="sortable" data-column="fecha_efectividad">Efectividad</th>
                                 <th class="sortable" data-column="created_at">Creación</th>
                                 <th class="sortable" data-column="updated_at">Modificación</th>
+                                <th class="sortable" data-column="updated_at">Modificación realizada por</th>
                                 <th class="sortable" data-column="ultimo_seguimiento">Último Seguimiento</th>
                                 <th >Seguimiento efectivo</th>
                             </tr>

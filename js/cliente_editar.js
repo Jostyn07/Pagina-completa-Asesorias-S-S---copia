@@ -17,7 +17,25 @@ const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 // ============================================
 // INICIALIZACIÓN
 // ============================================
-document.addEventListener('DOMContentLoaded', async function() {    
+document.addEventListener('DOMContentLoaded', async function() {
+    const modoVer = urlParams.get('modo') === 'ver';
+
+    if (modoVer) {
+        // Deshabilitar todos los inputs, selects y textareas
+        document.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+        // Ocultar botón guardar
+        const btnSubmit = document.getElementById('btnSubmit');
+        if (btnSubmit) btnSubmit.style.display = 'none';
+        // Ocultar botón archivar
+        const btnArchivar = document.getElementById('btnArchivarCliente');
+        if (btnArchivar) btnArchivar.style.display = 'none';
+        // Mostrar banner de solo lectura
+        const banner = document.createElement('div');
+        banner.style.cssText = 'background:#fef9ec;border:1px solid #fde68a;color:#92400e;padding:10px 18px;border-radius:8px;margin:12px 24px;display:flex;align-items:center;gap:8px;font-size:0.88rem;font-weight:600;';
+        banner.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">visibility</span> Modo solo lectura — Cliente archivado';
+        document.querySelector('.main__container')?.prepend(banner);
+    }
+    
     // Obtener ID de la URL
     const urlParams = new URLSearchParams(window.location.search);
     clienteId = urlParams.get('id');
@@ -164,6 +182,7 @@ function formatoISO(fecha) {
 // ============================================
 
 async function aplicarPermisosEstadoMercado() {
+    if (new URLSearchParams(window.location.search).get('modo') === 'ver') return;
     const camposEstadoMercado = [
         'fechaRevisionMercado',
         'estadoMercado',
@@ -385,7 +404,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if (cliente.telefono2) document.getElementById('telefono2').value = cliente.telefono2 || '';
        if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = formatoUS(cliente.fecha_nacimiento);
        if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio || '';
-       if (cliente.nombre_agente) document.getElementById('nombreAgente').value = cliente.nombre_agente || '';
+       if (cliente.nombre_agente) document.getElementById('agenteNombre').value = cliente.nombre_agente || '';
         
         const ssnInput = document.getElementById('ssn');
         if (ssnInput && cliente.ssn) {
@@ -1770,6 +1789,15 @@ async function actualizarCliente(id, formData) {
 // ============================================
 
 async function actualizarPoliza(polizaId, formData) {
+
+    const { data: { user }} = await supabaseClient.auth.getUser();
+    const {data: usuarioData} = await supabaseClient
+        .from('usuarios')
+        .select('nombre')
+        .eq('email', user.email)
+        .single();
+    
+    const usuarioNombre = usuarioData?.nombre || user.email;
     
     const polizaData = {
         aplicantes: parseInt(document.getElementById('aplicantes').value) || 1,
@@ -1791,7 +1819,9 @@ async function actualizarPoliza(polizaId, formData) {
         fecha_plazo_documentos: formData.fechaPlazoDocumento || null,
         agente35_estado: formData.agente35_estado || null,
         agente35_notas: formData.agente35_notas || null,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        modificado_por_nombre: usuarioNombre,
+        modificado_por_email: user.email,
     };
     
     if (polizaId) {

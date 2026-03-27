@@ -502,6 +502,15 @@ document.addEventListener('click', function(event) {
     }
 });
 
+async function inicializarMenuAdmin() {
+    await cargarRolUsuario();
+    const menuArchivados = document.getElementById('menuArchivados');
+    if (menuArchivados && esAdministrador()) {
+        menuArchivados.style.display = 'flex';
+    }
+}
+document.addEventListener('DOMContentLoaded', inicializarMenuAdmin);
+
 async function cerrarSesion() {
     const confirmacion = confirm('¿Estás seguro de que deseas cerrar sesión?');
     

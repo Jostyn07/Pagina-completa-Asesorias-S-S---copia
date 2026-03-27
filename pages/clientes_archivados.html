@@ -12,79 +12,387 @@
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/polizas.css">
     <link rel="stylesheet" href="../css/darkmode.css">
+    <style>
+        .archivados-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 28px 8px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .archivados-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-text-primary, #1a1a2e);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+
+        .archivados-header h1 span {
+            color: #8b8ef8;
+        }
+
+        .archivados-counter {
+            background: #f0f0ff;
+            color: #5b5bd6;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        [data-theme="dark"] .archivados-counter {
+            background: var(--dk-accent-bg);
+            color: var(--dk-accent);
+        }
+
+        .search-bar-archivados {
+            padding: 0 28px 20px;
+        }
+
+        .search-bar-archivados .search-inner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px 16px;
+            max-width: 420px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        [data-theme="dark"] .search-bar-archivados .search-inner {
+            background: var(--dk-surface-1);
+            border-color: var(--dk-border);
+        }
+
+        .search-bar-archivados input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 0.9rem;
+            width: 100%;
+            color: var(--color-text-primary, #1a1a2e);
+        }
+
+        .search-bar-archivados .material-symbols-rounded {
+            color: #94a3b8;
+            font-size: 20px;
+        }
+
+        .cards-archivados {
+            padding: 0 28px 28px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .card-archivado {
+            background: #fff;
+            border: 1px solid #e8ecf4;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: box-shadow 0.2s, transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .card-archivado:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        [data-theme="dark"] .card-archivado {
+            background: var(--dk-surface-1);
+            border-color: var(--dk-border);
+            box-shadow: var(--dk-shadow-sm);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .card-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e0e0ff, #c7c7f8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #5b5bd6;
+            flex-shrink: 0;
+        }
+
+        [data-theme="dark"] .card-avatar {
+            background: var(--dk-accent-bg);
+            color: var(--dk-accent);
+        }
+
+        .card-nombre {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--color-text-primary, #1a1a2e);
+            line-height: 1.2;
+        }
+
+        .card-email {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        [data-theme="dark"] .card-email {
+            color: var(--dk-text-secondary);
+        }
+
+        .card-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .card-detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .card-detail-item label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        [data-theme="dark"] .card-detail-item label {
+            color: var(--dk-text-tertiary);
+        }
+
+        .card-detail-item span {
+            font-size: 0.85rem;
+            color: var(--color-text-primary, #1a1a2e);
+            font-weight: 500;
+        }
+
+        [data-theme="dark"] .card-detail-item span {
+            color: var(--dk-text-primary);
+        }
+
+        .card-motivo {
+            background: #fef9ec;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.82rem;
+            color: #92400e;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        [data-theme="dark"] .card-motivo {
+            background: rgba(229, 180, 78, 0.08);
+            border-color: rgba(229, 180, 78, 0.25);
+            color: var(--dk-warning);
+        }
+
+        .card-motivo .material-symbols-rounded {
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-restaurar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            background: linear-gradient(135deg, #8b8ef8, #6366f1);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+
+        .btn-restaurar:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-restaurar .material-symbols-rounded {
+            font-size: 18px;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state .material-symbols-rounded {
+            font-size: 56px;
+            opacity: 0.3;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin: 0;
+        }
+    </style>
 </head>
 <body>
-    <!-- SIDEBAR (copiar del polizas.html) -->
-    <aside class="sidebar-unified" id="sidebar">
-        <!-- ... mismo sidebar ... -->
-    </aside>
-
-    <div class="main-container">
-        <header class="page-header">
-            <div class="header-left">
-                <button class="btn-back" onclick="window.location.href='./polizas.html'">
-                    <span class="material-symbols-rounded">arrow_back</span>
-                    Volver a Pólizas 
+    <div class="container">
+        <aside class="sidebar-unified" id="sidebar">
+            <div class="sidebar-header">
+                <a href="./home.html" class="sidebar-logo-link">
+                    <img src="../images/Logo.png" alt="S&S Asesorías" class="sidebar-logo-img">
+                </a>
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+                    <span class="material-symbols-rounded">chevron_left</span>
                 </button>
-                <h1>📦 Clientes Archivados</h1>
             </div>
-        </header>
-
-        <main class="main__container">
-            <!-- Info -->
-            <div class="alert alert-info" style="margin: 20px; display: flex;">
-                <span class="material-symbols-rounded">info</span>
-                <div>
-                    <strong>Clientes Archivados</strong>
-                    <p>Aquí se encuentran los clientes que han sido archivados. Puedes restaurarlos en cualquier momento.</p>
+            <div class="sidebar-search">
+                <div class="search-box">
+                    <span class="material-symbols-rounded">search</span>
+                    <input type="text" placeholder="Buscar...">
                 </div>
             </div>
+            <nav class="sidebar-nav">
+                <a href="./home.html" class="menu-item">
+                    <span class="material-symbols-rounded">home</span>
+                    <span>Inicio</span>
+                </a>
+                <a href="./polizas.html" class="menu-item">
+                    <span class="material-symbols-rounded">description</span>
+                    <span>Pólizas</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <span class="material-symbols-rounded">folder</span>
+                    <span>Gestiones</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <span class="material-symbols-rounded">rate_review</span>
+                    <span>Solicitud de revisión mercado</span>
+                </a>
+                <a href="./para-revisar.html" class="menu-item">
+                    <span class="material-symbols-rounded">fact_check</span>
+                    <span>Para revisar</span>
+                </a>
+                <a href="./control_calidad.html" class="menu-item">
+                    <span class="material-symbols-rounded">verified</span>
+                    <span>Control de calidad</span>
+                </a>
+                <a href="./historial_evaluacion.html" class="menu-item">
+                    <span class="material-symbols-rounded">history</span>
+                    <span>Mis Evaluaciones</span>
+                </a>
+                <a href="./usuarios.html" class="menu-item" id="menuUsuarios">
+                    <span class="material-symbols-rounded">group</span>
+                    <span>Usuarios</span>
+                </a>
+                <a href="./clientes_archivados.html" class="menu-item active" id="menuArchivados" style="display: none;">
+                    <span class="material-symbols-rounded">inventory_2</span>
+                    <span>Archivados</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="btnDarkMode" class="theme-toggle" onclick="toggleDarkMode()" title="Cambiar tema">
+                    <span class="material-symbols-rounded">dark_mode</span>
+                </button>
+            </div>
+        </aside>
 
-            <!-- Barra de búsqueda -->
-            <div class="container__form">
-                <div class="bar__search">
-                    <input 
-                        type="text" 
-                        id="searchArchivados" 
-                        class="search" 
-                        placeholder="Buscar cliente archivado..."
-                    >
-                    <button class="button__bar" onclick="buscarArchivados()">
+        <div class="container__flex">
+            <header class="header">
+                <div class="header__welcome">
+                    <div class="header__welcome__new">
+                        <label>Clientes Archivados</label>
+                    </div>
+                    <div class="header__welcome__inf">
+                        <p>Hola, <span class="nombre-usuario">Usuario</span></p>
+                        <div class="user-menu">
+                            <button class="user-profile-btn" onclick="toggleUserMenu()">
+                                <img src="https://ui-avatars.com/api/?name=Usuario&background=667eea&color=fff&size=40"
+                                    alt="Usuario" class="user-avatar">
+                                <span class="material-symbols-rounded dropdown-icon">expand_more</span>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown">
+                                <div class="user-dropdown-header">
+                                    <div class="user-info">
+                                        <strong id="userName">Usuario</strong>
+                                        <small id="userEmail">usuario@ejemplo.com</small>
+                                    </div>
+                                </div>
+                                <div class="user-dropdown-divider"></div>
+                                <button class="dropdown-item">
+                                    <span class="material-symbols-rounded">person</span>
+                                    Mi Perfil
+                                </button>
+                                <button class="dropdown-item">
+                                    <span class="material-symbols-rounded">settings</span>
+                                    Configuración
+                                </button>
+                                <div class="user-dropdown-divider"></div>
+                                <button class="dropdown-item danger" onclick="cerrarSesion()">
+                                    <span class="material-symbols-rounded">logout</span>
+                                    Cerrar Sesión
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="main__container">
+                <div class="archivados-header">
+                    <h1>
+                        <span class="material-symbols-rounded">inventory_2</span>
+                        Clientes Archivados
+                    </h1>
+                    <span class="archivados-counter" id="contadorArchivados">0 clientes</span>
+                </div>
+
+                <div class="search-bar-archivados">
+                    <div class="search-inner">
                         <span class="material-symbols-rounded">search</span>
-                        Buscar
-                    </button>
+                        <input type="text" id="searchArchivados" placeholder="Buscar por nombre, teléfono o email..." oninput="buscarArchivados()">
+                    </div>
                 </div>
-            </div>
 
-            <!-- Tabla de archivados -->
-            <div class="content">
-                <div class="content__info-client">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th>Teléfono</th>
-                                <th>Email</th>
-                                <th>Archivado Por</th>
-                                <th>Fecha Archivado</th>
-                                <th>Motivo</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaArchivados">
-                            <tr>
-                                <td colspan="7" style="text-align: center; padding: 40px;">
-                                    Cargando clientes archivados...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="cards-archivados" id="tablaArchivados">
+                    <div class="empty-state">
+                        <span class="material-symbols-rounded">inventory_2</span>
+                        <p>Cargando clientes archivados...</p>
+                    </div>
                 </div>
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
     <script src="../js/permisos.js"></script>
