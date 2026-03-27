@@ -1043,9 +1043,6 @@ async function cargarNotas(clienteId) {
                             <span class="nota-usuario">${nota.usuario_nombre || nota.usuario_email}</span>
                             <span class="nota-fecha">${formatoUS(nota.created_at)}</span>
                         </div>
-                        <button type="button" class="btn-remove-nota" onclick="confirmarEliminarNota('${nota.id}')">
-                            <span class="material-symbols-rounded">delete</span>
-                        </button>
                     </div>
                     <div class="nota-mensaje">${nota.mensaje || ''}</div>
                     ${nota.imagenes && nota.imagenes.length > 0 ? `
