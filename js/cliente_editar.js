@@ -18,23 +18,23 @@ const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 // INICIALIZACIÓN
 // ============================================
 document.addEventListener('DOMContentLoaded', async function() {
-    const modoVer = urlParams.get('modo') === 'ver';
+    // const modoVer = urlParams.get('modo') === 'ver';
 
-    if (modoVer) {
-        // Deshabilitar todos los inputs, selects y textareas
-        document.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
-        // Ocultar botón guardar
-        const btnSubmit = document.getElementById('btnSubmit');
-        if (btnSubmit) btnSubmit.style.display = 'none';
-        // Ocultar botón archivar
-        const btnArchivar = document.getElementById('btnArchivarCliente');
-        if (btnArchivar) btnArchivar.style.display = 'none';
-        // Mostrar banner de solo lectura
-        const banner = document.createElement('div');
-        banner.style.cssText = 'background:#fef9ec;border:1px solid #fde68a;color:#92400e;padding:10px 18px;border-radius:8px;margin:12px 24px;display:flex;align-items:center;gap:8px;font-size:0.88rem;font-weight:600;';
-        banner.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">visibility</span> Modo solo lectura — Cliente archivado';
-        document.querySelector('.main__container')?.prepend(banner);
-    }
+    // if (modoVer) {
+    //     // Deshabilitar todos los inputs, selects y textareas
+    //     document.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+    //     // Ocultar botón guardar
+    //     const btnSubmit = document.getElementById('btnSubmit');
+    //     if (btnSubmit) btnSubmit.style.display = 'none';
+    //     // Ocultar botón archivar
+    //     const btnArchivar = document.getElementById('btnArchivarCliente');
+    //     if (btnArchivar) btnArchivar.style.display = 'none';
+    //     // Mostrar banner de solo lectura
+    //     const banner = document.createElement('div');
+    //     banner.style.cssText = 'background:#fef9ec;border:1px solid #fde68a;color:#92400e;padding:10px 18px;border-radius:8px;margin:12px 24px;display:flex;align-items:center;gap:8px;font-size:0.88rem;font-weight:600;';
+    //     banner.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">visibility</span> Modo solo lectura — Cliente archivado';
+    //     document.querySelector('.main__container')?.prepend(banner);
+    // }
     
     // Obtener ID de la URL
     const urlParams = new URLSearchParams(window.location.search);
