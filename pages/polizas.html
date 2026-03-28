@@ -535,9 +535,18 @@
                                     </div>
                                     <div class="filtro-group" id="filtroOperadorGroup">
                                         <label>Operador (Solo Admin)</label>
-                                        <select id="filtroOperador">
-                                            <option value="">Todos</option>
-                                        </select>
+                                        <div class="dropdown-filter">
+                                            <button type="button" class="dropdown-trigger" id="triggerOperadores" onclick="toggleDropdownOperadores(event)">
+                                                <span id="textoOperadores">Todos los operadores</span>
+                                                <span class="material-symbols-rounded">expand_more</span>
+                                            </button>
+                                            <div class="dropdown-panel" id="panelOperadores">
+                                                <div class="dropdown-search">
+                                                    <input type="text" id="buscarOperador" placeholder="Buscar..." onkeyup="filtrarOpcionesOperador()">
+                                                </div>
+                                                <div class="checkbox-list-scroll" id="listaOperadores"></div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="filtro-group">
                                         <label>Modificado por</label>

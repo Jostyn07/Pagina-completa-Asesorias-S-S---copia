@@ -1043,6 +1043,9 @@ async function cargarNotas(clienteId) {
                             <span class="nota-usuario">${nota.usuario_nombre || nota.usuario_email}</span>
                             <span class="nota-fecha">${formatoUS(nota.created_at)}</span>
                         </div>
+                        <button type="button" class="btn-remove-nota" onclick="confirmarEliminarNota('${nota.id}')">
+                            <span class="material-symbols-rounded">delete</span>
+                        </button>
                     </div>
                     <div class="nota-mensaje">${nota.mensaje || ''}</div>
                     ${nota.imagenes && nota.imagenes.length > 0 ? `
@@ -1180,6 +1183,23 @@ async function agregarNota(clienteId) {
 }
 
 async function confirmarEliminarNota(notaId) {
+    const CORREOS_PERMITIDOS = [
+        'jostyn@ssasesorias.com',
+        'ericadeoro@asesoriasth.com',
+        'leanbarrios@asesoriasth.com',
+        'juanospino@asesoriasth.com',
+        'vivianberdugo@asesoriasth.com',
+        'edgarsanchez@asesoriasth.com',
+    ];
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const emailActual = session?.user?.email;
+
+    if (!CORREOS_PERMITIDOS.includes(emailActual)) {
+        alert('⚠️ No tienes permisos para eliminar notas.');
+        return;
+    }
+    
     if (!confirm('¿Eliminar esta nota?')) return;
     
     try {
@@ -2355,12 +2375,12 @@ function previsualizarImagenesNota() {
     mostrarNotificacion(`✅ ${numArchivos} imagen${numArchivos > 1 ? 'es' : ''} agregada${numArchivos > 1 ? 's' : ''}`, 'success');
 }
 
-function quitarImagenNota(index) {
-    imagenesNotaSeleccionadas.splice(index, 1);
-    actualizarPrevisualizacionImagenes();
-    actualizarContadorImagenes();
-    mostrarNotificacion('🗑️ Imagen eliminada', 'info');
-}
+// function quitarImagenNota(index) {
+//     imagenesNotaSeleccionadas.splice(index, 1);
+//     actualizarPrevisualizacionImagenes();
+//     actualizarContadorImagenes();
+//     mostrarNotificacion('🗑️ Imagen eliminada', 'info');
+// }
 
 // ============================================
 // MENÚ DE USUARIO
@@ -3390,27 +3410,42 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
  */
 function actualizarPrevisualizacionImagenes() {
     const preview = document.getElementById('imagenesPreview');
-    
     if (!preview) return;
-    
-    // Limpiar previsualizacion
+ 
     preview.innerHTML = '';
-    
-    // Renderizar todas las imagenes
+ 
     imagenesNotaSeleccionadas.forEach((imagen, index) => {
-        const imgHTML = `
-            <div class="imagen-preview" id="preview-nota-${index}">
-                <img src="${imagen}" alt="Preview ${index + 1}">
-                <button type="button" class="btn-remove-imagen" onclick="quitarImagenNota(${index})">
-                    <span class="material-symbols-rounded">close</span>
-                </button>
-                <div class="imagen-info">
-                    Imagen ${index + 1}
-                </div>
-            </div>
-        `;
-        
-        preview.insertAdjacentHTML('beforeend', imgHTML);
+        const div = document.createElement('div');
+        div.className = 'imagen-preview';
+        div.id = `preview-nota-${index}`;
+ 
+        const img = document.createElement('img');
+        img.src = imagen;
+        img.alt = `Preview ${index + 1}`;
+ 
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-remove-imagen';
+        btn.innerHTML = '<span class="material-symbols-rounded">close</span>';
+ 
+        const info = document.createElement('div');
+        info.className = 'imagen-info';
+        info.textContent = `Imagen ${index + 1}`;
+ 
+        // Closure captura el índice correcto en el momento de creación
+        (function(idx) {
+            btn.onclick = function() {
+                imagenesNotaSeleccionadas.splice(idx, 1);
+                actualizarPrevisualizacionImagenes();
+                actualizarContadorImagenes();
+                mostrarNotificacion('🗑️ Imagen eliminada', 'info');
+            };
+        })(index);
+ 
+        div.appendChild(img);
+        div.appendChild(btn);
+        div.appendChild(info);
+        preview.appendChild(div);
     });
 }
 

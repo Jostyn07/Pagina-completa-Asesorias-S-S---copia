@@ -4942,3 +4942,30 @@ input[readonly] {
         grid-template-columns: 1fr;
     }
 }
+
+.btn-remove-imagen {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 10;
+    background: rgba(220, 38, 38, 0.85);
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    pointer-events: all;
+}
+
+.btn-remove-imagen .material-symbols-rounded {
+    font-size: 16px;
+    pointer-events: none;
+}
+
+.btn-remove-imagen:hover {
+    background: rgba(220, 38, 38, 1);
+}

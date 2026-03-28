@@ -45,7 +45,7 @@ function guardarFiltrosEnStorage() {
             prima: document.getElementById('filtroPrima')?.value || '',
             filtroTipoModificacion: document.getElementById('tipoModificacion')?.value || '',
             tiposVenta: Array.from(document.querySelectorAll('#panelTipoVentas input:checked'))?.map(cb => cb.value),
-            operador: document.getElementById('filtroOperador')?.value || '',
+            operadores: Array.from(document.querySelectorAll('#panelOperadores input:checked')).map(cb => cb.value),
             documentos: document.getElementById('filtroDocumentos')?.value || '',
             seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo')?.value || '',
             filtroAgenteMercado: document.getElementById('agenteMercado')?.value || '',
@@ -293,7 +293,7 @@ function restaurarFiltrosDesdeStorage() {
                 if (!filtrosActivos.tiposVenta.includes(cliente.tipo_registro)) return false;
             }
             if (filtrosActivos.filtroTipoModificacion && cliente.tipo_modificacion !== filtrosActivos.filtroTipoModificacion) return false; 
-            if (filtrosActivos.operador && poliza.operador_nombre !== filtrosActivos.operador) return false;
+            if (filtrosActivos.operadores?.length > 0 && !filtrosActivos.operadores.includes(poliza.operador_nombre)) return false;
             if (filtrosActivos.estadoMercado) {
                 if (filtrosActivos.estadoMercado === '__null__') {
                     if (poliza.estado_mercado !== null && poliza.estado_mercado !== '' && poliza.estado_mercado !== undefined) return false;
@@ -411,7 +411,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Configurar modal
     configurarModal();
     
-    ;
+    // Cargar datos del operador
+    cargarDatosOperador();
 });
 
 
@@ -2088,7 +2089,8 @@ function limpiarFiltros() {
         cb.checked = false
     });
     actualizarTextoTipoVentas();
-    document.getElementById('filtroOperador').value = '';
+    document.querySelectorAll('#panelOperadores input[type="checkbox"]').forEach(cb => cb.checked = false);
+    actualizarTextoOperadores();
     document.getElementById('filtroModificadoPor').value = '';
     document.getElementById('filtroEstadoMercado').value = '';
     document.getElementById('agenteMercado').value = '';
@@ -2123,6 +2125,8 @@ function limpiarFiltros() {
     document.getElementById('filtroSeguimientoEfectivo').value = '';
     document.getElementById('filtroFechaPlazoDocumentosDesde').value = '';
     document.getElementById('filtroFechaPlazoDocumentosHasta').value = '';
+    document.getElementById('filtroModificacionDesde').value = '',
+    document.getElementById('filtroModificacionHasta').value = '',
     
     //  Restaurar todas las pólizas
     polizasFiltradas = todasLasPolizas;
@@ -2382,8 +2386,7 @@ function aplicarFiltrosAvanzados() {
         prima: document.getElementById('filtroPrima').value,
         filtroTipoModificacion: document.getElementById('tipoModificacion').value,
         tiposVenta: Array.from(document.querySelectorAll('#panelTipoVentas input:checked')).map(cb => cb.value),
-        operador: document.getElementById('filtroOperador').value,
-        modificadoPor: document.getElementById('filtroModificadoPor').value,
+        operadores: Array.from(document.querySelectorAll('#panelOperadores input:checked')).map(cb => cb.value),        modificadoPor: document.getElementById('filtroModificadoPor').value,
         documentos: document.getElementById('filtroDocumentos').value,
         filtroAgenteMercado: document.getElementById('agenteMercado').value,
         estadoMercado: document.getElementById('filtroEstadoMercado').value,
@@ -2540,7 +2543,7 @@ function aplicarFiltrosAvanzados() {
         }
         
         // Filtro por operador (solo para admins)
-        if (filtrosActivos.operador && poliza.operador_nombre !== filtrosActivos.operador) {
+        if (filtrosActivos.operadores?.length > 0 && !filtrosActivos.operadores.includes(poliza.operador_nombre)) {
             return false;
         }
 
@@ -2567,8 +2570,7 @@ function aplicarFiltrosAvanzados() {
             if (filtrosActivos.estadoCompania === '__null__') {
                 if (poliza.estado_compania !== null && poliza.estado_compania !== '' && poliza.estado_compania !== undefined) return false;
             } else {
-                poliza.estado_compania !== filtrosActivos.estadoCompania
-                return false
+                if (poliza.estado_compania !== filtrosActivos.estadoCompania) return false;
             }
         }
 
@@ -2695,54 +2697,80 @@ function obtenerBadgeAgente35(estado) {
 
 async function cargarDatosOperador() {
     const { data: operadores, error } = await supabaseClient
-    .from('usuarios')
-    .select('id, nombre')
-    .eq('rol', 'operador')
-    .eq('activo', true)
-    .order('nombre', { ascending: true });
+        .from('usuarios')
+        .select('id, nombre')
+        .eq('rol', 'operador')
+        .eq('activo', true)
+        .order('nombre', { ascending: true });
 
-    const select = document.getElementById('filtroOperador');
-    if (select && operadores) {
-        select.innerHTML = `<option value="">Todos</option>`;
-
-        operadores.forEach(op => {
-            select.innerHTML += `<option value="${op.nombre}">${op.nombre}</option>`
-        })
+    const lista = document.getElementById('listaOperadores');
+    if (lista && operadores) {
+        lista.innerHTML = operadores.map(op => `
+            <label class="checkbox-item">
+                <input type="checkbox" value="${op.nombre}" onchange="actualizarTextoOperadores();">
+                <span>${op.nombre}</span>
+            </label>
+        `).join('');
     }
 }
+
+function filtrarOpcionesOperador() {
+    const busqueda = document.getElementById('buscarOperador').value.toLowerCase();
+    document.querySelectorAll('#panelOperadores .checkbox-item').forEach(item => {
+        item.style.display = item.textContent.toLowerCase().includes(busqueda) ? '' : 'none';
+    });
+}
+
+function toggleDropdownOperadores(event) {
+    event.stopPropagation();
+    const panel = document.getElementById('panelOperadores');
+    const trigger = document.getElementById('triggerOperadores');
+    panel.classList.toggle('active');
+    trigger.classList.toggle('active');
+}
+
+function cerrarDropdownOperadores() {
+    const panel = document.getElementById('panelOperadores');
+    const trigger = document.getElementById('triggerOperadores');
+    if (panel) panel.classList.remove('active');
+    if (trigger) trigger.classList.remove('active');
+}
+
+function actualizarTextoOperadores() {
+    const checkboxes = document.querySelectorAll('#panelOperadores input[type="checkbox"]:checked');
+    const texto = document.getElementById('textoOperadores');
+    if (!texto) return;
+    if (checkboxes.length === 0) {
+        texto.textContent = 'Todos los operadores';
+        texto.style.color = '#94a3b8';
+    } else if (checkboxes.length === 1) {
+        texto.textContent = checkboxes[0].value;
+        texto.style.color = '#1e293b';
+    } else {
+        texto.textContent = `${checkboxes.length} operadores seleccionados`;
+        texto.style.color = '#6366f1';
+    }
+}
+
+function filtrarOpcionesOperador() {
+    const busqueda = document.getElementById('buscarOperador').value.toLowerCase();
+    document.querySelectorAll('#panelOperadores .checkbox-item').forEach(item => {
+        item.style.display = item.textContent.toLowerCase().includes(busqueda) ? 'flex' : 'none';
+    });
+}
+
+document.addEventListener('click', function(event) {
+    const panel = document.getElementById('panelOperadores');
+    const trigger = document.getElementById('triggerOperadores');
+    if (panel && trigger &&
+        !panel.contains(event.target) &&
+        !trigger.contains(event.target)) {
+        cerrarDropdownOperadores();
+    }
+});
 
 const null1 = document.getElementById("nullPlazoDocumentos")
 
 document.getElementById('nullPlazoDocumentos').addEventListener("click", function() {
     console.log(null1.checked)
 })
-// Cargar datos de operadores para filtro
-cargarDatosOperador();
-
-// async function aplicarPermisosEstadoMercado() {
-//     const camposEstadoMercado = [
-//         'crearNuevaPoliza1'
-//     ];
-    
-//     if (!esAdministrador()) {
-//         // Deshabilitar campos
-//         camposEstadoMercado.forEach(fieldId => {
-//             const field = document.getElementById(fieldId);
-//             if (field) {
-//                 field.disabled = true;
-//                 field.classList.add('campo-bloqueado');
-//                 field.style.cursor = 'not-allowed';
-//             }
-//         });
-        
-//         // Mostrar badge y mensaje de solo admin
-//         const badgeAdmin = document.getElementById('badgeAdminMercado');
-//         const mensajeNoAdmin = document.getElementById('mensajeNoAdmin');
-        
-//         if (badgeAdmin) badgeAdmin.style.display = 'inline-flex';
-//         if (mensajeNoAdmin) mensajeNoAdmin.style.display = 'block';
-        
-//     }
-// }
-
-// aplicarPermisosEstadoMercado()
