@@ -1535,15 +1535,15 @@ async function cerrarSesion() {
 
 // Cargar información del usuario
 async function cargarInfoUsuario() {
-    if (!user) {
+    try {
+        // Obtener usuario autenticado
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
+        if (!user) {
         console.warn('⚠️ No hay usuario autenticado');
         // Redirigir al login si no hay usuario
         window.location.href = '../index.html';
         return;
     }
-    try {
-        // Obtener usuario autenticado
-        const { data: { user }, error } = await supabaseClient.auth.getUser();
         
         if (error) throw error;      
         
