@@ -303,6 +303,13 @@ body {
     margin-bottom: 20px;
 }
 
+.form-row2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
 .form-row:last-child {
     margin-bottom: 0;
 }
@@ -4968,4 +4975,15 @@ input[readonly] {
 
 .btn-remove-imagen:hover {
     background: rgba(220, 38, 38, 1);
+}
+
+/* Meses de pago */
+
+.payFlex {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#pagoEnero {
+    border-radius: 50%;
 }

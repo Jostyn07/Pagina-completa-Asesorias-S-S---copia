@@ -1184,7 +1184,7 @@ async function agregarNota(clienteId) {
 
 async function confirmarEliminarNota(notaId) {
     const CORREOS_PERMITIDOS = [
-        'jostyn@ssasesorias.com',
+        'jostynaragon@asesoriasth.com',
         'ericadeoro@asesoriasth.com',
         'leanbarrios@asesoriasth.com',
         'juanospino@asesoriasth.com',
@@ -2205,7 +2205,11 @@ async function guardarDocumentosNuevos(clienteId) {
         try {
             // Subir archivo a Storage
             const timestamp = Date.now();
-            const nombreArchivo = `${clienteId}/${timestamp}_${archivo.name}`;
+            const nombreArchivoLimpio = archivo.name
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')  // quitar tildes
+                .replace(/[^a-zA-Z0-9._-]/g, '_'); // reemplazar caracteres especiales por _
+            const nombreArchivo = `${clienteId}/${timestamp}_${nombreArchivoLimpio}`;
             
             const { error: uploadError } = await supabaseClient.storage
                 .from('documentos')
