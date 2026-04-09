@@ -10,31 +10,61 @@ let polizaId = null;
 let dependientesCount = 0;
 let documentosCount = 0;
 let notasCount = 0;
-let imagenesNotaSeleccionadas = [];
+// let imagenesNotaSeleccionadas = [];
 let autosaveTimer = null;
+let quillNota = null
 const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 
 // ============================================
 // INICIALIZACIÓN
 // ============================================
 document.addEventListener('DOMContentLoaded', async function() {
-    // const modoVer = urlParams.get('modo') === 'ver';
+    const editorEl = document.getElementById('quillEditor');
+    if (editorEl) {
+        quillNota = new Quill('#quillEditor', {
+            theme: 'snow',
+            placeholder: 'Escribe tu mensaje aquí...',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'], //Tipografia
+                    [{ 'header': [1, 2, 3, false] }], // h1, h2, h3
+                    [{ 'list': 'ordered'}, { 'list': 'bullet'}], // Listas tipo viñetas o ordenadas
+                    [ {'color': []}, { 'background': []}], // Color de la letra y el fondo
+                    [{'font': []}], //Tipo de fuente
+                    ['link'], //Enlaces
+                    ['clean'] //Borrar todo el formato de texto seleccionado
+                ]
+            }
+        });
+    }
 
-    // if (modoVer) {
-    //     // Deshabilitar todos los inputs, selects y textareas
-    //     document.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
-    //     // Ocultar botón guardar
-    //     const btnSubmit = document.getElementById('btnSubmit');
-    //     if (btnSubmit) btnSubmit.style.display = 'none';
-    //     // Ocultar botón archivar
-    //     const btnArchivar = document.getElementById('btnArchivarCliente');
-    //     if (btnArchivar) btnArchivar.style.display = 'none';
-    //     // Mostrar banner de solo lectura
-    //     const banner = document.createElement('div');
-    //     banner.style.cssText = 'background:#fef9ec;border:1px solid #fde68a;color:#92400e;padding:10px 18px;border-radius:8px;margin:12px 24px;display:flex;align-items:center;gap:8px;font-size:0.88rem;font-weight:600;';
-    //     banner.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">visibility</span> Modo solo lectura — Cliente archivado';
-    //     document.querySelector('.main__container')?.prepend(banner);
-    // }
+        // Handler de imágenes - intercepta inserción y sube a Supabase Storage
+    if (quillNota) {
+        // Interceptar boton de imagen del toolbar
+        quillNota.getModule('toolbar').addHandler('image', function() {
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accpet', 'image/*');
+            input.click();
+            input.onchange = async function() {
+                const file = input.files[0];
+                if (file) await subirImagenQuill(file);
+            }
+        })
+
+        // Interceptar Ctrl+V
+        quillNota.root.addEventListener('paste', async function(e) {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('iamge') !== -1) {
+                    e.preventDefault();
+                    const file = items[i].getAsFile();
+                    if (file) await subirImagenQuill(file);
+                }
+            }
+        });
+    }
     
     // Obtener ID de la URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -85,6 +115,47 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     cargarRobado()
 });
+
+// Sube imagen a Supabase Storage e inserta URL en Quill
+async function subirImagenQuill(file) {
+    try {
+        // validar tamaño maximo 5mb
+        if (file.size > 5 * 1024 * 1024) {
+            mostrarNotificacion('Imagen muy grande (Max 5MB)', 'warning')
+            return
+        }
+
+        mostrarNotificacion ('Subiendo imagen...', 'info')
+
+        // Sanataizar el nombre del archivo
+        const nombreLimpio = file.name
+            .normalize('NFD') //descompone caracteres especiales como é en e + acento
+            .replace(/[\u0300-\u036f]/g, '') //Elimina acentos que no se eliminaron arriba
+            .replace(/[^a-zA-Z0-9._-]/g, '_'); //reemplaza cualquier cosa que no sea letra, número, punto, guión — por un guión bajo
+        
+            const timestamp = Date.now();
+            const path = `notas/${clienteId}/${timestamp}_${nombreLimpio}`;
+
+        // Subir a supabase
+        const { error: uploadError } = await supabaseClient.storage
+            .from('documentos')
+            .upload(path, file, { cacheControl: '3600', upsert: false});
+        if (uploadError) throw uploadError;
+
+        // Obtener URL pública
+        const { data: urlData} = supabaseClient.storage
+            .from('documentos')
+            .getPublicUrl(path)
+        // Insertar imagen en el editor en la posición actual del cursor
+        const range = quillNota.getSelection(true);
+        quillNota.insertEmbed(range.index, 'image', urlData.publicUrl);
+        quillNota.setSelection(range.index + 1);
+
+    } catch {
+        console.error('Error al subir imagen:', error)
+        mostrarNotificacion('Error al subir imagen', 'error')
+    }
+}
 
 function inicializarFormulario() {
     // Cambiar botón de submit
@@ -1077,18 +1148,15 @@ async function cargarNotas(clienteId) {
 
 
 async function agregarNota(clienteId) {
-    const textarea = document.getElementById('nuevaNota');
-    let mensaje = textarea ? textarea.value.trim() : '';
-    
-    // Validar que haya contenido
-    if (!mensaje && imagenesNotaSeleccionadas.length === 0) {
+    // Leer contenido de Quill
+    const contenidoQuill = quillNota ? quillNota.root.innerHTML : '';
+    const textoPlano = quillNota ? quillNota.getText().trim() : '';
+    let mensaje = contenidoQuill === '<p><br></p>' ? '' : contenidoQuill;
+
+    // Validar que haya algo escrito o alguna imagen
+    if (!textoPlano && !mensaje.includes('<img')) {
         mostrarNotificacion('⚠️ Escribe un mensaje o adjunta una imagen', 'warning');
         return;
-    }
-    
-    // Si solo hay imágenes sin mensaje, crear mensaje automático
-    if (!mensaje && imagenesNotaSeleccionadas.length > 0) {
-        mensaje = `📎 ${imagenesNotaSeleccionadas.length} imagen${imagenesNotaSeleccionadas.length > 1 ? 'es' : ''} adjunta${imagenesNotaSeleccionadas.length > 1 ? 's' : ''}`;
     }
     
     try {
@@ -1101,8 +1169,8 @@ async function agregarNota(clienteId) {
         
         const notaData = {
             cliente_id: clienteId,
-            mensaje: mensaje, // Siempre tendrá valor
-            imagenes: imagenesNotaSeleccionadas.length > 0 ? imagenesNotaSeleccionadas : null,
+            mensaje: mensaje,
+            imagenes: null,  // Ya no se usa — las imágenes van dentro del HTML
             usuario_email: user.email,
             usuario_nombre: user.user_metadata?.nombre || user.email
         };
@@ -1117,26 +1185,26 @@ async function agregarNota(clienteId) {
 
         await registrarNotaAgregada(clienteId, mensaje);
         
-        let imagenesHTML = '';
-        if (imagenesNotaSeleccionadas.length > 0) {
-            const imagenesEscapadas = JSON.stringify(imagenesNotaSeleccionadas).replace(/"/g, '&quot;');
+        // let imagenesHTML = '';
+        // if (imagenesNotaSeleccionadas.length > 0) {
+        //     const imagenesEscapadas = JSON.stringify(imagenesNotaSeleccionadas).replace(/"/g, '&quot;');
             
-            imagenesHTML = `
-                <div class="nota-imagenes">
-                    ${imagenesNotaSeleccionadas.map((img, index) => `
-                        <div class="nota-imagen-thumb" 
-                             onclick="abrirModalImagen('${img}', ${imagenesEscapadas}, ${index})"
-                             data-tooltip="Click para ampliar">
-                            <span class="imagen-numero">${index + 1}</span>
-                            <img src="${img}" 
-                                 alt="Imagen ${index + 1}"
-                                 loading="lazy"
-                                 onload="this.classList.add('loaded')">
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
+        //     imagenesHTML = `
+        //         <div class="nota-imagenes">
+        //             ${imagenesNotaSeleccionadas.map((img, index) => `
+        //                 <div class="nota-imagen-thumb" 
+        //                      onclick="abrirModalImagen('${img}', ${imagenesEscapadas}, ${index})"
+        //                      data-tooltip="Click para ampliar">
+        //                     <span class="imagen-numero">${index + 1}</span>
+        //                     <img src="${img}" 
+        //                          alt="Imagen ${index + 1}"
+        //                          loading="lazy"
+        //                          onload="this.classList.add('loaded')">
+        //                 </div>
+        //             `).join('')}
+        //         </div>
+        //     `;
+        // }
         
         const notaHTML = `
             <div class="nota-card" data-nota-id="${nuevaNota.id}">
@@ -1150,7 +1218,6 @@ async function agregarNota(clienteId) {
                     </button>
                 </div>
                 <div class="nota-mensaje">${mensaje}</div>
-                ${imagenesHTML}
             </div>
         `;
         
@@ -1160,19 +1227,8 @@ async function agregarNota(clienteId) {
         
         thread.insertAdjacentHTML('afterbegin', notaHTML);
         
-        // Limpiar formulario
-        if (textarea) textarea.value = '';
-        imagenesNotaSeleccionadas = [];
-        const preview = document.getElementById('imagenesPreview');
-        if (preview) preview.innerHTML = '';
-        
-        // Actualizar contadores
-        if (typeof actualizarContadorImagenes === 'function') {
-            actualizarContadorImagenes();
-        }
-        if (typeof actualizarContadorNotas === 'function') {
-            actualizarContadorNotas();
-        }
+        // Limpiar Quill
+        if (quillNota) quillNota.setText('');
         
         mostrarNotificacion('✅ Nota agregada correctamente', 'success');
         
@@ -2333,51 +2389,40 @@ async function eliminarNota(notaId) {
 }
 
 function cancelarNota() {
-    const textarea = document.getElementById('nuevaNota');
-    if (textarea) textarea.value = '';
-    
-    imagenesNotaSeleccionadas = []; 
-    
-    const preview = document.getElementById('imagenesPreview');
-    if (preview) preview.innerHTML = '';
-    
-    actualizarContadorImagenes();
-    
-    const input = document.getElementById('notaImagen');
-    if (input) input.value = '';
+    if (quillNota) quillNota.setText('');
 }
 
-function previsualizarImagenesNota() {
-    const input = document.getElementById('notaImagen'); 
+// function previsualizarImagenesNota() {
+//     const input = document.getElementById('notaImagen'); 
     
-    if (!input || !input.files || input.files.length === 0) return;
+//     if (!input || !input.files || input.files.length === 0) return;
     
-    Array.from(input.files).forEach((file) => {
-        // Validar tamaño (max 5MB)
-        const maxSize = 5 * 1024 * 1024;
-        if (file.size > maxSize) {
-            mostrarNotificacion('⚠️ ' + file.name + ' es muy grande (máx 5MB)', 'warning');
-            return;
-        }
+//     Array.from(input.files).forEach((file) => {
+//         // Validar tamaño (max 5MB)
+//         const maxSize = 5 * 1024 * 1024;
+//         if (file.size > maxSize) {
+//             mostrarNotificacion('⚠️ ' + file.name + ' es muy grande (máx 5MB)', 'warning');
+//             return;
+//         }
         
-        const reader = new FileReader();
+//         const reader = new FileReader();
         
-        reader.onload = function(e) {
-            imagenesNotaSeleccionadas.push(e.target.result);
-            actualizarPrevisualizacionImagenes();
-            actualizarContadorImagenes();
-        };
+//         reader.onload = function(e) {
+//             imagenesNotaSeleccionadas.push(e.target.result);
+//             actualizarPrevisualizacionImagenes();
+//             actualizarContadorImagenes();
+//         };
         
-        reader.readAsDataURL(file);
-    });
+//         reader.readAsDataURL(file);
+//     });
     
-    // Limpiar input para permitir seleccionar el mismo archivo después
-    input.value = '';
+//     // Limpiar input para permitir seleccionar el mismo archivo después
+//     input.value = '';
     
-    // Feedback
-    const numArchivos = input.files.length;
-    mostrarNotificacion(`✅ ${numArchivos} imagen${numArchivos > 1 ? 'es' : ''} agregada${numArchivos > 1 ? 's' : ''}`, 'success');
-}
+//     // Feedback
+//     const numArchivos = input.files.length;
+//     mostrarNotificacion(`✅ ${numArchivos} imagen${numArchivos > 1 ? 'es' : ''} agregada${numArchivos > 1 ? 's' : ''}`, 'success');
+// }
 
 // function quitarImagenNota(index) {
 //     imagenesNotaSeleccionadas.splice(index, 1);
@@ -3412,67 +3457,67 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 /**
  * Actualizar previsualizacion de imagenes
  */
-function actualizarPrevisualizacionImagenes() {
-    const preview = document.getElementById('imagenesPreview');
-    if (!preview) return;
+// function actualizarPrevisualizacionImagenes() {
+//     const preview = document.getElementById('imagenesPreview');
+//     if (!preview) return;
  
-    preview.innerHTML = '';
+//     preview.innerHTML = '';
  
-    imagenesNotaSeleccionadas.forEach((imagen, index) => {
-        const div = document.createElement('div');
-        div.className = 'imagen-preview';
-        div.id = `preview-nota-${index}`;
+//     imagenesNotaSeleccionadas.forEach((imagen, index) => {
+//         const div = document.createElement('div');
+//         div.className = 'imagen-preview';
+//         div.id = `preview-nota-${index}`;
  
-        const img = document.createElement('img');
-        img.src = imagen;
-        img.alt = `Preview ${index + 1}`;
+//         const img = document.createElement('img');
+//         img.src = imagen;
+//         img.alt = `Preview ${index + 1}`;
  
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn-remove-imagen';
-        btn.innerHTML = '<span class="material-symbols-rounded">close</span>';
+//         const btn = document.createElement('button');
+//         btn.type = 'button';
+//         btn.className = 'btn-remove-imagen';
+//         btn.innerHTML = '<span class="material-symbols-rounded">close</span>';
  
-        const info = document.createElement('div');
-        info.className = 'imagen-info';
-        info.textContent = `Imagen ${index + 1}`;
+//         const info = document.createElement('div');
+//         info.className = 'imagen-info';
+//         info.textContent = `Imagen ${index + 1}`;
  
-        // Closure captura el índice correcto en el momento de creación
-        (function(idx) {
-            btn.onclick = function() {
-                imagenesNotaSeleccionadas.splice(idx, 1);
-                actualizarPrevisualizacionImagenes();
-                actualizarContadorImagenes();
-                mostrarNotificacion('🗑️ Imagen eliminada', 'info');
-            };
-        })(index);
+//         // Closure captura el índice correcto en el momento de creación
+//         (function(idx) {
+//             btn.onclick = function() {
+//                 imagenesNotaSeleccionadas.splice(idx, 1);
+//                 actualizarPrevisualizacionImagenes();
+//                 actualizarContadorImagenes();
+//                 mostrarNotificacion('🗑️ Imagen eliminada', 'info');
+//             };
+//         })(index);
  
-        div.appendChild(img);
-        div.appendChild(btn);
-        div.appendChild(info);
-        preview.appendChild(div);
-    });
-}
+//         div.appendChild(img);
+//         div.appendChild(btn);
+//         div.appendChild(info);
+//         preview.appendChild(div);
+//     });
+// }
 
 /**
  * Actualizar contador de imagenes
  */
-function actualizarContadorImagenes() {
-    const contador = document.getElementById('archivosSeleccionados');
+// function actualizarContadorImagenes() {
+//     const contador = document.getElementById('archivosSeleccionados');
     
-    if (!contador) return;
+//     if (!contador) return;
     
-    const numImagenes = imagenesNotaSeleccionadas.length;
+//     const numImagenes = imagenesNotaSeleccionadas.length;
     
-    if (numImagenes === 0) {
-        contador.textContent = 'Ningún archivo seleccionado';
-        contador.style.color = '#64748b';
-        contador.style.fontWeight = 'normal';
-    } else {
-        contador.textContent = `${numImagenes} imagen${numImagenes > 1 ? 'es' : ''} adjunta${numImagenes > 1 ? 's' : ''}`;
-        contador.style.color = '#10b981';
-        contador.style.fontWeight = '600';
-    }
-}
+//     if (numImagenes === 0) {
+//         contador.textContent = 'Ningún archivo seleccionado';
+//         contador.style.color = '#64748b';
+//         contador.style.fontWeight = 'normal';
+//     } else {
+//         contador.textContent = `${numImagenes} imagen${numImagenes > 1 ? 'es' : ''} adjunta${numImagenes > 1 ? 's' : ''}`;
+//         contador.style.color = '#10b981';
+//         contador.style.fontWeight = '600';
+//     }
+// }
 
 /**
  * Mostrar notificacion temporal

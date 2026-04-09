@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="../css/thumbnails_modal_styles.css">
     <link rel="stylesheet" href="../css/darkmode.css">
     <link rel="stylesheet" href="../css/clientes_archivados.css">
+    <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
 </head>
 <body>
     <!-- SIDEBAR UNIFICADO -->
@@ -900,18 +901,18 @@
                         <!-- Formulario nueva nota -->
                         <div class="nueva-nota">
                             <h3>Nueva Nota</h3>
-                            <textarea id="nuevaNota" placeholder="Escribe tu mensaje aquí..." rows="4"></textarea>
+                            <div id="quillEditor" style="min-height: 120px;"></div>
                             
-                            <div class="nota-attachments">
+                            <!-- <div class="nota-attachments">
                                 <label class="btn-attach">
                                     <span class="material-symbols-rounded">attach_file</span>
                                     Adjuntar imagen
                                     <input type="file" id="notaImagen" accept="image/*" multiple onchange="previsualizarImagenesNota()" style="display: none;">
                                 </label>
                                 <span id="archivosSeleccionados">Ningún archivo seleccionado</span>
-                            </div>
+                            </div> -->
 
-                            <div id="imagenesPreview" class="imagenes-preview"></div>
+                            <!-- <div id="imagenesPreview" class="imagenes-preview"></div> -->
 
                             <div class="nota-actions">
                                 <button type="button" class="btn-secondary" onclick="cancelarNota()">Cancelar</button>
@@ -1039,6 +1040,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
     <script src="../js/main.js"></script>
@@ -1046,7 +1048,7 @@
     <script src="../js/enviar_googleSheets.js"></script>
     <script src="../js/permisos.js"></script>
     <script src="../js/formatear_input_fechas.js"></script>
-    <script src="../js/pegar_imagen_ctrl_v.js"></script>
-    <script src="../js/modal_imagenes_navegacion.js"></script>
+    <!-- <script src="../js/pegar_imagen_ctrl_v.js"></script> -->
+    <!-- <script src="../js/modal_imagenes_navegacion.js"></script> -->
 </body>
 </html>

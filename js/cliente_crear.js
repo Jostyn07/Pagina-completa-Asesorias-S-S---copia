@@ -9,16 +9,62 @@
 let dependientesCount = 0;
 let documentosCount = 0;
 let notasCount = 0;
-let imagenesNotaSeleccionadas = [];
+// let imagenesNotaSeleccionadas = [];
 let autosaveTimer = null;
 const AUTOSAVE_INTERVAL = 30000; // 30 segundos
+let quillNota = null;
 
 // ============================================
 // INICIALIZACIÓN
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    ;
-    
+    const editorEl = document.getElementById('quillEditor');
+    if (editorEl) {
+        quillNota = new Quill('#quillEditor', {
+            theme: 'snow',
+            placeholder: 'Escribe tu mensaje aquí...',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'], //Tipografia
+                    [{ 'header': [1, 2, 3, false] }], // h1, h2, h3
+                    [{ 'list': 'ordered'}, { 'list': 'bullet'}], // Listas tipo viñetas o ordenadas
+                    [ {'color': []}, { 'background': []}], // Color de la letra y el fondo
+                    [{'font': []}], //Tipo de fuente
+                    ['link'], //Enlaces
+                    ['clean'] //Borrar todo el formato de texto seleccionado
+                ]
+            }
+        });
+    }
+
+    // Handler de imágenes - intercepta inserción y sube a Supabase Storage
+    if (quillNota) {
+        // Interceptar boton de imagen del toolbar
+        quillNota.getModule('toolbar').addHandler('image', function() {
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accpet', 'image/*');
+            input.click();
+            input.onchange = async function() {
+                const file = input.files[0];
+                if (file) await subirImagenQuill(file);
+            }
+        })
+
+        // Interceptar Ctrl+V
+        quillNota.root.addEventListener('paste', async function(e) {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('iamge') !== -1) {
+                    e.preventDefault();
+                    const file = items[i].getAsFile();
+                    if (file) await subirImagenQuill(file);
+                }
+            }
+        });
+    }
+
     inicializarFormulario();
     inicializarTabs();
     calcularFechasAutomaticas();
@@ -33,6 +79,47 @@ document.addEventListener('DOMContentLoaded', function() {
     cargarInfoUsuario();
 
 });
+
+// Sube imagen a Supabase Storage e inserta URL en Quill
+async function subirImagenQuill(file) {
+    try {
+        // validar tamaño maximo 5mb
+        if (file.size > 5 * 1024 * 1024) {
+            mostrarNotificacion('Imagen muy grande (Max 5MB)', 'warning')
+            return
+        }
+
+        mostrarNotificacion ('Subiendo imagen...', 'info')
+
+        // Sanataizar el nombre del archivo
+        const nombreLimpio = file.name
+            .normalize('NFD') //descompone caracteres especiales como é en e + acento
+            .replace(/[\u0300-\u036f]/g, '') //Elimina acentos que no se eliminaron arriba
+            .replace(/[^a-zA-Z0-9._-]/g, '_'); //reemplaza cualquier cosa que no sea letra, número, punto, guión — por un guión bajo
+        
+            const timestamp = Date.now();
+            const path = `notas/${clienteId}/${timestamp}_${nombreLimpio}`;
+
+        // Subir a supabase
+        const { error: uploadError } = await supabaseClient.storage
+            .from('documentos')
+            .upload(path, file, { cacheControl: '3600', upsert: false});
+        if (uploadError) throw uploadError;
+
+        // Obtener URL pública
+        const { data: urlData} = supabaseClient.storage
+            .from('documentos')
+            .getPublicUrl(path)
+        // Insertar imagen en el editor en la posición actual del cursor
+        const range = quillNota.getSelection(true);
+        quillNota.insertEmbed(range.index, 'image', urlData.publicUrl);
+        quillNota.setSelection(range.index + 1);
+
+    } catch {
+        console.error('Error al subir imagen:', error)
+        mostrarNotificacion('Error al subir imagen', 'error')
+    }
+}
 
 function inicializarFormulario() {
     // Establecer fecha de registro a hoy en formato mm/dd/aaaa
@@ -895,119 +982,159 @@ function actualizarContadorDocumentos() {
 
 let notasTemporales = [];
 
-function enviarNota() {
 
 
-    const textarea = document.getElementById('nuevaNota');
-    const mensaje = textarea.value.trim();
+async function agregarNota(clienteId) {
+    // Leer contenido de Quill
+    const contenidoQuill = quillNota ? quillNota.root.innerHTML : '';
+    const textoPlano = quillNota ? quillNota.getText().trim() : '';
+    let mensaje = contenidoQuill === '<p><br></p>' ? '' : contenidoQuill;
 
-    if (!mensaje) {
-        alert('⚠️ Por favor, escribe un mensaje antes de enviar.');
+    // Validar que haya algo escrito o alguna imagen
+    if (!textoPlano && !mensaje.includes('<img')) {
+        mostrarNotificacion('⚠️ Escribe un mensaje o adjunta una imagen', 'warning');
         return;
     }
+    
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        
+        if (!user) {
+            mostrarNotificacion('❌ Debes estar autenticado', 'error');
+            return;
+        }
+        
+        const notaData = {
+            cliente_id: clienteId,
+            mensaje: mensaje,
+            imagenes: null,  // Ya no se usa — las imágenes van dentro del HTML
+            usuario_email: user.email,
+            usuario_nombre: user.user_metadata?.nombre || user.email
+        };
+        
+        const { data: nuevaNota, error } = await supabaseClient
+            .from('notas')
+            .insert([notaData])
+            .select()
+            .single();
+        
+        if (error) throw error;
 
-    notasTemporales.push({
-        mensaje: mensaje,
-        imagenes: [...imagenesNotaSeleccionadas]
-    });
-     
-    const notaHTML = `
-        <div class="nota-card">
-            <div class="nota-header">
-                <div class="nota-info">
-                    <span class="nota-usuario">Tú (antes de guardar)</span>
-                    <span class="nota-fecha">Ahora</span>
+        await registrarNotaAgregada(clienteId, mensaje);
+        
+        // let imagenesHTML = '';
+        // if (imagenesNotaSeleccionadas.length > 0) {
+        //     const imagenesEscapadas = JSON.stringify(imagenesNotaSeleccionadas).replace(/"/g, '&quot;');
+            
+        //     imagenesHTML = `
+        //         <div class="nota-imagenes">
+        //             ${imagenesNotaSeleccionadas.map((img, index) => `
+        //                 <div class="nota-imagen-thumb" 
+        //                      onclick="abrirModalImagen('${img}', ${imagenesEscapadas}, ${index})"
+        //                      data-tooltip="Click para ampliar">
+        //                     <span class="imagen-numero">${index + 1}</span>
+        //                     <img src="${img}" 
+        //                          alt="Imagen ${index + 1}"
+        //                          loading="lazy"
+        //                          onload="this.classList.add('loaded')">
+        //                 </div>
+        //             `).join('')}
+        //         </div>
+        //     `;
+        // }
+        
+        const notaHTML = `
+            <div class="nota-card" data-nota-id="${nuevaNota.id}">
+                <div class="nota-header">
+                    <div class="nota-info">
+                        <span class="nota-usuario">${nuevaNota.usuario_nombre}</span>
+                        <span class="nota-fecha">Ahora</span>
+                    </div>
+                    <button type="button" class="btn-remove-nota" onclick="confirmarEliminarNota('${nuevaNota.id}')">
+                        <span class="material-symbols-rounded">delete</span>
+                    </button>
                 </div>
+                <div class="nota-mensaje">${mensaje}</div>
             </div>
-            <div class="nota-mensaje">${mensaje}</div>
-            ${imagenesNotaSeleccionadas.length > 0 ? `
-                <div class="nota-imagenes">
-                    ${imagenesNotaSeleccionadas.map(img => `
-                        <img src="${img}" alt="Imagen adjunta" style="max-width: 150px; border-radius: 8px; margin: 5px;">
-                    `).join('')}
-                </div>
-            ` : ''}
-        </div>
-    `;
-    
-    const thread = document.getElementById('notasThread');
-    const emptyState = thread.querySelector('.empty-state');
-    if (emptyState) emptyState.remove();
-    
-    thread.insertAdjacentHTML('afterbegin', notaHTML);
-    
-    cancelarNota();
-    actualizarContadorNotas();
-    
-    alert('✅ Nota agregada. Se guardará al crear el cliente.');
+        `;
+        
+        const thread = document.getElementById('notasThread');
+        const emptyState = thread.querySelector('.empty-state');
+        if (emptyState) emptyState.remove();
+        
+        thread.insertAdjacentHTML('afterbegin', notaHTML);
+        
+        // Limpiar Quill
+        if (quillNota) quillNota.setText('');
+        
+        mostrarNotificacion('✅ Nota agregada correctamente', 'success');
+        
+    } catch (error) {
+        console.error('❌ Error al agregar nota:', error);
+        mostrarNotificacion('❌ Error al agregar nota: ' + error.message, 'error');
+    }
 }
 
 function cancelarNota() {
-    document.getElementById('nuevaNota').value = '';
-    imagenesNotaSeleccionadas = [];
-    document.getElementById('imagenesPreview').innerHTML = '';
-    document.getElementById('archivosSeleccionados').textContent = 'Ningún archivo seleccionado';
-    
-    const fileInput = document.getElementById('notaImagen');
-    if (fileInput) fileInput.value = '';
+    if (quillNota) quillNota.setText('');
 }
 
-function previsualizarImagenesNota() {
-    const fileInput = document.getElementById('notaImagen');
-    const preview = document.getElementById('imagenesPreview');
-    const label = document.getElementById('archivosSeleccionados');
+// function previsualizarImagenesNota() {
+//     const fileInput = document.getElementById('notaImagen');
+//     const preview = document.getElementById('imagenesPreview');
+//     const label = document.getElementById('archivosSeleccionados');
     
-    if (!fileInput.files || fileInput.files.length === 0) {
-        preview.innerHTML = '';
-        label.textContent = 'Ningún archivo seleccionado';
-        imagenesNotaSeleccionadas = [];
-        return;
-    }
+//     if (!fileInput.files || fileInput.files.length === 0) {
+//         preview.innerHTML = '';
+//         label.textContent = 'Ningún archivo seleccionado';
+//         // imagenesNotaSeleccionadas = [];
+//         return;
+//     }
     
-    const archivos = Array.from(fileInput.files);
-    label.textContent = `${archivos.length} imagen(es) seleccionada(s)`;
+//     const archivos = Array.from(fileInput.files);
+//     label.textContent = `${archivos.length} imagen(es) seleccionada(s)`;
     
-    preview.innerHTML = '';
-    imagenesNotaSeleccionadas = [];
+//     preview.innerHTML = '';
+//     // imagenesNotaSeleccionadas = [];
     
-    archivos.forEach((archivo, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imagenesNotaSeleccionadas.push(e.target.result);
+//     archivos.forEach((archivo, index) => {
+//         const reader = new FileReader();
+//         reader.onload = function(e) {
+//             imagenesNotaSeleccionadas.push(e.target.result);
             
-            const imgWrapper = document.createElement('div');
-            imgWrapper.className = 'preview-imagen-wrapper';
-            imgWrapper.style.cssText = 'display: inline-block; position: relative; margin-right: 10px;';
-            imgWrapper.innerHTML = `
-                <img src="${e.target.result}" alt="Preview" 
-                     style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;">
-                <button type="button" onclick="quitarImagenNota(${index})" 
-                        style="position: absolute; top: -5px; right: -5px; width: 24px; height: 24px; 
-                               background: #ef4444; color: white; border: none; border-radius: 50%; 
-                               cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                    <span class="material-symbols-rounded" style="font-size: 16px;">close</span>
-                </button>
-            `;
-            preview.appendChild(imgWrapper);
-        };
-        reader.readAsDataURL(archivo);
-    });
-}
+//             const imgWrapper = document.createElement('div');
+//             imgWrapper.className = 'preview-imagen-wrapper';
+//             imgWrapper.style.cssText = 'display: inline-block; position: relative; margin-right: 10px;';
+//             imgWrapper.innerHTML = `
+//                 <img src="${e.target.result}" alt="Preview" 
+//                      style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;">
+//                 <button type="button" onclick="quitarImagenNota(${index})" 
+//                         style="position: absolute; top: -5px; right: -5px; width: 24px; height: 24px; 
+//                                background: #ef4444; color: white; border: none; border-radius: 50%; 
+//                                cursor: pointer; display: flex; align-items: center; justify-content: center;">
+//                     <span class="material-symbols-rounded" style="font-size: 16px;">close</span>
+//                 </button>
+//             `;
+//             preview.appendChild(imgWrapper);
+//         };
+//         reader.readAsDataURL(archivo);
+//     });
+// }
 
-function quitarImagenNota(index) {
-    imagenesNotaSeleccionadas.splice(index, 1);
+// function quitarImagenNota(index) {
+//     imagenesNotaSeleccionadas.splice(index, 1);
     
-    const fileInput = document.getElementById('notaImagen');
-    const dt = new DataTransfer();
-    const archivos = Array.from(fileInput.files);
+//     const fileInput = document.getElementById('notaImagen');
+//     const dt = new DataTransfer();
+//     const archivos = Array.from(fileInput.files);
     
-    archivos.forEach((file, i) => {
-        if (i !== index) dt.items.add(file);
-    });
+//     archivos.forEach((file, i) => {
+//         if (i !== index) dt.items.add(file);
+//     });
     
-    fileInput.files = dt.files;
-    previsualizarImagenesNota();
-}
+//     fileInput.files = dt.files;
+//     previsualizarImagenesNota();
+// }
 
 function actualizarContadorNotas() {
     const total = document.querySelectorAll('.nota-card').length;

@@ -542,3 +542,120 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 [data-theme="dark"] .historial-usuario {color: #333 !important;}
 [data-theme="dark"] #modalContenido p {color: #fff !important;}
 [data-theme="dark"] .dependiente-detalle span {color: #fff !important;}
+
+/* ============================================
+   QUILL EDITOR — NOTAS
+   ============================================ */
+
+/* Contenedor general */
+#quillEditor {
+    border-radius: 0 0 8px 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+/* Toolbar */
+.ql-toolbar.ql-snow {
+    border: 1px solid #e2e8f0;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background: #f8fafc;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+}
+
+/* Área de escritura */
+.ql-container.ql-snow {
+    border: 1px solid #e2e8f0;
+    border-radius: 0 0 8px 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+/* Altura mínima del área editable */
+.ql-editor {
+    min-height: 120px;
+    padding: 12px 16px;
+    color: #1e293b;
+    line-height: 1.6;
+}
+
+/* Placeholder */
+.ql-editor.ql-blank::before {
+    color: #94a3b8;
+    font-style: normal;
+}
+
+/* Imágenes dentro del editor */
+.ql-editor img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+/* Botones del toolbar */
+.ql-toolbar.ql-snow .ql-formats {
+    margin-right: 12px;
+}
+
+/* ============================================
+   DARK MODE — QUILL
+   ============================================ */
+
+[data-theme="dark"] .ql-toolbar.ql-snow {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+[data-theme="dark"] .ql-container.ql-snow {
+    border-color: var(--dk-border);
+}
+
+[data-theme="dark"] .ql-editor {
+    color: var(--dk-text-primary);
+    background: var(--dk-surface-1);
+}
+
+[data-theme="dark"] .ql-editor.ql-blank::before {
+    color: var(--dk-text-tertiary);
+}
+
+/* Íconos del toolbar en dark mode */
+[data-theme="dark"] .ql-toolbar .ql-stroke {
+    stroke: var(--dk-text-secondary);
+}
+
+[data-theme="dark"] .ql-toolbar .ql-fill {
+    fill: var(--dk-text-secondary);
+}
+
+[data-theme="dark"] .ql-toolbar .ql-picker-label {
+    color: var(--dk-text-secondary);
+}
+
+[data-theme="dark"] .ql-toolbar button:hover .ql-stroke,
+[data-theme="dark"] .ql-toolbar button.ql-active .ql-stroke {
+    stroke: var(--dk-accent);
+}
+
+[data-theme="dark"] .ql-toolbar button:hover .ql-fill,
+[data-theme="dark"] .ql-toolbar button.ql-active .ql-fill {
+    fill: var(--dk-accent);
+}
+
+[data-theme="dark"] .ql-toolbar button:hover,
+[data-theme="dark"] .ql-toolbar button.ql-active {
+    background: var(--dk-accent-bg);
+    border-radius: 4px;
+}
+
+/* Dropdown de colores y fuentes en dark mode */
+[data-theme="dark"] .ql-picker-options {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+[data-theme="dark"] .ql-picker-item {
+    color: var(--dk-text-primary);
+}
