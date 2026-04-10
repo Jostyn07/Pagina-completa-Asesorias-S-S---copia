@@ -1572,7 +1572,7 @@ async function guardarNotas(clienteId) {
     const notasData = notasTemporales.map(nota => ({
         cliente_id: clienteId,
         mensaje: nota.mensaje,
-        imagenes: nota.imagenes.length > 0 ? nota.imagenes : null,
+        imagenes: null,
         usuario_email: user.email,
         usuario_nombre: user.user_metadata?.nombre || user.email
     }));
