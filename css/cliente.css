@@ -4987,3 +4987,19 @@ input[readonly] {
 #pagoEnero {
     border-radius: 50%;
 }
+
+/* Imágenes en notas enviadas */
+.nota-mensaje img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 4px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.nota-mensaje img:hover {
+    transform: scale(1.04);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}

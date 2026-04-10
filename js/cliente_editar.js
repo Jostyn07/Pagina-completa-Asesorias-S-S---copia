@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const items = e.clipboardData?.items;
             if (!items) return;
             for (let i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf('iamge') !== -1) {
+                if (items[i].type.indexOf('image') !== -1) {
                     e.preventDefault();
                     const file = items[i].getAsFile();
                     if (file) await subirImagenQuill(file);
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
     }
-    
+
     // Obtener ID de la URL
     const urlParams = new URLSearchParams(window.location.search);
     clienteId = urlParams.get('id');
@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await cargarDatosCliente(clienteId);
         await cargarDocumentos(clienteId);
         await cargarNotas(clienteId);
+        
         
     } catch (error) {
         console.error('❌ Error al cargar datos:', error);
@@ -115,6 +116,95 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     cargarRobado()
 });
+
+// ================================================
+// VISOR DE IMAGENES EN NOTAS
+// ================================================
+
+function procesarImagenesEnNotas(contenedor) {
+    const imgs = contenedor.querySelectorAll('.nota-mensaje img');
+
+    imgs.forEach((img, indexGlobal) => {
+        // Tamaño fijo
+        img.style.width = '150px';
+        img.style.height = '150px';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '8px';
+        img.style.cursor = 'pointer';
+        img.style.margin = '4px';
+
+        // Recopilar todas las imagenes de esa nota
+        const notaCard = img.closest('.nota-card');
+        const todasLasImgs = Array.from(
+            notaCard.querySelectorAll('.nota-mensaje img')
+        ).map(i => i.src);
+
+        const index = todasLasImgs.indexOf(img.src);
+
+        // Click abre el visor
+        img.addEventListener('click', function() {
+            abrirVisorImagenes(todasLasImgs, index); 
+        });
+    });
+}
+
+function abrirVisorImagenes(imagenes, indexInicial) {
+    let actual = indexInicial;
+
+    // Crear modal
+    const modal = document.createElement('div');
+    modal.id = 'visorImagenes';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,0.85);
+        display: flex; aling-items: center; justify-content: center;
+    `;
+
+    modal.innerHTML = `
+        <button id="visorCerrar" style="position:absolute;top:16px;right:16px;background:rgba(0,0,0,0.5);border:none;color:white;font-size:1.5rem;cursor:pointer;z-index:10000;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;">✕</button>
+        <button id="visorPrev" style="position:absolute;left:24px;top:50%;transform:translateY(-50%);background:none;border:none;color:white;font-size:2.5rem;cursor:pointer;${imagenes.length <= 1 ? 'display:none' : ''}">‹</button>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;height:100%;">
+            <img id="visorImg" src="${imagenes[actual]}" style="max-width:85vw;max-height:80vh;border-radius:10px;object-fit:contain;display:block;margin:auto;">
+            <span id="visorContador" style="color:white;font-size:0.85rem;opacity:0.7;">${actual + 1} / ${imagenes.length}</span>
+        </div>
+        <button id="visorNext" style="position:absolute;right:24px;top:50%;transform:translateY(-50%);background:none;border:none;color:white;font-size:2.5rem;cursor:pointer;">›</button>
+    `;
+
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+
+    function actualizar () {
+        document.getElementById('visorImg').src = imagenes[actual];
+        document.getElementById('visorContador').textContent = `${actual + 1} / ${imagenes.length}`;
+    }
+
+    // Cerrar
+    document.getElementById('visorCerrar').onclick = cerrar;
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) cerrar();
+    });
+
+    // Navegar
+    document.getElementById('visorPrev').onclick = function() {
+        actual = actual === 0 ? imagenes.length - 1 : actual - 1;
+        actualizar();
+    };
+
+    // Teclado
+    function onKey(e) {
+        if (e.key === 'Escape') cerrar();
+        if (e.key === 'ArrowLeft') {actual = actual === 0 ? imagenes.length - 1 : actual - 1; actualizar();}
+        if (e.key === 'ArrowRight') {actual = actual === imagenes.length - 1 ? 0 : actual + 1; actualizar();}
+
+    }
+    document.addEventListener('keydown', onKey)
+
+    function cerrar() {
+        document.body.removeChild(modal);
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', onKey);
+    }
+}
 
 // Sube imagen a Supabase Storage e inserta URL en Quill
 async function subirImagenQuill(file) {
@@ -151,7 +241,7 @@ async function subirImagenQuill(file) {
         quillNota.insertEmbed(range.index, 'image', urlData.publicUrl);
         quillNota.setSelection(range.index + 1);
 
-    } catch {
+    } catch (error) {
         console.error('Error al subir imagen:', error)
         mostrarNotificacion('Error al subir imagen', 'error')
     }
@@ -1107,6 +1197,14 @@ async function cargarNotas(clienteId) {
         
         // Mostrar cada nota
         notas.forEach(nota => {
+            // Construir imágenes del sistema viejo (campo imagenes[])
+            let imagenesViejasHTML = '';
+            if (nota.imagenes && nota.imagenes.length > 0) {
+                imagenesViejasHTML = nota.imagenes.map(img => 
+                    `<img src="${img}" alt="imagen" loading="lazy">`
+                ).join('');
+            }
+
             const notaHTML = `
                 <div class="nota-card" data-nota-id="${nota.id}">
                     <div class="nota-header">
@@ -1118,26 +1216,18 @@ async function cargarNotas(clienteId) {
                             <span class="material-symbols-rounded">delete</span>
                         </button>
                     </div>
-                    <div class="nota-mensaje">${nota.mensaje || ''}</div>
-                    ${nota.imagenes && nota.imagenes.length > 0 ? `
-                        <div class="nota-imagenes">
-                            ${nota.imagenes.map((img, index) => `
-                                <div class="nota-imagen-thumb" 
-                                    onclick="abrirModalImagen('${img}', ${JSON.stringify(nota.imagenes).replace(/"/g, '&quot;')}, ${index})"
-                                    data-tooltip="Click para ampliar">
-                                    <span class="imagen-numero">${index + 1}</span>
-                                    <img src="${img}" 
-                                        alt="Imagen ${index + 1}"
-                                        loading="lazy"
-                                        onload="this.classList.add('loaded')">
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : ''}
+                    <div class="nota-mensaje">
+                        ${nota.mensaje || ''}
+                        ${imagenesViejasHTML}
+                    </div>
                 </div>
             `;
             thread.insertAdjacentHTML('beforeend', notaHTML);
         });
+
+procesarImagenesEnNotas(thread);
+
+        procesarImagenesEnNotas(thread);
         
         actualizarContadorNotas();
         
@@ -1185,27 +1275,6 @@ async function agregarNota(clienteId) {
 
         await registrarNotaAgregada(clienteId, mensaje);
         
-        // let imagenesHTML = '';
-        // if (imagenesNotaSeleccionadas.length > 0) {
-        //     const imagenesEscapadas = JSON.stringify(imagenesNotaSeleccionadas).replace(/"/g, '&quot;');
-            
-        //     imagenesHTML = `
-        //         <div class="nota-imagenes">
-        //             ${imagenesNotaSeleccionadas.map((img, index) => `
-        //                 <div class="nota-imagen-thumb" 
-        //                      onclick="abrirModalImagen('${img}', ${imagenesEscapadas}, ${index})"
-        //                      data-tooltip="Click para ampliar">
-        //                     <span class="imagen-numero">${index + 1}</span>
-        //                     <img src="${img}" 
-        //                          alt="Imagen ${index + 1}"
-        //                          loading="lazy"
-        //                          onload="this.classList.add('loaded')">
-        //                 </div>
-        //             `).join('')}
-        //         </div>
-        //     `;
-        // }
-        
         const notaHTML = `
             <div class="nota-card" data-nota-id="${nuevaNota.id}">
                 <div class="nota-header">
@@ -1231,7 +1300,8 @@ async function agregarNota(clienteId) {
         if (quillNota) quillNota.setText('');
         
         mostrarNotificacion('✅ Nota agregada correctamente', 'success');
-        
+        const nuevaCard = thread.querySelector('.nota-card');
+        procesarImagenesEnNotas(nuevaCard);
     } catch (error) {
         console.error('❌ Error al agregar nota:', error);
         mostrarNotificacion('❌ Error al agregar nota: ' + error.message, 'error');
@@ -2392,45 +2462,6 @@ function cancelarNota() {
     if (quillNota) quillNota.setText('');
 }
 
-// function previsualizarImagenesNota() {
-//     const input = document.getElementById('notaImagen'); 
-    
-//     if (!input || !input.files || input.files.length === 0) return;
-    
-//     Array.from(input.files).forEach((file) => {
-//         // Validar tamaño (max 5MB)
-//         const maxSize = 5 * 1024 * 1024;
-//         if (file.size > maxSize) {
-//             mostrarNotificacion('⚠️ ' + file.name + ' es muy grande (máx 5MB)', 'warning');
-//             return;
-//         }
-        
-//         const reader = new FileReader();
-        
-//         reader.onload = function(e) {
-//             imagenesNotaSeleccionadas.push(e.target.result);
-//             actualizarPrevisualizacionImagenes();
-//             actualizarContadorImagenes();
-//         };
-        
-//         reader.readAsDataURL(file);
-//     });
-    
-//     // Limpiar input para permitir seleccionar el mismo archivo después
-//     input.value = '';
-    
-//     // Feedback
-//     const numArchivos = input.files.length;
-//     mostrarNotificacion(`✅ ${numArchivos} imagen${numArchivos > 1 ? 'es' : ''} agregada${numArchivos > 1 ? 's' : ''}`, 'success');
-// }
-
-// function quitarImagenNota(index) {
-//     imagenesNotaSeleccionadas.splice(index, 1);
-//     actualizarPrevisualizacionImagenes();
-//     actualizarContadorImagenes();
-//     mostrarNotificacion('🗑️ Imagen eliminada', 'info');
-// }
-
 // ============================================
 // MENÚ DE USUARIO
 // ============================================
@@ -3453,71 +3484,6 @@ document.addEventListener('DOMContentLoaded', function() {
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(inicializarSubPestanas, 100);
 }
-
-/**
- * Actualizar previsualizacion de imagenes
- */
-// function actualizarPrevisualizacionImagenes() {
-//     const preview = document.getElementById('imagenesPreview');
-//     if (!preview) return;
- 
-//     preview.innerHTML = '';
- 
-//     imagenesNotaSeleccionadas.forEach((imagen, index) => {
-//         const div = document.createElement('div');
-//         div.className = 'imagen-preview';
-//         div.id = `preview-nota-${index}`;
- 
-//         const img = document.createElement('img');
-//         img.src = imagen;
-//         img.alt = `Preview ${index + 1}`;
- 
-//         const btn = document.createElement('button');
-//         btn.type = 'button';
-//         btn.className = 'btn-remove-imagen';
-//         btn.innerHTML = '<span class="material-symbols-rounded">close</span>';
- 
-//         const info = document.createElement('div');
-//         info.className = 'imagen-info';
-//         info.textContent = `Imagen ${index + 1}`;
- 
-//         // Closure captura el índice correcto en el momento de creación
-//         (function(idx) {
-//             btn.onclick = function() {
-//                 imagenesNotaSeleccionadas.splice(idx, 1);
-//                 actualizarPrevisualizacionImagenes();
-//                 actualizarContadorImagenes();
-//                 mostrarNotificacion('🗑️ Imagen eliminada', 'info');
-//             };
-//         })(index);
- 
-//         div.appendChild(img);
-//         div.appendChild(btn);
-//         div.appendChild(info);
-//         preview.appendChild(div);
-//     });
-// }
-
-/**
- * Actualizar contador de imagenes
- */
-// function actualizarContadorImagenes() {
-//     const contador = document.getElementById('archivosSeleccionados');
-    
-//     if (!contador) return;
-    
-//     const numImagenes = imagenesNotaSeleccionadas.length;
-    
-//     if (numImagenes === 0) {
-//         contador.textContent = 'Ningún archivo seleccionado';
-//         contador.style.color = '#64748b';
-//         contador.style.fontWeight = 'normal';
-//     } else {
-//         contador.textContent = `${numImagenes} imagen${numImagenes > 1 ? 'es' : ''} adjunta${numImagenes > 1 ? 's' : ''}`;
-//         contador.style.color = '#10b981';
-//         contador.style.fontWeight = '600';
-//     }
-// }
 
 /**
  * Mostrar notificacion temporal

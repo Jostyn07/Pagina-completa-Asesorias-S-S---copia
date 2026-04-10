@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const items = e.clipboardData?.items;
             if (!items) return;
             for (let i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf('iamge') !== -1) {
+                if (items[i].type.indexOf('image') !== -1) {
                     e.preventDefault();
                     const file = items[i].getAsFile();
                     if (file) await subirImagenQuill(file);
@@ -115,9 +115,103 @@ async function subirImagenQuill(file) {
         quillNota.insertEmbed(range.index, 'image', urlData.publicUrl);
         quillNota.setSelection(range.index + 1);
 
-    } catch {
+    } catch (error) {
         console.error('Error al subir imagen:', error)
         mostrarNotificacion('Error al subir imagen', 'error')
+    }
+}
+
+// ================================================
+// VISOR DE IMAGENES EN NOTAS
+// ================================================
+
+function procesarImagenesEnNotas(contenedor) {
+    const imgs = contenedor.querySelectorAll('.nota-mensaje img');
+
+    imgs.forEach((img, indexGlobal) => {
+        // Tamaño fijo
+        img.style.width = '150px';
+        img.style.height = '150px';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '8px';
+        img.style.cursor = 'pointer';
+        img.style.margin = '4px';
+
+        // Recopilar todas las imagenes de esa nota
+        const notaCard = img.closest('.nota-card');
+        const todasLasImgs = Array.from(
+            notaCard.querySelectorAll('.nota-mensaje img')
+        ).map(i => i.src);
+
+        const index = todasLasImgs.indexOf(img.src);
+
+        // Click abre el visor
+        img.addEventListener('click', function() {
+            abrirVisorImagenes(todasLasImgs, index); 
+        });
+    });
+}
+
+function abrirVisorImagenes(imagenes, indexInicial) {
+    let actual = indexInicial;
+
+    // Crear modal
+    const modal = document.createElement('div');
+    modal.id = 'visorImagenes';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,0.85);
+        display: flex; align-items: center; justify-content: center;
+    `;
+
+    modal.innerHTML = `
+        <button id="visorCerrar" style="position:absolute;top:20px;right:24px;background:none;border:none;color:white;font-size:2rem;cursor:pointer;z-index:10000;">✕</button>
+        <button id="visorPrev" style="position:absolute;left:24px;top:50%;transform:translateY(-50%);background:none;border:none;color:white;font-size:2.5rem;cursor:pointer;${imagenes.length <= 1 ? 'display:none' : ''}">‹</button>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;height:100%;">
+            <img id="visorImg" src="${imagenes[actual]}" style="max-width:85vw;max-height:80vh;border-radius:10px;object-fit:contain;display:block;margin:auto;">
+            <span id="visorContador" style="color:white;font-size:0.85rem;opacity:0.7;">${actual + 1} / ${imagenes.length}</span>
+        </div>
+        <button id="visorNext" style="position:absolute;right:24px;top:50%;transform:translateY(-50%);background:none;border:none;color:white;font-size:2.5rem;cursor:pointer;">›</button>
+    `;
+
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+
+    function actualizar () {
+        document.getElementById('visorImg').src = imagenes[actual];
+        document.getElementById('visorContador').textContent = `${actual + 1} / ${imagenes.length}`;
+    }
+
+    // Cerrar
+    document.getElementById('visorCerrar').onclick = cerrar;
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) cerrar();
+    });
+
+    // Navegar
+    document.getElementById('visorPrev').onclick = function() {
+        actual = actual === 0 ? imagenes.length - 1 : actual - 1;
+        actualizar();
+    };
+
+    document.getElementById('visorNext').onclick = function() {
+        actual = actual === imagenes.length - 1 ? 0 : actual + 1;
+        actualizar();
+    };
+
+    // Teclado
+    function onKey(e) {
+        if (e.key === 'Escape') cerrar();
+        if (e.key === 'ArrowLeft') {actual = actual === 0 ? imagenes.length - 1 : actual - 1; actualizar();}
+        if (e.key === 'ArrowRight') {actual = actual === imagenes.length - 1 ? 0 : actual + 1; actualizar();}
+
+    }
+    document.addEventListener('keydown', onKey)
+
+    function cerrar() {
+        document.body.removeChild(modal);
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', onKey);
     }
 }
 
@@ -997,30 +1091,21 @@ async function agregarNota(clienteId) {
     }
     
     try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const user = session?.user;
+
         if (!user) {
             mostrarNotificacion('❌ Debes estar autenticado', 'error');
             return;
         }
-        
-        const notaData = {
-            cliente_id: clienteId,
+
+        // Guardar en memoria — se subirá a Supabase cuando se guarde el cliente
+        notasTemporales.push({
             mensaje: mensaje,
-            imagenes: null,  // Ya no se usa — las imágenes van dentro del HTML
+            imagenes: null,
             usuario_email: user.email,
             usuario_nombre: user.user_metadata?.nombre || user.email
-        };
-        
-        const { data: nuevaNota, error } = await supabaseClient
-            .from('notas')
-            .insert([notaData])
-            .select()
-            .single();
-        
-        if (error) throw error;
-
-        await registrarNotaAgregada(clienteId, mensaje);
+        });
         
         // let imagenesHTML = '';
         // if (imagenesNotaSeleccionadas.length > 0) {
@@ -1044,15 +1129,12 @@ async function agregarNota(clienteId) {
         // }
         
         const notaHTML = `
-            <div class="nota-card" data-nota-id="${nuevaNota.id}">
+            <div class="nota-card" data-nota-id="temp-${Date.now()}">
                 <div class="nota-header">
                     <div class="nota-info">
-                        <span class="nota-usuario">${nuevaNota.usuario_nombre}</span>
-                        <span class="nota-fecha">Ahora</span>
+                        <span class="nota-usuario">${user.user_metadata?.nombre || user.email}</span>
+                        <span class="nota-fecha">Ahora (pendiente de guardar)</span>
                     </div>
-                    <button type="button" class="btn-remove-nota" onclick="confirmarEliminarNota('${nuevaNota.id}')">
-                        <span class="material-symbols-rounded">delete</span>
-                    </button>
                 </div>
                 <div class="nota-mensaje">${mensaje}</div>
             </div>
@@ -1067,7 +1149,6 @@ async function agregarNota(clienteId) {
         // Limpiar Quill
         if (quillNota) quillNota.setText('');
         
-        mostrarNotificacion('✅ Nota agregada correctamente', 'success');
         
     } catch (error) {
         console.error('❌ Error al agregar nota:', error);
@@ -1079,62 +1160,6 @@ function cancelarNota() {
     if (quillNota) quillNota.setText('');
 }
 
-// function previsualizarImagenesNota() {
-//     const fileInput = document.getElementById('notaImagen');
-//     const preview = document.getElementById('imagenesPreview');
-//     const label = document.getElementById('archivosSeleccionados');
-    
-//     if (!fileInput.files || fileInput.files.length === 0) {
-//         preview.innerHTML = '';
-//         label.textContent = 'Ningún archivo seleccionado';
-//         // imagenesNotaSeleccionadas = [];
-//         return;
-//     }
-    
-//     const archivos = Array.from(fileInput.files);
-//     label.textContent = `${archivos.length} imagen(es) seleccionada(s)`;
-    
-//     preview.innerHTML = '';
-//     // imagenesNotaSeleccionadas = [];
-    
-//     archivos.forEach((archivo, index) => {
-//         const reader = new FileReader();
-//         reader.onload = function(e) {
-//             imagenesNotaSeleccionadas.push(e.target.result);
-            
-//             const imgWrapper = document.createElement('div');
-//             imgWrapper.className = 'preview-imagen-wrapper';
-//             imgWrapper.style.cssText = 'display: inline-block; position: relative; margin-right: 10px;';
-//             imgWrapper.innerHTML = `
-//                 <img src="${e.target.result}" alt="Preview" 
-//                      style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;">
-//                 <button type="button" onclick="quitarImagenNota(${index})" 
-//                         style="position: absolute; top: -5px; right: -5px; width: 24px; height: 24px; 
-//                                background: #ef4444; color: white; border: none; border-radius: 50%; 
-//                                cursor: pointer; display: flex; align-items: center; justify-content: center;">
-//                     <span class="material-symbols-rounded" style="font-size: 16px;">close</span>
-//                 </button>
-//             `;
-//             preview.appendChild(imgWrapper);
-//         };
-//         reader.readAsDataURL(archivo);
-//     });
-// }
-
-// function quitarImagenNota(index) {
-//     imagenesNotaSeleccionadas.splice(index, 1);
-    
-//     const fileInput = document.getElementById('notaImagen');
-//     const dt = new DataTransfer();
-//     const archivos = Array.from(fileInput.files);
-    
-//     archivos.forEach((file, i) => {
-//         if (i !== index) dt.items.add(file);
-//     });
-    
-//     fileInput.files = dt.files;
-//     previsualizarImagenesNota();
-// }
 
 function actualizarContadorNotas() {
     const total = document.querySelectorAll('.nota-card').length;
