@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     // Handler de imágenes - intercepta inserción y sube a Supabase Storage
     if (quillNota) {
-        // Interceptar botón de imagen del toolbar
+        // Botón de imagen del toolbar
         quillNota.getModule('toolbar').addHandler('image', function() {
             const input = document.createElement('input');
             input.setAttribute('type', 'file');
@@ -56,27 +56,45 @@ document.addEventListener('DOMContentLoaded', async function() {
             input.onchange = async function() {
                 const file = input.files[0];
                 if (file) await subirImagenQuill(file);
-            }
+            };
         });
 
-        // Sobreescribir el onPaste de Quill directamente
-        const originalOnPaste = quillNota.clipboard.onPaste.bind(quillNota.clipboard);
-        quillNota.clipboard.onPaste = async function(e) {
-            const items = e.clipboardData?.items;
-            if (items) {
-                for (let i = 0; i < items.length; i++) {
-                    if (items[i].type.indexOf('image') !== -1) {
-                        e.stopImmediatePropagation();
-                        e.preventDefault();
-                        const file = items[i].getAsFile();
-                        if (file) await subirImagenQuill(file);
-                        return; // Sale sin llamar al handler original
-                    }
+        // Detectar cuando Quill inserta una imagen base64 y subirla a Supabase
+        quillNota.on('text-change', async function(delta, oldDelta, source) {
+            if (source !== 'user') return;
+
+            const imgs = quillNota.root.querySelectorAll('img[src^="data:image"]');
+            if (imgs.length === 0) return;
+
+            for (const img of imgs) {
+                const base64 = img.getAttribute('src');
+
+                // Convertir base64 a File
+                const res = await fetch(base64);
+                const blob = await res.blob();
+                const file = new File([blob], `paste_${Date.now()}.png`, { type: blob.type });
+
+                // Subir a Supabase
+                const nombreLimpio = `paste_${Date.now()}.png`;
+                const path = `notas/${clienteId}/${nombreLimpio}`;
+
+                const { error } = await supabaseClient.storage
+                    .from('documentos')
+                    .upload(path, file, { cacheControl: '3600', upsert: false });
+
+                if (error) {
+                    console.error('Error subiendo imagen:', error);
+                    continue;
                 }
+
+                const { data: urlData } = supabaseClient.storage
+                    .from('documentos')
+                    .getPublicUrl(path);
+
+                // Reemplazar base64 por URL pública
+                img.setAttribute('src', urlData.publicUrl);
             }
-            // Si no hay imagen, deja que Quill maneje el paste normalmente
-            originalOnPaste(e);
-        };
+        });
     }
 
     // Obtener ID de la URL
