@@ -575,9 +575,29 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 /* Altura mínima del área editable */
 .ql-editor {
     min-height: 120px;
+    max-height: 300px;
+    overflow-y: auto;
     padding: 12px 16px;
     color: #1e293b;
     line-height: 1.6;
+    scrollbar-width: thin;
+}
+
+.ql-editor::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ql-editor::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.ql-editor::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+[data-theme="dark"] .ql-editor::-webkit-scrollbar-thumb {
+    background: var(--dk-border);
 }
 
 /* Placeholder */
