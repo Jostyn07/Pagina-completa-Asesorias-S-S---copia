@@ -33,37 +33,50 @@ document.addEventListener('DOMContentLoaded', async function() {
                     [{'font': []}], //Tipo de fuente
                     ['link'], //Enlaces
                     ['clean'] //Borrar todo el formato de texto seleccionado
-                ]
+                ],
+                clipboard: {
+                    matchers: [
+                        ['img', function(node, delta) {
+                            // Bloquear imágenes que Quill intenta pegar nativamente
+                            return new Quill.import('delta')();
+                        }]
+                    ]
+                }
             }
-        });
+        })
     }
-
-        // Handler de imágenes - intercepta inserción y sube a Supabase Storage
+    // Handler de imágenes - intercepta inserción y sube a Supabase Storage
     if (quillNota) {
-        // Interceptar boton de imagen del toolbar
+        // Interceptar botón de imagen del toolbar
         quillNota.getModule('toolbar').addHandler('image', function() {
             const input = document.createElement('input');
             input.setAttribute('type', 'file');
-            input.setAttribute('accpet', 'image/*');
+            input.setAttribute('accept', 'image/*');
             input.click();
             input.onchange = async function() {
                 const file = input.files[0];
                 if (file) await subirImagenQuill(file);
             }
-        })
+        });
 
-        // Interceptar Ctrl+V
-        quillNota.root.addEventListener('paste', async function(e) {
+        // Sobreescribir el onPaste de Quill directamente
+        const originalOnPaste = quillNota.clipboard.onPaste.bind(quillNota.clipboard);
+        quillNota.clipboard.onPaste = async function(e) {
             const items = e.clipboardData?.items;
-            if (!items) return;
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf('image') !== -1) {
-                    e.preventDefault();
-                    const file = items[i].getAsFile();
-                    if (file) await subirImagenQuill(file);
+            if (items) {
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+                        const file = items[i].getAsFile();
+                        if (file) await subirImagenQuill(file);
+                        return; // Sale sin llamar al handler original
+                    }
                 }
             }
-        });
+            // Si no hay imagen, deja que Quill maneje el paste normalmente
+            originalOnPaste(e);
+        };
     }
 
     // Obtener ID de la URL
@@ -157,7 +170,7 @@ function abrirVisorImagenes(imagenes, indexInicial) {
     modal.style.cssText = `
         position: fixed; inset: 0; z-index: 9999;
         background: rgba(0,0,0,0.85);
-        display: flex; aling-items: center; justify-content: center;
+        display: flex; align-items: center; justify-content: center;
     `;
 
     modal.innerHTML = `
@@ -215,6 +228,10 @@ async function subirImagenQuill(file) {
             return
         }
 
+        quillNota.focus();
+        const range = quillNota.getSelection() || { index: quillNota.getLength() - 1 };
+        const index = range.index;
+
         mostrarNotificacion ('Subiendo imagen...', 'info')
 
         // Sanataizar el nombre del archivo
@@ -237,9 +254,18 @@ async function subirImagenQuill(file) {
             .from('documentos')
             .getPublicUrl(path)
         // Insertar imagen en el editor en la posición actual del cursor
-        const range = quillNota.getSelection(true);
-        quillNota.insertEmbed(range.index, 'image', urlData.publicUrl);
-        quillNota.setSelection(range.index + 1);
+
+        // Si hay contenido antes, insertar salto de línea previo
+        if (index > 0) {
+            quillNota.insertText(index, '\n');
+            quillNota.insertEmbed(index + 1, 'image', urlData.publicUrl);
+            quillNota.insertText(index + 2, '\n');
+            quillNota.setSelection(index + 3);
+        } else {
+            quillNota.insertEmbed(index, 'image', urlData.publicUrl);
+            quillNota.insertText(index + 1, '\n');
+            quillNota.setSelection(index + 2);
+        }
 
     } catch (error) {
         console.error('Error al subir imagen:', error)

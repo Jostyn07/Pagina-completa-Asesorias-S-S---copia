@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
         quillNota.getModule('toolbar').addHandler('image', function() {
             const input = document.createElement('input');
             input.setAttribute('type', 'file');
-            input.setAttribute('accpet', 'image/*');
+            input.setAttribute('accept', 'image/*');
             input.click();
             input.onchange = async function() {
                 const file = input.files[0];
@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     e.preventDefault();
                     const file = items[i].getAsFile();
                     if (file) await subirImagenQuill(file);
+                    break
                 }
             }
         });
@@ -89,7 +90,9 @@ async function subirImagenQuill(file) {
             return
         }
 
-        mostrarNotificacion ('Subiendo imagen...', 'info')
+        quillNota.focus();
+        const range = quillNota.getSelection() || { index: quillNota.getLength() - 1 };
+        const index = range.index;
 
         // Sanataizar el nombre del archivo
         const nombreLimpio = file.name
@@ -111,13 +114,21 @@ async function subirImagenQuill(file) {
             .from('documentos')
             .getPublicUrl(path)
         // Insertar imagen en el editor en la posición actual del cursor
-        const range = quillNota.getSelection(true);
-        quillNota.insertEmbed(range.index, 'image', urlData.publicUrl);
-        quillNota.setSelection(range.index + 1);
+
+        // Si hay contenido antes, insertar salto de línea previo
+        if (index > 0) {
+            quillNota.insertText(index, '\n');
+            quillNota.insertEmbed(index + 1, 'image', urlData.publicUrl);
+            quillNota.insertText(index + 2, '\n');
+            quillNota.setSelection(index + 3);
+        } else {
+            quillNota.insertEmbed(index, 'image', urlData.publicUrl);
+            quillNota.insertText(index + 1, '\n');
+            quillNota.setSelection(index + 2);
+        }
 
     } catch (error) {
         console.error('Error al subir imagen:', error)
-        mostrarNotificacion('Error al subir imagen', 'error')
     }
 }
 
