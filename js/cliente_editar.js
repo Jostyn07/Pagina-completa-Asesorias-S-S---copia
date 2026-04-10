@@ -162,6 +162,9 @@ function procesarImagenesEnNotas(contenedor) {
 }
 
 function abrirVisorImagenes(imagenes, indexInicial) {
+    const visorExistente = document.getElementById('visorImagenes');
+    if (visorExistente) document.body.removeChild(visorExistente);
+    
     let actual = indexInicial;
 
     // Crear modal
@@ -213,6 +216,7 @@ function abrirVisorImagenes(imagenes, indexInicial) {
     document.addEventListener('keydown', onKey)
 
     function cerrar() {
+        if (!document.body.contains(modal)) return; 
         document.body.removeChild(modal);
         document.body.style.overflow = '';
         document.removeEventListener('keydown', onKey);
