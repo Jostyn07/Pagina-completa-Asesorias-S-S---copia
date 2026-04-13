@@ -589,7 +589,7 @@ function renderizarTabla() {
 
         let ultimoSeguimiento = '';
         let seguimientoEfectivo = '-';
-
+        
         if (poliza.seguimientos && poliza.seguimientos.length > 0) {
             // Calcular último seguimiento (fecha más reciente)
             const fechas = poliza.seguimientos.map(seg => new Date(formatoUS(seg.fecha_seguimiento)));
@@ -1072,6 +1072,7 @@ function actualizarIndicadoresOrden() {
 // EXPORTAR A EXCEL
 // ============================================
 async function exportarExcel() {
+
     try {
         if (!esAdministrador()) {
             mostrarNotificacion('Solo administradores pueden exportar', 'error');
@@ -1080,6 +1081,24 @@ async function exportarExcel() {
 
         const datos = polizasFiltradas.map(poliza => {
             const cliente = poliza.cliente || {};
+
+            let ultimoSeguimiento = '';
+            if (poliza.seguimientos && poliza.seguimientos.length > 0) {
+                // Calcular último seguimiento (fecha más reciente)
+                const fechas = poliza.seguimientos.map(seg => new Date(formatoUS(seg.fecha_seguimiento)));
+                const fechaMayor = new Date(Math.max(...fechas));
+                ultimoSeguimiento = formatoUS(fechaMayor);
+                
+                // Obtener el seguimiento efectivo del último seguimiento
+                const ultimoSeg = poliza.seguimientos.find(seg => {
+                    const fechaSeg = new Date(formatoUS(seg.fecha_seguimiento));
+                    return fechaSeg.getTime() === fechaMayor.getTime();
+                });
+                
+                if (ultimoSeg) {
+                    seguimientoEfectivo = ultimoSeg.seguimiento_efectivo || '-';
+                }
+            }
             return [
                 poliza.numero_poliza || '',
                 cliente.tipo_registro || '',
@@ -1113,6 +1132,7 @@ async function exportarExcel() {
                 poliza.fecha_plazo_documentos ? formatoUS(poliza.fecha_plazo_documentos) : '',
                 poliza.enlace_poliza || '',
                 poliza.observaciones || '',
+                ultimoSeguimiento || '',
                 poliza.created_at ? formatoUS(poliza.created_at) : ''
             ];
         });
@@ -1126,7 +1146,7 @@ async function exportarExcel() {
             'Member ID', 'Portal NPN', 'Clave Seguridad',
             'Fecha Efectividad', 'Fecha Inicial Cobertura', 'Fecha Final Cobertura',
             'Pagado Hasta', 'Revisión Mercado', 'Revisión Compañía',
-            'Plazo Documentos', 'Enlace Póliza', 'Observaciones', 'Fecha Creación'
+            'Plazo Documentos', 'Enlace Póliza', 'Observaciones', 'Fecha de seguimiento', 'Fecha Creación'
         ];
 
         // Crear libro de Excel con XML (formato xlsx simplificado via HTML table)
