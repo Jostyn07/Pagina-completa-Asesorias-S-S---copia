@@ -58,7 +58,7 @@ function guardarFiltrosEnStorage() {
             nullRevisionMercado: document.getElementById('nullRevisionMercado')?.checked || '',
             nullFechRevCompania: document.getElementById('nullFechRevCompania')?.checked || '',
             nullFechaPago: document.getElementById('nullFechaPago')?.checked || '',
-            nullFechaSeguimiento: document.getElementById('nullFechaSeguimiento')?.checked || '',
+            nullFechaSeguimiento: document.getElementById('nullFechaSeguimiento')?.checked || false,
             estado: document.getElementById('filtroEstado')?.value || '',
 
             // Fechas
@@ -209,7 +209,7 @@ function restaurarFiltrosDesdeStorage() {
         nullRevisionMercado: datos.nullRevisionMercado || '',
         nullFechRevCompania: datos.nullFechRevCompania || '',
         nullFechaPago: datos.nullFechaPago || '',
-        nullFechaSeguimiento: datos.nullFechaSeguimiento || '',
+        nullFechaSeguimiento: datos.nullFechaSeguimiento || false,
         fechaRegistroDesde: datos.fechaRegistroDesde || '',
         fechaRegistroHasta: datos.fechaRegistroHasta || '',
         fechaEfectividadDesde: datos.fechaEfectividadDesde || '',
@@ -314,7 +314,7 @@ function restaurarFiltrosDesdeStorage() {
             if(filtrosActivos.nullFechRevCompania && poliza.fecha_revision_compania !== null) return false;
             if(filtrosActivos.nullFechaPago && poliza.pagado_hasta !== null) return false;
             if (filtrosActivos.nullFechaSeguimiento) {
-                const tieneSeguimientos = poliza.seguimientos && poliza.seguimietos.length > 0
+                const tieneSeguimientos = poliza.seguimientos && poliza.seguimientos.length > 0
                 if (tieneSeguimientos) {
                     return false
                 }
@@ -1158,7 +1158,7 @@ async function exportarExcel() {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         const fecha = new Date().toISOString().split('T')[0];
-        link.download = `polizas_${fecha}.xls`;
+        link.download = `polizas_${fecha}.xlsx`;
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -2399,6 +2399,7 @@ function aplicarFiltrosAvanzados() {
         nullRevisionMercado: document.getElementById('nullRevisionMercado').checked,
         nullFechRevCompania: document.getElementById('nullFechRevCompania').checked,
         nullFechaPago: document.getElementById('nullFechaPago').checked,
+        nullFechaSeguimiento: document.getElementById('nullFechaSeguimiento').checked,
         fechaEfectividadDesde: document.getElementById('filtroFechaEfectividadDesde').value,
         fechaEfectividadHasta: document.getElementById('filtroFechaEfectividadHasta').value,
         fechaCoberturaInicialDesde: document.getElementById('filtroFechaCoberturaInicialDesde').value,
