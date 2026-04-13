@@ -1158,7 +1158,7 @@ async function exportarExcel() {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         const fecha = new Date().toISOString().split('T')[0];
-        link.download = `polizas_${fecha}.xlsx`;
+        link.download = `polizas_${fecha}.xls`;
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
