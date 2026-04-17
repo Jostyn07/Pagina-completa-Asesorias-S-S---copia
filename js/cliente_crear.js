@@ -7,10 +7,11 @@
 // VARIABLES GLOBALES
 // ============================================
 let notasCount = 0;
-// let imagenesNotaSeleccionadas = [];
+let imagenesNotaSeleccionadas = [];
 let autosaveTimer = null;
 const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 let quillNota = null;
+let documentosCount = 0;
 
 // ============================================
 // INICIALIZACIÓN
