@@ -1917,7 +1917,7 @@ async function cargarMetodoPago(clienteId) {
             .select('*')
             .eq('cliente_id', clienteId)
             .eq('activo', true)
-            .maybeSingle();
+            .single();
         
         if (error) {
             if (error.code === 'PGRST116') {
@@ -2039,84 +2039,63 @@ async function cargarMetodoPago(clienteId) {
 async function guardarMetodoPago(clienteId) {
     try {
         const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
-        const tipo = tipoSeleccionado ? tipoSeleccionado.value : null;
 
-        const checkboxTieneMetodo = document.getElementById("tieneMetodoPago");
-        const tieneMetodoPago = checkboxTieneMetodo?.checked ? "Si" : "No";
+        if (!tipoSeleccionado) {
+            return true;
+        }
 
-        const getMes = (id) => document.getElementById(id)?.checked ? "Si" : "No";
+        const tipo = tipoSeleccionado.value;
 
         let metodoPagoData = {
             cliente_id: clienteId,
             tipo: tipo,
             usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
-            tiene_metodo_pago: tieneMetodoPago,
-            activo: true,
-            pago_enero: getMes('pagoEnero'),
-            pago_febrero: getMes('pagoFebrero'),
-            pago_marzo: getMes('pagoMarzo'),
-            pago_abril: getMes('pagoAbril'),
-            pago_mayo: getMes('pagoMayo'),
-            pago_junio: getMes('pagoJunio'),
-            pago_julio: getMes('pagoJulio'),
-            pago_agosto: getMes('pagoAgosto'),
-            pago_septiembre: getMes('pagoSeptiembre'),
-            pago_octubre: getMes('pagoOctubre'),
-            pago_noviembre: getMes('pagoNoviembre'),
-            pago_diciembre: getMes('pagoDiciembre'),
-            fecha_pago: document.getElementById('fechaPago')?.value || null,
-            estado_pago: document.getElementById('estadoPago')?.value || null,
+            activo: true
         };
 
-        // Datos de banco (si aplica)
         if (tipo === 'banco') {
             metodoPagoData.nombre_banco = document.getElementById('nombreBanco')?.value || null;
             metodoPagoData.numero_cuenta = document.getElementById('numeroCuenta')?.value || null;
             metodoPagoData.routing_number = document.getElementById('routingNumber')?.value || null;
             metodoPagoData.nombre_cuenta = document.getElementById('nombreCuenta')?.value || null;
-            metodoPagoData.numero_tarjeta = null;
-            metodoPagoData.nombre_tarjeta = null;
-            metodoPagoData.fecha_expiracion = null;
-            metodoPagoData.cvv = null;
-            metodoPagoData.tipo_tarjeta = null;
         } else if (tipo === 'tarjeta') {
             metodoPagoData.numero_tarjeta = document.getElementById('numeroTarjeta')?.value || null;
             metodoPagoData.nombre_tarjeta = document.getElementById('nombreTarjeta')?.value || null;
             metodoPagoData.fecha_expiracion = document.getElementById('fechaExpiracion')?.value || null;
             metodoPagoData.cvv = document.getElementById('cvv')?.value || null;
             metodoPagoData.tipo_tarjeta = document.getElementById('tipoTarjeta')?.value || null;
-            metodoPagoData.nombre_banco = null;
-            metodoPagoData.numero_cuenta = null;
-            metodoPagoData.routing_number = null;
-            metodoPagoData.nombre_cuenta = null;
         }
 
-        // Buscar si ya existe
-        const { data: existente, error: errorBuscar } = await supabaseClient
+        const { data: metodoExistente, error: searchError } = await supabaseClient
             .from('metodos_pago')
             .select('id')
             .eq('cliente_id', clienteId)
             .eq('activo', true)
             .maybeSingle();
 
-        if (errorBuscar) throw errorBuscar;
-
-        if (existente) {
-            const { error } = await supabaseClient
-                .from('metodos_pago')
-                .update(metodoPagoData)
-                .eq('id', existente.id);
-            if (error) throw error;
-        } else {
-            const { error } = await supabaseClient
-                .from('metodos_pago')
-                .insert([metodoPagoData]);
-            if (error) throw error;
+        if (searchError && searchError.code !== 'PGRST116') {
+            throw searchError;
         }
 
+        if (metodoExistente) {
+            const { error: updateError } = await supabaseClient
+                .from('metodos_pago')
+                .update(metodoPagoData)
+                .eq('id', metodoExistente.id);
+
+            if (updateError) throw updateError;
+        } else {
+            const { error: insertError } = await supabaseClient
+                .from('metodos_pago')
+                .insert([metodoPagoData]);
+
+            if (insertError) throw insertError;
+        }
+
+        return true;
     } catch (error) {
-        console.error('❌ Error al guardar método de pago:', error);
-        throw error;
+        console.error('Error al guardar método de pago:', error);
+        return false;
     }
 }
 
