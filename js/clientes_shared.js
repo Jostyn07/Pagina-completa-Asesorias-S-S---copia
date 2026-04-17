@@ -303,20 +303,20 @@ function actualizarContadorDocumentos() {
 // MÉTODO DE PAGO
 // ============================================
 
-function mostrarFormularioPago(tipo) {
-    document.querySelectorAll('.pago-form').forEach(f => f.style.display = 'none');
-    if (tipo) {
-        const form = document.getElementById(`pago-${tipo}`);
-        if (form) form.style.display = 'block';
-    }
-}
+// function mostrarFormularioPago(tipo) {
+//     document.querySelectorAll('.pago-form').forEach(f => f.style.display = 'none');
+//     if (tipo) {
+//         const form = document.getElementById(`pago-${tipo}`);
+//         if (form) form.style.display = 'block';
+//     }
+// }
 
-function limpiarMetodoPago() {
-    const select = document.getElementById('tipoPago');
-    if (select) select.value = '';
-    document.querySelectorAll('.pago-form').forEach(f => f.style.display = 'none');
-    document.querySelectorAll('.pago-form input').forEach(i => i.value = '');
-}
+// function limpiarMetodoPago() {
+//     const select = document.getElementById('tipoPago');
+//     if (select) select.value = '';
+//     document.querySelectorAll('.pago-form').forEach(f => f.style.display = 'none');
+//     document.querySelectorAll('.pago-form input').forEach(i => i.value = '');
+// }
 
 
 // ============================================
