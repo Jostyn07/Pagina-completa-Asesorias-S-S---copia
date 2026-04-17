@@ -4195,6 +4195,133 @@ async function exportarHistorial() {
     }
 }
 
+function formatoUS(fecha) {
+    if (!fecha) return '';
+    try {
+        if (typeof fecha === 'string' && fecha.includes('-')) {
+            const soloFecha = fecha.split('T')[0];
+            const [anio, mes, dia] = soloFecha.split('-');
+            return `${mes}/${dia}/${anio}`;
+        }
+        if (typeof fecha === 'string' && fecha.includes('/')) return fecha;
+        if (fecha instanceof Date) {
+            const anio = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            return `${mes}/${dia}/${anio}`;
+        }
+        return '';
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
+        return '';
+    }
+}
+
+function formatoISO(fecha) {
+    if (!fecha) return '';
+    try {
+        if (typeof fecha === 'string' && fecha.includes('/')) {
+            const [mes, dia, anio] = fecha.split('/');
+            return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        }
+        if (typeof fecha === 'string' && fecha.includes('-')) {
+            return fecha.split('T')[0];
+        }
+        if (fecha instanceof Date) {
+            return fecha.toISOString().split('T')[0];
+        }
+        return '';
+    } catch (error) {
+        return '';
+    }
+}
+
+function calcularEdad(fechaNacimiento) {
+    if (!fechaNacimiento) return '';
+    try {
+        let fecha;
+        if (fechaNacimiento.includes('/')) {
+            const [mes, dia, anio] = fechaNacimiento.split('/');
+            fecha = new Date(anio, mes - 1, dia);
+        } else {
+            fecha = new Date(fechaNacimiento);
+        }
+        const hoy = new Date();
+        let edad = hoy.getFullYear() - fecha.getFullYear();
+        const m = hoy.getMonth() - fecha.getMonth();
+        if (m < 0 || (m === 0 && hoy.getDate() < fecha.getDate())) edad--;
+        return edad;
+    } catch {
+        return '';
+    }
+}
+
+
+// ============================================
+// FORMATO DE INPUTS
+// ============================================
+
+function formatearTelefono(valor) {
+    const numeros = valor.replace(/\D/g, '').slice(0, 10);
+    if (numeros.length === 0) return '';
+    if (numeros.length <= 3) return numeros;
+    if (numeros.length <= 6) return `(${numeros.slice(0, 3)}) ${numeros.slice(3)}`;
+    return `(${numeros.slice(0, 3)}) ${numeros.slice(3, 6)}-${numeros.slice(6, 10)}`;
+}
+
+function formatearSSN(valor) {
+    const numeros = valor.replace(/\D/g, '').slice(0, 9);
+    if (numeros.length === 0) return '';
+    if (numeros.length <= 3) return numeros;
+    if (numeros.length <= 5) return `${numeros.slice(0, 3)}-${numeros.slice(3)}`;
+    return `${numeros.slice(0, 3)}-${numeros.slice(3, 5)}-${numeros.slice(5, 9)}`;
+}
+
+function formatearMonto(input) {
+    input.value = input.value.replace(/[^0-9.]/g, '');
+}
+
+
+// ============================================
+// VALIDACIONES
+// ============================================
+
+function validarEmail(input) {
+    const email = input.value;
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email && !regex.test(email)) {
+        input.setCustomValidity('Email inválido');
+        input.reportValidity();
+    } else {
+        input.setCustomValidity('');
+    }
+}
+
+function validarTelefono(input) {
+    const tel = input.value.replace(/\D/g, '');
+    if (tel && tel.length !== 10) {
+        input.setCustomValidity('Teléfono debe tener 10 dígitos');
+        input.reportValidity();
+    } else {
+        input.setCustomValidity('');
+    }
+}
+
+function validarSSN(input) {
+    const ssn = input.value.replace(/\D/g, '');
+    if (ssn && ssn.length !== 9) {
+        input.setCustomValidity('SSN debe tener 9 dígitos');
+        input.reportValidity();
+    } else {
+        input.setCustomValidity('');
+    }
+}
+
+function validarCodigoPostal(input) {
+    const cp = input.value.replace(/\D/g, '');
+    if (cp && cp.length !== 5) input.value = cp.slice(0, 5);
+}
+
 // Exportar funciones para uso global
 window.inicializarSubPestanas = inicializarSubPestanas;
 window.cambiarSubPestana = cambiarSubPestana;
