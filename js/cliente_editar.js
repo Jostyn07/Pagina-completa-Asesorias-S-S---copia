@@ -12,6 +12,7 @@ let documentosCount = 0;
 let imagenesNotaSeleccionadas = [];
 let autosaveTimer = null;
 let quillNota = null
+let dependientesCount = 0;
 const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 
 // ============================================

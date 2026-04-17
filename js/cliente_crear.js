@@ -12,6 +12,8 @@ let autosaveTimer = null;
 const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 let quillNota = null;
 let documentosCount = 0;
+let dependientesCount = 0;
+
 
 // ============================================
 // INICIALIZACIÓN

@@ -7,6 +7,9 @@ let polizaIdSeleccionada = null;
 let datosOriginales = null;
 let quillNota = null;
 let autosaveTimer = null;
+let dependientesCount = 0;
+let documentosCount = 0;
+let imagenesNotaSeleccionadas = [];
 const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 
 // ============================================
