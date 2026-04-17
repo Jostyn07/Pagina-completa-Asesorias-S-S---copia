@@ -1917,7 +1917,7 @@ async function cargarMetodoPago(clienteId) {
             .select('*')
             .eq('cliente_id', clienteId)
             .eq('activo', true)
-            .single();
+            .maybeSingle();
         
         if (error) {
             if (error.code === 'PGRST116') {
