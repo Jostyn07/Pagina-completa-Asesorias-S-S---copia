@@ -7,8 +7,6 @@
 // ============================================
 let clienteId = null;
 let polizaId = null;
-let dependientesCount = 0;
-let documentosCount = 0;
 let notasCount = 0;
 // let imagenesNotaSeleccionadas = [];
 let autosaveTimer = null;
@@ -319,36 +317,6 @@ function inicializarFormulario() {
  * @param {string|Date} fecha - Fecha en cualquier formato
  * @returns {string} Fecha en formato mm/dd/aaaa
  */
-function formatoUS(fecha) {
-    if (!fecha) return '';
-    
-    try {
-        // Si es string en formato ISO (yyyy-mm-dd o yyyy-mm-ddTHH:MM:SS)
-        if (typeof fecha === 'string' && fecha.includes('-')) {
-            const soloFecha = fecha.split('T')[0]; // Quitar hora si existe
-            const [anio, mes, dia] = soloFecha.split('-');
-            return `${mes}/${dia}/${anio}`;
-        }
-        
-        // Si es string en formato US (mm/dd/yyyy)
-        if (typeof fecha === 'string' && fecha.includes('/')) {
-            return fecha; // Ya está en formato US
-        }
-        
-        // Si es Date object (último recurso)
-        if (fecha instanceof Date) {
-            const anio = fecha.getFullYear();
-            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-            const dia = String(fecha.getDate()).padStart(2, '0');
-            return `${mes}/${dia}/${anio}`;
-        }
-        
-        return '';
-    } catch (error) {
-        console.error('Error al formatear fecha:', error);
-        return '';
-    }
-}
 
 /**
  * Convierte fecha a formato ISO (yyyy-mm-dd) para inputs type="date"
@@ -356,35 +324,6 @@ function formatoUS(fecha) {
  * @param {string|Date} fecha - Fecha en cualquier formato
  * @returns {string} Fecha en formato yyyy-mm-dd
  */
-function formatoISO(fecha) {
-    if (!fecha) return '';
-    
-    try {
-        // Si es string en formato ISO (yyyy-mm-dd o yyyy-mm-ddTHH:MM:SS)
-        if (typeof fecha === 'string' && fecha.includes('-')) {
-            return fecha.split('T')[0]; // Ya está en ISO, solo quitar hora
-        }
-        
-        // Si es string en formato US (mm/dd/yyyy)
-        if (typeof fecha === 'string' && fecha.includes('/')) {
-            const [mes, dia, anio] = fecha.split('/');
-            return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-        }
-        
-        // Si es Date object (último recurso)
-        if (fecha instanceof Date) {
-            const anio = fecha.getFullYear();
-            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-            const dia = String(fecha.getDate()).padStart(2, '0');
-            return `${anio}-${mes}-${dia}`;
-        }
-        
-        return '';
-    } catch (error) {
-        console.error('Error al formatear fecha:', error);
-        return '';
-    }
-}
 
 // ============================================
 // APLICAR PERMISOS ESTADO EN MERCADO
@@ -519,78 +458,12 @@ async function cargarDatosCliente(id) {
  * @param {string|Date} fecha - Fecha en cualquier formato
  * @returns {string} Fecha en formato mm/dd/aaaa
  */
-function formatoUS(fecha) {
-    if (!fecha) return '';
-    
-    try {
-        let date;
-        
-        // Si ya es un objeto Date
-        if (fecha instanceof Date) {
-            date = fecha;
-        }
-        // Si es string en formato ISO (yyyy-mm-dd)
-        else if (typeof fecha === 'string' && fecha.includes('-')) {
-            const partes = fecha.split('T')[0].split('-');
-            date = new Date(partes[0], partes[1] - 1, partes[2]);
-        }
-        // Si es string en formato US (mm/dd/yyyy)
-        else if (typeof fecha === 'string' && fecha.includes('/')) {
-            return fecha; // Ya está en formato US
-        }
-        else {
-            date = new Date(fecha);
-        }
-        
-        const mes = String(date.getMonth() + 1).padStart(2, '0');
-        const dia = String(date.getDate()).padStart(2, '0');
-        const anio = date.getFullYear();
-        
-        return `${mes}/${dia}/${anio}`;
-    } catch (error) {
-        console.error('Error al formatear fecha:', error);
-        return '';
-    }
-}
 
 /**
  * Convierte fecha a formato ISO (yyyy-mm-dd) para inputs type="date"
  * @param {string|Date} fecha - Fecha en cualquier formato
  * @returns {string} Fecha en formato yyyy-mm-dd
  */
-function formatoISO(fecha) {
-    if (!fecha) return '';
-    
-    try {
-        let date;
-        
-        // Si ya es un objeto Date
-        if (fecha instanceof Date) {
-            date = fecha;
-        }
-        // Si es string en formato US (mm/dd/yyyy)
-        else if (typeof fecha === 'string' && fecha.includes('/')) {
-            const partes = fecha.split('/');
-            date = new Date(partes[2], partes[0] - 1, partes[1]);
-        }
-        // Si es string en formato ISO
-        else if (typeof fecha === 'string' && fecha.includes('-')) {
-            return fecha.split('T')[0]; // Ya está en ISO, solo quitar hora
-        }
-        else {
-            date = new Date(fecha);
-        }
-        
-        const anio = date.getFullYear();
-        const mes = String(date.getMonth() + 1).padStart(2, '0');
-        const dia = String(date.getDate()).padStart(2, '0');
-        
-        return `${anio}-${mes}-${dia}`;
-    } catch (error) {
-        console.error('Error al formatear fecha:', error);
-        return '';
-    }
-}
 
 // ============================================
 // RELLENAR FORMULARIO
@@ -871,22 +744,6 @@ function crearTarjetaDependiente(count, dep, depId) {
     `;
     
     container.insertAdjacentHTML('beforeend', cardHTML);
-}
-
-// CALCULAR EDAD
-function calcularEdad(fechaNacimiento) {
-    if (!fechaNacimiento) return 0;
-    
-    const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mes = hoy.getMonth() - nacimiento.getMonth();
-    
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-        edad--;
-    }
-    
-    return edad;
 }
 
 // EDITAR DEPENDIENTE
@@ -1613,69 +1470,6 @@ function inicializarValidacionTiempoReal() {
     });
 }
 
-function formatearTelefono(valor) {
-    const numeros = valor.replace(/\D/g, '').slice(0, 10);
-    if (numeros.length === 0) return '';
-    if (numeros.length <= 3) return numeros;
-    if (numeros.length <= 6) return `(${numeros.slice(0, 3)}) ${numeros.slice(3)}`;
-    return `(${numeros.slice(0, 3)}) ${numeros.slice(3, 6)}-${numeros.slice(6, 10)}`;
-}
-
-function formatearSSN(valor) {
-    const numeros = valor.replace(/\D/g, '').slice(0, 9);
-    if (numeros.length === 0) return '';
-    if (numeros.length <= 3) return numeros;
-    if (numeros.length <= 5) return `${numeros.slice(0, 3)}-${numeros.slice(3)}`;
-    return `${numeros.slice(0, 3)}-${numeros.slice(3, 5)}-${numeros.slice(5, 9)}`;
-}
-
-function formatearMonto(input) {
-    // Permitir solo números y punto decimal
-    input.value = input.value.replace(/[^0-9.]/g, '');
-}
-
-function validarEmail(input) {
-    const email = input.value;
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (email && !regex.test(email)) {
-        input.setCustomValidity('Email inválido');
-        input.reportValidity();
-    } else {
-        input.setCustomValidity('');
-    }
-}
-
-function validarTelefono(input) {
-    const tel = input.value.replace(/\D/g, '');
-    
-    if (tel && tel.length !== 10) {
-        input.setCustomValidity('Teléfono debe tener 10 dígitos');
-        input.reportValidity();
-    } else {
-        input.setCustomValidity('');
-    }
-}
-
-function validarSSN(input) {
-    const ssn = input.value.replace(/\D/g, '');
-    
-    if (ssn && ssn.length !== 9) {
-        input.setCustomValidity('SSN debe tener 9 dígitos');
-        input.reportValidity();
-    } else {
-        input.setCustomValidity('');
-    }
-}
-
-function validarCodigoPostal(input) {
-    const cp = input.value.replace(/\D/g, '');
-    
-    if (cp && cp.length !== 5) {
-        input.value = cp.slice(0, 5);
-    }
-}
-
 // ============================================
 // MÉTODO DE PAGO
 // ============================================
@@ -1821,6 +1615,7 @@ async function handleSubmit(event) {
         clave_seguridad: formData.claveSeguridad || '',
         enlace_poliza: formData.enlacePoliza || '',
         pagado_hasta: formData.pagadoHasta || '',
+        fecha_confirmacion: formData.fechaConfirmacion || '',
         observacion_pagos: formData.observacionPago || '',
         };  
 
@@ -2700,6 +2495,7 @@ async function cargarEstadoSeguimiento(polizaId) {
             }
 
             if (poliza.pagado_hasta) document.getElementById('pagadoHasta').value = formatoUS(poliza.pagado_hasta);
+            if (poliza.fecha_confirmacion) document.getElementById('fechaConfirmacion').value = formatoUS(poliza.fecha_confirmacion);
 
             if (poliza.observacion_pagos) document.getElementById('observacionPago').value = poliza.observacion_pagos;
             
@@ -2850,6 +2646,7 @@ async function guardarEstadoSeguimiento(polizaId) {
             nombre_agente_compania: document.getElementById('nombreAgenteCompania')?.value || null,
             estado_compania: document.getElementById('estadoCompania')?.value || null,
             pagado_hasta: document.getElementById('pagadoHasta')?.value || null,
+            fecha_confirmacion: document.getElementById('fechaConfirmacion')?.value || null,
             observacion_pagos: document.getElementById('observacionPago')?.value || null,
             
             updated_at: new Date().toISOString(),
@@ -3779,6 +3576,7 @@ function formatearNombreCampo(campo) {
         'clave_seguridad': 'Clave de seguridad',
         'enlace_poliza': 'Enlace de la póliza',
         'pagado_hasta': 'Pagado hasta',
+        'fecha_confirmacion': 'Fecha de confirmacion',
         'observacion_pagos': 'Observaciones de pago',
         'nombre_agente_mercado': 'Nombre del agente (Mercado)',
         'fecha_revision_mercado': 'Fecha de revisión en mercado',
@@ -3827,6 +3625,7 @@ function obtenerDatosFormularioPoliza() {
         maximo_bolsillo: document.getElementById('maximoBolsillo')?.value || '',
         estado_compania: document.getElementById('estadoCompania')?.value || '',
         pagado_hasta: document.getElementById('pagadoHasta')?.value || '',
+        fecha_confirmacion: document.getElementById('fechaConfirmacion')?.value || '',
         observacion_pagos: document.getElementById('observacionPago')?.value || '',
         estado_mercado: document.getElementById('estadoMercado')?.value || '',
         agente35_estado: document.getElementById('agente35Estado')?.value || '',

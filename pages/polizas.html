@@ -191,8 +191,8 @@
                 <div class="header__welcome">
                     <div class="header__welcome__new">
                         <label>
-                            Crear Nueva Póliza
-                            <button class="button__new" onclick="crearNuevaPoliza()" id="crearNuevaPoliza1">+</button>
+                            Crear
+                            <button class="button__new" onclick="abirModalTipoRegistro()" id="crearNuevaPoliza1">+</button>
                         </label>
                     </div>
                     <div class="header__welcome__inf">
@@ -898,6 +898,43 @@
     <div id="modalDetalles">
         <div class="modal-content" id="modalContenido">
             <!-- El contenido se cargará dinámicamente -->
+        </div>
+    </div>
+    <!-- MODAL TIPO DE REGISTRO -->
+    <div id="modalTipoRegistro" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:16px; padding:32px; max-width:520px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            
+            <h2 style="margin:0 0 8px; font-size:1.3rem; color:#1e293b;">¿Qué deseas registrar?</h2>
+            <p style="margin:0 0 24px; color:#64748b; font-size:0.9rem;">Selecciona el tipo de registro para continuar</p>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                
+                <!-- Opción 1: Nueva Póliza -->
+                <div onclick="window.location.href='./cliente_crear.html'" 
+                    style="border:2px solid #e2e8f0; border-radius:12px; padding:24px; cursor:pointer; transition:all 0.2s;"
+                    onmouseover="this.style.borderColor='#6366f1'; this.style.background='#f5f3ff';"
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='white';">
+                    <span class="material-symbols-rounded" style="font-size:2rem; color:#6366f1;">person_add</span>
+                    <h3 style="margin:12px 0 6px; font-size:1rem; color:#1e293b;">Nueva Póliza</h3>
+                    <p style="margin:0; font-size:0.8rem; color:#64748b;">Registra un cliente nuevo desde cero</p>
+                </div>
+
+                <!-- Opción 2: Recuperado / Cambio de vida -->
+                <div onclick="window.location.href='./cliente_recuperado-cambioDeVida.html'"
+                    style="border:2px solid #e2e8f0; border-radius:12px; padding:24px; cursor:pointer; transition:all 0.2s;"
+                    onmouseover="this.style.borderColor='#f59e0b'; this.style.background='#fffbeb';"
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='white';">
+                    <span class="material-symbols-rounded" style="font-size:2rem; color:#f59e0b;">cycle</span>
+                    <h3 style="margin:12px 0 6px; font-size:1rem; color:#1e293b;">Recuperado / Cambio de vida</h3>
+                    <p style="margin:0; font-size:0.8rem; color:#64748b;">Actualiza un cliente existente</p>
+                </div>
+
+            </div>
+
+            <button onclick="cerrarModalTipoRegistro()" 
+                    style="margin-top:20px; width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; background:white; color:#64748b; cursor:pointer; font-size:0.9rem;">
+                Cancelar
+            </button>
         </div>
     </div>
 

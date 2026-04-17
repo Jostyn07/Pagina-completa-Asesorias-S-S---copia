@@ -6,8 +6,6 @@
 // ============================================
 // VARIABLES GLOBALES
 // ============================================
-let dependientesCount = 0;
-let documentosCount = 0;
 let notasCount = 0;
 // let imagenesNotaSeleccionadas = [];
 let autosaveTimer = null;
@@ -501,41 +499,6 @@ function calcularYMostrarFechas() {
  * @param {string|Date} fecha - Fecha en cualquier formato
  * @returns {string} Fecha en formato mm/dd/aaaa
  */
-function formatoUS(fecha) {
-    if (!fecha) return '';
-    
-    // Si ya viene en formato mm/dd/aaaa, devolver tal cual
-    if (typeof fecha === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
-        return fecha;
-    }
-    
-    // Convertir a objeto Date
-    let d;
-    if (fecha instanceof Date) {
-        d = fecha;
-    } else if (typeof fecha === 'string') {
-        // Manejar formato ISO (aaaa-mm-dd)
-        if (fecha.includes('-')) {
-            const partes = fecha.split('T')[0].split('-');
-            d = new Date(partes[0], partes[1] - 1, partes[2]);
-        } else {
-            d = new Date(fecha);
-        }
-    } else {
-        return '';
-    }
-    
-    // Validar que sea fecha válida
-    if (isNaN(d.getTime())) return '';
-    
-    // Formatear a mm/dd/aaaa
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const dia = String(d.getDate()).padStart(2, '0');
-    const anio = d.getFullYear();
-    
-    return `${mes}/${dia}/${anio}`;
-}
-
 // ============================================
 // VALIDACIÓN EN TIEMPO REAL
 // ============================================
@@ -605,77 +568,6 @@ function inicializarValidacionTiempoReal() {
             });
         }
     });
-}
-
-// Formateadores
-function formatearTelefono(valor) {
-    // Remover todo excepto números
-    const numeros = valor.replace(/\D/g, '');
-    
-    // Limitar a 10 dígitos
-    const limitado = numeros.slice(0, 10);
-    
-    // Formatear
-    if (limitado.length <= 3) return limitado;
-    if (limitado.length <= 6) return `(${limitado.slice(0, 3)}) ${limitado.slice(3)}`;
-    return `(${limitado.slice(0, 3)}) ${limitado.slice(3, 6)}-${limitado.slice(6, 10)}`;
-}
-
-function formatearSSN(valor) {
-    const numeros = valor.replace(/\D/g, '');
-    if (numeros.length <= 3) return numeros;
-    if (numeros.length <= 5) return `${numeros.slice(0, 3)}-${numeros.slice(3)}`;
-    return `${numeros.slice(0, 3)}-${numeros.slice(3, 5)}-${numeros.slice(5, 9)}`;
-}
-
-function formatearMonto(input) {
-    let valor = parseFloat(input.value.replace(/[^0-9.]/g, ''));
-    if (isNaN(valor)) valor = 0;
-    input.value = valor.toFixed(2);
-}
-
-// Validadores
-function validarEmail(input) {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (input.value && !regex.test(input.value)) {
-        input.setCustomValidity('Email inválido');
-        input.reportValidity();
-        return false;
-    }
-    input.setCustomValidity('');
-    return true;
-}
-
-function validarTelefono(input) {
-    const numeros = input.value.replace(/\D/g, '');
-    if (numeros && numeros.length !== 10) {
-        input.setCustomValidity('Teléfono debe tener 10 dígitos');
-        input.reportValidity();
-        return false;
-    }
-    input.setCustomValidity('');
-    return true;
-}
-
-function validarSSN(input) {
-    const numeros = input.value.replace(/\D/g, '');
-    if (numeros && numeros.length !== 9) {
-        input.setCustomValidity('SSN debe tener 9 dígitos');
-        input.reportValidity();
-        return false;
-    }
-    input.setCustomValidity('');
-    return true;
-}
-
-function validarCodigoPostal(input) {
-    if (input.value && input.value.length !== 5) {
-        input.setCustomValidity('Código postal debe tener 5 dígitos');
-        input.reportValidity();
-        return false;
-    }
-    input.setCustomValidity('');
-    return true;
 }
 
 // ============================================
@@ -907,22 +799,6 @@ function crearTarjetaDependiente(count, dep) {
     `;
     
     container.insertAdjacentHTML('beforeend', cardHTML);
-}
-
-// CALCULAR EDAD
-function calcularEdad(fechaNacimiento) {
-    if (!fechaNacimiento) return 0;
-    
-    const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mes = hoy.getMonth() - nacimiento.getMonth();
-    
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-        edad--;
-    }
-    
-    return edad;
 }
 
 // EDITAR DEPENDIENTE

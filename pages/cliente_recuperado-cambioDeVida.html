@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Nuevo Cliente - S&S Asesorías</title>
+    <title>Recuperado / Cambio de vida Cliente - S&S Asesorías</title>
     <script>
     const t = localStorage.getItem('ss_theme') || 'light';
     document.documentElement.setAttribute('data-theme', t);
@@ -12,12 +12,12 @@
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/cliente.css">
     <link rel="stylesheet" href="../css/thumbnails_modal_styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=paid" />
     <link rel="stylesheet" href="../css/darkmode.css">
-    <link rel="stylesheet" href="../css/clientes_archivados.css">
     <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
 </head>
 <body>
-    <!-- SIDEBAR UNIFICADO -->
+        <!-- SIDEBAR UNIFICADO -->
     <aside class="sidebar-unified" id="sidebar">
         <div class="sidebar-header">
             <a href="./home.html" class="sidebar-logo-link">
@@ -84,27 +84,27 @@
         </div>
     </aside>
 
-    <!-- CONTENEDOR PRINCIPAL -->
     <div class="main-container">
         <!-- HEADER -->
         <header class="page-header">
             <div class="header-left">
                 <button class="btn-back" onclick="window.location.href='./polizas.html'">
                     <span class="material-symbols-rounded">arrow_back</span>
-                    Volver a Pólizas 
+                    Volver a Pólizas
                 </button>
-                <h1 id="pageTitle">📝 Crear Nuevo Cliente y Póliza</h1>
+                <h1 id="pageTitle">Recuperado o cambio de vida</h1>
             </div>
             <div class="header-right">
                 <div class="autosave-indicator" id="autosaveIndicator">
                     <span class="material-symbols-rounded">cloud_done</span>
                     <span id="autosaveText">Todos los cambios guardados</span>
                 </div>
+            </div>
                 <div class="user-menu">
                     <button class="user-profile-btn" onclick="toggleUserMenu()">
                         <img src="https://ui-avatars.com/api/?name=Usuario&background=667eea&color=fff&size=40" 
-                            alt="Usuario" 
-                            class="user-avatar">
+                             alt="Usuario" 
+                             class="user-avatar">
                         <span class="material-symbols-rounded dropdown-icon">expand_more</span>
                     </button>
                     
@@ -131,9 +131,43 @@
                         </button>
                     </div>
                 </div>
-            </div>
         </header>
+        <!-- ================ Buscar cliente =================== -->
+         <!-- PANEL DE BÚSQUEDA DE CLIENTE -->
+          <div class="busqueda-cliente-panel">
+            <div class="busqueda-cliente-inner">
 
+                <div class="busqueda-tipo">
+                    <span class="material-symbols-rounded">cycle</span>
+                    <div>
+                        <strong>Recuperado / Cambio de vida</strong>
+                        <small>Busca el cliente y carga su Información</small>
+                    </div>
+                </div>
+
+                <div class="busqueda-grupo">
+                    <label for="">Buscar cliente</label>
+                    <input type="text" id="inputBuscarCliente" placeholder="Escribe el nombre" oninput="buscarClientes(this.value)" autocomplete="off">
+                </div>
+
+                <div class="busqueda-grupo">
+                    <label>Seleccionar resultado</label>
+                    <select id="selectCliente" onchange="seleccionarCliente(this.value)" disabled>
+                        <option value="">Escribe para buscar</option>
+                    </select>
+                </div>
+
+                <div class="busqueda-estado" id="busquedaEstado" style="display: none;">
+                    <span class="material-symbols-rounded" style="color: #16a34a;">check_circle</span>
+                    <span id="busquedaEstadoTexto">Cliente cargado</span>
+                </div>
+
+                <button class="busqueda-btn-nuevo" onclick="window.location.href='../pages/cliente_crear.html'">
+                    <span class="material-symbols-rounded">person_add</span>
+                    No existe - Crear nuevo
+                </button>
+            </div>
+          </div>
         <!-- TABS NAVEGACIÓN -->
         <div class="tabs-container">
             <div class="tabs-nav" id="tabsNav">
@@ -930,9 +964,9 @@
                     <span class="material-symbols-rounded">arrow_forward</span>
                     Siguiente
                 </button>
-                <button type="submit" class="btn-submit">
+                <button type="submit" class="btn-submit" id="btn-circle">
                     <span class="material-symbols-rounded">check_circle</span>
-                    Guardar Cliente
+                    Guardar y Enviar
                 </button>
             </div>
         </form>
@@ -1034,7 +1068,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
     <script src="../js/main.js"></script>
-    <script src="../js/cliente_crear.js"></script>
+    <script src="../js/cliente_recuperado-cambioDeVida.js"></script>
     <script src="../js/clientes_shared.js"></script>
     <script src="../js/enviar_googleSheets.js"></script>
     <script src="../js/permisos.js"></script>

@@ -241,13 +241,29 @@ function restaurarFiltrosDesdeStorage() {
             if (poliza.cliente?.archivado === true) return false;
             const cliente = poliza.cliente || {};
             const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.toLowerCase();
-            return nombreCompleto.includes(termino) ||
-                (cliente.telefono1 || '').includes(termino) ||
-                (poliza.numero_poliza || '').toLowerCase().includes(termino) ||
-                (poliza.compania || '').toLowerCase().includes(termino) ||
-                (poliza.plan || '').toLowerCase().includes(termino) ||
-                (poliza.estado_mercado || '').toLowerCase().includes(termino) ||
-                (poliza.operador_nombre || '').toLowerCase().includes(termino);
+            const telefono = cliente.telefono1 || '';
+            const numeroPoliza = poliza.numero_poliza || '';
+            const compania = poliza.compania || '';
+            const plan = poliza.plan || '';
+            const estadoMercado = poliza.estado_mercado || '';
+            const operadorNombre = poliza.operador_nombre || '';
+            const agente35Estado = poliza.agente35_estado || '';
+            const tipoRegistro = cliente.tipo_registro || '';
+
+            const palabras = termino.split(/\s+/).filter(Boolean);
+            const camposBusqueda = [
+                nombreCompleto,
+                telefono.toLowerCase(),
+                numeroPoliza.toLowerCase(),
+                compania.toLowerCase(),
+                plan.toLowerCase(),
+                estadoMercado.toLowerCase(),
+                operadorNombre.toLowerCase(),
+                agente35Estado.toLowerCase(),
+                tipoRegistro.toLowerCase()
+            ].join(' ');
+
+            return palabras.every(palabra => camposBusqueda.includes(palabra));
         });
     }
 
@@ -1227,15 +1243,19 @@ function buscarPolizas(termino) {
             const operadorNombre = poliza.operador_nombre || '';
             const agente35Estado = poliza.agente35_estado || '';
             
-            return nombreCompleto.includes(termino) ||
-                   telefono.includes(termino) ||
-                   numeroPoliza.toLowerCase().includes(termino) ||
-                   compania.toLowerCase().includes(termino) ||
-                   plan.toLowerCase().includes(termino) ||
-                   estadoMercado.toLowerCase().includes(termino) ||
-                   operadorNombre.toLowerCase().includes(termino) ||
-                   agente35Estado.toLowerCase().includes(termino) ||
-                   tipoRegistro.toLowerCase().includes(termino);
+            const palabras = termino.split(/\s+/).filter(Boolean);
+            const camposBusqueda = [
+                nombreCompleto,
+                telefono.toLowerCase(),
+                numeroPoliza.toLowerCase(),
+                compania.toLowerCase(),
+                plan.toLowerCase(),
+                estadoMercado.toLowerCase(),
+                operadorNombre.toLowerCase(),
+                agente35Estado.toLowerCase(),
+                tipoRegistro.toLowerCase()
+            ].join(' ');
+            return palabras.every(palabra => camposBusqueda.includes(palabra));
         });
     }
     
@@ -2794,4 +2814,18 @@ const null1 = document.getElementById("nullPlazoDocumentos")
 
 document.getElementById('nullPlazoDocumentos').addEventListener("click", function() {
     console.log(null1.checked)
+})
+
+function abirModalTipoRegistro() {
+    const modal = document.getElementById('modalTipoRegistro')
+    modal.style.display = 'flex'
+}
+
+function cerrarModalTipoRegistro() {
+    const modal = document.getElementById('modalTipoRegistro')
+    modal.style.display = 'none'
+}
+
+document.getElementById('modalTipoRegistro').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalTipoRegistro()
 })

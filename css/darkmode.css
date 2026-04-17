@@ -679,3 +679,38 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 [data-theme="dark"] .ql-picker-item {
     color: var(--dk-text-primary);
 }
+
+/* Busqueda cliente en Recuerado o cambio de vida */
+[data-theme="dark"] .busqueda-cliente-panel {
+ background: rgba(245, 158, 11, 0.08);
+ border-bottom-color: rgba(245, 158, 11, 0.25)
+}
+
+ [data-theme="dark"] .busqueda-tipo {
+ color: var(--dk-warning)
+}
+
+[data-theme="dark"] .busqueda-grupo label {
+    color: var(--dk-warning);
+}
+
+[data-theme="dark"] .busqueda-grupo input,
+[data-theme="dark"] .busqueda-grupo select {
+    background: var(--dk-surface-1);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: var(--dk-text-primary);
+}
+
+[data-theme="dark"] .busqueda-estado {
+    color: var(--dk-success);
+}
+
+[data-theme="dark"] .busqueda-btn-nuevo {
+    border-color: var(--dk-warning);
+    color: var(--dk-warning);
+}
+
+[data-theme="dark"] .busqueda-btn-nuevo:hover {
+    background: var(--dk-warning);
+    color: #1e293b;
+}

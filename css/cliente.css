@@ -5003,3 +5003,99 @@ input[readonly] {
     transform: scale(1.04);
     box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 }
+
+/* ============================================
+   PANEL DE BÚSQUEDA — RECUPERADO / CAMBIO DE VIDA
+   ============================================ */
+
+   .busqueda-cliente-panel {
+    background: #fffbeb;
+    border-bottom: 2px solid #fde68a;
+    padding: 16px 24px;
+   }
+
+   .busqueda-cliente-inner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    max-width: 1200px;
+   }
+
+   .busqueda-tipo .material-symbols-rounded {
+    font-size: 2rem;
+    color: #f59e0b;
+}
+
+.busqueda-tipo strong {
+    display: block;
+    font-size: 0.9rem;
+}
+
+.busqueda-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 200px;
+}
+
+.busqueda-grupo label {
+    font-size: 0.75;
+    font-weight: 600;
+    color: #92400e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.busqueda-grupo input,
+.busqueda-grupo select {
+    padding: 8px 12px;
+    border:  1px solid var(--color-hover-primary);
+    border-radius: 8px;
+    font-size: 0.9em;
+    background: white;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.busqueda-grupo input:focus,
+.busqueda-grupo select:focus {
+    border-color: var(--color-hover-light);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+.busqueda-grupo select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.busqueda-estado {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #16a34a;
+}
+
+.busqueda-btn-nuevo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: none;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    color: #92400e;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.busqueda-btn-nuevo:hover {
+    background: #f59e0b;
+    color: white;
+}
+
