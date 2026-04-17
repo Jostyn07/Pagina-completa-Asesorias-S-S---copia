@@ -715,3 +715,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
  
 });
+
+function mostrarFormularioPago(tipo) {
+    // Ocultar ambos formularios
+    const formBanco = document.getElementById('formBanco');
+    const formTarjeta = document.getElementById('formTarjeta');
+    
+    if (formBanco) formBanco.style.display = 'none';
+    if (formTarjeta) formTarjeta.style.display = 'none';
+    
+    // Mostrar el formulario seleccionado
+    if (tipo === 'banco' && formBanco) {
+        formBanco.style.display = 'block';
+    } else if (tipo === 'tarjeta' && formTarjeta) {
+        formTarjeta.style.display = 'block';
+    }
+}

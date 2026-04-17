@@ -162,14 +162,14 @@ function cambiarTab(tabName) {
     actualizarBotonSiguiente();
 }
 
-function siguientePestana() {
-    const tabs = Array.from(document.querySelectorAll('.tab-btn:not([style*="display: none"])'));
-    const activeTab = document.querySelector('.tab-btn.active');
-    const currentIndex = tabs.indexOf(activeTab);
-    if (currentIndex < tabs.length - 1) {
-        cambiarTab(tabs[currentIndex + 1].dataset.tab);
-    }
-}
+// function siguientePestana() {
+//     const tabs = Array.from(document.querySelectorAll('.tab-btn:not([style*="display: none"])'));
+//     const activeTab = document.querySelector('.tab-btn.active');
+//     const currentIndex = tabs.indexOf(activeTab);
+//     if (currentIndex < tabs.length - 1) {
+//         cambiarTab(tabs[currentIndex + 1].dataset.tab);
+//     }
+// }
 
 function actualizarBotonSiguiente() {
     const tabs = Array.from(document.querySelectorAll('.tab-btn:not([style*="display: none"])'));
