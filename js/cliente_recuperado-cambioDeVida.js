@@ -731,3 +731,36 @@ function mostrarFormularioPago(tipo) {
         formTarjeta.style.display = 'block';
     }
 }
+
+function siguientePestana() {
+    const tabsEnOrden = [
+        'info-general',
+        'dependientes',
+        'estado',
+        'pago',
+        'documentos',
+        'notas',
+    ];
+    
+    // Obtener pestaña actual
+    const tabActual = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
+    const indexActual = tabsEnOrden.indexOf(tabActual);
+    
+    if (indexActual === -1 || indexActual >= tabsEnOrden.length - 1) {
+        // Ya está en la última pestaña
+        alert('Ya estás en la última pestaña. Haz click en "Guardar Cliente" para finalizar.');
+        return;
+    }
+    
+    // Validar pestaña actual antes de avanzar
+    if (!validarPestanaActual(tabActual)) {
+        return; // No avanzar si hay errores
+    }
+    
+    // Avanzar a la siguiente pestaña
+    const siguienteTab = tabsEnOrden[indexActual + 1];
+    cambiarTab(siguienteTab);
+    
+    // Actualizar botón si es la última pestaña
+    actualizarBotonSiguiente();
+}
