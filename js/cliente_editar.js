@@ -8,6 +8,7 @@
 let clienteId = null;
 let polizaId = null;
 let notasCount = 0;
+let documentosCount = 0;
 // let imagenesNotaSeleccionadas = [];
 let autosaveTimer = null;
 let quillNota = null
