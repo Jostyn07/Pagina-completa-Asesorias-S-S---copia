@@ -1971,53 +1971,16 @@ async function cargarMetodoPago(clienteId) {
             tieneMetodoPago.checked = metodos.tiene_metodo_pago === "Si";
         }
 
-        // Checkbox pago Enero
-        const pagoEnero = document.getElementById('pagoEnero');
-        metodos.pago_enero === "Si" ? pagoEnero.checked = metodos.pago_enero === "Si" : "";
-
-        // Checkbox pago Febrero
-        const pagoFebrero = document.getElementById('pagoFebrero');
-        metodos.pago_febrero === "Si" ? pagoFebrero.checked = metodos.pago_febrero === "Si" : "";
-
-        // Checkbox pago Marzo
-        const pagoMarzo = document.getElementById('pagoMarzo');
-        metodos.pago_marzo === "Si" ? pagoMarzo.checked = metodos.pago_marzo === "Si" : "";
-
-        // Checkbox pago Abril
-        const pagoAbril = document.getElementById('pagoAbril');
-        metodos.pago_abril === "Si" ? pagoAbril.checked = metodos.pago_abril === "Si" : "";
-
-        // Checkbox pago Mayo
-        const pagoMayo = document.getElementById('pagoMayo');
-        metodos.pago_mayo === "Si" ? pagoMayo.checked = metodos.pago_mayo === "Si" : "";
-
-        // Checkbox pago Junio
-        const pagoJunio = document.getElementById('pagoJunio');
-        metodos.pago_junio === "Si" ? pagoJunio.checked = metodos.pago_junio === "Si" : "";
-
-        // Checkbox pago Julio
-        const pagoJulio = document.getElementById('pagoJulio');
-        metodos.pago_julio === "Si" ? pagoJulio.checked = metodos.pago_julio === "Si" : "";
-
-        // Checkbox pago Agosto
-        const pagoAgosto = document.getElementById('pagoAgosto');
-        metodos.pago_agosto === "Si" ? pagoAgosto.checked = metodos.pago_agosto === "Si" : "";
-
-        // Checkbox pago Septiembre
-        const pagoSeptiembre = document.getElementById('pagoSeptiembre');
-        metodos.pago_septiembre === "Si" ? pagoSeptiembre.checked = metodos.pago_septiembre === "Si" : "";
-
-        // Checkbox pago Octubre
-        const pagoOctubre = document.getElementById('pagoOctubre');
-        metodos.pago_octubre === "Si" ? pagoOctubre.checked = metodos.pago_octubre === "Si" : "";
-
-        // Checkbox pago Noviembre
-        const pagoNoviembre = document.getElementById('pagoNoviembre');
-        metodos.pago_noviembre === "Si" ? pagoNoviembre.checked = metodos.pago_noviembre === "Si" : "";
-
-        // Checkbox pago Diciembre
-        const pagoDiciembre = document.getElementById('pagoDiciembre');
-        metodos.pago_diciembre === "Si" ? pagoDiciembre.checked = metodos.pago_diciembre === "Si" : "";
+        // Checkboxes de meses pagados
+        const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                       'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        
+        meses.forEach(mes => {
+            const checkbox = document.getElementById(`pago${mes.charAt(0).toUpperCase() + mes.slice(1)}`);
+            if (checkbox) {
+                checkbox.checked = metodos[`pago_${mes}`] === "Si";
+            }
+        });
         
         // Fecha de pago
         if (metodos.fecha_pago) {
@@ -2039,18 +2002,28 @@ async function cargarMetodoPago(clienteId) {
 async function guardarMetodoPago(clienteId) {
     try {
         const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
-
-        if (!tipoSeleccionado) {
-            return true;
-        }
-
-        const tipo = tipoSeleccionado.value;
+        const tipo = tipoSeleccionado ? tipoSeleccionado.value : null
 
         let metodoPagoData = {
             cliente_id: clienteId,
             tipo: tipo,
             usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
-            activo: true
+            activo: true,
+
+            fecha_pago: document.getElementById('fechaPago')?.value || null,
+            estado_pago: document.getElementById('estadoPago')?.value || null,
+            pago_enero: document.getElementById('pagoEnero').checked ? "Si" : "No",
+            pago_febrero: document.getElementById('pagoFebrero').checked ? "Si" : "No",
+            pago_marzo: document.getElementById('pagoMarzo').checked ? "Si" : "No",
+            pago_abril: document.getElementById('pagoAbril').checked ? "Si" : "No",
+            pago_mayo: document.getElementById('pagoMayo').checked ? "Si" : "No",
+            pago_junio: document.getElementById('pagoJunio').checked ? "Si" : "No",
+            pago_julio: document.getElementById('pagoJulio').checked ? "Si" : "No",
+            pago_agosto: document.getElementById('pagoAgosto').checked ? "Si" : "No",
+            pago_septiembre: document.getElementById('pagoSeptiembre').checked ? "Si" : "No",
+            pago_octubre: document.getElementById('pagoOctubre').checked ? "Si" : "No",
+            pago_noviembre: document.getElementById('pagoNoviembre').checked ? "Si" : "No",
+            pago_diciembre: document.getElementById('pagoDiciembre').checked ? "Si" : "No"
         };
 
         if (tipo === 'banco') {
