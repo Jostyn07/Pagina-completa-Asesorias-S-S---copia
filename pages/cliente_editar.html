@@ -179,6 +179,21 @@
 
         <!-- FORMULARIO -->
         <form id="clienteForm" class="cliente-form" novalidate>
+
+            <div class="form-section">
+                <button type="button" class="tab-btn" id="tabCambiosPendientes" data-tab="cambios-pendientes" style="display: none;">
+                    <span class="material-symbols-rounded">schedule</span>
+                    <span>Cambios Programados</span>
+                    <span class="badge badge-warning" id="cambiosPendientesCounter"></span>
+                </button>
+                <div class="tab-content" id="tab-cambios-pendientes">
+                    <div class="info-message warning">
+                        <span class="material-symbols-rounded">schedule</span>
+                        <p>Este cliente tiene cambios programados que se aplicaran automáticamente el primero del próximo mes.</p>
+                    </div>
+                    <div id="cambiosPendientesContainer"></div>
+                </div>
+            </div>
             
             <!-- TAB 1: INFORMACIÓN GENERAL -->
             <div class="tab-content active" id="tab-info-general">
@@ -196,7 +211,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Tipo de registro <span class="required">*</span></label>
-                                <select id="tipoRegistro" name="tipoRegistro">
+                                <select id="tipoRegistro" name="tipoRegistro" onlyread>
                                     <option value="">Selecciona...</option>
                                     <option value="Nuevo">Nuevo</option>
                                     <option value="Venta con registro">Venta con Registro</option>

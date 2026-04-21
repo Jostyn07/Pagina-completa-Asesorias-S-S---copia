@@ -231,17 +231,31 @@
                                     <option value="Recuperada">Recuperada</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label>Aplicantes <span class="required">*</span></label>
-                                <input type="number" id="aplicantes" name="aplicantes" placeholder="1" min="1" max="99" value="1" required>
-                                <small class="field-hint">Número de personas que aplican en esta póliza</small>
-                            </div>
                             
                             <div class="form-group">
                                 <label>Fecha de registro</label>
                                 <input type="text" id="fechaRegistro" name="fechaRegistro" readonly value="">
                                 <span class="input-icon">🔒</span>
                                 <small class="helper-text">Generada automáticamente</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tipoModificacion">Tipo de modificación</label>
+                                <select name="tipoModificacion" id="tipoModificacion">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Recuperada">Recuperada</option>
+                                    <option value="Cambio de vida">Cambio de vida</option>
+                                    <option value="Recuperada y cambio de vida">Recuperada y Cambio de vida</option>
+                                    <option value="Cancelada">Cancelada</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Aplicantes <span class="required">*</span></label>
+                                <input type="number" id="aplicantes" name="aplicantes" placeholder="1" min="1" max="99" value="1" required>
+                                <small class="field-hint">Número de personas que aplican en esta póliza</small>
                             </div>
                         </div>
                         <!-- Datos -->
@@ -290,7 +304,7 @@
                                 <label>Estado migratorio <span class="required">*</span></label>
                                 <select id="estadoMigratorio" name="estadoMigratorio" required>
                                     <option value="">Selecciona...</option>
-                                    <option value="ciudadano">Ciudadano</option>
+                                    <option value="Ciudadano">Ciudadano</option>
                                     <option value="Residente Permanente">Residente Permanente</option>
                                     <option value="Permiso de trabajo">Permiso de trabajo</option>
                                     <option value="Asilo politico">Asilo politico</option>
@@ -493,7 +507,7 @@
                                     <option value="Joycee Caceres">Joycee Caceres</option>
                                     <option value="Juan Ospino">Juan Ospino</option>
                                     <option value="Juan Jimenez">Juan Jimenez</option>
-                                    <option value="Jostyn Aragon">Jostyn Aragón</option>
+                                    <option value="Jostyn Aragón">Jostyn Aragón</option>
                                     <option value="Julieth Garcia">Julieth Garcia</option>
                                     <option value="Kevin Marino">Kevin Marino</option>
                                     <option value="Laura Restrepo">Laura Restrepo</option>
@@ -1067,12 +1081,11 @@
     <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
-    <script src="../js/main.js"></script>
-    <script src="../js/cliente_recuperado-cambioDeVida.js"></script>
-    <script src="../js/clientes_shared.js"></script>
-    <script src="../js/enviar_googleSheets.js"></script>
     <script src="../js/permisos.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/enviar_googleSheets.js"></script>
     <script src="../js/formatear_input_fechas.js"></script>
+    <script src="../js/cliente_recuperado-cambioDeVida.js"></script>
     <!-- <script src="../js/pegar_imagen_ctrl_v.js"></script> -->
     <!-- <script src="../js/modal_imagenes_navegacion.js"></script> -->
 </body>

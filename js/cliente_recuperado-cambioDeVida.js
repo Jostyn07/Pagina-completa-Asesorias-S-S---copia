@@ -269,6 +269,24 @@ function agregarDependienteExistente(dep) {
     actualizarContadorDependientes();
 }
 
+function agregarDependiente() {
+    // Limpiar formulario del modal
+    document.getElementById('formDependiente').reset();
+    document.getElementById('modal_dep_id').value = '';
+    document.getElementById('modal_dep_count').value = '';
+    
+    // Cambiar título
+    document.getElementById('modalDependienteTitulo').textContent = 'Agregar Dependiente';
+    
+    // Mostrar modal
+    document.getElementById('modalDependiente').classList.add('active');
+    
+    // Focus en primer campo
+    setTimeout(() => {
+        document.getElementById('modal_dep_nombres').focus();
+    }, 300);
+}
+
 // ============================================
 // MODAL DEPENDIENTE — GUARDAR
 // ============================================
@@ -484,6 +502,33 @@ function calcularFechasAutomaticas(poliza) {
     }
 }
 
+function formatearFechaSinZonaHoraria(fechaStr, formato = 'largo') {
+    if (!fechaStr) return '';
+    
+    let año, mes, dia;
+    
+    // Parsear fecha YYYY-MM-DD sin conversión de zona horaria
+    if (fechaStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+        [año, mes, dia] = fechaStr.split(/[-T]/);
+    } else {
+        // Si no es formato ISO, intentar convertir normalmente
+        const d = new Date(fechaStr);
+        año = d.getFullYear();
+        mes = String(d.getMonth() + 1).padStart(2, '0');
+        dia = String(d.getDate()).padStart(2, '0');
+    }
+    
+    if (formato === 'corto') {
+        // DD/MM/YYYY
+        return `${dia}/${mes}/${año}`;
+    } else {
+        // "1 de abril de 2026"
+        const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        return `${parseInt(dia)} de ${meses[parseInt(mes) - 1]} de ${año}`;
+    }
+}
+
 // ============================================
 // DETECTAR CAMPOS MODIFICADOS
 // ============================================
@@ -538,6 +583,7 @@ function detectarCamposModificados(datosNuevos) {
 function obtenerDatosFormulario() {
     const get    = (id) => document.getElementById(id)?.value?.trim() || '';
     const getNum = (id) => parseFloat(document.getElementById(id)?.value) || 0;
+    const getFecha = (id) => document.getElementById(id)?.value || '';
 
     return {
         // CLIENTE
@@ -548,7 +594,7 @@ function obtenerDatosFormulario() {
         email:                   get('email'),
         telefono1:               get('telefono1'),
         telefono2:               get('telefono2'),
-        fecha_nacimiento:        get('fechaNacimiento'),
+        fecha_nacimiento:        getFecha('fechaNacimiento'),
         estado_migratorio:       get('estadoMigratorio'),
         ssn:                     get('ssn'),
         ingreso_anual:           getNum('ingresos'),
@@ -577,9 +623,9 @@ function obtenerDatosFormulario() {
         agente_nombre:           get('nombreAgenteCompania'),
 
         // FECHAS (hidden ISO)
-        fecha_efectividad:       get('fechaEfectividad'),
-        fecha_inicial_cobertura: get('fechaInicialCobertura'),
-        fecha_final_cobertura:   get('fechaFinalCobertura'),
+        fecha_efectividad:       getFecha('fechaEfectividad'),
+        fecha_inicial_cobertura: getFecha('fechaInicialCobertura'),
+        fecha_final_cobertura:   getFecha('fechaFinalCobertura'),
     };
 }
 
@@ -617,10 +663,110 @@ function obtenerDependientes() {
 // ============================================
 
 function obtenerTipoCambio() {
-    const tipo = document.getElementById('tipoRegistro')?.value?.toLowerCase() || '';
-    if (tipo.includes('recuperad')) return 'recuperado';
-    if (tipo.includes('cambio'))    return 'cambio_de_vida';
+    const tipo = document.getElementById('tipoModificacion')?.value || '';
+    
+    // Valores exactos del select
+    if (tipo === 'Recuperada') return 'recuperado';
+    if (tipo === 'Cambio de vida') return 'cambio_de_vida';
+    if (tipo === 'Recuperada y cambio de vida') return 'cambio_de_vida'; // Asumimos cambio de vida
+    
+    // Por defecto
     return 'recuperado';
+}
+
+// ============================================
+// OBTENER MÉTODO DE PAGO DEL FORMULARIO
+// ============================================
+
+async function obtenerMetodoPago() {
+    const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
+    if (!tipoSeleccionado) return null;
+
+    const tipo = tipoSeleccionado.value;
+    const get = (id) => document.getElementById(id)?.value?.trim() || '';
+
+    let metodoPagoData = {
+        tipo: tipo,
+        cliente_id: clienteIdSeleccionado,
+    };
+
+    if (tipo === 'banco') {
+        metodoPagoData = {
+            ...metodoPagoData,
+            nombre_banco:   get('nombreBanco'),
+            numero_cuenta:  get('numeroCuenta'),
+            routing_number: get('routingNumber'),
+            nombre_cuenta:  get('nombreCuenta'),
+        };
+    } else if (tipo === 'tarjeta') {
+        metodoPagoData = {
+            ...metodoPagoData,
+            numero_tarjeta:   get('numeroTarjeta'),
+            nombre_tarjeta:   get('nombreTarjeta'),
+            fecha_expiracion: get('fechaExpiracion'),
+            cvv:              get('cvv'),
+            tipo_tarjeta:     get('tipoTarjeta'),
+        };
+    }
+
+    return metodoPagoData;
+}
+
+// ============================================
+// SUBIR DOCUMENTOS A SUPABASE STORAGE
+// ============================================
+
+async function subirDocumentos() {
+    const cards = document.querySelectorAll('.documento-card');
+    const documentosSubidos = [];
+
+    for (const card of cards) {
+        const match = card.id.match(/documento-(\d+)/);
+        if (!match) continue;
+        
+        const docId = match[1];
+        const fileInput = document.getElementById(`file-${docId}`);
+        
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) continue;
+
+        const file = fileInput.files[0];
+        const timestamp = Date.now();
+        const fileName = `${clienteIdSeleccionado}/${timestamp}_${file.name}`;
+
+        try {
+            // Subir archivo a Supabase Storage
+            const { data, error } = await supabaseClient.storage
+                .from('documentos')
+                .upload(fileName, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) {
+                console.error('Error subiendo documento:', error);
+                mostrarNotificacion(`Error al subir ${file.name}`, 'error');
+                continue;
+            }
+
+            // Obtener URL pública
+            const { data: urlData } = supabaseClient.storage
+                .from('documentos')
+                .getPublicUrl(fileName);
+
+            documentosSubidos.push({
+                nombre_archivo: file.name,
+                url_archivo: urlData.publicUrl,
+                tipo_archivo: file.type,
+                tamanio: Math.round(file.size / 1024), // KB como integer
+            });
+
+        } catch (error) {
+            console.error('Error procesando documento:', error);
+            mostrarNotificacion(`Error al procesar ${file.name}`, 'error');
+        }
+    }
+
+    return documentosSubidos;
 }
 
 // ============================================
@@ -652,8 +798,11 @@ async function guardarYEnviar(e) {
         const formData        = obtenerDatosFormulario();
         const camposModificados = detectarCamposModificados(formData);
         const tipoCambio      = obtenerTipoCambio();
+        const dependientes    = obtenerDependientes();
+        const metodoPago      = await obtenerMetodoPago();
+        const documentos      = await subirDocumentos();
 
-        // 1. Guardar en polizas_pendientes
+        // 1. Guardar en polizas_pendientes (NO actualiza inmediatamente)
         const { error: errorPendiente } = await supabaseClient
             .from('polizas_pendientes')
             .insert({
@@ -665,62 +814,15 @@ async function guardarYEnviar(e) {
                 campos_modificados: camposModificados,
                 fecha_efectividad:  formData.fecha_efectividad,
                 creado_por:         nombreOperador,
+                estado:             'pendiente',
+                // Datos adicionales para aplicar el 1ro del mes
+                dependientes_nuevos: dependientes,
+                metodo_pago_nuevo:   metodoPago,
+                documentos_nuevos:   documentos,
             });
         if (errorPendiente) throw errorPendiente;
 
-        // 2. Actualizar cliente
-        const { error: errorCliente } = await supabaseClient
-            .from('clientes')
-            .update({
-                nombres:           formData.nombres,
-                apellidos:         formData.apellidos,
-                email:             formData.email,
-                telefono1:         formData.telefono1,
-                telefono2:         formData.telefono2,
-                genero:            formData.genero,
-                direccion:         formData.direccion,
-                casa_apartamento:  formData.casa_apartamento,
-                condado:           formData.condado,
-                ciudad:            formData.ciudad,
-                estado:            formData.estado,
-                codigo_postal:     formData.codigo_postal,
-                po_box:            formData.po_box,
-                estado_migratorio: formData.estado_migratorio,
-                ssn:               formData.ssn,
-                ingreso_anual:     formData.ingreso_anual,
-                ocupacion:         formData.ocupacion,
-                operador_nombre:   formData.operador_nombre,
-                venta_realizada_por: formData.venta_realizada_por,
-            })
-            .eq('id', clienteIdSeleccionado);
-        if (errorCliente) throw errorCliente;
-
-        // 3. Actualizar póliza si existe
-        if (polizaIdSeleccionada) {
-            const { error: errorPoliza } = await supabaseClient
-                .from('polizas')
-                .update({
-                    aplicantes:             formData.aplicantes,
-                    compania:               formData.compania,
-                    plan:                   formData.plan,
-                    prima:                  formData.prima,
-                    credito_fiscal:         formData.credito_fiscal,
-                    member_id:              formData.member_id,
-                    clave_seguridad:        formData.clave_seguridad,
-                    enlace_poliza:          formData.enlace_poliza,
-                    agente_nombre:          formData.agente_nombre,
-                    fecha_efectividad:      formData.fecha_efectividad,
-                    fecha_inicial_cobertura:formData.fecha_inicial_cobertura,
-                    fecha_final_cobertura:  formData.fecha_final_cobertura,
-                    modificado_por_nombre:  nombreOperador,
-                    modificado_por_email:   user.email,
-                })
-                .eq('id', polizaIdSeleccionada);
-            if (errorPoliza) throw errorPoliza;
-        }
-
-        // 4. Enviar a Google Sheets
-        const dependientes = obtenerDependientes();
+        // 2. Enviar a Google Sheets
         await enviarAGoogleSheets({
             registradoPor:   nombreOperador,
             tipoCambio:      tipoCambio,
@@ -751,7 +853,12 @@ async function guardarYEnviar(e) {
             tipoVenta:       tipoCambio === 'recuperado' ? 'Recuperado' : 'Cambio de vida',
         });
 
-        mostrarNotificacion('Guardado y enviado correctamente', 'success');
+        const fechaEfectiva = formatearFechaSinZonaHoraria(formData.fecha_efectividad, 'largo');
+
+        mostrarNotificacion(
+            `${tipoCambio === 'recuperado' ? 'Recuperado' : 'Cambio de vida'} programado para ${fechaEfectiva}`, 
+            'success'
+        );
         localStorage.removeItem('borrador_recuperado');
 
         setTimeout(() => {
@@ -1121,4 +1228,282 @@ function limpiarMetodoPago() {
     document.querySelectorAll('#formBanco input, #formTarjeta input, #formTarjeta select').forEach(input => {
         input.value = '';
     });
+}
+// =================================
+// Accesibilidad
+// =================================
+
+function formatoUS(fecha) {
+    if (!fecha) return '';
+    try {
+        if (typeof fecha === 'string' && fecha.includes('-')) {
+            const soloFecha = fecha.split('T')[0];
+            const [anio, mes, dia] = soloFecha.split('-');
+            return `${mes}/${dia}/${anio}`;
+        }
+        if (typeof fecha === 'string' && fecha.includes('/')) return fecha;
+        if (fecha instanceof Date) {
+            const anio = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            return `${mes}/${dia}/${anio}`;
+        }
+        return '';
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
+        return '';
+    }
+}
+
+function formatearTelefono(valor) {
+    const numeros = valor.replace(/\D/g, '').slice(0, 10);
+    if (numeros.length === 0) return '';
+    if (numeros.length <= 3) return numeros;
+    if (numeros.length <= 6) return `(${numeros.slice(0, 3)}) ${numeros.slice(3)}`;
+    return `(${numeros.slice(0, 3)}) ${numeros.slice(3, 6)}-${numeros.slice(6, 10)}`;
+}
+
+function formatearSSN(valor) {
+    const numeros = valor.replace(/\D/g, '').slice(0, 9);
+    if (numeros.length === 0) return '';
+    if (numeros.length <= 3) return numeros;
+    if (numeros.length <= 5) return `${numeros.slice(0, 3)}-${numeros.slice(3)}`;
+    return `${numeros.slice(0, 3)}-${numeros.slice(3, 5)}-${numeros.slice(5, 9)}`;
+}
+
+function formatearMonto(input) {
+    input.value = input.value.replace(/[^0-9.]/g, '');
+}
+
+function validarCodigoPostal(input) {
+    const cp = input.value.replace(/\D/g, '');
+    if (cp && cp.length !== 5) input.value = cp.slice(0, 5);
+}
+
+function calcularEdad(fechaNacimiento) {
+    if (!fechaNacimiento) return '';
+    try {
+        let fecha;
+        if (fechaNacimiento.includes('/')) {
+            const [mes, dia, anio] = fechaNacimiento.split('/');
+            fecha = new Date(anio, mes - 1, dia);
+        } else {
+            fecha = new Date(fechaNacimiento);
+        }
+        const hoy = new Date();
+        let edad = hoy.getFullYear() - fecha.getFullYear();
+        const m = hoy.getMonth() - fecha.getMonth();
+        if (m < 0 || (m === 0 && hoy.getDate() < fecha.getDate())) edad--;
+        return edad;
+    } catch {
+        return '';
+    }
+}
+
+
+function togglePOBox() {
+    const checkbox = document.getElementById('tienePOBox');
+    const poBoxGroup = document.getElementById('poBoxGroup');
+    
+    if (checkbox && poBoxGroup) {
+        poBoxGroup.style.display = checkbox.checked ? 'block' : 'none';
+    }
+}
+
+function agregarDocumento() {
+    documentosCount++;
+    const container = document.getElementById('documentosContainer');
+    
+    // Remover empty state si existe
+    const emptyState = container.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+    
+    const docHTML = `
+        <div class="documento-card nuevo" id="documento-${documentosCount}">
+            <div class="documento-icono">
+                <span class="material-symbols-rounded">upload_file</span>
+            </div>
+            <div class="documento-info">
+                <h4 class="documento-nombre" id="nombre-doc-${documentosCount}">Documento #${documentosCount}</h4>
+                <div class="documento-meta">
+                    <input type="file" 
+                           name="doc_archivo_${documentosCount}" 
+                           id="file-${documentosCount}"
+                           accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" 
+                           onchange="previsualizarDocumento(${documentosCount}, this)"
+                           style="display: none;">
+                    <label for="file-${documentosCount}" class="btn-seleccionar-archivo">
+                        <span class="material-symbols-rounded">attach_file</span>
+                        Seleccionar archivo
+                    </label>
+                    <span class="documento-estado" id="estado-doc-${documentosCount}">No seleccionado</span>
+                </div>
+            </div>
+            <div class="documento-acciones">
+                <button type="button" class="btn-eliminar-doc" onclick="eliminarDocumento(${documentosCount})">
+                    <span class="material-symbols-rounded">delete</span>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', docHTML);
+    actualizarContadorDocumentos();
+}
+
+function cerrarModalDependiente() {
+    document.getElementById('modalDependiente').classList.remove('active');
+    document.getElementById('formDependiente').reset();
+}
+
+function actualizarContadorDependientes() {
+    const total = document.querySelectorAll('.dependiente-card').length;
+    const contador = document.getElementById('dependientesCounter');
+    if (contador) {
+        contador.textContent = `(${total})`;
+    }
+}
+
+function actualizarContadorNotas() {
+    const total = document.querySelectorAll('.nota-card').length;
+    const contador = document.getElementById('notasCounter');
+    if (contador) {
+        contador.textContent = `(${total})`;
+    }
+}
+
+function actualizarBotonSiguiente() {
+    const btnSiguiente = document.getElementById('btnSiguiente');
+    const tabActual = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
+    
+    if (tabActual === 'metodos-pago') {
+        // Última pestaña
+        btnSiguiente.textContent = 'Finalizar';
+        btnSiguiente.innerHTML = '<span class="material-symbols-rounded">check_circle</span> Finalizar';
+    } else {
+        btnSiguiente.innerHTML = '<span class="material-symbols-rounded">arrow_forward</span> Siguiente';
+    }
+}
+
+function validarPestanaActual(tab) {
+    switch(tab) {
+        case 'info-general':
+            return validarInfoGeneral();
+        case 'dependientes':
+            return true; // Dependientes son opcionales
+        case 'documentos':
+            return true; // Documentos son opcionales
+        case 'notas':
+            return true; // Notas son opcionales
+        case 'metodos-pago':
+            return true; // Método de pago es opcional
+        default:
+            return true;
+    }
+}
+
+function validarInfoGeneral() {
+    const camposRequeridos = [
+        { id: 'tipoRegistro', nombre: 'Tipo de registro'},
+        { id: 'nombres', nombre: 'Nombres' },
+        { id: 'apellidos', nombre: 'Apellidos' },
+        { id: 'genero', nombre: 'Género' },
+        { id: 'email', nombre: 'Correo electrónico' },
+        { id: 'telefono1', nombre: 'Teléfono' },
+        { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
+        { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'direccion', nombre: 'Dirección' },
+        { id: 'ciudad', nombre: 'Ciudad' },
+        { id: 'estado', nombre: 'Estado' },
+        { id: 'codigoPostal', nombre: 'Código postal' },
+        { id: 'compania', nombre: 'Compañía' },
+        { id: 'plan', nombre: 'Plan' },
+        { id: 'prima', nombre: 'Prima' },
+        { id: 'aplica', nombre: 'Tipo de registro'}
+    ];
+    
+    for (const campo of camposRequeridos) {
+        const elemento = document.getElementById(campo.id);
+        if (!elemento || !elemento.value || elemento.value.trim() === '') {
+            alert(`El campo "${campo.nombre}" es requerido antes de continuar`);
+            elemento?.focus();
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+function toggleSection(header) {
+    const section = header.parentElement;
+    section.classList.toggle('collapsed');
+}
+
+function actualizarContadorDocumentos() {
+    const total = document.querySelectorAll('.documento-card').length;
+    const contador = document.getElementById('documentosCounter');
+    if (contador) {
+        contador.textContent = `(${total})`;
+    }
+}
+
+function previsualizarDocumento(id, input) {
+    if (!input.files || input.files.length === 0) return;
+    
+    const file = input.files[0];
+    const nombreElemento = document.getElementById(`nombre-doc-${id}`);
+    const estadoElemento = document.getElementById(`estado-doc-${id}`);
+    
+    if (nombreElemento) {
+        nombreElemento.textContent = file.name;
+    }
+    
+    if (estadoElemento) {
+        const fileSize = (file.size / 1024).toFixed(2);
+        estadoElemento.textContent = `${fileSize} KB`;
+        estadoElemento.classList.add('seleccionado');
+    }
+}
+
+function mostrarNotificacion(mensaje, tipo = 'info') {
+    let notif = document.getElementById('notificacionPaste');
+    
+    if (!notif) {
+        notif = document.createElement('div');
+        notif.id = 'notificacionPaste';
+        notif.className = 'notificacion-paste';
+        notif.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+            font-size: 0.95rem;
+            z-index: 10001;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            color: white;
+        `;
+        document.body.appendChild(notif);
+    }
+    
+    const colores = {
+        success: '#10b981',
+        error: '#ef4444',
+        info: '#3b82f6',
+        warning: '#f59e0b'
+    };
+    
+    notif.style.background = colores[tipo] || colores.info;
+    notif.textContent = mensaje;
+    notif.style.opacity = '1';
+    notif.style.transform = 'translateX(0)';
+    
+    setTimeout(() => {
+        notif.style.opacity = '0';
+        notif.style.transform = 'translateX(400px)';
+    }, 3000);
 }

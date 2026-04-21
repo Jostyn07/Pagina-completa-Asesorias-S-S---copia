@@ -119,6 +119,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await cargarDatosCliente(clienteId);
         await cargarDocumentos(clienteId);
         await cargarNotas(clienteId);
+        await verificarCambiosPendientes(clienteId);
         
         
     } catch (error) {
@@ -1144,6 +1145,7 @@ procesarImagenesEnNotas(thread);
 }
 
 
+
 async function agregarNota(clienteId) {
     // Leer contenido de Quill
     const contenidoQuill = quillNota ? quillNota.root.innerHTML : '';
@@ -1407,11 +1409,6 @@ function actualizarBotonSiguiente() {
     } else {
         btnSiguiente.innerHTML = '<span class="material-symbols-rounded">arrow_forward</span> Siguiente';
     }
-}
-
-function toggleSection(header) {
-    const section = header.parentElement;
-    section.classList.toggle('collapsed');
 }
 
 function toggleSection(header) {
@@ -2179,6 +2176,33 @@ async function guardarDocumentosNuevos(clienteId) {
 // ============================================
 // HELPERS
 // ============================================
+
+function formatearFechaSinZonaHoraria(fechaStr, formato = 'largo') {
+    if (!fechaStr) return '';
+    
+    let año, mes, dia;
+    
+    // Parsear fecha YYYY-MM-DD sin conversión de zona horaria
+    if (fechaStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+        [año, mes, dia] = fechaStr.split(/[-T]/);
+    } else {
+        // Si no es formato ISO, intentar convertir normalmente
+        const d = new Date(fechaStr);
+        año = d.getFullYear();
+        mes = String(d.getMonth() + 1).padStart(2, '0');
+        dia = String(d.getDate()).padStart(2, '0');
+    }
+    
+    if (formato === 'corto') {
+        // DD/MM/YYYY
+        return `${dia}/${mes}/${año}`;
+    } else {
+        // "1 de abril de 2026"
+        const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        return `${parseInt(dia)} de ${meses[parseInt(mes) - 1]} de ${año}`;
+    }
+}
 
 async function generarNumeroPoliza() {
     const anio = new Date().getFullYear();
@@ -4276,6 +4300,498 @@ function validarCodigoPostal(input) {
     if (cp && cp.length !== 5) input.value = cp.slice(0, 5);
 }
 
+// ============================================
+// CAMBIOS PENDIENTES (RECUPERADOS Y CAMBIOS DE VIDA)
+// ============================================
+
+async function verificarCambiosPendientes(clienteId) {
+    if (!clienteId) return
+
+    try {
+        // Buscar cambios pendeintes en la base de datos
+        const { data, error } = await supabaseClient
+            .from('polizas_pendientes')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .eq('estado', 'pendiente')
+            .order('fecha_efectividad', { ascending: true});
+        if (error) {
+            console.error('Error verificando cambios pendientes: ', error);
+            return
+        }
+
+        //  Obtener el botón de la pestaña
+        const tab = document.getElementById('tabCambiosPendientes');
+
+        // Si no hay cambios pendientes
+        if (!data || data.length === 0) {
+            if (tab) tab.style.display = 'none';
+            return
+        }
+
+        // Si si hay cambios pendientes
+        if (tab) {
+            tab.style.display = 'flex';
+
+            // Actualizar el badge con el numero de cambios
+            const badge = tab.querySelector('.badge');
+            if (badge) {
+                badge.textContent = data.length;
+            }
+        }
+
+        // Renderizar los cambios en el contenedor
+        mostrarCambiosPendientes(data);
+    } catch (error) {
+        console.error('Error en VerificarCambiosPendientes:', error)
+    }
+}
+
+function mostrarCambiosPendientes(cambios) {
+    // Obtener el contenedor donde se mostrarán los cambios
+    const container = document.getElementById('cambiosPendientesContainer');
+    if (!container) return;
+
+    // Limpiar contenido anteriror
+    container.innerHTML = ''
+
+    // por cada cambio pendiente, crear una tarjeta
+    cambios.forEach(cambio => {
+        // formatear la fecha de efectividad (cuando se aplicará)
+        const fechaEfectiva = formatearFechaSinZonaHoraria(cambio.fecha_efectividad, 'largo');
+
+        // Formatear la fecha de creacion (Cuando se registro)
+        const fechaCreacion = new Date(cambio.creado_en).toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        // Badge según el tipo (Recuperado = verde, cambio de vida = Azul)
+        const tipoBadge = cambio.tipo_cambio === 'recuperado'
+            ? '<span class = "badge badge-success">Recuperado</span>'
+            : '<span class = "badge badge-info">Cambio de vida</span>';
+        // Crear el html de la tarjeta
+        const card = `
+            <div class="cambio-pendiente-card" style="
+                background: var(--surface-color);
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                padding: 24px;
+                margin-bottom: 16px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            ">
+                <!-- ENCABEZADO -->
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                    <div>
+                        <!-- Badge + Fecha -->
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            ${tipoBadge}
+                            <span style="color: var(--text-muted); font-size: 14px;">programado para</span>
+                            <strong style="color: var(--primary-color); font-size: 16px;">${fechaEfectiva}</strong>
+                        </div>
+                        
+                        <!-- Quién lo creó y cuándo -->
+                        <small style="color: var(--text-muted); display: block;">
+                            Registrado por ${cambio.creado_por || 'Sistema'} el ${fechaCreacion}
+                        </small>
+                    </div>
+                    
+                    <!-- Botón Ver Detalles -->
+                    <button 
+                        class="btn-secondary" 
+                        onclick="verDetallesCambio('${cambio.id}')"
+                        style="padding: 8px 16px; font-size: 14px;"
+                        type="button"
+                    >
+                        <span class="material-symbols-rounded" style="font-size: 18px;">visibility</span>
+                        Ver detalles
+                    </button>
+                </div>
+                
+                <!-- RESUMEN DE CAMPOS MODIFICADOS -->
+                <div style="
+                    background: var(--background-color);
+                    border-radius: 8px;
+                    padding: 16px;
+                    margin-top: 12px;
+                ">
+                    <p style="margin: 0; color: var(--text-color); line-height: 1.6;">
+                        <strong style="color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Campos modificados:
+                        </strong><br>
+                        <span style="color: var(--text-color); font-size: 15px;">
+                            ${cambio.campos_modificados || 'Sin cambios registrados'}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        `;
+
+        // Agregar la tarjeta al contenedor
+        container.insertAdjacentHTML('beforeend', card);
+    })
+}
+
+async function verDetallesCambio(cambioId) {
+    try {
+        const { data: cambio, error } = await supabaseClient
+            .from('polizas_pendientes')
+            .select('*')
+            .eq('id', cambioId)
+            .single();
+
+        if (error) throw error;
+        mostrarModalDetallesCambio(cambio);
+    } catch (error) {
+        console.error('Error cargando detalles del cambio:', error);
+        alert('Error al cargar los detalles del cambio')
+    }
+}
+
+function mostrarModalDetallesCambio(cambio) {
+    const fechaEfectiva = formatearFechaSinZonaHoraria(cambio.fecha_efectividad, 'largo');
+
+    console.log('Datos del cambio:', cambio)
+
+    const tipoCambio = cambio.tipo_cambio === 'recuperado' ? 'Recuperado' : 'cambio de vida'
+
+    // Función auxiliar para formatear fechas SIN zona horaria
+    const formatearFecha = (fecha) => {
+        if (!fecha) return '';
+        
+        // Si ya está en formato DD/MM/YYYY, devolverla tal cual
+        if (fecha.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            return fecha;
+        }
+        
+        // Si está en formato YYYY-MM-DD, convertir DIRECTAMENTE sin Date
+        if (fecha.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            const [año, mes, dia] = fecha.split('-');
+            return `${dia}/${mes}/${año}`;
+        }
+        
+        // Si está en formato MM/DD/YYYY, convertir a DD/MM/YYYY
+        if (fecha.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            const [mes, dia, año] = fecha.split('/');
+            return `${dia}/${mes}/${año}`;
+        }
+        
+        // Para otros formatos, intentar parsear
+        try {
+            // Si tiene formato ISO completo (con hora), extraer solo la fecha
+            if (fecha.includes('T')) {
+                const soloFecha = fecha.split('T')[0];
+                const [año, mes, dia] = soloFecha.split('-');
+                return `${dia}/${mes}/${año}`;
+            }
+            
+            // Último recurso
+            const d = new Date(fecha);
+            if (!isNaN(d.getTime())) {
+                const dia = String(d.getDate()).padStart(2, '0');
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const año = d.getFullYear();
+                return `${dia}/${mes}/${año}`;
+            }
+        } catch (e) {
+            // Si todo falla, devolver el valor original
+        }
+        
+        return fecha;
+    };
+
+    // Función para normalizar fechas a formato ISO para comparación
+    const normalizarFechaISO = (fecha) => {
+        if (!fecha) return '';
+        
+        // Si ya está en formato ISO (YYYY-MM-DD), devolverla tal cual
+        if (fecha.match(/^\d{4}-\d{2}-\d{2}/)) {
+            return fecha.split('T')[0]; // Por si tiene hora, quedarse solo con la fecha
+        }
+        
+        // Si está en formato MM/DD/YYYY, convertir a YYYY-MM-DD
+        if (fecha.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            const [mes, dia, año] = fecha.split('/');
+            return `${año}-${mes}-${dia}`;
+        }
+        
+        // Si está en formato DD/MM/YYYY, convertir a YYYY-MM-DD
+        if (fecha.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            // Asumir DD/MM/YYYY si el día > 12
+            const partes = fecha.split('/');
+            if (parseInt(partes[0]) > 12) {
+                const [dia, mes, año] = partes;
+                return `${año}-${mes}-${dia}`;
+            } else {
+                // Ambiguo, asumir MM/DD/YYYY
+                const [mes, dia, año] = partes;
+                return `${año}-${mes}-${dia}`;
+            }
+        }
+        
+        return fecha;
+    };
+
+    let tablaComparacion = '<table style="width: 100%; border-collapse: collapse; margin-top: 16px;">';
+        tablaComparacion += `
+        <thead>
+            <tr style="background: var(--background-color); border-bottom: 2px solid var(--border-color);">
+                <th style="padding: 12px; text-align: left;">Campo</th>
+                <th style="padding: 12px; text-align: left;">Valor Anterior</th>
+                <th style="padding: 12px; text-align: left;">Valor Nuevo</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+        // 3. Mapeo de nombres técnicos a nombres legibles
+    const camposEtiquetas = {
+        // DATOS PERSONALES
+        nombres: 'Nombres',
+        apellidos: 'Apellidos',
+        genero: 'Género',
+        fecha_nacimiento: 'Fecha de Nacimiento',
+        
+        // CONTACTO
+        email: 'Email',
+        telefono1: 'Teléfono 1',
+        telefono2: 'Teléfono 2',
+        
+        // DIRECCIÓN
+        direccion: 'Dirección',
+        casa_apartamento: 'Casa/Apartamento',
+        condado: 'Condado',
+        ciudad: 'Ciudad',
+        estado: 'Estado',
+        codigo_postal: 'Código Postal',
+        po_box: 'PO Box',
+        
+        // INFORMACIÓN LEGAL
+        estado_migratorio: 'Estado Migratorio',
+        ssn: 'SSN',
+        nacionalidad: 'Nacionalidad',
+        
+        // INFORMACIÓN LABORAL
+        ingreso_anual: 'Ingreso Anual',
+        ocupacion: 'Ocupación',
+        
+        // OPERADOR
+        operador_nombre: 'Operador',
+        venta_realizada_por: 'Venta Realizada Por',
+        
+        // PÓLIZA
+        aplicantes: 'Aplicantes',
+        compania: 'Compañía',
+        plan: 'Plan',
+        prima: 'Prima',
+        credito_fiscal: 'Crédito Fiscal',
+        member_id: 'Member ID',
+        clave_seguridad: 'Clave de Seguridad',
+        enlace_poliza: 'Enlace Póliza',
+        agente_nombre: 'Agente de Compañía',
+        
+        // FECHAS
+        fecha_efectividad: 'Fecha de Efectividad',
+        fecha_inicial_cobertura: 'Fecha Inicial Cobertura',
+        fecha_final_cobertura: 'Fecha Final Cobertura',
+        
+        // OTROS
+        aplica: 'Aplica',
+        tipo_registro: 'Tipo de Registro',
+    };
+
+    // Comparar datos anteriores vs nuevos
+if (cambio.datos_anteriores && cambio.datos_nuevos) {
+    Object.keys(camposEtiquetas).forEach(campo => {
+        // Buscar en cliente o póliza (datos anteriores)
+        let valorAnterior = cambio.datos_anteriores.cliente?.[campo] || 
+                            cambio.datos_anteriores.poliza?.[campo] || 
+                            '';
+        
+        // Datos nuevos vienen directo
+        let valorNuevo = cambio.datos_nuevos[campo] || '';
+
+        // NORMALIZAR FECHAS para comparación correcta
+        if (campo.includes('fecha') || campo === 'fecha_nacimiento') {
+            // Convertir ambos a formato ISO para comparar
+            if (valorAnterior) {
+                valorAnterior = normalizarFechaISO(valorAnterior);
+            }
+            if (valorNuevo) {
+                valorNuevo = normalizarFechaISO(valorNuevo);
+            }
+        }
+
+        // Solo mostrar si cambió
+        if (valorAnterior !== valorNuevo && valorNuevo !== '') {
+                const estilo = 'padding: 12px; border-bottom: 1px solid var(--border-color);';
+                
+                // Formatear fechas si el campo es una fecha
+                let valorAnteriorMostrar = valorAnterior || '(vacío)';
+                let valorNuevoMostrar = valorNuevo;
+                
+                if (campo.includes('fecha') || campo === 'fecha_nacimiento') {
+                    if (valorAnterior) {
+                        valorAnteriorMostrar = formatearFecha(valorAnterior);
+                    }
+                    if (valorNuevo) {
+                        valorNuevoMostrar = formatearFecha(valorNuevo);
+                    }
+                }
+                
+                tablaComparacion += `
+                    <tr>
+                        <td style="${estilo}"><strong>${camposEtiquetas[campo]}</strong></td>
+                        <td style="${estilo}">
+                            <span style="color: var(--text-muted);">${valorAnteriorMostrar}</span>
+                        </td>
+                        <td style="${estilo}">
+                            <span style="color: var(--primary-color); font-weight: 600;">${valorNuevoMostrar}</span>
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+    }
+
+        tablaComparacion += '</tbody></table>';
+    
+    // 5. CREAR HTML DEL MODAL
+    const modalHTML = `
+        <div id="modalDetallesCambio" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        " onclick="cerrarModalDetallesCambio(event)">
+            
+            <!-- CONTENEDOR DEL MODAL -->
+            <div style="
+                background: white;
+                border-radius: 16px;
+                max-width: 900px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            " onclick="event.stopPropagation()">
+                
+                <!-- ENCABEZADO -->
+                <div style="
+                    padding: 24px;
+                    border-bottom: 1px solid var(--border-color);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                ">
+                    <div>
+                        <h2 style="margin: 0 0 8px 0; font-size: 24px; color: var(--text-color)">
+                            Detalles del ${tipoCambio}
+                        </h2>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 14px;">
+                            Se aplicará automáticamente el <strong>${fechaEfectiva}</strong>
+                        </p>
+                    </div>
+                    
+                    <!-- Botón cerrar -->
+                    <button onclick="cerrarModalDetallesCambio()" style="
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        padding: 8px;
+                        color: var(--text-color);
+                        border-radius: 8px;
+                        transition: background 0.2s;
+                    ">
+                        <span class="material-symbols-rounded" style="font-size: 24px;">close</span>
+                    </button>
+                </div>
+                
+                <!-- CONTENIDO -->
+                <div style="padding: 24px;">
+                    <h3 style="margin: 0 0 16px 0; font-size: 18px;">Cambios a Aplicar</h3>
+                    
+                    <!-- TABLA COMPARATIVA -->
+                    ${tablaComparacion}
+                    
+                    <!-- MÉTODO DE PAGO (si existe) -->
+                    ${cambio.metodo_pago_nuevo ? `
+                        <div style="margin-top: 24px; padding: 16px; background: var(--background-color); border-radius: 8px;">
+                            <h4 style="margin: 0 0 12px 0; font-size: 16px;">Método de Pago</h4>
+                            <p style="margin: 0;">
+                                Tipo: <strong>${cambio.metodo_pago_nuevo.tipo === 'banco' ? 'Cuenta Bancaria' : 'Tarjeta'}</strong>
+                            </p>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- DOCUMENTOS (si existen) -->
+                    ${cambio.documentos_nuevos && cambio.documentos_nuevos.length > 0 ? `
+                        <div style="margin-top: 24px; padding: 16px; background: var(--background-color); border-radius: 8px;">
+                            <h4 style="margin: 0 0 12px 0; font-size: 16px;">
+                                Documentos (${cambio.documentos_nuevos.length})
+                            </h4>
+                            ${cambio.documentos_nuevos.map(doc => `
+                                <p style="margin: 4px 0;">
+                                    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">description</span>
+                                    ${doc.nombre_archivo}
+                                </p>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    <!-- DEPENDIENTES (si existen) -->
+                    ${cambio.dependientes_nuevos && cambio.dependientes_nuevos.length > 0 ? `
+                        <div style="margin-top: 24px; padding: 16px; background: var(--background-color); border-radius: 8px;">
+                            <h4 style="margin: 0 0 12px 0; font-size: 16px;">
+                                Dependientes (${cambio.dependientes_nuevos.length})
+                            </h4>
+                            ${cambio.dependientes_nuevos.map(dep => `
+                                <p style="margin: 4px 0;">
+                                    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">person</span>
+                                    ${dep.nombre} ${dep.apellidos}
+                                </p>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <!-- FOOTER -->
+                <div style="
+                    padding: 16px 24px;
+                    border-top: 1px solid var(--border-color);
+                    display: flex;
+                    justify-content: flex-end;
+                ">
+                    <button onclick="cerrarModalDetallesCambio()" class="btn-primary">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 6. Agregar modal al body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function cerrarModalDetallesCambio(event) {
+    // Si se hace click en el overlay (no en el contenido), cerrar
+    if (event && event.target.id !== 'modalDetallesCambio') return;
+    
+    const modal = document.getElementById('modalDetallesCambio');
+    if (modal) modal.remove();
+}
+
 // Exportar funciones para uso global
 window.inicializarSubPestanas = inicializarSubPestanas;
 window.cambiarSubPestana = cambiarSubPestana;
@@ -4283,3 +4799,6 @@ window.cargarAgente35 = cargarAgente35;
 window.obtenerDatosAgente35 = obtenerDatosAgente35;
 window.obtenerBadgeAgente35 = obtenerBadgeAgente35;
 window.formatearFechaHora = formatearFechaHora;
+window.verificarCambiosPendientes = verificarCambiosPendientes;
+window.verDetallesCambio = verDetallesCambio;
+window.cerrarModalDetallesCambio = cerrarModalDetallesCambio;
