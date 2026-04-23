@@ -663,9 +663,14 @@ function obtenerDependientes() {
 // ============================================
 
 function obtenerTipoCambio() {
-    const tipo = document.getElementById('tipoModificacion')?.value?.toLowerCase() || '';
-    if (tipo.includes('Recuperada')) return 'recuperado';
-    if (tipo.includes('Cambio'))    return 'cambio_de_vida';
+    const tipo = document.getElementById('tipoModificacion')?.value || '';
+    
+    // Valores exactos del select
+    if (tipo === 'Recuperada') return 'recuperado';
+    if (tipo === 'Cambio de vida') return 'cambio_de_vida';
+    if (tipo === 'Recuperada y cambio de vida') return 'cambio_de_vida'; // Asumimos cambio de vida
+    
+    // Por defecto
     return 'recuperado';
 }
 
