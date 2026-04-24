@@ -508,7 +508,7 @@ async function cargarPolizas() {
                     tiene_social,
                     archivado,
                     metodos_pago (
-                        tiene_metodo_pago
+                        tiene_metodo_pago,
                         tiene_pago_automatico
                     )
                 ),
