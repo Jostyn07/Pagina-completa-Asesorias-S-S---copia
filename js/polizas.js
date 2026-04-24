@@ -2524,7 +2524,7 @@ function aplicarFiltrosAvanzados() {
         }
 
         if (filtrosActivos.tienePagoAutomatico) {
-            const valorCliente = poliza.clientes?.metodos_pago?.[0]?.tiene_pago_automatico || 'No';
+            const valorCliente = poliza.cliente?.metodos_pago?.[0]?.tiene_pago_automatico || 'No';
             if (valorCliente !== filtrosActivos.tienePagoAutomatico) return false;
         }
 
