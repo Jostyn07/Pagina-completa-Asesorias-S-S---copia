@@ -295,7 +295,7 @@ function restaurarFiltrosDesdeStorage() {
             if (filtrosActivos.estadoMigratorio && cliente.estado_migratorio !== filtrosActivos.estadoMigratorio) return false;
             if (filtrosActivos.tieneSsn && cliente.tiene_social !== filtrosActivos.tieneSsn) return false;
             if (filtrosActivos.tieneMetodoPago && cliente.tiene_metodo_pago !== filtrosActivos.tieneMetodoPago) return false;
-            if (filtrosActivos.tienePagoAutomatico && cliente.tiene_pago_automatico !== filtrosActivos.tienePagoAutomatico) return false;
+            if (filtrosActivos.tienePagoAutomatico && cliente.metodos_pago?.[0]?.tiene_pago_automatico !== filtrosActivos.tienePagoAutomatico) return false;
             if (filtrosActivos.filtroAgenteMercado) {
                 if (filtrosActivos.filtroAgenteMercado === '__null__') {
                     if (poliza.nombre_agente_mercado !== null && poliza.nombre_agente_mercado !== '' && poliza.nombre_agente_mercado !== undefined) return false;
@@ -2524,9 +2524,8 @@ function aplicarFiltrosAvanzados() {
         }
 
         if (filtrosActivos.tienePagoAutomatico) {
-            if(filtrosActivos.tienePagoAutomatico == "Si") {
-                return false
-            }
+            const valorCliente = poliza.clientes?.metodos_pago?.[0]?.tiene_pago_automatico || 'No';
+            if (valorCliente !== filtrosActivos.tienePagoAutomatico) return false;
         }
 
         // Filtro por compañía
