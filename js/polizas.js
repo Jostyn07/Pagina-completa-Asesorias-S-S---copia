@@ -509,6 +509,7 @@ async function cargarPolizas() {
                     archivado,
                     metodos_pago (
                         tiene_metodo_pago
+                        tiene_pago_automatico
                     )
                 ),
                 seguimientos (
@@ -2523,7 +2524,7 @@ function aplicarFiltrosAvanzados() {
         }
 
         if (filtrosActivos.tienePagoAutomatico) {
-            if(filtrosActivos.tienePagoAutomatico == "No") {
+            if(filtrosActivos.tienePagoAutomatico == "Si") {
                 return false
             }
         }
