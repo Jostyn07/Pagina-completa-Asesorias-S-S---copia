@@ -13,6 +13,8 @@ const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxKTFxk3D20md
  * @returns {Promise} - Promesa que se resuelve cuando se envían los datos
  */
 async function enviarAGoogleSheets(datosFormulario) {
+
+
     try {
         // Validar que la URL esté configurada
         if (GOOGLE_SHEETS_URL === 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
@@ -21,32 +23,68 @@ async function enviarAGoogleSheets(datosFormulario) {
 
         // Preparar los datos
         const datos = {
-            nombreOperador: datosFormulario.nombreOperador || '',
-            fecha: datosFormulario.fecha || new Date().toISOString().split('T')[0],
-            tipoVenta: datosFormulario.tipoVenta || '',
-            clave: datosFormulario.clave || '',
-            parentesco: datosFormulario.parentesco || '',
-            nombre: datosFormulario.nombre || '',
-            apellidos: datosFormulario.apellidos || '',
-            sexo: datosFormulario.sexo || '',
-            correo: datosFormulario.correo || '',
-            telefono1: datosFormulario.telefono1 || '',
-            telefono2: datosFormulario.telefono2 || '',
-            fechaNacimiento: datosFormulario.fechaNacimiento || '',
-            estatus: datosFormulario.estatus || '',
-            social: datosFormulario.social || '',
-            ingresos: datosFormulario.ingresos || '',
-            ocupacion: datosFormulario.ocupacion || '',
-            nacionalidad: datosFormulario.nacionalidad || '',
-            aplica: datosFormulario.aplica || '',
-            cantidadDependientes: datosFormulario.cantidadDependientes || '',
-            direccion: datosFormulario.direccion || '',
-            compania: datosFormulario.compania || '',
-            plan: datosFormulario.plan || '',
-            creditoFiscal: datosFormulario.creditoFiscal || '',
-            prima: datosFormulario.prima || '',
-            link: datosFormulario.link || '',
-            observacion: datosFormulario.observacion || ''
+            // OPERADOR Y CONTROL
+            nombreOperador:         datosFormulario.nombreOperador || '',
+            registradoPor:          datosFormulario.registradoPor || datosFormulario.nombreOperador || '',
+            fecha:                  datosFormulario.fecha || new Date().toISOString().split('T')[0],
+            tipoVenta:              datosFormulario.tipoVenta || '',
+            tipoRegistro:           datosFormulario.tipoRegistro || '',
+            tipoModificacion:       datosFormulario.tipoModificacion || '',
+            tipoCambio:             datosFormulario.tipoCambio || '',
+            camposModificados:      datosFormulario.camposModificados || '',
+            fechaEfectiva:          datosFormulario.fechaEfectiva || '',
+            ventaRealizadaPor:      datosFormulario.ventaRealizadaPor || '',
+
+            // DATOS PERSONALES
+            nombre:                 datosFormulario.nombre || '',
+            apellidos:              datosFormulario.apellidos || '',
+            genero:                 datosFormulario.genero || datosFormulario.sexo || '',
+            sexo:                   datosFormulario.sexo || datosFormulario.genero || '',
+            fechaNacimiento:        datosFormulario.fechaNacimiento || '',
+            nacionalidad:           datosFormulario.nacionalidad || '',
+            aplica:                 datosFormulario.aplica || '',
+
+            // CONTACTO
+            correo:                 datosFormulario.correo || datosFormulario.email || '',
+            email:                  datosFormulario.email || datosFormulario.correo || '',
+            telefono1:              datosFormulario.telefono1 || '',
+            telefono2:              datosFormulario.telefono2 || '',
+
+            // DIRECCIÓN
+            direccion:              datosFormulario.direccion || '',
+            casaApartamento:        datosFormulario.casaApartamento || '',
+            condado:                datosFormulario.condado || '',
+            ciudad:                 datosFormulario.ciudad || '',
+            estado:                 datosFormulario.estado || '',
+            codigoPostal:           datosFormulario.codigoPostal || '',
+            poBox:                  datosFormulario.poBox || '',
+
+            // INFORMACIÓN LEGAL
+            estatus:                datosFormulario.estatus || '',
+            social:                 datosFormulario.social || '',
+
+            // INFORMACIÓN LABORAL
+            ingresos:               datosFormulario.ingresos || '',
+            ocupacion:              datosFormulario.ocupacion || '',
+
+            // PÓLIZA
+            aplicantes:             datosFormulario.aplicantes || '',
+            compania:               datosFormulario.compania || '',
+            plan:                   datosFormulario.plan || '',
+            prima:                  datosFormulario.prima || '',
+            creditoFiscal:          datosFormulario.creditoFiscal || '',
+            memberId:               datosFormulario.memberId || '',
+            claveSeguridad:         datosFormulario.claveSeguridad || datosFormulario.clave || '',
+            link:                   datosFormulario.link || '',
+            agenteNombre:           datosFormulario.agenteNombre || '',
+
+            // FECHAS
+            fechaInicialCobertura:  datosFormulario.fechaInicialCobertura || '',
+            fechaFinalCobertura:    datosFormulario.fechaFinalCobertura || '',
+
+            // DEPENDIENTES
+            cantidadDependientes:   datosFormulario.cantidadDependientes || (datosFormulario.dependientes || []).length || '',
+            dependientes:           JSON.stringify(datosFormulario.dependientes || []),
         };
 
         // Enviar a Google Sheets
@@ -177,24 +215,63 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 // VERSIÓN SIMPLIFICADA (ALTERNATIVA)
 // ============================================
+// await enviarAGoogleSheets({
+//     // OPERADOR Y CONTROL
+//     registradoPor:          nombreOperador,
+//     tipoCambio:             tipoCambio,
+//     tipoVenta:              tipoCambio === 'recuperado' ? 'Recuperado' : 'Cambio de vida',
+//     tipoModificacion:       formData.tipo_modificacion,
+//     tipoRegistro:           formData.tipo_registro,
+//     camposModificados,
+//     fechaEfectiva:          formData.fecha_efectividad,
+//     ventaRealizadaPor:      formData.venta_realizada_por,
 
-/**
- * Si ya tienes una función que maneja el envío del formulario,
- * simplemente agrega esta línea al final:
- */
+//     // DATOS PERSONALES
+//     nombreOperador:         formData.operador_nombre,
+//     nombre:                 formData.nombres,
+//     apellidos:              formData.apellidos,
+//     genero:                 formData.genero,
+//     fechaNacimiento:        formData.fecha_nacimiento,
+//     nacionalidad:           formData.nacionalidad,
+//     aplica:                 formData.aplica,
 
-// await enviarAGoogleSheets(tusDatos);
+//     // CONTACTO
+//     email:                  formData.email,
+//     telefono1:              formData.telefono1,
+//     telefono2:              formData.telefono2,
 
-/**
- * Ejemplo:
- * 
- * async function guardarCliente() {
- *     // Tu código actual para guardar en Supabase
- *     const resultado = await supabase.table('clientes').insert(datos);
- *     
- *     // AGREGAR: Enviar también a Google Sheets
- *     await enviarAGoogleSheets(datos);
- *     
- *     // Resto de tu código...
- * }
- */
+//     // DIRECCIÓN
+//     direccion:              formData.direccion,
+//     casaApartamento:        formData.casa_apartamento,
+//     condado:                formData.condado,
+//     ciudad:                 formData.ciudad,
+//     estado:                 formData.estado,
+//     codigoPostal:           formData.codigo_postal,
+//     poBox:                  formData.po_box,
+
+//     // INFORMACIÓN LEGAL
+//     estatus:                formData.estado_migratorio,
+//     social:                 formData.ssn,
+
+//     // INFORMACIÓN LABORAL
+//     ingresos:               formData.ingreso_anual,
+//     ocupacion:              formData.ocupacion,
+
+//     // PÓLIZA
+//     aplicantes:             formData.aplicantes,
+//     compania:               formData.compania,
+//     plan:                   formData.plan,
+//     prima:                  formData.prima,
+//     creditoFiscal:          formData.credito_fiscal,
+//     memberId:               formData.member_id,
+//     claveSeguridad:         formData.clave_seguridad,
+//     link:                   formData.enlace_poliza,
+//     agenteNombre:           formData.agente_nombre,
+
+//     // FECHAS
+//     fechaInicialCobertura:  formData.fecha_inicial_cobertura,
+//     fechaFinalCobertura:    formData.fecha_final_cobertura,
+
+//     // DEPENDIENTES
+//     dependientes,
+// });

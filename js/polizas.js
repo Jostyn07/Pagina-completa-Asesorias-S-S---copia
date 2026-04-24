@@ -41,6 +41,7 @@ function guardarFiltrosEnStorage() {
             estadoMigratorio: document.getElementById('filtroEstadoMigratorio')?.value || '',
             tieneSsn: document.getElementById('filtroTieneSsn')?.value || '',
             tieneMetodoPago: document.getElementById('filtroTieneMetodoPago')?.value || '',
+            tienePagoAutomatico: document.getElementById('filtroTienePagoAutomatico')?.value || '',
             companias: Array.from(document.querySelectorAll('#panelCompanias input:checked'))?.map(cb => cb.value),
             prima: document.getElementById('filtroPrima')?.value || '',
             filtroTipoModificacion: document.getElementById('tipoModificacion')?.value || '',
@@ -164,6 +165,7 @@ function restaurarFiltrosDesdeStorage() {
     setChecked('nullFechaSeguimiento', datos.nullFechaSeguimiento);
     setChecked('nullPlazoDocumentos', datos.nullPlazoDocumentos);
     set('filtroTieneMetodoPago', datos?.tieneMetodoPago)
+    set('filtroTienePagoAutomatico', datos?.tienePagoAutomatico)
 
     // Fechas
     set('filtroFechaEfectividadDesde', datos.fechaEfectividadDesde);
@@ -191,6 +193,7 @@ function restaurarFiltrosDesdeStorage() {
         estadoMigratorio: datos.estadoMigratorio || '',
         tieneSsn: datos.tieneSsn || '',
         tieneMetodoPago: datos?.tieneMetodoPago || '',
+        tienePagoAutomatico: datos?.tienePagoAutomatico || '',
         companias: datos.companias || [],
         prima: datos.prima || '',
         filtroTipoModificacion: datos.filtroTipoModificacion || '',
@@ -292,6 +295,7 @@ function restaurarFiltrosDesdeStorage() {
             if (filtrosActivos.estadoMigratorio && cliente.estado_migratorio !== filtrosActivos.estadoMigratorio) return false;
             if (filtrosActivos.tieneSsn && cliente.tiene_social !== filtrosActivos.tieneSsn) return false;
             if (filtrosActivos.tieneMetodoPago && cliente.tiene_metodo_pago !== filtrosActivos.tieneMetodoPago) return false;
+            if (filtrosActivos.tienePagoAutomatico && cliente.tiene_pago_automatico !== filtrosActivos.tienePagoAutomatico) return false;
             if (filtrosActivos.filtroAgenteMercado) {
                 if (filtrosActivos.filtroAgenteMercado === '__null__') {
                     if (poliza.nombre_agente_mercado !== null && poliza.nombre_agente_mercado !== '' && poliza.nombre_agente_mercado !== undefined) return false;
@@ -2121,6 +2125,7 @@ function limpiarFiltros() {
     document.getElementById('filtroEstadoMigratorio').value = '';
     document.getElementById('filtroTieneSsn').value = '';
     document.getElementById('filtroTieneMetodoPago').value = '';
+    document.getElementById('filtroTienePagoAutomatico').value = '';
     document.querySelectorAll('#panelCompanias input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
     });
@@ -2422,6 +2427,7 @@ function aplicarFiltrosAvanzados() {
         estadoMigratorio: document.getElementById('filtroEstadoMigratorio').value,
         tieneSsn: document.getElementById('filtroTieneSsn').value,
         tieneMetodoPago: document.getElementById('filtroTieneMetodoPago').value,
+        tienePagoAutomatico: document.getElementById('filtroTienePagoAutomatico').value,
         companias: Array.from(document.querySelectorAll('#panelCompanias input:checked')).map(cb => cb.value),
         prima: document.getElementById('filtroPrima').value,
         filtroTipoModificacion: document.getElementById('tipoModificacion').value,
@@ -2513,6 +2519,12 @@ function aplicarFiltrosAvanzados() {
                 if (!esNo && !sinRegistro) {
                     return false;
                 }
+            }
+        }
+
+        if (filtrosActivos.tienePagoAutomatico) {
+            if(filtrosActivos.tienePagoAutomatico == "No") {
+                return false
             }
         }
 

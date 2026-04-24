@@ -1477,32 +1477,65 @@ async function guardarNotas(clienteId) {
 
     try {
         await enviarAGoogleSheets({
-            nombreOperador: formData.operadorNombre || '',
-            fecha: formData.fechaRegistro || new Date().toISOString().split('T')[0],
-            tipoVenta: formData.tipoRegistro || '',
-            clave: formData.claveSeguridad || '',
-            parentesco: '',
-            nombre: formData.nombres || '',
-            apellidos: formData.apellidos || '',
-            sexo: formData.genero || '',
-            correo: formData.email || '',
-            telefono1: formData.telefono1 || '',
-            telefono2: formData.telefono2 || '',
-            fechaNacimiento: formData.fechaNacimiento || '',
-            estatus: 'Activo',
-            social: formData.ssn || '',
-            ingresos: formData.ingresos || '',
-            ocupacion: formData.ocupacion || '',
-            nacionalidad: formData.nacionalidad || '',
-            aplica: formData.aplica || '',
-            cantidadDependientes: dependientesCount.toString(),
-            direccion: `${formData.direccion}, ${formData.casaApartamento || ''}`.trim(),
-            compania: formData.compania || '',
-            plan: formData.plan || '',
-            creditoFiscal: formData.creditoFiscal || '',
-            prima: formData.prima || '',
-            link: formData.enlacePoliza || '',
-            observacion: ''
+            // OPERADOR Y CONTROL
+            nombreOperador:         formData.operadorNombre || '',
+            registradoPor:          formData.operadorNombre || '',
+            fecha:                  formData.fechaRegistro || new Date().toISOString().split('T')[0],
+            tipoVenta:              formData.tipoRegistro || '',
+            tipoRegistro:           formData.tipoRegistro || '',
+            ventaRealizadaPor:      formData.ventaRealizadaPor || '',
+
+            // DATOS PERSONALES
+            nombre:                 formData.nombres || '',
+            apellidos:              formData.apellidos || '',
+            genero:                 formData.genero || '',
+            sexo:                   formData.genero || '',
+            fechaNacimiento:        formData.fechaNacimiento || '',
+            nacionalidad:           formData.nacionalidad || '',
+            aplica:                 formData.aplica || '',
+
+            // CONTACTO
+            correo:                 formData.email || '',
+            email:                  formData.email || '',
+            telefono1:              formData.telefono1 || '',
+            telefono2:              formData.telefono2 || '',
+
+            // DIRECCIÓN
+            direccion:              formData.direccion || '',
+            casaApartamento:        formData.casaApartamento || '',
+            condado:                formData.condado || '',
+            ciudad:                 formData.ciudad || '',
+            estado:                 formData.estado || '',
+            codigoPostal:           formData.codigoPostal || '',
+            poBox:                  formData.poBox || '',
+
+            // INFORMACIÓN LEGAL
+            estatus:                'Activo',
+            social:                 formData.ssn || '',
+
+            // INFORMACIÓN LABORAL
+            ingresos:               formData.ingresos || '',
+            ocupacion:              formData.ocupacion || '',
+
+            // PÓLIZA
+            aplicantes:             document.getElementById('aplicantes')?.value || '',
+            compania:               formData.compania || '',
+            plan:                   formData.plan || '',
+            prima:                  formData.prima || '',
+            creditoFiscal:          formData.creditoFiscal || '',
+            memberId:               formData.memberId || '',
+            claveSeguridad:         formData.claveSeguridad || '',
+            link:                   formData.enlacePoliza || '',
+            agenteNombre:           formData.portalNPN || '',
+
+            // FECHAS
+            fechaEfectiva:          formData.fechaEfectividad || '',
+            fechaInicialCobertura:  formData.fechaInicialCobertura || '',
+            fechaFinalCobertura:    formData.fechaFinalCobertura || '',
+
+            // DEPENDIENTES
+            cantidadDependientes:   dependientesCount.toString(),
+            dependientes:           [],  // En cliente_crear no se tiene el array aún
         });
         ;
     } catch (errorSheets) {

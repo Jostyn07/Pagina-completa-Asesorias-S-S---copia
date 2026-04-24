@@ -1968,6 +1968,11 @@ async function cargarMetodoPago(clienteId) {
             tieneMetodoPago.checked = metodos.tiene_metodo_pago === "Si";
         }
 
+        const tienePagoAutomatico = document.getElementById('tienePagoAutomatico');
+        if(metodos.tiene_pago_automatico == "Si") {
+            tienePagoAutomatico.checked = metodos.tiene_pago_automatico === "Si";
+        }
+
         // Checkboxes de meses pagados
         const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -2006,7 +2011,8 @@ async function guardarMetodoPago(clienteId) {
             tipo: tipo,
             usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
             activo: true,
-
+            tiene_metodo_pago: document.getElementById('tieneMetodoPago')?.checked ? "Si" : "No",
+            tiene_pago_automatico: document.getElementById('tienePagoAutomatico')?.checked ? "Si" : "No",
             fecha_pago: document.getElementById('fechaPago')?.value || null,
             estado_pago: document.getElementById('estadoPago')?.value || null,
             pago_enero: document.getElementById('pagoEnero').checked ? "Si" : "No",
@@ -4399,16 +4405,43 @@ function mostrarCambiosPendientes(cambios) {
                         </small>
                     </div>
                     
-                    <!-- Botón Ver Detalles -->
-                    <button 
-                        class="btn-secondary" 
-                        onclick="verDetallesCambio('${cambio.id}')"
-                        style="padding: 8px 16px; font-size: 14px;"
-                        type="button"
-                    >
-                        <span class="material-symbols-rounded" style="font-size: 18px;">visibility</span>
-                        Ver detalles
-                    </button>
+                    <!-- Botones de acción -->
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        
+                        ${cambio.error_mensaje ? `
+                            <span title="${cambio.error_mensaje}" style="
+                                color: var(--danger-color, #e53e3e);
+                                font-size: 13px;
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                                cursor: help;
+                            ">
+                                <span class="material-symbols-rounded" style="font-size: 16px;">warning</span>
+                                Error (${cambio.intentos_cron} intento${cambio.intentos_cron !== 1 ? 's' : ''})
+                            </span>
+                        ` : ''}
+
+                        <button 
+                            class="btn-secondary" 
+                            onclick="verDetallesCambio('${cambio.id}')"
+                            style="padding: 8px 16px; font-size: 14px;"
+                            type="button"
+                        >
+                            <span class="material-symbols-rounded" style="font-size: 18px;">visibility</span>
+                            Ver detalles
+                        </button>
+
+                        <button 
+                            class="btn-primary" 
+                            onclick="aplicarCambioAhora('${cambio.id}', this)"
+                            style="padding: 8px 16px; font-size: 14px;"
+                            type="button"
+                        >
+                            <span class="material-symbols-rounded" style="font-size: 18px;">bolt</span>
+                            Aplicar ahora
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- RESUMEN DE CAMPOS MODIFICADOS -->
@@ -4433,6 +4466,69 @@ function mostrarCambiosPendientes(cambios) {
         // Agregar la tarjeta al contenedor
         container.insertAdjacentHTML('beforeend', card);
     })
+}
+
+// ============================================
+// APLICAR CAMBIO INMEDIATAMENTE
+// ============================================
+
+async function aplicarCambioAhora(cambioId, boton) {
+    if (!confirm('¿Aplicar este cambio ahora? Esta acción actualizará los datos del cliente inmediatamente.')) return;
+
+    // Deshabilitar botón y mostrar cargando
+    const btnOriginal = boton.innerHTML;
+    boton.disabled = true;
+    boton.innerHTML = `
+        <span class="material-symbols-rounded" style="font-size: 18px;">refresh</span>
+        Aplicando...
+    `;
+
+    try {
+        // 1. Cambiar fecha_efectividad a hoy para que la función SQL lo tome
+        const hoy = new Date().toISOString().split('T')[0];
+        
+        const { error: updateError } = await supabaseClient
+            .from('polizas_pendientes')
+            .update({ 
+                fecha_efectividad: hoy,
+                error_mensaje: null  // Limpiar error anterior si existe
+            })
+            .eq('id', cambioId);
+
+        if (updateError) throw updateError;
+
+        // 2. Llamar a la función SQL que aplica los cambios pendientes
+        const { data, error: rpcError } = await supabaseClient
+            .rpc('aplicar_cambios_pendientes');
+
+        if (rpcError) throw rpcError;
+
+        // 3. Verificar si hubo errores en la aplicación
+        const resultado = data?.[0];
+        
+        if (resultado?.errores_encontrados > 0) {
+            alert(`⚠️ Error al aplicar el cambio:\n\n${resultado.detalles}`);
+            boton.disabled = false;
+            boton.innerHTML = btnOriginal;
+            return;
+        }
+
+        // 4. Éxito: recargar la pestaña de cambios pendientes
+        alert('✅ Cambio aplicado correctamente.');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const clienteId = urlParams.get('id');
+        if (clienteId) {
+            await verificarCambiosPendientes(clienteId);
+        }
+
+        window.location.href = "../pages/polizas.html"
+    } catch (error) {
+        console.error('Error al aplicar cambio:', error);
+        alert(`❌ Error al aplicar el cambio:\n\n${error.message}`);
+        boton.disabled = false;
+        boton.innerHTML = btnOriginal;
+    }
 }
 
 async function verDetallesCambio(cambioId) {
@@ -4758,7 +4854,7 @@ if (cambio.datos_anteriores && cambio.datos_nuevos) {
                             ${cambio.dependientes_nuevos.map(dep => `
                                 <p style="margin: 4px 0;">
                                     <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">person</span>
-                                    ${dep.nombre} ${dep.apellidos}
+                                    ${dep.nombres} ${dep.apellidos}
                                 </p>
                             `).join('')}
                         </div>
@@ -4802,3 +4898,4 @@ window.formatearFechaHora = formatearFechaHora;
 window.verificarCambiosPendientes = verificarCambiosPendientes;
 window.verDetallesCambio = verDetallesCambio;
 window.cerrarModalDetallesCambio = cerrarModalDetallesCambio;
+window.aplicarCambioAhora = aplicarCambioAhora;

@@ -588,6 +588,7 @@ function obtenerDatosFormulario() {
     return {
         // CLIENTE
         tipo_registro:           get('tipoRegistro'),
+        tipo_modificacion:       get('tipoModificacion'),
         nombres:                 get('nombres'),
         apellidos:               get('apellidos'),
         genero:                  get('genero'),
@@ -634,6 +635,8 @@ function obtenerDatosFormulario() {
 // ============================================
 
 function obtenerDependientes() {
+    // Obtener TODOS los dependientes (existentes + nuevos)
+    // SQL hará DELETE + INSERT para actualizar completamente
     const cards = document.querySelectorAll('.dependiente-card');
     const dependientes = [];
 
@@ -663,14 +666,9 @@ function obtenerDependientes() {
 // ============================================
 
 function obtenerTipoCambio() {
-    const tipo = document.getElementById('tipoModificacion')?.value || '';
-    
-    // Valores exactos del select
-    if (tipo === 'Recuperada') return 'recuperado';
-    if (tipo === 'Cambio de vida') return 'cambio_de_vida';
-    if (tipo === 'Recuperada y cambio de vida') return 'cambio_de_vida'; // Asumimos cambio de vida
-    
-    // Por defecto
+    const tipo = document.getElementById('tipoModificacion')?.value?.toLowerCase() || '';
+    if (tipo.includes('Recuperada')) return 'recuperado';
+    if (tipo.includes('Cambio'))    return 'cambio_de_vida';
     return 'recuperado';
 }
 
@@ -824,33 +822,64 @@ async function guardarYEnviar(e) {
 
         // 2. Enviar a Google Sheets
         await enviarAGoogleSheets({
-            registradoPor:   nombreOperador,
-            tipoCambio:      tipoCambio,
-            camposModificados,
-            fechaEfectiva:   formData.fecha_efectividad,
+        // OPERADOR Y CONTROL
+        registradoPor:          nombreOperador,
+        tipoCambio:             tipoCambio,
+        tipoVenta:              tipoCambio === 'recuperado' ? 'Recuperado' : 'Cambio de vida',
+        tipoModificacion:       formData.tipo_modificacion,
+        tipoRegistro:           formData.tipo_registro,
+        camposModificados,
+        fechaEfectiva:          formData.fecha_efectividad,
+        ventaRealizadaPor:      formData.venta_realizada_por,
 
-            nombreOperador:  formData.operador_nombre,
-            nombre:          formData.nombres,
-            apellidos:       formData.apellidos,
-            genero:          formData.genero,
-            email:           formData.email,
-            telefono1:       formData.telefono1,
-            telefono2:       formData.telefono2,
-            fechaNacimiento: formData.fecha_nacimiento,
-            estatus:         formData.estado_migratorio,
-            social:          formData.ssn,
-            ingresos:        formData.ingreso_anual,
-            ocupacion:       formData.ocupacion,
-            direccion:       formData.direccion,
+        // DATOS PERSONALES
+        nombreOperador:         formData.operador_nombre,
+        nombre:                 formData.nombres,
+        apellidos:              formData.apellidos,
+        genero:                 formData.genero,
+        fechaNacimiento:        formData.fecha_nacimiento,
+        nacionalidad:           formData.nacionalidad,
+        aplica:                 formData.aplica,
 
-            compania:        formData.compania,
-            plan:            formData.plan,
-            credito_fiscal:  formData.credito_fiscal,
-            prima:           formData.prima,
-            link:            formData.enlace_poliza,
+        // CONTACTO
+        email:                  formData.email,
+        telefono1:              formData.telefono1,
+        telefono2:              formData.telefono2,
 
-            dependientes,
-            tipoVenta:       tipoCambio === 'recuperado' ? 'Recuperado' : 'Cambio de vida',
+        // DIRECCIÓN
+        direccion:              formData.direccion,
+        casaApartamento:        formData.casa_apartamento,
+        condado:                formData.condado,
+        ciudad:                 formData.ciudad,
+        estado:                 formData.estado,
+        codigoPostal:           formData.codigo_postal,
+        poBox:                  formData.po_box,
+
+        // INFORMACIÓN LEGAL
+        estatus:                formData.estado_migratorio,
+        social:                 formData.ssn,
+
+        // INFORMACIÓN LABORAL
+        ingresos:               formData.ingreso_anual,
+        ocupacion:              formData.ocupacion,
+
+        // PÓLIZA
+        aplicantes:             formData.aplicantes,
+        compania:               formData.compania,
+        plan:                   formData.plan,
+        prima:                  formData.prima,
+        creditoFiscal:          formData.credito_fiscal,
+        memberId:               formData.member_id,
+        claveSeguridad:         formData.clave_seguridad,
+        link:                   formData.enlace_poliza,
+        agenteNombre:           formData.agente_nombre,
+
+        // FECHAS
+        fechaInicialCobertura:  formData.fecha_inicial_cobertura,
+        fechaFinalCobertura:    formData.fecha_final_cobertura,
+
+        // DEPENDIENTES
+        dependientes,
         });
 
         const fechaEfectiva = formatearFechaSinZonaHoraria(formData.fecha_efectividad, 'largo');
