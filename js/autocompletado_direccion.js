@@ -1,17 +1,12 @@
 // ============================================
-// AUTOCOMPLETADO DE DIRECCIÓN - Geoapify
-// API Key: 591b3289801144a2bd51aeba45002ce4
-// Rellena: dirección, condado, ciudad, estado, codigoPostal
+// AUTOCOMPLETADO DE DIRECCIÓN - Nominatim (OpenStreetMap)
+// Sin API Key requerida
+// Rellena: condado, ciudad, estado, codigoPostal
 // ============================================
 
-(function () {
+(function() {
 
-    const GEOAPIFY_KEY = '591b3289801144a2bd51aeba45002ce4';
-
-    // ==========================================
-    // ESTILOS DEL DROPDOWN
-    // ==========================================
-
+    // Estilos del dropdown
     const estilos = document.createElement('style');
     estilos.textContent = `
         .autocomplete-wrapper {
@@ -19,7 +14,7 @@
         }
         .autocomplete-dropdown {
             position: absolute;
-            top: calc(100% + 4px);
+            top: 100%;
             left: 0;
             right: 0;
             background: white;
@@ -27,7 +22,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             z-index: 9999;
-            max-height: 280px;
+            max-height: 250px;
             overflow-y: auto;
         }
         .autocomplete-item {
@@ -45,34 +40,22 @@
         .autocomplete-item:hover {
             background: var(--primary-light, #f0f4ff);
         }
-        .autocomplete-item .ac-icon {
+        .autocomplete-item .icon {
             color: var(--primary-color, #6366f1);
-            font-size: 18px;
+            font-size: 16px;
             margin-top: 1px;
             flex-shrink: 0;
         }
-        .autocomplete-item .ac-texto-principal {
+        .autocomplete-item .texto-principal {
             font-weight: 500;
             color: var(--text-color, #1a202c);
-            line-height: 1.3;
         }
-        .autocomplete-item .ac-texto-secundario {
+        .autocomplete-item .texto-secundario {
             font-size: 12px;
             color: var(--text-muted, #718096);
             margin-top: 2px;
-            line-height: 1.3;
         }
         .autocomplete-cargando {
-            padding: 12px 14px;
-            font-size: 13px;
-            color: var(--text-muted, #718096);
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .autocomplete-sin-resultados {
             padding: 12px 14px;
             font-size: 13px;
             color: var(--text-muted, #718096);
@@ -83,7 +66,6 @@
 
     let timeoutBusqueda = null;
     let dropdownActual = null;
-    let abortController = null;
 
     // ==========================================
     // INICIALIZAR EN EL CAMPO DIRECCIÓN
@@ -106,13 +88,13 @@
             clearTimeout(timeoutBusqueda);
             const query = campoDireccion.value.trim();
 
-            if (query.length < 3) {
+            if (query.length < 5) {
                 cerrarDropdown();
                 return;
             }
 
-            // Esperar 400ms después de que el usuario deje de escribir
-            timeoutBusqueda = setTimeout(() => buscarDirecciones(query, campoDireccion), 400);
+            // Esperar 600ms después de que el usuario deje de escribir
+            timeoutBusqueda = setTimeout(() => buscarDirecciones(query, campoDireccion), 600);
         });
 
         // Cerrar al hacer click fuera
@@ -121,50 +103,39 @@
                 cerrarDropdown();
             }
         });
-
-        // Cerrar con ESC
-        campoDireccion.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') cerrarDropdown();
-        });
     }
 
     // ==========================================
-    // BUSCAR DIRECCIONES EN GEOAPIFY
+    // BUSCAR DIRECCIONES EN NOMINATIM
     // ==========================================
 
     async function buscarDirecciones(query, campo) {
-        // Cancelar request anterior si existe
-        if (abortController) abortController.abort();
-        abortController = new AbortController();
-
         mostrarCargando(campo);
 
         try {
-            const url = `https://api.geoapify.com/v1/geocode/autocomplete?` + new URLSearchParams({
-                text: query,
-                apiKey: GEOAPIFY_KEY,
+            // Buscar solo en USA
+            const url = `https://nominatim.openstreetmap.org/search?` + new URLSearchParams({
+                q: query,
+                format: 'json',
+                addressdetails: 1,
                 limit: 6,
-                lang: 'es',
-                format: 'json'
+                'accept-language': 'es'
             });
 
             const res = await fetch(url, {
-                method: 'GET',
-                signal: abortController.signal
+                headers: { 'Accept-Language': 'es' }
             });
 
-            const data = await res.json();
-            const resultados = data.results || [];
+            const resultados = await res.json();
 
             if (!resultados.length) {
-                mostrarSinResultados(campo);
+                cerrarDropdown();
                 return;
             }
 
             mostrarResultados(resultados, campo);
 
         } catch (error) {
-            if (error.name === 'AbortError') return; // Request cancelado, ignorar
             console.error('Error buscando dirección:', error);
             cerrarDropdown();
         }
@@ -181,28 +152,25 @@
         dropdown.classList.add('autocomplete-dropdown');
 
         resultados.forEach(resultado => {
-            // Geoapify devuelve los campos ya separados
-            const calle     = resultado.street || '';
-            const numero    = resultado.housenumber || '';
-            const ciudad    = resultado.city || resultado.town || resultado.village || resultado.municipality || '';
-            const estado    = resultado.state || resultado.state_code || '';
-            const cp        = resultado.postcode || '';
-            const pais      = resultado.country || '';
+            const addr = resultado.address;
 
-            const textoPrincipal = [numero, calle].filter(Boolean).join(' ') 
-                || resultado.address_line1 
-                || resultado.formatted?.split(',')[0] 
-                || '';
+            // Construir texto legible
+            const calle = addr.road || addr.pedestrian || addr.footway || '';
+            const numero = addr.house_number || '';
+            const ciudad = addr.city || addr.town || addr.village || addr.municipality || '';
+            const estado = addr.state || '';
+            const cp = addr.postcode || '';
 
-            const textoSecundario = [ciudad, estado, cp, pais].filter(Boolean).join(', ');
+            const textoPrincipal = [numero, calle].filter(Boolean).join(' ') || resultado.display_name.split(',')[0];
+            const textoSecundario = [ciudad, estado, cp].filter(Boolean).join(', ');
 
             const item = document.createElement('div');
             item.classList.add('autocomplete-item');
             item.innerHTML = `
-                <span class="material-symbols-rounded ac-icon">location_on</span>
+                <span class="material-symbols-rounded icon">location_on</span>
                 <div>
-                    <div class="ac-texto-principal">${textoPrincipal}</div>
-                    <div class="ac-texto-secundario">${textoSecundario}</div>
+                    <div class="texto-principal">${textoPrincipal}</div>
+                    <div class="texto-secundario">${textoSecundario}</div>
                 </div>
             `;
 
@@ -219,53 +187,52 @@
     // ==========================================
 
     function seleccionarDireccion(resultado, campoDireccion) {
-        // Geoapify ya devuelve los campos bien separados
-        const numero        = resultado.housenumber || '';
-        const calle         = resultado.street || '';
-        const condadoVal    = resultado.county || '';
-        const ciudadVal     = resultado.city || resultado.town || resultado.village || resultado.municipality || '';
-        const estadoVal     = resultado.state || '';
-        const estadoCodigo  = resultado.state_code || '';
-        const cpVal         = resultado.postcode?.substring(0, 5) || '';
+        const addr = resultado.address;
 
-        // Rellenar dirección principal
+        // Construir dirección principal (calle + número)
+        const numero = addr.house_number || '';
+        const calle  = addr.road || addr.pedestrian || addr.footway || '';
         const direccionCompleta = [numero, calle].filter(Boolean).join(' ');
-        campoDireccion.value = direccionCompleta || resultado.address_line1 || campoDireccion.value;
+
+        // Extraer datos
+        const condado    = addr.county || '';
+        const ciudad     = addr.city || addr.town || addr.village || addr.municipality || '';
+        const estadoVal  = addr.state || '';
+        const cp         = addr.postcode?.substring(0, 5) || '';
+
+        // Rellenar campo dirección
+        campoDireccion.value = direccionCompleta || campoDireccion.value;
 
         // Rellenar condado
         const campoCondado = document.getElementById('condado');
-        if (campoCondado && condadoVal) campoCondado.value = condadoVal;
+        if (campoCondado && condado) campoCondado.value = condado;
 
         // Rellenar ciudad
         const campoCiudad = document.getElementById('ciudad');
-        if (campoCiudad && ciudadVal) campoCiudad.value = ciudadVal;
+        if (campoCiudad && ciudad) campoCiudad.value = ciudad;
 
-        // Rellenar estado (es un <select>, buscar por código o nombre)
+        // Rellenar estado (select)
         const campoEstado = document.getElementById('estado');
-        if (campoEstado && (estadoCodigo || estadoVal)) {
+        if (campoEstado && estadoVal) {
+            // Buscar por nombre completo o abreviatura
             const opciones = Array.from(campoEstado.options);
             const match = opciones.find(op =>
-                op.value.toLowerCase() === estadoCodigo.toLowerCase() ||
-                op.value.toLowerCase() === estadoVal.toLowerCase()   ||
-                op.text.toLowerCase()  === estadoVal.toLowerCase()
+                op.value.toLowerCase() === estadoVal.toLowerCase() ||
+                op.text.toLowerCase() === estadoVal.toLowerCase()
             );
             if (match) campoEstado.value = match.value;
         }
 
         // Rellenar código postal
         const campoCP = document.getElementById('codigoPostal');
-        if (campoCP && cpVal) campoCP.value = cpVal;
+        if (campoCP && cp) campoCP.value = cp;
 
         cerrarDropdown();
 
         // Disparar eventos change para que el sistema detecte los cambios
         ['direccion', 'condado', 'ciudad', 'estado', 'codigoPostal'].forEach(id => {
             document.getElementById(id)?.dispatchEvent(new Event('change', { bubbles: true }));
-            document.getElementById(id)?.dispatchEvent(new Event('input', { bubbles: true }));
         });
-
-        // Enfocar el siguiente campo (casaApartamento)
-        document.getElementById('casaApartamento')?.focus();
     }
 
     // ==========================================
@@ -276,30 +243,12 @@
         cerrarDropdown();
         const dropdown = document.createElement('div');
         dropdown.classList.add('autocomplete-dropdown');
-        dropdown.innerHTML = `
-            <div class="autocomplete-cargando">
-                <span class="material-symbols-rounded" style="font-size:16px;animation:spin 1s linear infinite;">refresh</span>
-                Buscando direcciones...
-            </div>
-        `;
+        dropdown.innerHTML = `<div class="autocomplete-cargando">
+            <span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;">search</span>
+            Buscando direcciones...
+        </div>`;
         campo.parentElement.appendChild(dropdown);
         dropdownActual = dropdown;
-    }
-
-    function mostrarSinResultados(campo) {
-        cerrarDropdown();
-        const dropdown = document.createElement('div');
-        dropdown.classList.add('autocomplete-dropdown');
-        dropdown.innerHTML = `
-            <div class="autocomplete-sin-resultados">
-                No se encontraron direcciones
-            </div>
-        `;
-        campo.parentElement.appendChild(dropdown);
-        dropdownActual = dropdown;
-
-        // Cerrar automáticamente después de 2 segundos
-        setTimeout(cerrarDropdown, 2000);
     }
 
     function cerrarDropdown() {
