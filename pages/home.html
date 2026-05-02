@@ -12,6 +12,9 @@
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/darkmode.css">
+    <!-- Libreria de fecha Flatpickr estilos-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 </head>
 <body>
     <!-- SIDEBAR UNIFICADO -->
@@ -325,6 +328,33 @@
                 </div>
                 <p class="chart-subtitle">Ranking de operadores según el período seleccionado</p>
 
+                <div class="filtro-fechas-wrapper">
+                    <div class="filtro-fecha-grupo">
+                        <label>Desde</label>
+                        <input 
+                            type="text" 
+                            id="filtroFechaDesde" 
+                            placeholder="MM/DD/YYYY"
+                            readonly
+                        >
+                    </div>
+
+                    <div class="filtro-fecha-grupo">
+                        <label>Hasta</label>
+                        <input 
+                            type="text" 
+                            id="filtroFechaHasta" 
+                            placeholder="MM/DD/YYYY"
+                            readonly
+                        >
+                    </div>
+
+                    <button id="btnLimpiarFechas" class="btn-limpiar-fechas">
+                        <span class="material-symbols-rounded">close</span>
+                        Limpiar
+                    </button>
+                </div>
+
                 <!-- Tabs -->
                 <div class="clasificacion-tabs">
                     <button class="tab-btn active" onclick="cambiarTabClasificacion('ventas', this)">
@@ -381,6 +411,7 @@
     <script src="../js/main.js"></script>
     <script src="../js/formatear_input_fechas.js"></script>
     <script src="../js/home.js"></script>
-
+    <!-- Libreria de fecha Flatpickr js-->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
 </html>

@@ -8,8 +8,8 @@ let filtrosActivos = {
     estadoCompania: '',
     operador: '',
     documentos: '',
-    fechaDesde: '2026-01-01',
-    fechaHasta: '2026-12-31'
+    fechaDesde: '2000-01-01',
+    fechaHasta: '2099-12-31'
 };
 
 // ============================================
@@ -77,24 +77,13 @@ function aplicarFiltros() {
         );
     }
     
-    // Filtro por rango de fechas
+    // Filtro por fecha de creación de la póliza
     polizasFiltradas = polizasFiltradas.filter(p => {
-        if (!p.fecha_efectividad) return false;
-        
-        const fechaEfectividad = p.fecha_efectividad.split('T')[0]; // yyyy-mm-dd
-        return fechaEfectividad >= filtrosActivos.fechaDesde && 
-               fechaEfectividad <= filtrosActivos.fechaHasta;
+        if (!p.created_at) return false;
+        const fechaCreacion = p.created_at.split('T')[0]; // YYYY-MM-DD
+        return fechaCreacion >= filtrosActivos.fechaDesde && 
+            fechaCreacion <= filtrosActivos.fechaHasta;
     });
-    
-    // Filtrar también por fecha_final_cobertura dentro del rango
-    polizasFiltradas = polizasFiltradas.filter(p => {
-        if (!p.fecha_final_cobertura) return false;
-        
-        const fechaFinal = p.fecha_final_cobertura.split('T')[0];
-        return fechaFinal >= filtrosActivos.fechaDesde && 
-               fechaFinal <= filtrosActivos.fechaHasta;
-    });
-    
     ;
     
     return polizasFiltradas;
@@ -326,6 +315,94 @@ function inicializarEventListeners() {
 }
 
 // ============================================
+// FLATPICKR - FILTRO DE FECHAS
+// ============================================
+
+function inicializarFiltroFechas() {
+    // Configuración base compartida
+    const configBase = {
+        // Formato visible para el usuario (estilo US)
+        dateFormat: 'm/d/Y',       // → 05/01/2026
+
+        // Idioma en español
+        locale: {
+            firstDayOfWeek: 0,     // Semana empieza en domingo (US)
+            weekdays: {
+                shorthand: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+                longhand:  ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+            },
+            months: {
+                shorthand: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                longhand:  ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+            }
+        },
+
+        // Cuando el usuario selecciona una fecha
+        onChange: function(selectedDates, dateStr) {
+            // Mostrar botón limpiar
+            document.getElementById('btnLimpiarFechas').classList.add('visible');
+            
+            // Aplicar el filtro
+            aplicarFiltroFechas();
+        }
+    };
+
+    // Inicializar campo "Desde"
+    const fpDesde = flatpickr('#filtroFechaDesde', {
+        ...configBase,
+        onChange: function(selectedDates, dateStr) {
+            document.getElementById('btnLimpiarFechas').classList.add('visible');
+            aplicarFiltroFechas();
+            // Abrir "Hasta" solo si no tiene fecha aún
+            if (!fpHasta.selectedDates.length) {
+                setTimeout(() => fpHasta.open(), 150);
+            }
+        }
+    });
+
+    // Inicializar campo "Hasta"
+    const fpHasta = flatpickr('#filtroFechaHasta', {
+        ...configBase,
+    });
+
+    // Botón limpiar
+    document.getElementById('btnLimpiarFechas').addEventListener('click', () => {
+        fpDesde.clear();
+        fpHasta.clear();
+        document.getElementById('btnLimpiarFechas').classList.remove('visible');
+        aplicarFiltroFechas(); // Recargar sin filtro
+    });
+}
+
+function aplicarFiltroFechas() {
+    const desde = document.getElementById('filtroFechaDesde')._flatpickr?.selectedDates[0];
+    const hasta = document.getElementById('filtroFechaHasta')._flatpickr?.selectedDates[0];
+
+    if (desde) {
+        // Convertir a formato ISO YYYY-MM-DD para comparación
+        const año  = desde.getFullYear();
+        const mes  = String(desde.getMonth() + 1).padStart(2, '0');
+        const dia  = String(desde.getDate()).padStart(2, '0');
+        filtrosActivos.fechaDesde = `${año}-${mes}-${dia}`;
+    } else {
+        filtrosActivos.fechaDesde = '2000-01-01'; // Sin límite inferior
+    }
+
+    if (hasta) {
+        const año  = hasta.getFullYear();
+        const mes  = String(hasta.getMonth() + 1).padStart(2, '0');
+        const dia  = String(hasta.getDate()).padStart(2, '0');
+        filtrosActivos.fechaHasta = `${año}-${mes}-${dia}`;
+    } else {
+        filtrosActivos.fechaHasta = '2099-12-31'; // Sin límite superior
+    }
+
+    // Re-renderizar con las fechas actualizadas
+    renderizarClasificacion(tabClasificacionActual);
+    actualizarGrafico();
+}
+
+// ============================================
 // ESTADÍSTICAS
 // ============================================
 
@@ -462,10 +539,10 @@ function calcularClasificacionVentas() {
     // Usa todasLasPolizas y aplica solo filtro de fecha_efectividad
     (todasLasPolizas || []).forEach(poliza => {
         // Filtrar por rango de fechas usando solo fecha_efectividad
-        if (poliza.fecha_efectividad) {
-            const fecha = poliza.fecha_efectividad.split('T')[0];
-            if (fecha < filtrosActivos.fechaDesde || fecha > filtrosActivos.fechaHasta) return;
-        }
+    if (poliza.created_at) {
+        const fecha = poliza.created_at.split('T')[0];
+        if (fecha < filtrosActivos.fechaDesde || fecha > filtrosActivos.fechaHasta) return;
+    }
 
         const tipo = (poliza.cliente?.tipo_registro || '').toLowerCase().trim();
         if (!tiposVenta.includes(tipo)) return;
@@ -609,6 +686,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Inicializar listeners
     inicializarEventListeners();
     actualizarGrafico();
+    inicializarFiltroFechas();
 
     // Renderizar tab inicial de clasificación
     renderizarClasificacion(tabClasificacionActual);

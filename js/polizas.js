@@ -806,6 +806,11 @@ async function abrirDetalles(polizaId) {
                             <p>${poliza.clave_seguridad || 'N/A'}</p>
                         </div>
 
+                        <div class="detalle-item">
+                            <label>Estado migratorio</label>
+                            <p>${cliente.estado_migratorio || 'N/A'}</p>
+                        </div>
+
                         <div class="detalle-item full-width">
                             <label>Dirección</label>
                             <p>${cliente.direccion || 'N/A'}, ${cliente.ciudad || ''}, ${cliente.estado || ''} ${cliente.codigo_postal || ''}</p>
