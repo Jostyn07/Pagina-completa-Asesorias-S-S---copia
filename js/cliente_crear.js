@@ -103,6 +103,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     cargarInfoUsuario();
 
+    // Iniciar guardado de borrador cada 30 segundos
+    iniciarGuardadoBorrador('crear', obtenerDatosFormulario);
+
 });
 
 // Sube imagen a Supabase Storage e inserta URL en Quill
@@ -1544,6 +1547,7 @@ async function guardarNotas(clienteId) {
     
     localStorage.removeItem('borrador_cliente');
     clearInterval(autosaveTimer);
+    detenerGuardadoBorrador();
     
     alert(`✅ Cliente y póliza creados exitosamente\n\nCliente: ${cliente.nombres} ${cliente.apellidos}\nPóliza: ${poliza.numero_poliza}`);
     

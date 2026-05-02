@@ -889,6 +889,7 @@ async function guardarYEnviar(e) {
             'success'
         );
         localStorage.removeItem('borrador_recuperado');
+        detenerGuardadoBorrador();
 
         setTimeout(() => {
             window.location.href = '../pages/polizas.html';
@@ -1216,11 +1217,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 6. Borrador
     await cargarBorradorAutomatico();
 
-    // 7. Info usuario en header
+    // 7. Info usuario en headers
     if (typeof cargarInfoUsuario === 'function') await cargarInfoUsuario();
 
-    // 8. Menú admin
+    // 8. Borrador automático a Google Sheets cada 30 segundos
+    iniciarGuardadoBorrador('recuperado', obtenerDatosFormulario);
+
+    // 9. Menú admin
     if (typeof inicializarMenuAdmin === 'function') await inicializarMenuAdmin();
+
+    // Iniciar guardado de borrador cada 30 segundos
+    iniciarGuardadoBorrador('recuperado', () => obtenerDatosFormulario());
+
+    // Detener cuando se envíe exitosamente
+    detenerGuardadoBorrador();
 
 });
 
