@@ -507,6 +507,7 @@ async function cargarPolizas() {
                     operador_nombre,
                     tiene_social,
                     archivado,
+                    venta_realizada_por,
                     metodos_pago (
                         tiene_metodo_pago,
                         tiene_pago_automatico
@@ -637,7 +638,19 @@ function renderizarTabla() {
             <td data-label="Tipo de registro">${cliente?.tipo_registro || '-'}</td>
             <td data-label="Tipo de modificación">${cliente?.tipo_modificacion || '-'}</td>
             <td data-label="Agente (Mercado)">${poliza.nombre_agente_mercado || '-'}</td>
-            <td data-label="Operador">${cliente?.operador_nombre || poliza?.operador_nombre || '-'}</td>
+            <td data-label="Operador">
+                ${esAdministrador() ? `
+                    <div class="operador-editable" 
+                        title="Click para cambiar operador"
+                        onclick="abrirSelectorOperador(event, '${cliente?.id || ''}', '${cliente?.operador_nombre || ''}')"
+                    >
+                        <span class="operador-nombre">${cliente?.operador_nombre || poliza?.operador_nombre || '-'}</span>
+                        <span class="material-symbols-rounded operador-edit-icon">edit</span>
+                    </div>
+                ` : `
+                    ${cliente?.operador_nombre || poliza?.operador_nombre || '-'}
+                `}
+            </td>
             <td class="td1" data-label="Cliente">
                 <div class="td1__flex">
                     <a href="./cliente_editar.html?id=${cliente?.id || ''}" onclick="event.stopPropagation()">
@@ -917,6 +930,10 @@ async function abrirDetalles(polizaId) {
                             <label>Tipo de venta</label>
                             <p>${cliente.tipo_registro || 'N/A'}</p>
                         </div>
+                        <div class="detalle-item">
+                            <label>Venta realizada por</label>
+                            <p>${cliente.venta_realizada_por || 'N/A'}</p>
+                        </div>
                         ${poliza.enlace_poliza ? `
                         <div class="detalle-item full-width">
                             <label>Enlace de póliza</label>
@@ -926,7 +943,7 @@ async function abrirDetalles(polizaId) {
                         ${poliza.observaciones ? `
                         <div class="detalle-item full-width">
                             <label>Observaciones</label>
-                            <p>${poliza .observaciones}</p>
+                            <p>${poliza.observaciones}</p>
                         </div>
                         ` : ''}
                     </div>
@@ -2846,3 +2863,121 @@ function cerrarModalTipoRegistro() {
 document.getElementById('modalTipoRegistro').addEventListener('click', function(e) {
     if (e.target === this) cerrarModalTipoRegistro()
 })
+
+// ============================================
+// CAMBIO DE OPERADOR (SOLO ADMIN)
+// ============================================
+
+let operadoresCache = [];
+
+async function cargarOperadoresCache() {
+    if (operadoresCache.length > 0) return; // Ya cargados
+    const { data } = await supabaseClient
+        .from('usuarios')
+        .select('id, nombre')
+        .eq('rol', 'operador')
+        .eq('activo', true)
+        .order('nombre', { ascending: true });
+    operadoresCache = data || [];
+}
+
+async function abrirSelectorOperador(event, clienteId, operadorActual) {
+    event.stopPropagation();
+    if (!clienteId) return;
+
+    // Cerrar selector anterior si existe
+    cerrarSelectorOperador();
+
+    // Cargar operadores si no están en cache
+    await cargarOperadoresCache();
+
+    // Crear dropdown
+    const dropdown = document.createElement('div');
+    dropdown.id = 'selectorOperadorDropdown';
+    dropdown.className = 'selector-operador-dropdown';
+    dropdown.innerHTML = `
+        <div class="selector-operador-header">
+            <span>Cambiar Operador</span>
+            <span class="material-symbols-rounded" 
+                style="cursor:pointer; font-size:18px;"
+                onclick="cerrarSelectorOperador()"
+            >close</span>
+        </div>
+        <input 
+            type="text" 
+            class="selector-operador-buscar" 
+            placeholder="Buscar operador..."
+            oninput="filtrarOpcionesSelectorOperador(this.value)"
+            onclick="event.stopPropagation()"
+        >
+        <div class="selector-operador-lista" id="listaSelectorOperador">
+            ${operadoresCache.map(op => `
+                <div class="selector-operador-item ${op.nombre === operadorActual ? 'activo' : ''}"
+                    onclick="seleccionarOperador('${clienteId}', '${op.nombre}', this)"
+                >
+                    ${op.nombre === operadorActual ? '<span class="material-symbols-rounded" style="font-size:16px;color:#7c3aed;">check</span>' : ''}
+                    ${op.nombre}
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // Posicionar cerca del click
+    const rect = event.target.closest('td').getBoundingClientRect();
+    dropdown.style.top  = `${rect.bottom + window.scrollY}px`;
+    dropdown.style.left = `${rect.left + window.scrollX}px`;
+
+    document.body.appendChild(dropdown);
+
+    // Cerrar al hacer click fuera
+    setTimeout(() => {
+        document.addEventListener('click', cerrarSelectorOperador, { once: true });
+    }, 100);
+}
+
+function filtrarOpcionesSelectorOperador(query) {
+    const items = document.querySelectorAll('.selector-operador-item');
+    items.forEach(item => {
+        item.style.display = item.textContent.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
+    });
+}
+
+async function seleccionarOperador(clienteId, nuevoOperador, itemEl) {
+    try {
+        // Actualizar en Supabase
+        const { error } = await supabaseClient
+            .from('clientes')
+            .update({ 
+                operador_nombre: nuevoOperador,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', clienteId);
+
+        if (error) throw error;
+
+        // Actualizar en memoria
+        const poliza = todasLasPolizas.find(p => p.cliente?.id === clienteId);
+        if (poliza?.cliente) poliza.cliente.operador_nombre = nuevoOperador;
+
+        // Actualizar en la tabla sin re-renderizar todo
+        const td = document.querySelector(`[onclick*="${clienteId}"]`)?.closest('td');
+        if (td) {
+            td.querySelector('.operador-nombre').textContent = nuevoOperador;
+        }
+
+        cerrarSelectorOperador();
+
+    } catch (error) {
+        console.error('Error cambiando operador:', error);
+        alert('Error al cambiar el operador');
+    }
+}
+
+function cerrarSelectorOperador() {
+    document.getElementById('selectorOperadorDropdown')?.remove();
+}
+
+window.abrirSelectorOperador  = abrirSelectorOperador;
+window.cerrarSelectorOperador = cerrarSelectorOperador;
+window.seleccionarOperador    = seleccionarOperador;
+window.filtrarOpcionesSelectorOperador = filtrarOpcionesSelectorOperador;

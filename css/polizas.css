@@ -1190,3 +1190,166 @@ tbody td {
     text-align: center;
     color: #555;
 }
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--color-bg-white);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text-primary);
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    font-family: 'Inter', 'Poppins', sans-serif;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-hover-primary);
+    background: var(--color-bg-white);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--color-text-secondary);
+}
+
+.form-group input:disabled,
+.form-group select:disabled {
+    background: var(--color-bg-primary);
+    color: var(--color-text-secondary);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Validación en tiempo real */
+.form-group input.valid {
+    border-color: var(--color-success);
+    background: rgba(76, 175, 80, 0.05);
+}
+
+.form-group input.invalid {
+    border-color: var(--color-error);
+    background: rgba(244, 67, 54, 0.05);
+}
+
+.form-group input.invalid + .validation-message {
+    display: block;
+}
+
+/* ============================================
+   OPERADOR EDITABLE (SOLO ADMIN)
+   ============================================ */
+
+.operador-editable {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.operador-editable:hover {
+    background: var(--primary-light, #f0f4ff);
+}
+
+.operador-editable:hover .operador-edit-icon {
+    opacity: 1;
+}
+
+.operador-edit-icon {
+    font-size: 15px;
+    color: #7c3aed;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+/* DROPDOWN SELECTOR */
+
+.selector-operador-dropdown {
+    position: absolute;
+    background: white;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    z-index: 99999;
+    width: 240px;
+    overflow: hidden;
+}
+
+.selector-operador-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    background: #f8fafc;
+}
+
+.selector-operador-buscar {
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.selector-operador-lista {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.selector-operador-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s;
+}
+
+.selector-operador-item:hover {
+    background: #f0f4ff;
+}
+
+.selector-operador-item.activo {
+    color: #7c3aed;
+    font-weight: 600;
+    background: #f5f3ff;
+}

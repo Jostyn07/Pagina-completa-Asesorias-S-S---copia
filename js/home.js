@@ -534,21 +534,27 @@ function cambiarTabClasificacion(tab, btn) {
 }
 
 function calcularClasificacionVentas() {
-    const tiposVenta = ['nuevo', 'nueva con registro'];
+    const tiposVenta = ['nuevo', 'venta con registro'];
     const conteo = {};
-    // Usa todasLasPolizas y aplica solo filtro de fecha_efectividad
-    (todasLasPolizas || []).forEach(poliza => {
-        // Filtrar por rango de fechas usando solo fecha_efectividad
-    if (poliza.created_at) {
-        const fecha = poliza.created_at.split('T')[0];
-        if (fecha < filtrosActivos.fechaDesde || fecha > filtrosActivos.fechaHasta) return;
-    }
 
+    (todasLasPolizas || []).forEach(poliza => {
+        // Filtro de fechas por created_at
+        if (poliza.created_at) {
+            const fecha = poliza.created_at.split('T')[0];
+            if (fecha < filtrosActivos.fechaDesde || fecha > filtrosActivos.fechaHasta) return;
+        }
+
+        // Solo tipos de venta correctos
         const tipo = (poliza.cliente?.tipo_registro || '').toLowerCase().trim();
         if (!tiposVenta.includes(tipo)) return;
-        const operador = poliza.operador_nombre || 'Sin asignar';
-        if (operador === 'Jostyn Aragón' || operador === 'Jostyn Aragon') return;
-        conteo[operador] = (conteo[operador] || 0) + 1;
+
+        // Usar venta_realizada_por (quién cerró la venta)
+        // en lugar de operador_nombre (quién asesora actualmente)
+        const vendedor = poliza.cliente?.venta_realizada_por || 'Sin asignar';
+        if (vendedor === 'Jostyn Aragón' || vendedor === 'Jostyn Aragon') return;
+        if (!vendedor || vendedor === 'Sin asignar') return;
+
+        conteo[vendedor] = (conteo[vendedor] || 0) + 1;
     });
 
     return Object.entries(conteo)
