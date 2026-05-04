@@ -4824,9 +4824,58 @@ if (cambio.datos_anteriores && cambio.datos_nuevos) {
                     ${cambio.metodo_pago_nuevo ? `
                         <div style="margin-top: 24px; padding: 16px; background: var(--background-color); border-radius: 8px;">
                             <h4 style="margin: 0 0 12px 0; font-size: 16px;">Método de Pago</h4>
-                            <p style="margin: 0;">
-                                Tipo: <strong>${cambio.metodo_pago_nuevo.tipo === 'banco' ? 'Cuenta Bancaria' : 'Tarjeta'}</strong>
-                            </p>
+                            
+                            ${cambio.metodo_pago_nuevo.tipo === 'banco' ? `
+                                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted); width: 45%;">Tipo</td>
+                                        <td style="padding: 6px 0;"><strong>Cuenta Bancaria</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted);">Nombre del Banco</td>
+                                        <td style="padding: 6px 0;">${cambio.metodo_pago_nuevo.nombre_banco || '-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted);">Número de Cuenta</td>
+                                        <td style="padding: 6px 0;">${cambio.metodo_pago_nuevo.numero_cuenta || '-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted);">Routing Number</td>
+                                        <td style="padding: 6px 0;">${cambio.metodo_pago_nuevo.routing_number || '-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted);">Nombre en la Cuenta</td>
+                                        <td style="padding: 6px 0;">${cambio.metodo_pago_nuevo.nombre_cuenta || '-'}</td>
+                                    </tr>
+                                </table>
+                            ` : `
+                                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted); width: 45%;">Tipo</td>
+                                        <td style="padding: 6px 0;"><strong>Tarjeta de Crédito/Débito</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted);">Tipo de Tarjeta</td>
+                                        <td style="padding: 6px 0;">${cambio.metodo_pago_nuevo.tipo_tarjeta || '-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted);">Número de Tarjeta</td>
+                                        <td style="padding: 6px 0;">${cambio.metodo_pago_nuevo.numero_tarjeta || '-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted);">Nombre en la Tarjeta</td>
+                                        <td style="padding: 6px 0;">${cambio.metodo_pago_nuevo.nombre_tarjeta || '-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted);">Fecha Expiración</td>
+                                        <td style="padding: 6px 0;">${cambio.metodo_pago_nuevo.fecha_expiracion || '-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: var(--text-muted);">CVV</td>
+                                        <td style="padding: 6px 0;">${cambio.metodo_pago_nuevo.cvv || '-'}</td>
+                                    </tr>
+                                </table>
+                            `}
                         </div>
                     ` : ''}
                     
@@ -4848,14 +4897,52 @@ if (cambio.datos_anteriores && cambio.datos_nuevos) {
                     <!-- DEPENDIENTES (si existen) -->
                     ${cambio.dependientes_nuevos && cambio.dependientes_nuevos.length > 0 ? `
                         <div style="margin-top: 24px; padding: 16px; background: var(--background-color); border-radius: 8px;">
-                            <h4 style="margin: 0 0 12px 0; font-size: 16px;">
+                            <h4 style="margin: 0 0 16px 0; font-size: 16px;">
                                 Dependientes (${cambio.dependientes_nuevos.length})
                             </h4>
-                            ${cambio.dependientes_nuevos.map(dep => `
-                                <p style="margin: 4px 0;">
-                                    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">person</span>
-                                    ${dep.nombres} ${dep.apellidos}
-                                </p>
+                            ${cambio.dependientes_nuevos.map((dep, index) => `
+                                <div style="
+                                    padding: 12px;
+                                    margin-bottom: 8px;
+                                    background: white;
+                                    border: 1px solid var(--border-color);
+                                    border-radius: 8px;
+                                ">
+                                    <p style="margin: 0 0 8px 0; font-weight: 600; font-size: 14px; color: var(--primary-color);">
+                                        <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">person</span>
+                                        Dependiente ${index + 1}
+                                    </p>
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                        <tr>
+                                            <td style="padding: 4px 0; color: var(--text-muted); width: 45%;">Nombre</td>
+                                            <td style="padding: 4px 0;">${dep.nombres || '-'} ${dep.apellidos || ''}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 4px 0; color: var(--text-muted);">Fecha Nacimiento</td>
+                                            <td style="padding: 4px 0;">${dep.fecha_nacimiento ? formatearFecha(dep.fecha_nacimiento) : '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 4px 0; color: var(--text-muted);">Sexo</td>
+                                            <td style="padding: 4px 0;">${dep.sexo || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 4px 0; color: var(--text-muted);">Relación</td>
+                                            <td style="padding: 4px 0;">${dep.relacion || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 4px 0; color: var(--text-muted);">SSN</td>
+                                            <td style="padding: 4px 0;">${dep.ssn || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 4px 0; color: var(--text-muted);">Estado Migratorio</td>
+                                            <td style="padding: 4px 0;">${dep.estado_migratorio || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 4px 0; color: var(--text-muted);">Aplica</td>
+                                            <td style="padding: 4px 0;">${dep.aplica || '-'}</td>
+                                        </tr>
+                                    </table>
+                                </div>
                             `).join('')}
                         </div>
                     ` : ''}
