@@ -666,10 +666,14 @@ function obtenerDependientes() {
 // ============================================
 
 function obtenerTipoCambio() {
-    const tipo = document.getElementById('tipoModificacion')?.value?.toLowerCase() || '';
-    if (tipo.includes('Recuperada')) return 'recuperado';
-    if (tipo.includes('Cambio'))    return 'cambio_de_vida';
-    return 'recuperado';
+    const tipo = document.getElementById('tipoModificacion')?.value || '';
+
+    if (tipo === 'Recuperada')                    return 'recuperado';
+    if (tipo === 'Cambio de vida')                return 'cambio_de_vida';
+    if (tipo === 'Recuperada y cambio de vida')   return 'cambio_de_vida';
+    if (tipo === 'Cancelada')                     return 'cancelada';
+
+    return 'recuperado'; // Por defecto
 }
 
 // ============================================
