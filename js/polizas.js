@@ -2875,7 +2875,6 @@ async function cargarOperadoresCache() {
     const { data } = await supabaseClient
         .from('usuarios')
         .select('id, nombre')
-        .eq('rol', 'operador')
         .eq('activo', true)
         .order('nombre', { ascending: true });
     operadoresCache = data || [];
