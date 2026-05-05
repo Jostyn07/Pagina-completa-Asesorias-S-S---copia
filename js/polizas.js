@@ -2959,8 +2959,8 @@ function filtrarOpcionesSelectorOperador(query) {
 
 async function seleccionarOperador(clienteId, nuevoOperador, itemEl) {
     try {
-        // Actualizar en Supabase
-        const { error } = await supabaseClient
+        // 1. Actualizar en tabla clientes
+        const { error: errorCliente } = await supabaseClient
             .from('clientes')
             .update({ 
                 operador_nombre: nuevoOperador,
@@ -2968,7 +2968,18 @@ async function seleccionarOperador(clienteId, nuevoOperador, itemEl) {
             })
             .eq('id', clienteId);
 
-        if (error) throw error;
+        if (errorCliente) throw errorCliente;
+
+        // 2. Actualizar en tabla polizas (todas las pólizas del cliente)
+        const { error: errorPoliza } = await supabaseClient
+            .from('polizas')
+            .update({ 
+                operador_nombre: nuevoOperador,
+                updated_at: new Date().toISOString()
+            })
+            .eq('cliente_id', clienteId);
+
+        if (errorPoliza) throw errorPoliza;
 
         // Actualizar en memoria
         const poliza = todasLasPolizas.find(p => p.cliente?.id === clienteId);
