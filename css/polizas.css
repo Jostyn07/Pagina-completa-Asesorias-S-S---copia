@@ -393,7 +393,7 @@ body {
 
 .thead tr {
     display: grid;
-    grid-template-columns: repeat(28, 200px); 
+    grid-template-columns: repeat(29, 200px); 
     padding: 15px;
     font-weight: 600;
     color: var(--color-text-primary);
@@ -409,7 +409,7 @@ body {
 
 tbody tr {
     display: grid;
-    grid-template-columns: repeat(28, 200px);
+    grid-template-columns: repeat(29, 200px);
     padding: 15px;
     border-bottom: 1px solid var(--color-border-hr);
     transition: background-color 0.2s ease;
@@ -1352,4 +1352,37 @@ tbody td {
     color: #7c3aed;
     font-weight: 600;
     background: #f5f3ff;
+}
+
+/* ============================================
+   BOTONES FILTRO ESTADO - MERCADO / COMPAÑÍA
+   ============================================ */
+
+.filtro-estado-tipo {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.btn-estado-tipo {
+    padding: 8px 20px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    background: white;
+    color: var(--text-muted, #64748b);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-estado-tipo:hover {
+    border-color: #7c3aed;
+    color: #7c3aed;
+}
+
+.btn-estado-tipo.active {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: white;
 }

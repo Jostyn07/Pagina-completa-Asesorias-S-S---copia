@@ -2,6 +2,7 @@
 // VARIABLES GLOBALES
 // ============================================
 let todasLasPolizas = [];
+let modoFiltroEstado = 'mercado';
 let polizasFiltradas = [];
 let paginaActual = 1;
 let polizasPorPagina = 10;
@@ -660,7 +661,7 @@ function renderizarTabla() {
             </td>
             <td data-label="Teléfono">${cliente?.telefono1 || '-'}</td>
             <td data-label="Estado migratorio">${cliente?.estado_migratorio || '-'}</td>
-            <td data-label="Estado migratorio">${cliente?.ssn || 'No'}</td>
+            <td data-label="SSN">${cliente?.ssn || 'No'}</td>
             <td data-label="Estado (Mercado)">  
                 <span class="badge-estado ${poliza.estado_mercado || 'pendiente'}">
                     ${poliza.estado_mercado || 'Pendiente'}
@@ -672,7 +673,8 @@ function renderizarTabla() {
             <td data-label="Fecha del plazo de documentos">${formatoUS(poliza.fecha_plazo_documentos) || 'Pendiente información'} </td>
             <td data-label="Agente 3.5">${obtenerBadgeAgente35(poliza.agente35_estado)}</td>
             <td data-label="Compañía">${poliza.compania || '-'}</td>
-            <td data-label="Compañía">${formatoUS(poliza.fecha_revision_compania) || '-'}</td>
+            <td data-label="Estado en compañia">${poliza.estado_compania || '-'}</td>
+            <td data-label="Fecha de revision en compañia">${formatoUS(poliza.fecha_revision_compania) || '-'}</td>
             <td data-label="Plan">${poliza.plan || '-'}</td>
             <td data-label="Prima">$${poliza.prima || '0.00'}</td>
             <td data-label="Fecha de ultimo pago">${formatoUS(poliza.pagado_hasta) || '-'}</td>
@@ -1297,14 +1299,25 @@ function buscarPolizas(termino) {
 // ============================================
 // FILTROS
 // ============================================
+function cambiarFiltroEstado(modo) {
+    modoFiltroEstado = modo;
+
+    document.getElementById('btnFiltroMercado').classList.toggle('active', modo === 'mercado');
+    document.getElementById('btnFiltroCompania').classList.toggle('active', modo === 'compania');
+
+    // Usar el sistema real de estadísticas
+    const estadisticas = calcularEstadisticas(todasLasPolizas);
+    actualizarTarjetas(estadisticas);
+}
+
 function filtrarPorEstado(estado) {
-    ;
-    
+    const campo = modoFiltroEstado === 'compania' ? 'estado_compania' : 'estado_mercado';
+
     if (estado === 'Activas') {
-        polizasFiltradas = todasLasPolizas.filter(p => p.estado_mercado === 'Activo');
+        polizasFiltradas = todasLasPolizas.filter(p => p[campo] === 'Activo');
     } else if (estado === 'Canceladas') {
-        const estadosCancelados = ['Cancelado', 'Robado', 'Cancelado a P.C', 'Doble póliza', 'Triple póliza'];
-        polizasFiltradas = todasLasPolizas.filter(p => estadosCancelados.includes(p.estado_mercado));
+        const estadosCancelados = ['Cancelado', 'Robado', 'Cancelado a P.C', 'Doble póliza', 'Triple póliza', 'Inactivo'];
+        polizasFiltradas = todasLasPolizas.filter(p => estadosCancelados.includes(p[campo]));
     } else if (estado === 'proximas') {
         polizasFiltradas = todasLasPolizas.filter(p => {
             if (!p.fecha_efectividad) return false;
@@ -1357,25 +1370,29 @@ function aplicarFiltros() {
 // ============================================
 // ESTADÍSTICAS
 // ============================================
-function actualizarEstadisticas(polizas) {
-    const activas = polizas.filter(p => p.estado_mercado === 'Activo').length;
-    const canceladas = polizas.filter(p => p.estado_mercado === 'cancelado').length;
-    const proximas = polizas.filter(p => {
-        if (!p.fecha_efectividad) return false;
-        const hoy = new Date();
-        const fechaEfectividad = new Date(p.fecha_efectividad);
-        const diasDiferencia = Math.ceil((fechaEfectividad - hoy) / (1000 * 60 * 60 * 24));
-        return diasDiferencia > 0 && diasDiferencia <= 30;
-    }).length;
+// function actualizarEstadisticasTarjetas(polizas) {
+//     const campo = modoFiltroEstado === 'compania' ? 'estado_compania' : 'estado_mercado';
+//     const activas = polizas.filter(p => p[campo] === 'Activo').length;
+//     const canceladas = polizas.filter(p => {
+//         const estadosCancelados = ['Cancelado', 'Robado', 'Cancelado a P.C', 'Doble póliza', 'Triple póliza', 'cancelado'];
+//         return estadosCancelados.includes(p[campo]);
+//     }).length;
+//     const proximas = polizas.filter(p => {
+//         if (!p.fecha_efectividad) return false;
+//         const hoy = new Date();
+//         const fechaEfectividad = new Date(p.fecha_efectividad);
+//         const diasDiferencia = Math.ceil((fechaEfectividad - hoy) / (1000 * 60 * 60 * 24));
+//         return diasDiferencia > 0 && diasDiferencia <= 30;
+//     }).length;
     
-    const elementoActivas = document.getElementById('polizasActivas');
-    const elementoCanceladas = document.getElementById('polizasCanceladas');
-    const elementoProximas = document.getElementById('polizasProximas');
+//     const elementoActivas = document.getElementById('polizasActivas');
+//     const elementoCanceladas = document.getElementById('polizasCanceladas');
+//     const elementoProximas = document.getElementById('polizasProximas');
     
-    if (elementoActivas) elementoActivas.textContent = activas;
-    if (elementoCanceladas) elementoCanceladas.textContent = canceladas;
-    if (elementoProximas) elementoProximas.textContent = proximas;
-}
+//     if (elementoActivas) elementoActivas.textContent = activas;
+//     if (elementoCanceladas) elementoCanceladas.textContent = canceladas;
+//     if (elementoProximas) elementoProximas.textContent = proximas;
+// }
 
 function calcularTotales(polizas) {
     const totalPolizas = polizas.length;
@@ -1420,7 +1437,7 @@ function actualizarContadoresEstados(polizas) {
         
         if (estado === 'activo') {
             activas++;
-        } else if (estado === 'cancelado' || estado === 'robado' || estado === 'Cancelado a P.C') {
+        } else if (estado === 'cancelado' || estado === 'robado' || estado === 'Cancelado a P.C' || estado === 'Inactivo') {
             canceladas++;
         }
     });
@@ -1474,19 +1491,18 @@ function calcularEstadisticas(polizas) {
     let proximas = 0;
     
     const hoy = new Date();
+
+    // Usar campo según modo activo
+    const campo = modoFiltroEstado === 'compania' ? 'estado_compania' : 'estado_mercado';
     
     polizas.forEach(poliza => {
-        const estadoMercado = (poliza.estado_mercado || '').toLowerCase();
+        const estadoValor = (poliza[campo] || '').toLowerCase();
         
-        if (estadoMercado === 'activo') {
+        if (estadoValor === 'activo') {
             activas++;
         }
         
-        if (estadoMercado === 'cancelado' ||
-            estadoMercado === 'Cancelado' || 
-            estadoMercado === 'Robado' ||
-            estadoMercado === 'robado' || 
-            estadoMercado === 'cancelado a p.c') {
+        if (['cancelado', 'robado', 'cancelado a p.c', 'doble póliza', 'triple póliza', 'inactivo'].includes(estadoValor)) {
             canceladas++;
         }
         
