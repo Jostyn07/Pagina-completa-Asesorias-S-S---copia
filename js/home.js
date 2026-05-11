@@ -592,7 +592,7 @@ function calcularClasificacionCompania() {
     const conteo = {};
 
     (todasLasPolizas || []).forEach(poliza => {
-        const estadoCompania = (poliza.estado_mercado || '').toLowerCase().trim();
+        const estadoCompania = (poliza.estado_compania || '').toLowerCase().trim();
         if (estadoCompania !== 'activo') return;
 
         const operador = poliza.operador_nombre || 'Sin asignar';
