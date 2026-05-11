@@ -5099,3 +5099,42 @@ input[readonly] {
     color: white;
 }
 
+/* ============================================
+   MESES PAGADOS - BADGES
+   ============================================ */
+
+.meses-pago-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 4px 0;
+}
+
+.mes-pago-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--surface-color, #f8fafc);
+    color: var(--text-muted, #94a3b8);
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.mes-pago-btn:hover {
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.mes-pago-btn.activo {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #16a34a;
+}

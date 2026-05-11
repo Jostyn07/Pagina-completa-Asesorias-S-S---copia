@@ -576,7 +576,7 @@ function calcularClasificacionRecuperadas() {
         const tipo = (poliza.cliente?.tipo_modificacion || '').toLowerCase().trim();
         if (tipo !== 'recuperada') return;
 
-        const operador = poliza.operador_nombre || 'Sin asignar';
+        const operador = poliza.cliente?.venta_realizada_por || 'Sin asignar';
         if (operador === 'Jostyn Aragón' || operador === 'Jostyn Aragon') return;
         conteo[operador] = (conteo[operador] || 0) + 1;
     });

@@ -807,67 +807,33 @@
                                     <h2>Meses pagados</h2>
                                 </div>
                             </div>
-                            <div class="form-row2">
-                                <div class="form-group ">
-                                    <label for="pagoEnero" class="payFlex">
-                                    <input type="checkbox" name="pagoEnero" id="pagoEnero">
-                                    Enero</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoFebrero" class="payFlex">
-                                    <input type="checkbox" name="pagoFebrero" id="pagoFebrero">
-                                    Febrero</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoMarzo" class="payFlex">
-                                    <input type="checkbox" name="pagoMarzo" id="pagoMarzo">
-                                    Marzo</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoAbril" class="payFlex">
-                                    <input type="checkbox" name="pagoAbril" id="pagoAbril">
-                                    Abril</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoMayo" class="payFlex">
-                                    <input type="checkbox" name="pagoMayo" id="pagoMayo">
-                                    Mayo</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoJunio" class="payFlex">
-                                    <input type="checkbox" name="pagoJunio" id="pagoJunio">
-                                    Junio</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoJulio" class="payFlex">
-                                    <input type="checkbox" name="pagoJulio" id="pagoJulio">
-                                    Julio</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoAgosto" class="payFlex">
-                                    <input type="checkbox" name="pagoAgosto" id="pagoAgosto">
-                                    Agosto</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoSeptiembre" class="payFlex">
-                                    <input type="checkbox" name="pagoSeptiembre" id="pagoSeptiembre">
-                                    Septiembre</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoOctubre" class="payFlex">
-                                    <input type="checkbox" name="pagoOctubre" id="pagoOctubre">
-                                    Octubre</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoNoviembre" class="payFlex">
-                                    <input type="checkbox" name="pagoNoviembre" id="pagoNoviembre">
-                                    Noviembre</label>
-                                </div>
-                                <div class="form-group">
-                                    <label for="pagoDiciembre" class="payFlex">
-                                    <input type="checkbox" name="pagoDiciembre" id="pagoDiciembre">
-                                    Diciembre</label>
-                                </div>
+                            <div class="meses-pago-wrapper">
+                                <button type="button" class="mes-pago-btn" data-mes="pagoEnero"   onclick="toggleMesPago(this)">Ene</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoFebrero" onclick="toggleMesPago(this)">Feb</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoMarzo"   onclick="toggleMesPago(this)">Mar</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoAbril"   onclick="toggleMesPago(this)">Abr</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoMayo"    onclick="toggleMesPago(this)">May</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoJunio"   onclick="toggleMesPago(this)">Jun</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoJulio"   onclick="toggleMesPago(this)">Jul</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoAgosto"  onclick="toggleMesPago(this)">Ago</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoSeptiembre" onclick="toggleMesPago(this)">Sep</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoOctubre" onclick="toggleMesPago(this)">Oct</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoNoviembre" onclick="toggleMesPago(this)">Nov</button>
+                                <button type="button" class="mes-pago-btn" data-mes="pagoDiciembre" onclick="toggleMesPago(this)">Dic</button>
+
+                                <!-- Inputs hidden para mantener compatibilidad con el resto del código -->
+                                <input type="checkbox" id="pagoEnero"      name="pagoEnero"      style="display:none">
+                                <input type="checkbox" id="pagoFebrero"    name="pagoFebrero"    style="display:none">
+                                <input type="checkbox" id="pagoMarzo"      name="pagoMarzo"      style="display:none">
+                                <input type="checkbox" id="pagoAbril"      name="pagoAbril"      style="display:none">
+                                <input type="checkbox" id="pagoMayo"       name="pagoMayo"       style="display:none">
+                                <input type="checkbox" id="pagoJunio"      name="pagoJunio"      style="display:none">
+                                <input type="checkbox" id="pagoJulio"      name="pagoJulio"      style="display:none">
+                                <input type="checkbox" id="pagoAgosto"     name="pagoAgosto"     style="display:none">
+                                <input type="checkbox" id="pagoSeptiembre" name="pagoSeptiembre" style="display:none">
+                                <input type="checkbox" id="pagoOctubre"    name="pagoOctubre"    style="display:none">
+                                <input type="checkbox" id="pagoNoviembre"  name="pagoNoviembre"  style="display:none">
+                                <input type="checkbox" id="pagoDiciembre"  name="pagoDiciembre"  style="display:none">
                             </div>
                         </div>
                     </div>

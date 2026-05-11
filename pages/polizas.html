@@ -525,6 +525,25 @@
                                             <option value="sinAsignar">Sin prima asignada</option>
                                         </select>
                                     </div>
+
+                                    <div class="filtro-group">
+                                        <label for="">Mes pagado</label>
+                                        <select name="mesPagado" id="mesPagado">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="enero">Enero</option>
+                                            <option value="febrero">febrero</option>
+                                            <option value="marzo">Marzo</option>
+                                            <option value="abril">Abril</option>
+                                            <option value="mayo">Mayo</option>
+                                            <option value="junio">Junio</option>
+                                            <option value="julio">Julio</option>
+                                            <option value="agosto">Agosto</option>
+                                            <option value="septiembre">Septiembre</option>
+                                            <option value="octubre">Octubre</option>
+                                            <option value="noviembre">Noviembre</option>
+                                            <option value="diciembre">Diciembre</option>
+                                        </select>
+                                    </div>
                                     <div class="filtro-group">
                                         <label>Tipo de Venta</label>
                                         <div class="dropdown-filter">
@@ -571,6 +590,21 @@
                                                     <input type="text" id="buscarOperador" placeholder="Buscar..." onkeyup="filtrarOpcionesOperador()">
                                                 </div>
                                                 <div class="checkbox-list-scroll" id="listaOperadores"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="filtro-group" id="filtroVentaRealizadaPorGroup">
+                                        <label>Venta Realizada Por (Solo Admin)</label>
+                                        <div class="dropdown-filter">
+                                            <button type="button" class="dropdown-trigger" id="triggerVentaRealizadaPor" onclick="toggleDropdownVentaRealizadaPor(event)">
+                                                <span id="textoVentaRealizadaPor">Todos los operadores</span>
+                                                <span class="material-symbols-rounded">expand_more</span>
+                                            </button>
+                                            <div class="dropdown-panel" id="panelVentaRealizadaPor">
+                                                <div class="dropdown-search">
+                                                    <input type="text" id="buscarVentaRealizadaPor" placeholder="Buscar..." onkeyup="filtrarOpcionesVentaRealizadaPor()">
+                                                </div>
+                                                <div class="checkbox-list-scroll" id="listaVentaRealizadaPor"></div>
                                             </div>
                                         </div>
                                     </div>

@@ -449,6 +449,8 @@ async function cargarDatosCliente(id) {
             await cargarHistorial(id);
         }
         
+        sincronizarBadgesMeses();
+
         
     } catch (error) {
         console.error('❌ Error al cargar cliente:', error);
@@ -4973,6 +4975,34 @@ function cerrarModalDetallesCambio(event) {
     
     const modal = document.getElementById('modalDetallesCambio');
     if (modal) modal.remove();
+}
+
+// ============================================
+// MESES PAGADOS - BADGES
+// ============================================
+
+function toggleMesPago(btn) {
+    const activo = btn.classList.toggle('activo');
+    // Sincronizar con el checkbox hidden
+    const checkbox = document.getElementById(btn.dataset.mes);
+    if (checkbox) checkbox.checked = activo;
+}
+
+// Llamar al cargar los datos del cliente para reflejar estado actual
+function sincronizarBadgesMeses() {
+    const meses = [
+        'pagoEnero', 'pagoFebrero', 'pagoMarzo', 'pagoAbril',
+        'pagoMayo', 'pagoJunio', 'pagoJulio', 'pagoAgosto',
+        'pagoSeptiembre', 'pagoOctubre', 'pagoNoviembre', 'pagoDiciembre'
+    ];
+
+    meses.forEach(mes => {
+        const checkbox = document.getElementById(mes);
+        const btn = document.querySelector(`[data-mes="${mes}"]`);
+        if (checkbox && btn) {
+            btn.classList.toggle('activo', checkbox.checked);
+        }
+    });
 }
 
 // Exportar funciones para uso global

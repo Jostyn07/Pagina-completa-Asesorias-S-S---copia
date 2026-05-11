@@ -48,6 +48,8 @@ function guardarFiltrosEnStorage() {
             filtroTipoModificacion: document.getElementById('tipoModificacion')?.value || '',
             tiposVenta: Array.from(document.querySelectorAll('#panelTipoVentas input:checked'))?.map(cb => cb.value),
             operadores: Array.from(document.querySelectorAll('#panelOperadores input:checked')).map(cb => cb.value),
+            mesPagado: document.getElementById('mesPagado')?.value || '',
+            ventaRealizadaPor: Array.from(document.querySelectorAll('#panelVentaRealizadaPor input:checked')).map(cb => cb.value),
             documentos: document.getElementById('filtroDocumentos')?.value || '',
             seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo')?.value || '',
             filtroAgenteMercado: document.getElementById('agenteMercado')?.value || '',
@@ -152,6 +154,7 @@ function restaurarFiltrosDesdeStorage() {
     set('tipoModificacion', datos.filtroTipoModificacion)
     set('filtroOperador', datos.operador);
     set('filtroDocumentos', datos.documentos);
+    set('mesPagado', datos.mesPagado);
     set('filtroSeguimientoEfectivo', datos.seguimientoEfectivo);
     set('agenteMercado', datos.filtroAgenteMercado)
     set('filtroEstadoMercado', datos.estadoMercado);
@@ -200,6 +203,8 @@ function restaurarFiltrosDesdeStorage() {
         filtroTipoModificacion: datos.filtroTipoModificacion || '',
         tiposVenta: datos.tiposVenta || [],
         operador: datos.operador || '',
+        ventaRealizadaPor: datos.ventaRealizadaPor || [],
+        mesPagado: datos.mesPagado || '',
         documentos: datos.documentos || '',
         seguimientoEfectivo: datos.seguimientoEfectivo || '',
         filtroAgenteMercado: datos.filtroAgenteMercado || '',
@@ -315,6 +320,7 @@ function restaurarFiltrosDesdeStorage() {
             }
             if (filtrosActivos.filtroTipoModificacion && cliente.tipo_modificacion !== filtrosActivos.filtroTipoModificacion) return false; 
             if (filtrosActivos.operadores?.length > 0 && !filtrosActivos.operadores.includes(poliza.operador_nombre)) return false;
+            if (filtrosActivos.ventaRealizadaPor?.length > 0 && !filtrosActivos.ventaRealizadaPor.includes(poliza.cliente?.venta_realizada_por)) return false;
             if (filtrosActivos.estadoMercado) {
                 if (filtrosActivos.estadoMercado === '__null__') {
                     if (poliza.estado_mercado !== null && poliza.estado_mercado !== '' && poliza.estado_mercado !== undefined) return false;
@@ -511,7 +517,19 @@ async function cargarPolizas() {
                     venta_realizada_por,
                     metodos_pago (
                         tiene_metodo_pago,
-                        tiene_pago_automatico
+                        tiene_pago_automatico,
+                        pago_enero,
+                        pago_febrero,
+                        pago_marzo,
+                        pago_abril,
+                        pago_mayo,
+                        pago_junio,
+                        pago_julio,
+                        pago_agosto,
+                        pago_septiembre,
+                        pago_octubre,
+                        pago_noviembre,
+                        pago_diciembre
                     )
                 ),
                 seguimientos (
@@ -775,6 +793,8 @@ async function abrirDetalles(polizaId) {
         if (!poliza) {
             throw new Error('Póliza no encontrada');
         }
+
+
         
         polizaSeleccionada = poliza;
         const cliente = poliza.cliente || {};
@@ -918,6 +938,54 @@ async function abrirDetalles(polizaId) {
                 
                 <!-- Información Adicional -->
                 <div class="detalle-seccion">
+                    <!-- Meses Pagados -->
+                    ${(() => {
+                        const metodo = poliza.cliente?.metodos_pago?.[0];
+                        if (!metodo) return '';
+
+                        const meses = [
+                            { key: 'pago_enero',      abr: 'Ene' },
+                            { key: 'pago_febrero',    abr: 'Feb' },
+                            { key: 'pago_marzo',      abr: 'Mar' },
+                            { key: 'pago_abril',      abr: 'Abr' },
+                            { key: 'pago_mayo',       abr: 'May' },
+                            { key: 'pago_junio',      abr: 'Jun' },
+                            { key: 'pago_julio',      abr: 'Jul' },
+                            { key: 'pago_agosto',     abr: 'Ago' },
+                            { key: 'pago_septiembre', abr: 'Sep' },
+                            { key: 'pago_octubre',    abr: 'Oct' },
+                            { key: 'pago_noviembre',  abr: 'Nov' },
+                            { key: 'pago_diciembre',  abr: 'Dic' },
+                        ];
+
+                        const badges = meses.map(({ key, abr }) => {
+                            const pagado = metodo[key] === true || metodo[key] === 'Si';
+                            return `
+                                <span style="
+                                    display: inline-flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    width: 40px;
+                                    height: 32px;
+                                    border-radius: 6px;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                    background: ${pagado ? '#dcfce7' : '#f1f5f9'};
+                                    color: ${pagado ? '#16a34a' : '#94a3b8'};
+                                    border: 1px solid ${pagado ? '#86efac' : '#e2e8f0'};
+                                ">${abr}</span>
+                            `;
+                        }).join('');
+
+                        return `
+                            <div class="detalle-seccion">
+                                <h3><span class="material-symbols-rounded">payments</span> Meses Pagados</h3>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0;">
+                                    ${badges}
+                                </div>
+                            </div>
+                        `;
+                    })()}
                     <h3><span class="material-symbols-rounded">info</span> Información Adicional</h3>
                     <div class="detalle-grid">
                         <div class="detalle-item">
@@ -2175,6 +2243,8 @@ function limpiarFiltros() {
     actualizarTextoTipoVentas();
     document.querySelectorAll('#panelOperadores input[type="checkbox"]').forEach(cb => cb.checked = false);
     actualizarTextoOperadores();
+    document.querySelectorAll('#panelVentaRealizadaPor input[type="checkbox"]').forEach(cb => cb.checked = false);
+    actualizarTextoVentaRealizadaPor();
     document.getElementById('filtroModificadoPor').value = '';
     document.getElementById('filtroEstadoMercado').value = '';
     document.getElementById('agenteMercado').value = '';
@@ -2472,6 +2542,9 @@ function aplicarFiltrosAvanzados() {
         filtroTipoModificacion: document.getElementById('tipoModificacion').value,
         tiposVenta: Array.from(document.querySelectorAll('#panelTipoVentas input:checked')).map(cb => cb.value),
         operadores: Array.from(document.querySelectorAll('#panelOperadores input:checked')).map(cb => cb.value),        modificadoPor: document.getElementById('filtroModificadoPor').value,
+        ventaRealizadaPor: Array.from(document.querySelectorAll('#panelVentaRealizadaPor input:checked')).map(cb => cb.value),
+        mesPagado: document.getElementById('mesPagado').value,
+        modificadoPor: document.getElementById('filtroModificadoPor').value,
         documentos: document.getElementById('filtroDocumentos').value,
         filtroAgenteMercado: document.getElementById('agenteMercado').value,
         estadoMercado: document.getElementById('filtroEstadoMercado').value,
@@ -2636,6 +2709,19 @@ function aplicarFiltrosAvanzados() {
         // Filtro por operador (solo para admins)
         if (filtrosActivos.operadores?.length > 0 && !filtrosActivos.operadores.includes(poliza.operador_nombre)) {
             return false;
+        }
+
+        // Filtro por venta realizada por (solo para admins)
+        if (filtrosActivos.ventaRealizadaPor?.length > 0 && !filtrosActivos.ventaRealizadaPor.includes(poliza.cliente?.venta_realizada_por)) {
+            return false;
+        }
+
+        // Filtro por mes pagado
+        if (filtrosActivos.mesPagado) {
+            const metodo = poliza.cliente?.metodos_pago?.[0];
+            if (!metodo) return false;
+            const campoPago = `pago_${filtrosActivos.mesPagado}`;
+            if (metodo[campoPago] !== true && metodo[campoPago] !== 'Si') return false;
         }
 
         // Filtro por quién modificó
@@ -2803,6 +2889,16 @@ async function cargarDatosOperador() {
             </label>
         `).join('');
     }
+
+    const listaVenta = document.getElementById('listaVentaRealizadaPor');
+    if (listaVenta && operadores) {
+        listaVenta.innerHTML = operadores.map(op => `
+            <label class="checkbox-item">
+                <input type="checkbox" value="${op.nombre}" onchange="actualizarTextoVentaRealizadaPor();">
+                <span>${op.nombre}</span>
+            </label>
+        `).join('');
+    }
 }
 
 function filtrarOpcionesOperador() {
@@ -2842,6 +2938,62 @@ function actualizarTextoOperadores() {
         texto.style.color = '#6366f1';
     }
 }
+
+// ============================================
+// FILTRO VENTA REALIZADA POR
+// ============================================
+
+function toggleDropdownVentaRealizadaPor(event) {
+    event.stopPropagation();
+    const panel = document.getElementById('panelVentaRealizadaPor');
+    const trigger = document.getElementById('triggerVentaRealizadaPor');
+    panel.classList.toggle('active');
+    trigger.classList.toggle('active');
+}
+
+function cerrarDropdownVentaRealizadaPor() {
+    const panel = document.getElementById('panelVentaRealizadaPor');
+    const trigger = document.getElementById('triggerVentaRealizadaPor');
+    if (panel) panel.classList.remove('active');
+    if (trigger) trigger.classList.remove('active');
+}
+
+function actualizarTextoVentaRealizadaPor() {
+    const checkboxes = document.querySelectorAll('#panelVentaRealizadaPor input[type="checkbox"]:checked');
+    const texto = document.getElementById('textoVentaRealizadaPor');
+    if (!texto) return;
+    if (checkboxes.length === 0) {
+        texto.textContent = 'Todos los operadores';
+        texto.style.color = '#94a3b8';
+    } else if (checkboxes.length === 1) {
+        texto.textContent = checkboxes[0].value;
+        texto.style.color = '#1e293b';
+    } else {
+        texto.textContent = `${checkboxes.length} operadores seleccionados`;
+        texto.style.color = '#6366f1';
+    }
+    guardarFiltrosEnStorage();
+    restaurarFiltrosDesdeStorage();
+    aplicarFiltros();
+}
+
+function filtrarOpcionesVentaRealizadaPor() {
+    const busqueda = document.getElementById('buscarVentaRealizadaPor').value.toLowerCase();
+    document.querySelectorAll('#panelVentaRealizadaPor .checkbox-item').forEach(item => {
+        item.style.display = item.textContent.toLowerCase().includes(busqueda) ? 'flex' : 'none';
+    });
+}
+
+// Cerrar al hacer click fuera
+document.addEventListener('click', function(event) {
+    const panel = document.getElementById('panelVentaRealizadaPor');
+    const trigger = document.getElementById('triggerVentaRealizadaPor');
+    if (panel && trigger &&
+        !panel.contains(event.target) &&
+        !trigger.contains(event.target)) {
+        cerrarDropdownVentaRealizadaPor();
+    }
+});
 
 function filtrarOpcionesOperador() {
     const busqueda = document.getElementById('buscarOperador').value.toLowerCase();
