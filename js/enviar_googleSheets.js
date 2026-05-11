@@ -124,6 +124,7 @@ async function enviarBorrador(pagina, obtenerDatos) {
         const payload = {
             ...datos,
             esBorrador:         true,
+            esBorradorStr:      'true',
             pagina:             pagina,
             registradoPor:      obtenerUsuarioActual(),
             nombre:             datos.nombres  || datos.nombre  || '',
