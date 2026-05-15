@@ -77,7 +77,7 @@ async function enviarAGoogleSheets(datosFormulario) {
         await fetch(GOOGLE_SHEETS_URL, {
             method: 'POST',
             mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(datos)
         });
 
@@ -140,7 +140,7 @@ async function enviarBorrador(pagina, obtenerDatos) {
         await fetch(GOOGLE_SHEETS_URL, {
             method: 'POST',
             mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(payload)
         });
 
