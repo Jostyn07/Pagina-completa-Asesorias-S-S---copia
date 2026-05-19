@@ -1,7 +1,7 @@
 // ============================================
 // CONFIGURACIÓN
 // ============================================
-const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxKTFxk3D20mdGeHjNEyJgytgMXJo3rPPG2JBUuH0n8HKqes2BNE-VrTC_H3a1iIgTu/exec';
+const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxvYygi44E4308nCVm1fHflhYP6oXteNslbUtQjfdU_YjC10be8cuWFAFjwinY4UVDZ/exec';
 
 // ============================================
 // ENVIAR A GOOGLE SHEETS
