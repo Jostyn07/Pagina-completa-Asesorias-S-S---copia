@@ -1,11 +1,11 @@
 // Variables globales
 let usuarioActual = null;
 let rolUsuario = 'operador';
+let datosUsuario = null;
 
 // Cargar rol del usuario desde localStorage
 async function cargarRolUsuario() {
     try {
-        // ✅ Leer de localStorage (como hace main.js)
         const usuarioData = localStorage.getItem('usuario');
         
         if (!usuarioData) {
@@ -16,7 +16,7 @@ async function cargarRolUsuario() {
         
         const usuario = JSON.parse(usuarioData);
         
-        // ✅ Obtener usuario de Supabase Auth
+        // Obtener usuario de Supabase Auth
         const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
         
         if (authError || !user) {
@@ -25,16 +25,25 @@ async function cargarRolUsuario() {
             return null;
         }
         
-        // ✅ Guardar datos
+        // Leer rol Directo de la tabla usuarios en supabase
+        const { data: usuarioDB, error: dbError } = await supabaseClient
+            .from('usuarios')
+            .select('id, nombre, email, rol, activo')
+            .eq('email', user.email)
+            .single();
+        
+        if (dbError || !usuarioDB) {
+            console.error('Usuario no encontrado en BD:', dbError);
+            window.location.href = '../index.html'
+            return null
+        }
+
+        // Guardar en varables de módulo
         usuarioActual = user;
-        rolUsuario = usuario.rol || 'operador';
-        
-        ;
-        ;
-        ;
-        ;
-        
-        return rolUsuario;
+        datosUsuario = usuarioDB;
+        rolUsuario = usuarioDB.rol || 'operador';
+
+        return rolUsuario
         
     } catch (error) {
         console.error('❌ Error al cargar rol:', error);
@@ -55,6 +64,9 @@ function esSoporte() {
 }
 
 function obtenerUsuarioId() {
+    // Usar datos de supabase si ya estan cargados
+    if (datosUsuario) return datosUsuario.id || null;
+    // Fallback al localstoridage si aun no se ha llamado cargarRolUsuario()
     const usuarioData = localStorage.getItem('usuario');
     if (!usuarioData) return null;
     const usuario = JSON.parse(usuarioData);
@@ -62,6 +74,7 @@ function obtenerUsuarioId() {
 }
 
 function obtenerUsuarioEmail() {
+    if (datosUsuario) return datosUsuario.email || null
     const usuarioData = localStorage.getItem('usuario');
     if (!usuarioData) return null;
     const usuario = JSON.parse(usuarioData);

@@ -2816,6 +2816,11 @@ function aplicarFiltrosAvanzados() {
 
     // Guardar filtros en localStorage para persistirlos
     guardarFiltrosEnStorage();
+
+    // Guardar datos filtrados para gráficas
+    sessionStorage.setItem('graficas_data', JSON.stringify(polizasFiltradas));
+    // Mostrar botón "Ver gráfica"
+    document.getElementById('btnVerGrafica').style.display = 'inline-flex';
     
 }
 
