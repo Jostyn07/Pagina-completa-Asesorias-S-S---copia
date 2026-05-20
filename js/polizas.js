@@ -496,6 +496,7 @@ async function cargarPolizas() {
                 modificado_por_nombre,
                 modificado_por_email,
                 clave_seguridad,
+                member_id,
                 cliente:clientes (
                     id,
                     nombres,
