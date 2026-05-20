@@ -595,6 +595,7 @@ function agregarDependienteExistente(dep) {
         estado_migratorio: dep.estado_migratorio || '',
         relacion: dep.relacion || '',
         aplica: dep.aplica || '',
+        member_id_dep: dep.member_id_dep || '',
     };
     
     crearTarjetaDependiente(dependientesCount, dependiente, dep.id);
@@ -1868,7 +1869,8 @@ async function actualizarDependientes(clienteId, formData) {
             ssn: formData[`dep_ssn_${i}`] ? formData[`dep_ssn_${i}`].replace(/\D/g, '') : null,
             estado_migratorio: formData[`dep_estado_migratorio_${i}`] || null,
             relacion: formData[`dep_relacion_${i}`] || null,
-            aplica: formData[`dep_aplica_${i}`] || null
+            aplica: formData[`dep_aplica_${i}`] || null,
+            member_id_dep: formData[`dep_memberId_${i}`] || null
         };
         
         // Verificar si es existente o nuevo
