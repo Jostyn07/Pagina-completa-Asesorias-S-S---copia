@@ -701,6 +701,7 @@ function crearTarjetaDependiente(count, dep, depId) {
             <input type="hidden" name="dep_estado_migratorio_${count}" value="${dep.estado_migratorio || ''}">
             <input type="hidden" name="dep_relacion_${count}" value="${dep.relacion || ''}">
             <input type="hidden" name="dep_aplica_${count}" value="${dep.aplica || ''}">
+            <input type="hidden" name="dep_memberId_${count}" value="${dep.member_id_dep || ''}">
             
             <div class="dependiente-card-header">
                 <div class="dependiente-card-info">
@@ -805,6 +806,7 @@ function actualizarTarjetaDependiente(count, dep, depId) {
     card.querySelector(`[name="dep_estado_migratorio_${count}"]`).value = dep.estado_migratorio || '';
     card.querySelector(`[name="dep_relacion_${count}"]`).value = dep.relacion || '';
     card.querySelector(`[name="dep_aplica_${count}"]`).value = dep.aplica || '';
+    card.querySelector(`[name="dep_memberId_${count}"]`).value = dep.member_id_dep || '';
     
     // Recrear tarjeta
     card.remove();
