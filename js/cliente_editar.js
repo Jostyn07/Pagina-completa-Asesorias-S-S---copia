@@ -491,7 +491,7 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if (cliente.telefono2) document.getElementById('telefono2').value = cliente.telefono2 || '';
        if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = formatoUS(cliente.fecha_nacimiento);
        if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio || '';
-       if (poliza.nombre_agente) document.getElementById('agenteNombre').value = poliza.nombre_agente || '';
+       if (poliza.agente_nombre) document.getElementById('agenteNombre').value = poliza.agente_nombre || '';
         
         const ssnInput = document.getElementById('ssn');
         if (ssnInput && cliente.ssn) {
@@ -651,7 +651,8 @@ function guardarDependienteModal() {
         ssn: document.getElementById('modal_dep_ssn').value.trim(),
         estado_migratorio: document.getElementById('modal_dep_estado_migratorio').value,
         relacion: document.getElementById('modal_dep_relacion').value,
-        aplica: document.getElementById('modal_dep_aplica').value
+        aplica: document.getElementById('modal_dep_aplica').value,
+        member_id_dep: document.getElementById('modal_dep_memberId').value
     };
     
     if (depCount) {
@@ -762,6 +763,7 @@ function editarDependiente(count) {
     const estadoMigratorio = document.querySelector(`[name="dep_estado_migratorio_${count}"]`).value;
     const relacion = document.querySelector(`[name="dep_relacion_${count}"]`).value;
     const aplica = document.querySelector(`[name="dep_aplica_${count}"]`).value;
+    const memberIdDep = document.querySelector(`[name="dep_memberId_${count}"]`).value;
     
     // Obtener ID si existe (dependiente de BD)
     const elemento = document.getElementById(`dependiente-${count}`);
@@ -776,6 +778,7 @@ function editarDependiente(count) {
     document.getElementById('modal_dep_estado_migratorio').value = estadoMigratorio;
     document.getElementById('modal_dep_relacion').value = relacion;
     document.getElementById('modal_dep_aplica').value = aplica;
+    document.getElementById('modal_dep_memberId').value = memberIdDep;
     
     // Guardar ID y count para actualizar
     document.getElementById('modal_dep_id').value = depId;
@@ -3513,7 +3516,7 @@ async function registrarCambio(clienteId, tipoCambio, seccion, cambios) {
 }
 
 /**
- * Formatear nombre de campo para mostrarlo bonito
+ * Formatear nombre de campo
  */
 function formatearNombreCampo(campo) {
     const nombres = {
@@ -3536,7 +3539,7 @@ function formatearNombreCampo(campo) {
         'ingreso_anual': 'Ingresos',
         'tipo_registro': 'Tipo de registro',
         'tipo_modificacion': 'Tipo de modifiación',
-        'aplia': 'Aplica',
+        'aplica': 'Aplica',
         'casa_apartamento': 'Casa o apartamento',
         'condado': 'Condado',
         'po_box': 'POBox',
@@ -3580,7 +3583,7 @@ function formatearNombreCampo(campo) {
 function obtenerDatosFormularioCliente() {
     return {
         tipo_registro: document.getElementById('tipoRegistro') || '',
-        tipo_registro: document.getElementById('casoEspecial') || '',
+        caso_especial: document.getElementById('casoEspecial') || '',
         nombre: document.getElementById('nombre')?.value || '',
         email: document.getElementById('email')?.value || '',
         telefono: document.getElementById('telefono')?.value || '',
@@ -3592,7 +3595,8 @@ function obtenerDatosFormularioCliente() {
         genero: document.getElementById('genero')?.value || '',
         ocupacion: document.getElementById('ocupacion')?.value || '',
         notas_personales: document.getElementById('notasPersonales')?.value || '',
-        operador_asignado: document.getElementById('operadorAsignado')?.value || ''
+        operador_asignado: document.getElementById('operadorAsignado')?.value || '',
+        agente_nombre : document.getElementById('agenteNombre')?.value || '',
     };
 }
 
@@ -4887,12 +4891,26 @@ if (cambio.datos_anteriores && cambio.datos_nuevos) {
                             <h4 style="margin: 0 0 12px 0; font-size: 16px;">
                                 Documentos (${cambio.documentos_nuevos.length})
                             </h4>
-                            ${cambio.documentos_nuevos.map(doc => `
-                                <p style="margin: 4px 0;">
-                                    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">description</span>
-                                    ${doc.nombre_archivo}
-                                </p>
-                            `).join('')}
+                    ${cambio.documentos_nuevos.map(doc => `
+                        <a href="${doc.url_archivo}" target="_blank" style="
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            margin: 6px 0;
+                            padding: 8px 12px;
+                            background: white;
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            text-decoration: none;
+                            color: var(--text-color);
+                            font-size: 14px;
+                            transition: background 0.15s;
+                        " onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'">
+                            <span class="material-symbols-rounded" style="font-size: 18px; color: #6366f1;">description</span>
+                            <span style="flex:1;">${doc.nombre_archivo}</span>
+                            <span class="material-symbols-rounded" style="font-size: 16px; color: #94a3b8;">open_in_new</span>
+                        </a>
+                    `).join('')}
                         </div>
                     ` : ''}
                     

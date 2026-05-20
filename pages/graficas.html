@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráficas - S&S Asesorías</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="../css/graficas.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="graficas-header">
+        <div class="header-left">
+            <span class="material-symbols-rounded header-icon">bar_chart</span>
+            <div>
+                <h1>Análisis de pólizas</h1>
+                <p id="subtituloConteo">Cargando datos...</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn-secundario" onclick="window.close()">
+                <span class="material-symbols-rounded">close</span>
+                Cerrar
+            </button>
+        </div>
+    </header>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <div class="graficas-layout">
+
+        <!-- PANEL IZQUIERDO: Selector de campos -->
+        <aside class="panel-campos">
+            <div class="panel-campos-header">
+                <span class="material-symbols-rounded">tune</span>
+                <span>Campos a analizar</span>
+            </div>
+            <p class="panel-campos-hint">Haz clic en un campo para generar su gráfica</p>
+            <div id="listaCampos" class="lista-campos">
+                <!-- Se genera dinámicamente -->
+            </div>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL: Gráficas -->
+        <main class="area-graficas">
+            <div id="estadoVacio" class="estado-vacio">
+                <span class="material-symbols-rounded vacio-icon">area_chart</span>
+                <h2>Selecciona un campo para comenzar</h2>
+                <p>Elige uno o más campos del panel izquierdo para visualizar la distribución de tus pólizas filtradas.</p>
+            </div>
+            <div id="gridGraficas" class="grid-graficas">
+                <!-- Las tarjetas de gráficas se insertan aquí -->
+            </div>
+        </main>
+
+    </div>
+
+    <script src="../js/graficas.js"></script>
+</body>
+</html>

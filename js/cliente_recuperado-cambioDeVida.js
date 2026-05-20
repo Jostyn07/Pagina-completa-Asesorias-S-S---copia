@@ -1550,3 +1550,64 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
         notif.style.transform = 'translateX(400px)';
     }, 3000);
 }
+
+// ============================================
+// CARGAR DOCUMENTOS EXISTENTES
+// ============================================
+
+async function cargarDocumentos(clienteId) {
+    try {
+        const { data: documentos, error } = await supabaseClient
+            .from('documentos')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const container = document.getElementById('documentosContainer');
+
+        if (!documentos || documentos.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-rounded">upload_file</span>
+                    <p>No hay documentos cargados</p>
+                    <small>Haz clic en "Agregar Archivo" para comenzar</small>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = '';
+
+        documentos.forEach(doc => {
+            container.insertAdjacentHTML('beforeend', `
+                <div class="documento-card" data-doc-id="${doc.id}">
+                    <div class="documento-icono">
+                        <span class="material-symbols-rounded">description</span>
+                    </div>
+                    <div class="documento-info">
+                        <h4 class="documento-nombre">${doc.nombre_archivo}</h4>
+                        <div class="documento-meta">
+                            <span class="documento-tipo">${doc.tipo_archivo || 'Archivo'}</span>
+                            <span class="documento-fecha">Subido: ${formatoUS(doc.created_at)}</span>
+                        </div>
+                    </div>
+                    <div class="documento-acciones">
+                        <a href="${doc.url_archivo}" target="_blank" class="btn-ver-doc">
+                            <span class="material-symbols-rounded">visibility</span>
+                            Ver
+                        </a>
+                    </div>
+                </div>
+            `);
+        });
+
+        // Actualizar contador
+        const contador = document.getElementById('documentosCounter');
+        if (contador) contador.textContent = `(${documentos.length})`;
+
+    } catch (error) {
+        console.error('❌ Error al cargar documentos:', error);
+    }
+}

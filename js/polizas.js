@@ -994,7 +994,7 @@ async function abrirDetalles(polizaId) {
                         </div>
                         <div class="detalle-item">
                             <label>Portal NPN</label>
-                            <p>${poliza.portal_npn || 'N/A'}</p>
+                            <p>${poliza.agente_nombre || 'N/A'}</p>
                         </div>
                         <div class="detalle-item">
                             <label>Tipo de venta</label>
