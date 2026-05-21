@@ -11,6 +11,9 @@ let filtrosActivos = {
     fechaDesde: '2000-01-01',
     fechaHasta: '2099-12-31'
 };
+let usuariosGlobal = [];
+let charSupervisores = null;
+let supervisorSeleccionado = null;
 
 // ============================================
 // CARGA DE DATOS
@@ -263,6 +266,136 @@ function crearGraficoTorta(datosPorOperador) {
     chartActual.render();
 }
 
+// ============================================
+// GRÁFICA DE SUPERVISORES
+// ============================================
+
+async function cargarUsuariosParaGrafica() {
+    const {data, error } = await supabaseClient
+        .from('usuarios')
+        .select('id, nombre, rol, es_supervisor, supervisor_id, activo')
+        .eq('activo', true);
+
+    if (error) {
+        console.error('Error cargando usuarios:', error);
+        return
+    }
+    usuarioGlobal = data || []
+}
+
+function renderizarGraficaSupervisores() {
+    const contenedor = document.getElementById('chartSupervisores')
+    if (!contenedor) return;
+
+    const supervisores = usuarioGlobal.filter(u => u.es_supervisor);
+
+    if (supervisores.length === 0) {
+        contenedor.innerHTML = '<p style="text-align: center; padding: 30px; color: #94a3b8;">No hay supervisores configurados aún</p>';
+        return;
+    }
+
+    const operadores = usuariosGlobal.filter(u => u.supervisor_id);
+
+    // Contar pólizas por supervisor
+    const conteo = {};
+    supervisores.forEach(s => {conteo[s.nombre] = 0;});
+
+    todasLasPolizas.forEach(p => {
+        const nombreOp = p.operador_nombre || p.cliente?.operador_nombre;
+        if (!nombreOp) return;
+        const operador = operadores.find(o => o.nombre == nombreOp);
+        if (!operador) return;
+        const supervisor = supervisores.find(s => s.id === operador.supervisor_id);
+        if (!supervisor) return;
+        conteo[supervisor.nombre] = (conteo[supervisor.nombre] || 0) +1
+    })
+
+    const labels = Object.keys(conteo);
+    const valores = Object.values(conteo);
+
+    if (chartSupervisores) chartSupervisores.destroy();
+
+    chartSupervisores = new ApexCharts(contenedor, {
+        chart: {
+            type: 'pie',
+            height: 340,
+            events: {
+                dataPointSelection: (e, ctx, config) => {
+                    drillDownOperadores(labels[config.dataPointIndex]);
+                }
+            }
+        },
+        series: valores,
+        labels: labels,
+        legend: { position: 'bottom' },
+        toolpit: { y: { formatter: v => `${v} pólizas`}},
+        colors: ['#6366f1','#22c55e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#ec4899']
+    });
+
+    chartSupervisores.render();
+    supervisorSeleccionado = null;
+    document.getElementById('btnVolverSupervisores').style.display = 'none';
+
+    document.getElementById('tituloGraficaSupervisor').textContent = 'Pólizas por supervisor';
+    document.getElementById('subtituloGraficaSupervisor').textContent = 'Haz clic en un supervisor para ver su equipo'
+}
+
+function drillDownOperadores(nombreSupervisor) {
+    const supervisor = usuarioGloball.find(u => u.nombre === nombreSupervisor && u.es_supervisor);
+    if (!supervisor) return;
+
+    supervisorSeleccionado = supervisor;
+
+    const operadoresDelSupervisor = usuarioGlobal.filter(u => u.supervisor_id === supervisor.id);
+    
+    const conteo = {};
+    operadoresDelSupervisor.forEach(op => { conteo[op.nombre] = 0; });
+
+    todasLasPolizas.forEach(p => {
+        const nombreOp = p.operador_nombre || p.cliente?.operador_nombre;
+        if (!nombreOp || !conteo.hasOwnProperty(nombreOp)) return;
+        conteo[nombreOp]++;
+    });
+
+    const labels = Object.keys(conteo);
+    const valores = Object.values(conteo);
+
+    if (chartSupervisores) chartSupervisores.destroy();
+
+    chartSupervisores = new ApexCharts(
+        document.getElementById('charSupervisores'), {
+            chart: {
+                type: 'pie',
+                height: 340,
+                events: {
+                    dataPointSelection: (e, ctx, config) => {
+                        irAPolizasFiltrado(labels[config.dataPointIndex]);
+                    }
+                }
+            },
+            series: valores,
+            labels: labels,
+            legend: { position: 'bottom' },
+            tooltip: { y: { formatter: v => `${v} pólizas`} },
+            colors: ['#6366f1','#22c55e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#ec4899','#f97316']
+        }
+    );
+
+    chartSupervisores.render();
+
+    document.getElementById('tituloGraficaSupervisor').textContent = `Equipo de ${nombreSupervisor}`;
+    document.getElementById('subtituloGraficaSupervisor').textContent = `Haz clic en un operador para ver sus pólizas`
+    document.getElementById('btnVolverSupervisores').style.display = 'inline-flex';
+}
+
+function irAPolizasFiltrado(nombreOperador) {
+    sessionStorage.setItem('filtro_operador_home', nombreOperador);
+    window.location.href = '../pages/polizas.html';
+}
+
+function volverASupervisores() {
+    renderizarGraficaSupervisores();
+}
 // ============================================
 // ACTUALIZACIÓN DE GRÁFICOS
 // ============================================
@@ -684,6 +817,8 @@ function renderizarClasificacion(tab) {
 document.addEventListener('DOMContentLoaded', async function() {
     // Cargar todas las pólizas
     polizasGlobales = await cargarPolizasParaGrafico();
+    await cargarUsuariosParaGrafica();
+    renderizarGraficaSupervisores();
     
     // Calcular y actualizar estadísticas
     const { totalPolizas, totalAplicantes } = calcularTotales(polizasGlobales);

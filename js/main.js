@@ -69,6 +69,11 @@ async function handleLogin(event) {
             // console.error('❌ Usuario no encontrado en BD:', userError);
             throw new Error('Usuario no encontrado en el sistema');
         }
+
+        if (!userData.activo) {
+            await supabaseClient.auth.signOut();
+            throw new Error('Tu cuenta está desactivada. Contacta a tu supervisor.');
+        }
         
         // ;
         
@@ -79,10 +84,8 @@ async function handleLogin(event) {
             id: userData.id,
             nombre: userData.nombre,
             email: userData.email,
-            rol: userData.rol,  
             activo: userData.activo,
             loginTime: new Date().toISOString(),
-            // También guardamos el token de Supabase
             accessToken: authData.session.access_token,
             refreshToken: authData.session.refresh_token,
             expiresAt: authData.session.expires_at

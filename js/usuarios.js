@@ -161,6 +161,7 @@ async function editarUsuario(id) {
 async function guardarUsuario(event) {
     event.preventDefault();
     
+    const idEditando = usuarioEditando?.id || null;
     const nombre = document.getElementById('nombre').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
@@ -175,7 +176,7 @@ async function guardarUsuario(event) {
     try {
         if (usuarioEditando) {
             // ACTUALIZAR
-            const { error } = await supabaseClient
+            const { data, error } = await supabaseClient
                 .from('usuarios')
                 .update({
                     nombre,
@@ -190,7 +191,11 @@ async function guardarUsuario(event) {
                     puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', usuarioEditando.id);
+                .eq('id', idEditando)
+                .select();
+                
+            console.log('Resultado update:', data, 'Error:', error);
+            
             
             if (error) throw error;
             

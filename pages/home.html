@@ -273,6 +273,24 @@
             </div>
         </div>
 
+        <!-- Grafica supervisores -->
+
+        <div class="chart-card" id="cardSupervisores">
+            <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 id="tituloGraficaSupervisor">Polizas por supervisor</h3>
+                    <p class="chart-subtitle" id="subtituloGraficaSupervisor">
+                        Haz clic en un supervisor para ver el equipo
+                    </p>
+                </div>
+
+                <button id="btnVolverSupervisores" onclick="volverASupervisores()" style="display: none; padding: 7px 16px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 6px;">
+                    <span class="material-symbols-rounded" style="font-size:1rem; vertical-align:middle;">arrow_back</span>
+                    Volver
+                </button>
+            </div>
+            <div id="chartSupervisores"></div>
+        </div>
         <!-- Gráficos -->
         <div class="charts-grid">
             <div class="chart-card">

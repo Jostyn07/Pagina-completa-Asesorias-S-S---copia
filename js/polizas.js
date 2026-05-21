@@ -445,6 +445,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Cargar datos del operador
     cargarDatosOperador();
+
+    const filtroOperadorHome = sessionStorage.getItem('filtro_operador_home');
+    if (filtroOperadorHome) {
+        sessionStorage.removeItem('filtro_operador_home');
+        setTimeout(() => {
+            const checkbox = document.querySelector(`#panelOperadores input[value="${filtroOperadorHome}"]`);
+            if (checkbox) {
+                document.querySelectorAll('#panelOperadores input').forEach(cb => cb.checked = false);
+                checkbox.checked = true;
+                aplicarFiltrosAvanzados
+            }
+        }, 1500);
+    }
 });
 
 
