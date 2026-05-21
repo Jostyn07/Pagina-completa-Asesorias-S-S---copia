@@ -4895,26 +4895,51 @@ if (cambio.datos_anteriores && cambio.datos_nuevos) {
                             <h4 style="margin: 0 0 12px 0; font-size: 16px;">
                                 Documentos (${cambio.documentos_nuevos.length})
                             </h4>
-                    ${cambio.documentos_nuevos.map(doc => `
-                        <a href="${doc.url_archivo}" target="_blank" style="
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                            margin: 6px 0;
-                            padding: 8px 12px;
-                            background: white;
-                            border: 1px solid var(--border-color);
-                            border-radius: 8px;
-                            text-decoration: none;
-                            color: var(--text-color);
-                            font-size: 14px;
-                            transition: background 0.15s;
-                        " onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'">
-                            <span class="material-symbols-rounded" style="font-size: 18px; color: #6366f1;">description</span>
-                            <span style="flex:1;">${doc.nombre_archivo}</span>
-                            <span class="material-symbols-rounded" style="font-size: 16px; color: #94a3b8;">open_in_new</span>
-                        </a>
-                    `).join('')}
+                    ${cambio.documentos_nuevos.map(doc => {
+                        const esAudio = doc.nombre_archivo?.match(/\.(mp3|mp4|wav|ogg|m4a|webm)$/i);
+                        const icono  = esAudio ? 'audio_file' : 'description';
+                        return `
+                            <div style="
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                                margin: 6px 0;
+                                padding: 8px 12px;
+                                background: white;
+                                border: 1px solid var(--border-color);
+                                border-radius: 8px;
+                                font-size: 14px;
+                            ">
+                                <span class="material-symbols-rounded" style="font-size: 18px; color: #6366f1;">${icono}</span>
+                                <span style="flex:1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${doc.nombre_archivo}</span>
+
+                                <!-- Ver / Reproducir -->
+                                <a href="${doc.url_archivo}" target="_blank" title="Ver archivo" style="
+                                    display: flex; align-items: center; gap: 4px;
+                                    padding: 5px 10px; border-radius: 6px;
+                                    background: #eef2ff; color: #6366f1;
+                                    text-decoration: none; font-size: 12px; font-weight: 600;
+                                    white-space: nowrap;
+                                ">
+                                    <span class="material-symbols-rounded" style="font-size: 15px;">${esAudio ? 'play_arrow' : 'visibility'}</span>
+                                    ${esAudio ? 'Escuchar' : 'Ver'}
+                                </a>
+
+                                <!-- Descargar -->
+                                <button onclick="descargarArchivo('${doc.url_archivo}', '${doc.nombre_archivo}')" style="
+                                    display: flex; align-items: center; gap: 4px;
+                                    padding: 5px 10px; border-radius: 6px;
+                                    background: #f0fdf4; color: #22c55e;
+                                    border: none; cursor: pointer;
+                                    font-size: 12px; font-weight: 600;
+                                    white-space: nowrap;
+                                ">
+                                    <span class="material-symbols-rounded" style="font-size: 15px;">download</span>
+                                    Descargar
+                                </button>
+                            </div>
+                        `;
+                    }).join('')}
                         </div>
                     ` : ''}
                     
@@ -5025,6 +5050,26 @@ function sincronizarBadgesMeses() {
             btn.classList.toggle('activo', checkbox.checked);
         }
     });
+}
+
+async function descargarArchivo(url, nombreArchivo) {
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = nombreArchivo;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    } catch (error) {
+        console.error('Error al descargar:', error);
+        alert('No se pudo descargar el archivo');
+    }
 }
 
 // Exportar funciones para uso global

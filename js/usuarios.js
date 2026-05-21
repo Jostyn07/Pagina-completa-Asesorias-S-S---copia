@@ -80,13 +80,13 @@ function renderizarTabla() {
             <td>${usuario.nombre}</td>
             <td>${usuario.email}</td>
             <td><span class="badge-rol ${rolClass}">${usuario.rol}</span></td>
-            <td>${nombreSupervisor}</td>
             <td>
                 <span class="badge-estado ${estadoClass}">
                     <span class="material-symbols-rounded" style="font-size: 16px;">${estadoIcon}</span>
                     ${estadoTexto}
                 </span>
             </td>
+            <td>${usuario.es_supervisor ? '<span class="badge-rol badge-admin">Supervisor</span>' : nombreSupervisor }</td>
             <td>${new Date(usuario.created_at).toLocaleDateString('es-ES')}</td>
             <td>
                 <button class="btn-edit" onclick="editarUsuario('${usuario.id}')">
@@ -105,7 +105,7 @@ function renderizarTabla() {
 }
 
 // Abrir modal crear
-function abrirModalCrear() {
+async function abrirModalCrear() {
     usuarioEditando = null;
     document.getElementById('modalTitulo').innerHTML = `
         <span class="material-symbols-rounded">person_add</span>
@@ -181,7 +181,12 @@ async function guardarUsuario(event) {
                     nombre,
                     rol,
                     activo,
-                    supervisor_id: rol === 'operador' ? (document.getElementById('supervisorId').value || null) : null,
+                    es_supervisor: document.getElementById('esSupervisor').checked,
+                    supervisor_id: (() => {
+                        const val = document.getElementById('supervisorId').value;
+                        console.log('supervisor_id al guardar:', val);
+                        return val || null;
+                    })(),
                     puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
                     updated_at: new Date().toISOString()
                 })
@@ -221,6 +226,7 @@ async function guardarUsuario(event) {
                     nombre,
                     rol,
                     activo,
+                    es_supervisor: document.getElementById('esSupervisor').checked,
                     supervisor_id: rol === 'operador' ? (document.getElementById('supervisorId').value || null) : null,
                     puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
                 });
@@ -342,19 +348,21 @@ document.getElementById('rol').addEventListener('change', function() {
 })
 
 async function cargarSupervisores() {
-    const {data } = await supabaseClient
+    const {data, error } = await supabaseClient
         .from('usuarios')
         .select('id, nombre')
-        .in('rol', ['admin', 'supervisor'])
         .eq('activo', true)
         .eq('es_supervisor', true)
         .order('nombre');
 
+    console.log('Supervisores encontrados:', data);
+    console.log('Error:', error);
     const select = document.getElementById('supervisorId');
+    console.log('supervisor_id a guardar:', document.getElementById('supervisorId').value);
     select.innerHTML = '<option value="">Sin supervisor</option>';
-    (data || [].forEach(s => {
+    (data || []).forEach(s => {
         select.innerHTML += `<option value="${s.id}">${s.nombre}</option>`
-    }))
+    })
 }
 
 
