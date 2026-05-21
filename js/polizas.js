@@ -82,6 +82,8 @@ function guardarFiltrosEnStorage() {
             PlazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosHasta')?.value || '',
             fechaModificacionDesde: document.getElementById('filtroModificacionDesde')?.value || '',
             fechaModificacionHasta: document.getElementById('filtroModificacionHasta')?.value || '',
+            fechaCreacionDesde: document.getElementById('filtroCreacionDesde')?.value || '',
+            fechaCreacionHasta: document.getElementById('filtroCreacionHasta')?.value || '',
         };
 
         localStorage.setItem(FILTROS_STORAGE_KEY, JSON.stringify(datos));
@@ -188,6 +190,8 @@ function restaurarFiltrosDesdeStorage() {
     set('filtroFechaPlazoDocumentosHasta', datos.plazoDocumentosHasta);
     set('filtroModificacionDesde', datos.filtroModificacionDesde);
     set('filtroModificacionhasta', datos.filtroModificacionHasta);
+    set('filtroCreacionDesde', datos.filtroCreacionDesde);
+    set('filtroCreacionHasta', datos.filtroCreacionHasta);
 
     // 3. Reconstruir filtrosActivos para que el sistema sepa que hay filtros vivos
     filtrosActivos = {
@@ -376,6 +380,7 @@ function restaurarFiltrosDesdeStorage() {
             if (!filtrarPorRangoFecha(poliza.pagado_hasta, filtrosActivos.fechaUltimoPagoDesde, filtrosActivos.fechaUltimoPagoHasta)) return false;
             if (!filtrarPorRangoFecha(poliza.fecha_plazo_documentos, filtrosActivos.plazoDocumentosDesde, filtrosActivos.plazoDocumentosHasta)) return false;
             if (!filtrarPorRangoFecha(poliza.updated_at, filtrosActivos.filtroModificacionDesde, filtrosActivos.filtroModificacionHasta)) return false;
+            if (!filtrarPorRangoFecha(poliza.created_at, filtrosActivos.filtroCreacionDesde, filtrosActivos.filtroCreacionHasta)) return false;
 
             if (filtrosActivos.fechaSeguimientoDesde || filtrosActivos.fechaSeguimientoHasta) {
                 if (!poliza.seguimientos || poliza.seguimientos.length === 0) return false;
@@ -2282,6 +2287,8 @@ function limpiarFiltros() {
     document.getElementById('filtroFechaPlazoDocumentosHasta').value = '';
     document.getElementById('filtroModificacionDesde').value = '',
     document.getElementById('filtroModificacionHasta').value = '',
+    document.getElementById('filtroCreacionDesde').value = '',
+    document.getElementById('filtroCreacionHasta').value = '',
     
     //  Restaurar todas las pólizas
     polizasFiltradas = todasLasPolizas;
@@ -2575,7 +2582,9 @@ function aplicarFiltrosAvanzados() {
         plazoDocumentosDesde: document.getElementById('filtroFechaPlazoDocumentosDesde').value,
         plazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosHasta').value,
         filtroModificacionDesde: document.getElementById('filtroModificacionDesde').value,
-        filtroModificacionHasta: document.getElementById('filtroModificacionHasta').value
+        filtroModificacionHasta: document.getElementById('filtroModificacionHasta').value,
+        filtroCreacionDesde: document.getElementById('filtroCreacionDesde').value,
+        filtroCreacionHasta: document.getElementById('filtroCreacionHasta').value,
     };
     
     //  Verificar si hay algún filtro activo
@@ -2771,6 +2780,7 @@ function aplicarFiltrosAvanzados() {
         if (!filtrarPorRangoFecha(poliza.pagado_hasta, filtrosActivos.fechaUltimoPagoDesde, filtrosActivos.fechaUltimoPagoHasta)) return false
         if (!filtrarPorRangoFecha(poliza.fecha_plazo_documentos, filtrosActivos.plazoDocumentosDesde, filtrosActivos.plazoDocumentosHasta)) return false
         if (!filtrarPorRangoFecha(poliza.updated_at, filtrosActivos.filtroModificacionDesde, filtrosActivos.filtroModificacionHasta)) return false
+        if (!filtrarPorRangoFecha(poliza.created_at, filtrosActivos.filtroCreacionDesde, filtrosActivos.filtroCreacionHasta)) return false
         if (filtrosActivos.fechaSeguimientoDesde || filtrosActivos.fechaSeguimientoHasta) {
 
             if (!poliza.seguimientos || poliza.seguimientos.length === 0) {
@@ -2840,7 +2850,8 @@ function filtrarPorRangoFecha(fecha, desde, hasta) {
     
     if (hasta) {
         const hastaObj = new Date(hasta);
-        if (fechaObj > hastaObj) return false;
+        hastaObj.setDate(hastaObj.getDate() + 1);
+        if (fechaObj >= hastaObj) return false;
     }
     
     return true;
