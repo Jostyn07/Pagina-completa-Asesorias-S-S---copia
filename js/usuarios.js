@@ -73,11 +73,14 @@ function renderizarTabla() {
         const estadoClass = usuario.activo ? 'badge-activo' : 'badge-inactivo';
         const estadoTexto = usuario.activo ? 'Activo' : 'Inactivo';
         const estadoIcon = usuario.activo ? 'check_circle' : 'cancel';
+        const supervisor = usuarios.find(u => u.id === usuario.supervisor_id);
+        const nombreSupervisor = supervisor ? supervisor.nombre : '-'
         
         tr.innerHTML = `
             <td>${usuario.nombre}</td>
             <td>${usuario.email}</td>
             <td><span class="badge-rol ${rolClass}">${usuario.rol}</span></td>
+            <td>${nombreSupervisor}</td>
             <td>
                 <span class="badge-estado ${estadoClass}">
                     <span class="material-symbols-rounded" style="font-size: 16px;">${estadoIcon}</span>
@@ -112,10 +115,14 @@ function abrirModalCrear() {
     document.getElementById('grupoPassword').style.display = 'block';
     document.getElementById('password').required = true;
     document.getElementById('modalUsuario').classList.add('show');
+    document.getElementById('grupoSupervisor').style.display = 'none';
+    document.getElementById('esSupervisor').checked = false;
+    document.getElementById('puedeVerMonitoreo').checked = false;
+    await cargarSupervisores();
 }
 
 // Editar usuario
-function editarUsuario(id) {
+async function editarUsuario(id) {
     const usuario = usuarios.find(u => u.id === id);
     
     if (!usuario) return;
@@ -131,12 +138,23 @@ function editarUsuario(id) {
     document.getElementById('email').value = usuario.email;
     document.getElementById('rol').value = usuario.rol;
     document.getElementById('activo').checked = usuario.activo;
+    document.getElementById('puedeVerMonitoreo').checked = usuario.puede_ver_monitoreo || false;
+    document.getElementById('esSupervisor').checked = usuario.es_supervisor || false;
     
     // Ocultar campo contraseña en edición
     document.getElementById('grupoPassword').style.display = 'none';
     document.getElementById('password').required = false;
     
     document.getElementById('modalUsuario').classList.add('show');
+
+    await cargarSupervisores();
+    const grupoSupervisor = document.getElementById('grupoSupervisor');
+    if (usuario.rol === 'operador') {
+        grupoSupervisor.style.display = 'block'
+        document.getElementById('supervisorId').value = usuario.supervisor_id || '';
+    } else {
+        grupoSupervisor.style.display = 'none';
+    }
 }
 
 // Guardar usuario
@@ -163,6 +181,8 @@ async function guardarUsuario(event) {
                     nombre,
                     rol,
                     activo,
+                    supervisor_id: rol === 'operador' ? (document.getElementById('supervisorId').value || null) : null,
+                    puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', usuarioEditando.id);
@@ -200,7 +220,9 @@ async function guardarUsuario(event) {
                     email,
                     nombre,
                     rol,
-                    activo
+                    activo,
+                    supervisor_id: rol === 'operador' ? (document.getElementById('supervisorId').value || null) : null,
+                    puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
                 });
             
             if (dbError) throw dbError;
@@ -313,6 +335,28 @@ function cerrarModal() {
     document.getElementById('formUsuario').reset();
     usuarioEditando = null;
 }
+
+document.getElementById('rol').addEventListener('change', function() {
+    const grupoSupervisor = document.getElementById('grupoSupervisor');
+    grupoSupervisor.style.display = this.value === 'operador' ? 'block' : 'none';
+})
+
+async function cargarSupervisores() {
+    const {data } = await supabaseClient
+        .from('usuarios')
+        .select('id, nombre')
+        .in('rol', ['admin', 'supervisor'])
+        .eq('activo', true)
+        .eq('es_supervisor', true)
+        .order('nombre');
+
+    const select = document.getElementById('supervisorId');
+    select.innerHTML = '<option value="">Sin supervisor</option>';
+    (data || [].forEach(s => {
+        select.innerHTML += `<option value="${s.id}">${s.nombre}</option>`
+    }))
+}
+
 
 // Cargar al iniciar
 document.addEventListener('DOMContentLoaded', cargarUsuarios);

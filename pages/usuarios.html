@@ -97,6 +97,7 @@
                         <th>Email</th>
                         <th>Rol</th>
                         <th>Estado</th>
+                        <th>Supervisor</th>
                         <th>Fecha Creación</th>
                         <th>Acciones</th>
                     </tr>
@@ -168,17 +169,32 @@
                         </div>
 
                         <div class="form-group" id="grupoSupervisor" style="display: none;">
-                            <label>Superisor directo</label>
+                            <label>Supervisor directo</label>
                             <select id="supervisorId">
                                 <option value="">Sin supervisor</option>
                                 <!-- Se llena dinamicamente -->
                             </select>
                         </div>
 
+                        <!-- Es supervisor -->
+                        <div class="form-group">
+                            <label class="checkbox-label" id="esSupervisor">
+                                <input type="checkbox" id="esSupervisor">
+                                Es supervisor
+                            </label>
+                        </div>
+
                         <div class="form-group">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="activo" checked>
                                 <span>Usuario activo</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label >
+                                <input type="checkbox" id="puedeVerMonitoreo">
+                                Puede ver monitoreo
                             </label>
                         </div>
                     </div>
