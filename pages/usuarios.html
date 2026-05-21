@@ -50,6 +50,11 @@
                 <span class="material-symbols-rounded">inventory_2</span>
                 <span>Archivados</span>
             </a>
+
+            <a href="./usuarios.html" class="menu-item">
+                <span class="material-symbols-rounded"></span>
+                <span>Usuarios</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -159,6 +164,14 @@
                                 <option value="admin">Administrador</option>
                                 <option value="operador">Operador</option>
                                 <option value="soporte">Soporte</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="grupoSupervisor" style="display: none;">
+                            <label>Superisor directo</label>
+                            <select id="supervisorId">
+                                <option value="">Sin supervisor</option>
+                                <!-- Se llena dinamicamente -->
                             </select>
                         </div>
 
