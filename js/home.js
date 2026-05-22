@@ -7,7 +7,7 @@ let todasLasPolizas = [];
 let filtrosActivos = {    
     estadoCompania: '',
     operador: '',
-    documentos: '',
+    documentos: [],
     fechaDesde: '2000-01-01',
     fechaHasta: '2099-12-31'
 };
@@ -89,9 +89,9 @@ function aplicarFiltros() {
     }
     
     // Filtro por documentos
-    if (filtrosActivos.documentos) {
-        polizasFiltradas = polizasFiltradas.filter(p => 
-            p.estado_documentos === filtrosActivos.documentos
+    if (filtrosActivos.documentos.length > 0) {
+        polizasFiltradas = polizasFiltradas.filter(p =>
+            filtrosActivos.documentos.includes(p.estado_documentos)
         );
     }
     
@@ -117,7 +117,9 @@ function applyFilters() {
     // Capturar valores de los selectores
     filtrosActivos.estadoCompania = document.getElementById('filtroEstadoCompania')?.value || '';
     filtrosActivos.operador = document.getElementById('filterTypeOperador')?.value || '';
-    filtrosActivos.documentos = document.getElementById('filtroDocumentos')?.value || '';
+    filtrosActivos.documentos = Array.from(
+        document.querySelectorAll('#listaDocumentos input[type="checkbox"]:checked')
+    ).map(cb => cb.value).filter(v => v !== '');
     
     // Aplicar filtros
     polizasGlobales = aplicarFiltros();
@@ -865,46 +867,126 @@ function irACumpleanos() {
     window.location.href='../pages/polizas.html'
 }
 
+// Dropown para documentos
+
+function toggleDropdownDocumentos(event) {
+    event.stopPropagation();
+    const panel = document.getElementById('panelDocumentos');
+    const trigger = document.getElementById('triggerDocumentos');
+    panel.classList.toggle('active');
+    trigger.classList.toggle('active');
+}
+
+function cerrarDropdownDocumentos() {
+    document.getElementById('panelDocumentos')?.classList.remove('active');
+    document.getElementById('triggerDocumentos')?.classList.remove('active');
+}
+
+function filtrarOpcionesDocumentos() {
+    const busqueda = document.getElementById('buscarDocumento').value.toLowerCase();
+    document.querySelectorAll('#panelDocumentos .checkbox-item').forEach(item => {
+        item.style.display = item.textContent.toLowerCase().includes(busqueda) ? 'flex' : 'none';
+    });
+}
+
+function actualizarTextoDocumentos() {
+    const seleccionados = Array.from(
+        document.querySelectorAll('#listaDocumentos input[type="checkbox"]:checked')
+    ).map(cb => cb.value).filter(v => v !== '');
+
+    const span = document.getElementById('textoDocumentos');
+    if (!span) return;
+
+    if (seleccionados.length === 0) {
+        span.textContent = 'Todos los documentos';
+        span.style.color = '';
+    } else if (seleccionados.length === 1) {
+        span.textContent = seleccionados[0];
+        span.style.color = '#6366f1';
+    } else {
+        span.textContent = `${seleccionados.length} estados seleccionados`;
+        span.style.color = '#6366f1';
+    }
+}
+
+function cargarDocumentos() {
+    document.getElementById('listaDocumentos').innerHTML = `
+        <label class="checkbox-item checkbox-item-todos">
+            <input type="checkbox" value="" id="checkTodosDoc">
+            <span>Todos los documentos</span>
+        </label>
+        <label class="checkbox-item">
+            <input type="checkbox" value="Documentos completos">
+            <span>Documentos completos</span>
+        </label>
+        <label class="checkbox-item">
+            <input type="checkbox" value="Pendiente">
+            <span>Pendiente</span>
+        </label>
+        <label class="checkbox-item">
+            <input type="checkbox" value="Incompleto">
+            <span>Incompleto</span>
+        </label>
+        <label class="checkbox-item">
+            <input type="checkbox" value="A la espera de verificación">
+            <span>A la espera de verificación</span>
+        </label>
+        <label class="checkbox-item">
+            <input type="checkbox" value="Rechazado">
+            <span>Rechazados</span>
+        </label>
+    `;
+
+    document.getElementById('checkTodosDoc')?.addEventListener('change', function () {
+        if (this.checked) {
+            document.querySelectorAll('#listaDocumentos input[type="checkbox"]')
+                .forEach(cb => { if (cb !== this) cb.checked = false; });
+        }
+        actualizarTextoDocumentos();
+    });
+
+    document.querySelectorAll('#listaDocumentos input[type="checkbox"]:not(#checkTodosDoc)')
+        .forEach(cb => cb.addEventListener('change', () => {
+            document.getElementById('checkTodosDoc').checked = false;
+            actualizarTextoDocumentos();
+        }));
+}
+
 // ============================================
 // INICIALIZACIÓN
 // ============================================
 
 document.addEventListener('DOMContentLoaded', async function() {
-    // Cargar todas las pólizas
+
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#filtroDocumentosWrapper')) {
+            cerrarDropdownDocumentos();
+        }
+    });
+
+    // Poblar checkboxes de documentos
+    cargarDocumentos();
+
+    // Cargar datos
     polizasGlobales = await cargarPolizasParaGrafico();
     await cargarUsuariosParaGrafica();
     renderizarGraficaSupervisores();
-    
-    // Calcular y actualizar estadísticas
+
+    // Estadísticas iniciales
     const { totalPolizas, totalAplicantes } = calcularTotales(polizasGlobales);
     actualizarEstadisticas(totalPolizas, totalAplicantes);
-    
-    // Inicializar listeners
+
+    // Listeners y gráficos
     inicializarEventListeners();
     actualizarGrafico();
     inicializarFiltroFechas();
 
-    calcularCumpleanosEnSemana();
-
-    // 2. Mover el contador al DOMContentLoaded, después de cargar datos:
-    // Al final del DOMContentLoaded, reemplazar calcularCumpleanosEnSemana() por:
+    // Cumpleaños
     const cumpleaneros = calcularCumpleanosEnSemana();
     const contador = document.getElementById('contadorCumpleanos');
     if (contador) contador.textContent = cumpleaneros.length;
 
-    // Renderizar tab inicial de clasificación
+    // Clasificación inicial
     renderizarClasificacion(tabClasificacionActual);
-    
-    // Agregar listeners a los filtros (opcional: para debug)
-    document.getElementById('filtroEstadoCompania')?.addEventListener('change', () => {
-        ;
-    });
-    
-    document.getElementById('filterTypeOperador')?.addEventListener('change', () => {
-        ;
-    });
-    
-    document.getElementById('filtroDocumentos')?.addEventListener('change', () => {
-        ;
-    });
 });
