@@ -255,10 +255,6 @@
                 <option value="A la espera de verificación">A la espera de verificación</option>
                 <option value="Rechazado">Rechazados</option>
             </select>
-            <div class="date-range" onclick="openDatePicker()">
-                <span class="material-symbols-rounded">calendar_today</span>
-                <span id="dateRangeText">01/2026 - 12/2026</span>
-            </div>
             <button class="btn-filters" onclick="applyFilters()">
                 <span class="material-symbols-rounded">filter_alt</span>
                 Filtros
@@ -310,10 +306,10 @@
                 <h3>Pólizas efectivas cada mes</h3>
                 <p class="chart-subtitle">Número de pólizas vs. aplicantes agrupados por mes</p>
                 <div class="controles-grafico">
-                    <label>
+                    <!-- <label>
                         <input type="radio" name="tipoGrafico" value="lineas" checked>
                         Por mes
-                    </label>
+                    </label> -->
                     <label>
                         <input type="radio" name="tipoGrafico" value="torta">
                         Por operador
