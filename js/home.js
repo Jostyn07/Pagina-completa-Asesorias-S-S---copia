@@ -555,8 +555,9 @@ function aplicarFiltroFechas() {
 // ============================================
 
 function calcularTotales(polizas) {
-    const totalPolizas = polizas.length;
-    const totalAplicantes = polizas.reduce((suma, poliza) => {
+    const noArchivadas = polizas.filter(p => !p.cliente?.archivado);
+    const totalPolizas = noArchivadas.length;
+    const totalAplicantes = noArchivadas.reduce((suma, poliza) => {
         const aplicantes = parseInt(poliza.aplicantes) || 0;
         return suma + aplicantes;
     }, 0);

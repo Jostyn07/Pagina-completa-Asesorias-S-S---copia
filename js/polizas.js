@@ -2,7 +2,7 @@
 // VARIABLES GLOBALES
 // ============================================
 let todasLasPolizas = [];
-let modoFiltroEstado = 'compania';
+let modoFiltroEstado = 'mercado';
 let polizasFiltradas = [];
 let paginaActual = 1;
 let polizasPorPagina = 10;

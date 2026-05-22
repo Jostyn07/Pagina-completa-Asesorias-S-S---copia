@@ -2,13 +2,64 @@ let recordatoriosList = [];
 let recordatorioEditandoId = null;
 let notificacionesMostradas = new Set(); // evitar duplicados
 let intervaloVerificacion = null;
+const MINUTOS_GRACIA_VENCIDO = 5;
+
+function escapeHtml(valor) {
+    return String(valor ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function escapeAttr(valor) {
+    return escapeHtml(valor).replace(/`/g, '&#096;');
+}
+
+function fechaValida(valor) {
+    const fecha = new Date(valor);
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function recordatorioEstaVencido(recordatorio, ahora = new Date()) {
+    const fecha = fechaValida(recordatorio.fecha_recordatorio);
+    if (!fecha) return false;
+    const fechaVencimiento = new Date(fecha.getTime() + MINUTOS_GRACIA_VENCIDO * 60 * 1000);
+    return recordatorio.estado === 'pendiente' && fechaVencimiento < ahora;
+}
+
+async function sincronizarRecordatoriosVencidos(recordatorios) {
+    const ahora = new Date();
+    const vencidos = (recordatorios || []).filter(r => recordatorioEstaVencido(r, ahora));
+    if (vencidos.length === 0) return recordatorios || [];
+
+    const idsVencidos = vencidos.map(r => r.id).filter(Boolean);
+    if (idsVencidos.length === 0) return recordatorios || [];
+
+    const { error } = await supabaseClient
+        .from('recordatorios')
+        .update({ estado: 'vencido', updated_at: ahora.toISOString() })
+        .in('id', idsVencidos);
+
+    if (error) {
+        console.error('âŒ Error actualizando recordatorios vencidos:', error);
+    }
+
+    return (recordatorios || []).map(r =>
+        idsVencidos.includes(r.id) ? { ...r, estado: 'vencido' } : r
+    );
+}
 
 // ── Inicializar al cargar ─────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     inyectarDrawer();
     await cargarRecordatorios();
     verificarNotificaciones();
-    intervaloVerificacion = setInterval(verificarNotificaciones, 5 * 60 * 1000);
+    intervaloVerificacion = setInterval(async () => {
+        await cargarRecordatorios();
+        verificarNotificaciones();
+    }, 60 * 1000);
 });
 
 // ── Inyectar drawer en el DOM ─────────────────
@@ -108,14 +159,20 @@ function cerrarDrawerRecordatorios() {
 // ── Cargar recordatorios ──────────────────────
 async function cargarRecordatorios() {
     try {
+        if (!supabaseClient?.auth) {
+            throw new Error('Supabase no esta inicializado');
+        }
+
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (!user) return;
 
-        const { data: usuarioActual } = await supabaseClient
+        const { data: usuarioActual, error: errorUsuario } = await supabaseClient
             .from('usuarios')
             .select('id, rol, es_supervisor, puede_ver_monitoreo, supervisor_id')
             .eq('id', user.id)
             .single();
+        if (errorUsuario) throw errorUsuario;
+        if (!usuarioActual) throw new Error('No se encontro el perfil del usuario actual');
 
         let query = supabaseClient
             .from('recordatorios')
@@ -144,16 +201,10 @@ async function cargarRecordatorios() {
         if (error) throw error;
 
         // Actualizar estados vencidos
-        const ahora = new Date();
-        recordatoriosList = (data || []).map(r => {
-            if (r.estado === 'pendiente' && new Date(r.fecha_recordatorio) < ahora) {
-                return { ...r, estado: 'vencido' };
-            }
-            return r;
-        });
+        recordatoriosList = await sincronizarRecordatoriosVencidos(data || []);
 
         actualizarContadorBadge();
-        renderizarRecordatorios('pendiente');
+        renderizarRecordatorios(estadoFiltroActual);
 
     } catch (error) {
         console.error('❌ Error cargando recordatorios:', error);
@@ -189,47 +240,50 @@ function renderizarRecordatorios(estado) {
     }
 
     contenedor.innerHTML = filtrados.map(r => {
-        const fecha = new Date(r.fecha_recordatorio);
+        const fecha = fechaValida(r.fecha_recordatorio);
         const ahora = new Date();
-        const minutos = Math.round((fecha - ahora) / 60000);
+        const minutos = fecha ? Math.round((fecha - ahora) / 60000) : null;
         let badgeTiempo = '';
         if (r.estado === 'pendiente') {
             if (minutos <= 5 && minutos > 0) badgeTiempo = `<span class="dr-badge-urgente">En ${minutos} min</span>`;
             else if (minutos <= 15 && minutos > 0) badgeTiempo = `<span class="dr-badge-aviso">En ${minutos} min</span>`;
         }
 
+        const fechaTexto = fecha
+            ? `${fecha.toLocaleDateString('es-US', { month:'short', day:'numeric' })} ${fecha.toLocaleTimeString('es-US', { hour:'2-digit', minute:'2-digit' })}`
+            : 'Fecha invalida';
+
         return `
-            <div class="dr-item dr-estado-${r.estado}" data-id="${r.id}">
+            <div class="dr-item dr-estado-${escapeAttr(r.estado)}" data-id="${escapeAttr(r.id)}">
                 <div class="dr-item-header">
-                    <span class="dr-item-titulo">${r.titulo}</span>
+                    <span class="dr-item-titulo">${escapeHtml(r.titulo)}</span>
                     ${badgeTiempo}
                     <div class="dr-item-acciones">
                         ${r.estado === 'pendiente' ? `
-                            <button title="Completar" onclick="cambiarEstadoRecordatorio('${r.id}', 'completado')">
+                            <button title="Completar" onclick="cambiarEstadoRecordatorio('${escapeAttr(r.id)}', 'completado')">
                                 <span class="material-symbols-rounded">check_circle</span>
                             </button>
                         ` : ''}
-                        <button title="Editar" onclick="editarRecordatorio('${r.id}')">
+                        <button title="Editar" onclick="editarRecordatorio('${escapeAttr(r.id)}')">
                             <span class="material-symbols-rounded">edit</span>
                         </button>
-                        <button title="Eliminar" onclick="eliminarRecordatorio('${r.id}')">
+                        <button title="Eliminar" onclick="eliminarRecordatorio('${escapeAttr(r.id)}')">
                             <span class="material-symbols-rounded">delete</span>
                         </button>
                     </div>
                 </div>
-                ${r.descripcion ? `<p class="dr-item-desc">${r.descripcion}</p>` : ''}
+                ${r.descripcion ? `<p class="dr-item-desc">${escapeHtml(r.descripcion)}</p>` : ''}
                 <div class="dr-item-meta">
                     <span><span class="material-symbols-rounded">schedule</span>
-                        ${fecha.toLocaleDateString('es-US', { month:'short', day:'numeric' })}
-                        ${fecha.toLocaleTimeString('es-US', { hour:'2-digit', minute:'2-digit' })}
+                        ${escapeHtml(fechaTexto)}
                     </span>
                     ${r.cliente_nombre ? `
-                        <a href="#" onclick="irAClienteDesdeRecordatorio('${r.cliente_id}', event)" class="dr-item-cliente">
+                        <a href="#" onclick="irAClienteDesdeRecordatorio('${escapeAttr(r.cliente_id)}', event)" class="dr-item-cliente">
                             <span class="material-symbols-rounded">person</span>
-                            ${r.cliente_nombre}
+                            ${escapeHtml(r.cliente_nombre)}
                         </a>
                     ` : ''}
-                    ${r.usuario?.nombre ? `<span class="dr-item-usuario">${r.usuario.nombre}</span>` : ''}
+                    ${r.usuario?.nombre ? `<span class="dr-item-usuario">${escapeHtml(r.usuario.nombre)}</span>` : ''}
                 </div>
             </div>
         `;
@@ -267,13 +321,20 @@ async function guardarRecordatorio() {
         return;
     }
 
+    const fechaRecordatorio = fechaValida(fecha);
+    if (!fechaRecordatorio) {
+        alert('Fecha invalida');
+        return;
+    }
+
     try {
         const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) throw new Error('No hay una sesion activa');
 
         const datos = {
             titulo,
             descripcion: descripcion || null,
-            fecha_recordatorio: new Date(fecha).toISOString(),
+            fecha_recordatorio: fechaRecordatorio.toISOString(),
             cliente_id: clienteId,
             poliza_id: polizaId,
             cliente_nombre: clienteNombre,
@@ -282,6 +343,7 @@ async function guardarRecordatorio() {
         };
 
         if (recordatorioEditandoId) {
+            datos.estado = recordatorioEstaVencido({ ...datos, estado: 'pendiente' }) ? 'vencido' : 'pendiente';
             const { error } = await supabaseClient
                 .from('recordatorios')
                 .update(datos)
@@ -313,7 +375,11 @@ function editarRecordatorio(id) {
     document.getElementById('drDescripcion').value = r.descripcion || '';
 
     // Formatear fecha para datetime-local
-    const fecha = new Date(r.fecha_recordatorio);
+    const fecha = fechaValida(r.fecha_recordatorio);
+    if (!fecha) {
+        alert('Este recordatorio tiene una fecha invalida');
+        return;
+    }
     const iso = fecha.getFullYear() + '-' +
         String(fecha.getMonth() + 1).padStart(2, '0') + '-' +
         String(fecha.getDate()).padStart(2, '0') + 'T' +
@@ -330,6 +396,8 @@ function editarRecordatorio(id) {
         document.getElementById('drClienteSeleccionado').style.display = 'flex';
         document.getElementById('drClienteNombre').textContent =
             r.cliente_nombre + (r.numero_poliza ? ` — Póliza ${r.numero_poliza}` : '');
+    } else {
+        limpiarClienteRecordatorio();
     }
 
     document.getElementById('drawerForm').style.display = 'block';
@@ -369,19 +437,27 @@ let timeoutBusqueda;
 async function buscarClienteRecordatorio(texto) {
     clearTimeout(timeoutBusqueda);
     const sugerencias = document.getElementById('drSugerencias');
+    const textoBusqueda = texto.trim();
 
-    if (texto.length < 2) {
+    if (textoBusqueda.length < 2) {
         sugerencias.innerHTML = '';
         sugerencias.style.display = 'none';
         return;
     }
 
     timeoutBusqueda = setTimeout(async () => {
-        const { data } = await supabaseClient
+        const termino = textoBusqueda.replace(/[%,]/g, '').trim();
+        const { data, error } = await supabaseClient
             .from('clientes')
             .select('id, nombres, apellidos, telefono1, polizas(id, numero_poliza)')
-            .or(`nombres.ilike.%${texto}%,apellidos.ilike.%${texto}%,telefono1.ilike.%${texto}%`)
+            .or(`nombres.ilike.%${termino}%,apellidos.ilike.%${termino}%,telefono1.ilike.%${termino}%`)
             .limit(8);
+        if (error) {
+            console.error('âŒ Error buscando cliente:', error);
+            sugerencias.innerHTML = '<div class="dr-sug-item dr-sug-empty">Error buscando clientes</div>';
+            sugerencias.style.display = 'block';
+            return;
+        }
 
         if (!data || data.length === 0) {
             sugerencias.innerHTML = '<div class="dr-sug-item dr-sug-empty">Sin resultados</div>';
@@ -391,17 +467,19 @@ async function buscarClienteRecordatorio(texto) {
 
         sugerencias.innerHTML = data.map(c => {
             const poliza = c.polizas?.[0];
+            const nombre = `${c.nombres || ''} ${c.apellidos || ''}`.trim();
+            const args = [
+                c.id || '',
+                nombre,
+                poliza?.id || '',
+                poliza?.numero_poliza || ''
+            ].map(valor => escapeAttr(JSON.stringify(valor)));
             return `
-                <div class="dr-sug-item" onclick="seleccionarClienteRecordatorio(
-                    '${c.id}',
-                    '${c.nombres} ${c.apellidos}',
-                    '${poliza?.id || ''}',
-                    '${poliza?.numero_poliza || ''}'
-                )">
+                <div class="dr-sug-item" onclick="seleccionarClienteRecordatorio(${args.join(', ')})" data-cliente-id="${escapeAttr(c.id)}">
                     <span class="material-symbols-rounded">person</span>
                     <div>
-                        <strong>${c.nombres} ${c.apellidos}</strong>
-                        <small>${c.telefono1 || ''} ${poliza ? '— ' + poliza.numero_poliza : ''}</small>
+                        <strong>${escapeHtml(nombre)}</strong>
+                        <small>${escapeHtml(c.telefono1 || '')} ${poliza ? '- ' + escapeHtml(poliza.numero_poliza) : ''}</small>
                     </div>
                 </div>
             `;
@@ -432,11 +510,10 @@ function limpiarClienteRecordatorio() {
     document.getElementById('drSugerencias').style.display = 'none';
 }
 
-function irAClienteDesdeRecordatorio(polizaId, event) {
-    if (!polizaId) return;
+function irAClienteDesdeRecordatorio(clienteId, event) {
+    if (!clienteId) return;
     event.preventDefault();
-    sessionStorage.setItem('filtro_poliza_id', polizaId);
-    window.location.href = `../pages/cliente_editar.html?id=${polizaId}`;
+    window.location.href = `../pages/cliente_editar.html?id=${encodeURIComponent(clienteId)}`;
 }
 
 // ── Contador badge ────────────────────────────
@@ -466,7 +543,8 @@ function verificarNotificaciones() {
     recordatoriosList
         .filter(r => r.estado === 'pendiente')
         .forEach(r => {
-            const fecha = new Date(r.fecha_recordatorio);
+            const fecha = fechaValida(r.fecha_recordatorio);
+            if (!fecha) return;
             const minutos = Math.round((fecha - ahora) / 60000);
             const key5  = `${r.id}-5`;
             const key15 = `${r.id}-15`;
@@ -488,8 +566,8 @@ function mostrarToastRecordatorio(recordatorio, minutos, tipo) {
         <span class="material-symbols-rounded">${tipo === 'urgente' ? 'alarm' : 'notifications'}</span>
         <div>
             <strong>${tipo === 'urgente' ? '⚡ ' : '🔔 '}En ${minutos} min</strong>
-            <p>${recordatorio.titulo}</p>
-            ${recordatorio.cliente_nombre ? `<small>${recordatorio.cliente_nombre}</small>` : ''}
+            <p>${escapeHtml(recordatorio.titulo)}</p>
+            ${recordatorio.cliente_nombre ? `<small>${escapeHtml(recordatorio.cliente_nombre)}</small>` : ''}
         </div>
         <button onclick="this.parentElement.remove()">
             <span class="material-symbols-rounded">close</span>
