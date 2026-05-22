@@ -12,7 +12,7 @@ let filtrosActivos = {
     fechaHasta: '2099-12-31'
 };
 let usuariosGlobal = [];
-let charSupervisores = null;
+let chartSupervisores = null;
 let supervisorSeleccionado = null;
 
 // ============================================
@@ -31,7 +31,16 @@ async function cargarPolizasParaGrafico() {
             .from('polizas')
             .select(`
                 *,
-                cliente:clientes (*)
+                cliente:clientes (
+                    id,
+                    nombres,
+                    apellidos,
+                    fecha_nacimiento,
+                    operador_nombre,
+                    tipo_registro,
+                    tipo_modificacion,
+                    venta_realizada_por
+            )
             `)
             .not('fecha_efectividad', 'is', null);
         
@@ -280,14 +289,14 @@ async function cargarUsuariosParaGrafica() {
         console.error('Error cargando usuarios:', error);
         return
     }
-    usuarioGlobal = data || []
+    usuariosGlobal = data || []
 }
 
 function renderizarGraficaSupervisores() {
     const contenedor = document.getElementById('chartSupervisores')
     if (!contenedor) return;
 
-    const supervisores = usuarioGlobal.filter(u => u.es_supervisor);
+    const supervisores = usuariosGlobal.filter(u => u.es_supervisor);
 
     if (supervisores.length === 0) {
         contenedor.innerHTML = '<p style="text-align: center; padding: 30px; color: #94a3b8;">No hay supervisores configurados aún</p>';
@@ -328,7 +337,7 @@ function renderizarGraficaSupervisores() {
         series: valores,
         labels: labels,
         legend: { position: 'bottom' },
-        toolpit: { y: { formatter: v => `${v} pólizas`}},
+        tooltip: { y: { formatter: v => `${v} pólizas`}},
         colors: ['#6366f1','#22c55e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#ec4899']
     });
 
@@ -341,12 +350,12 @@ function renderizarGraficaSupervisores() {
 }
 
 function drillDownOperadores(nombreSupervisor) {
-    const supervisor = usuarioGloball.find(u => u.nombre === nombreSupervisor && u.es_supervisor);
+    const supervisor = usuariosGlobal.find(u => u.nombre === nombreSupervisor && u.es_supervisor);
     if (!supervisor) return;
 
     supervisorSeleccionado = supervisor;
 
-    const operadoresDelSupervisor = usuarioGlobal.filter(u => u.supervisor_id === supervisor.id);
+    const operadoresDelSupervisor = usuariosGlobal.filter(u => u.supervisor_id === supervisor.id);
     
     const conteo = {};
     operadoresDelSupervisor.forEach(op => { conteo[op.nombre] = 0; });
@@ -363,7 +372,7 @@ function drillDownOperadores(nombreSupervisor) {
     if (chartSupervisores) chartSupervisores.destroy();
 
     chartSupervisores = new ApexCharts(
-        document.getElementById('charSupervisores'), {
+        document.getElementById('chartSupervisores'), {
             chart: {
                 type: 'pie',
                 height: 340,
@@ -389,7 +398,7 @@ function drillDownOperadores(nombreSupervisor) {
 }
 
 function irAPolizasFiltrado(nombreOperador) {
-    sessionStorage.setItem('filtro_operador_home', nombreOperador);
+    sessionStorage.setItem('filtro_operador', nombreOperador);
     window.location.href = '../pages/polizas.html';
 }
 
@@ -810,6 +819,45 @@ function renderizarClasificacion(tab) {
     `;
 }
 
+// Calcular cumpleaños de la semana}
+function calcularCumpleanosEnSemana() {
+    const hoy = new Date();
+
+    const inicioDeSemana = new Date(hoy);
+    inicioDeSemana.setDate(hoy.getDate() - hoy.getDay());
+    inicioDeSemana.setHours(0, 0, 0, 0);
+
+    const finDeSemana = new Date(inicioDeSemana);
+    finDeSemana.setDate(inicioDeSemana.getDate() + 6);
+    finDeSemana.setHours(23, 59, 59, 999);
+    
+    return todasLasPolizas.filter(p => {
+        const fn = p.cliente?.fecha_nacimiento;
+        if (!fn) return false;
+
+        // ← Parsear sin timezone para evitar desfase
+        const [anio, mes, dia] = fn.split('T')[0].split('-');
+        const cumpleEsteAnio = new Date(
+            hoy.getFullYear(),
+            parseInt(mes) - 1,
+            parseInt(dia)
+        );
+
+        return cumpleEsteAnio >= inicioDeSemana && cumpleEsteAnio <= finDeSemana;
+    });
+}
+
+function irACumpleanos() {
+    const cumpleaneros = calcularCumpleanosEnSemana();
+    const contador = document.getElementById('contadorCumpleanos');
+    if (contador) contador.textContent = cumpleaneros.length
+    if (cumpleaneros.length === 0) return;
+
+    const ids = cumpleaneros.map(p => p.cliente?.id).filter(Boolean);
+    localStorage.setItem('filtro_cumpleanos', JSON.stringify(ids));
+    window.location.href='../pages/polizas.html'
+}
+
 // ============================================
 // INICIALIZACIÓN
 // ============================================
@@ -828,6 +876,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     inicializarEventListeners();
     actualizarGrafico();
     inicializarFiltroFechas();
+
+    calcularCumpleanosEnSemana();
+
+    // 2. Mover el contador al DOMContentLoaded, después de cargar datos:
+    // Al final del DOMContentLoaded, reemplazar calcularCumpleanosEnSemana() por:
+    const cumpleaneros = calcularCumpleanosEnSemana();
+    const contador = document.getElementById('contadorCumpleanos');
+    if (contador) contador.textContent = cumpleaneros.length;
 
     // Renderizar tab inicial de clasificación
     renderizarClasificacion(tabClasificacionActual);

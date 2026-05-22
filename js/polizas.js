@@ -425,42 +425,6 @@ function restaurarFiltrosDesdeStorage() {
     ;
 }
 
-// ============================================
-// INICIALIZACIÓN
-// ============================================
-document.addEventListener('DOMContentLoaded', async function() {
-    ;
-    
-    // Configurar búsqueda
-    configurarBusqueda();
-    
-    // Configurar paginación
-    configurarPaginacion();
-    
-    // Configurar ordenamiento
-    configurarOrdenamiento();
-    
-    // Configurar modal
-    configurarModal();
-    
-    // Cargar datos del operador
-    cargarDatosOperador();
-
-    const filtroOperadorHome = sessionStorage.getItem('filtro_operador_home');
-    if (filtroOperadorHome) {
-        sessionStorage.removeItem('filtro_operador_home');
-        setTimeout(() => {
-            const checkbox = document.querySelector(`#panelOperadores input[value="${filtroOperadorHome}"]`);
-            if (checkbox) {
-                document.querySelectorAll('#panelOperadores input').forEach(cb => cb.checked = false);
-                checkbox.checked = true;
-                aplicarFiltrosAvanzados
-            }
-        }, 1500);
-    }
-});
-
-
 async function cargarPolizas() {
     try {
         mostrarIndicadorCarga(true);
@@ -519,6 +483,7 @@ async function cargarPolizas() {
                     id,
                     nombres,
                     apellidos,
+                    fecha_nacimiento,
                     telefono1,
                     telefono2,
                     email,
@@ -605,6 +570,34 @@ async function cargarPolizas() {
         actualizarPaginacion();
         
         mostrarIndicadorCarga(false);
+
+        const filtroOperadorHome = sessionStorage.getItem('filtro_operador');
+        if (filtroOperadorHome) {
+            sessionStorage.removeItem('filtro_operador');
+            const checkbox = document.querySelector(`#panelOperadores input[value="${filtroOperadorHome}"]`);
+            if (checkbox) {
+                document.querySelectorAll('#panelOperadores input').forEach(cb => cb.checked = false);
+                checkbox.checked = true;
+                actualizarTextoOperadores();
+                aplicarFiltrosAvanzados();
+
+                requestAnimationFrame(() => {
+                    renderizarTabla();
+                    actualizarPaginacion()
+                })
+            }
+        }
+
+        const filtroCumpleanos = localStorage.getItem('filtro_cumpleanos');
+        if (filtroCumpleanos) {
+            localStorage.removeItem('filtro_cumpleanos');
+            const ids = JSON.parse(filtroCumpleanos);
+            polizasFiltradas = todasLasPolizas.filter(p => ids.includes(p.cliente?.id));
+            hayFiltrosActivos = true;
+            renderizarTabla();
+            actualizarPaginacion();
+            actualizarIndicadorFiltros();
+        }
         
     } catch (error) {
         console.error('❌ Error al cargar pólizas:', error);
@@ -2211,10 +2204,17 @@ function generarColorDesdeTexto(texto) {
     return colores[index];
 }
 
-// Llamar al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Configuraciones síncronas
+    configurarBusqueda();
+    configurarPaginacion();
+    configurarOrdenamiento();
+    configurarModal();
     cargarInfoUsuario();
-    cargarPolizas()
+
+    // Primero poblar checkboxes, luego cargar pólizas
+    await cargarDatosOperador();
+    await cargarPolizas();
 });
 
 // ============================================
@@ -2844,7 +2844,7 @@ function aplicarFiltrosAvanzados() {
     // Guardar datos filtrados para gráficas
     sessionStorage.setItem('graficas_data', JSON.stringify(polizasFiltradas));
     // Mostrar botón "Ver gráfica"
-    document.getElementById('btnVerGrafica').style.display = 'inline-flex';
+    document.getElementById('btnVerGrafica')?.style.setProperty('display', 'inline-flex');
     
 }
 
