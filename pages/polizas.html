@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="../css/polizas.css">
     <link rel="stylesheet" href="../css/cliente.css">
     <link rel="stylesheet" href="../css/darkmode.css">
+    <link rel="stylesheet" href="../css/recordatorios.css">
 
     <style>
         /* Estilos adicionales para las mejoras */
@@ -146,6 +147,12 @@
                     <span>Pólizas</span>
                 </a>
 
+                <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
+                    <span class="material-symbols-rounded">task_alt</span>
+                    <span>Recordatorios</span>
+                    <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
+                </a>
+
                 <a href="#" class="menu-item">
                     <span class="material-symbols-rounded">folder</span>
                     <span>Gestiones</span>
@@ -174,6 +181,11 @@
                 <a href="./clientes_archivados.html" class="menu-item" id="menuArchivados">
                     <span class="material-symbols-rounded">inventory_2</span>
                     <span>Archivados</span>
+                </a>
+
+                <a href="./monitoreo.html" class="menu-item" id="menuMonitoreo" style="display:none">
+                    <span class="material-symbols-rounded">monitor_heart</span>
+                    <span>Monitoreo</span>
                 </a>
 
                 <a href="./usuarios.html" class="menu-item">
@@ -1032,6 +1044,10 @@
     <script src="../js/main.js"></script>
 
     <script src="../js/polizas.js"></script>
+
+    <script src="../js/recordatorios.js"></script>
+
+    <script src="../js/actividad.js"></script>
 
     
 </body>

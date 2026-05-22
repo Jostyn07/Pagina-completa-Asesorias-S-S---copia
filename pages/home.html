@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/darkmode.css">
+    <link rel="stylesheet" href="../css/recordatorios.css">
     <!-- Libreria de fecha Flatpickr estilos-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
@@ -46,6 +47,12 @@
                 <span>Pólizas</span>
             </a>
 
+            <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
+                <span class="material-symbols-rounded">task_alt</span>
+                <span>Recordatorios</span>
+                <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
+            </a>
+
             <a href="#" class="menu-item">
                 <span class="material-symbols-rounded">folder</span>
                 <span>Gestiones</span>
@@ -74,6 +81,11 @@
             <a href="./clientes_archivados.html" class="menu-item" id="menuArchivados">
                 <span class="material-symbols-rounded">inventory_2</span>
                 <span>Archivados</span>
+            </a>
+
+            <a href="./monitoreo.html" class="menu-item" id="menuMonitoreo" style="display:none">
+                <span class="material-symbols-rounded">monitor_heart</span>
+                <span>Monitoreo</span>
             </a>
 
             <a href="./usuarios.html" class="menu-item">
@@ -129,7 +141,7 @@
 
         <!-- Tarjetas de Métricas (Clickeables) -->
         <div class="metrics-cards">
-            <div class="metric-card" onclick="navigateTo('./polizas.html')">
+            <!-- <div class="metric-card" onclick="navigateTo('./polizas.html')">
                 <div class="metric-icon" style="background-color: #e8eaf6;">
                     <span class="material-symbols-rounded" style="color: #5c6bc0;">notifications</span>
                 </div>
@@ -138,7 +150,7 @@
                     <p>Haz clic aquí para más detalles</p>
                 </div>
                 <span class="material-symbols-rounded metric-arrow">chevron_right</span>
-            </div>
+            </div> -->
 
             <div class="metric-card" onclick="irACumpleanos()" style="cursor:pointer;">
                 <div class="metric-icon" style="background-color: #e3f2fd;">
@@ -152,7 +164,7 @@
                 <span class="material-symbols-rounded metric-arrow">chevron_right</span>
             </div>
 
-            <div class="metric-card" onclick="navigateTo('./polizas.html')">
+            <!-- <div class="metric-card" onclick="navigateTo('./polizas.html')">
                 <div class="metric-icon" style="background-color: #fce4ec;">
                     <span class="material-symbols-rounded" style="color: #ec407a;">warning</span>
                 </div>
@@ -172,7 +184,7 @@
                     <p>Haz clic aquí para más detalles</p>
                 </div>
                 <span class="material-symbols-rounded metric-arrow">chevron_right</span>
-            </div>
+            </div> -->
         </div>
 
         <!-- Filtros -->
@@ -435,6 +447,8 @@
     <script src="../js/main.js"></script>
     <script src="../js/formatear_input_fechas.js"></script>
     <script src="../js/home.js"></script>
+    <script src="../js/recordatorios.js"></script>
+    <script src="../js/actividad.js"></script>
     <!-- Libreria de fecha Flatpickr js-->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>

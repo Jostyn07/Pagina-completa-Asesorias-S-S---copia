@@ -511,6 +511,11 @@ async function inicializarMenuAdmin() {
     if (menuArchivados && esAdministrador()) {
         menuArchivados.style.display = 'flex';
     }
+
+    const menuMonitoreo = document.getElementById('menuMonitoreo');
+    if (menuMonitoreo && datosUsuario?.puede_ver_monitoreo) {
+        menuMonitoreo.style.display = 'flex';
+    }
 }
 document.addEventListener('DOMContentLoaded', inicializarMenuAdmin);
 
