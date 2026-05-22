@@ -32,6 +32,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     await verificarAcceso();
     await cargarSesiones();
     suscribirRealtime();
+
+    setInterval(() => {
+        renderizarSesiones();
+    }, 10 * 1000);
+
+    console.log(canalRealtime?.state);
 });
 
 async function verificarAcceso() {
@@ -56,14 +62,30 @@ async function verificarAcceso() {
 // ── Cargar sesiones ───────────────────────────
 async function cargarSesiones() {
     try {
-        const { data, error } = await supabaseClient
+        // Cargar todos los usuarios activos
+        const { data: usuarios } = await supabaseClient
+            .from('usuarios')
+            .select('id, nombre, rol')
+            .eq('activo', true)
+            .order('nombre');
+
+        // Cargar sesiones activas
+        const { data: sesiones } = await supabaseClient
             .from('actividad_sesiones')
-            .select('*')
-            .order('ultima_actividad', { ascending: false });
+            .select('*');
 
-        if (error) throw error;
+        // Cruzar: todos los usuarios con su sesión si existe
+        sesionesActuales = (usuarios || []).map(u => {
+            const sesion = (sesiones || []).find(s => s.usuario_id === u.id);
+            return sesion || {
+                usuario_id:       u.id,
+                usuario_nombre:   u.nombre,
+                pagina_actual:    null,
+                ultima_actividad: null,
+                estado:           'desconectado'
+            };
+        });
 
-        sesionesActuales = data || [];
         renderizarSesiones();
 
     } catch (error) {
@@ -154,11 +176,13 @@ function renderizarSesiones() {
         const ahoraMs    = Date.now();
         const difMin     = Math.round((ahoraMs - ultimaAct.getTime()) / 60000);
 
-        const tiempoTexto = difMin < 1
-            ? 'Hace menos de 1 min'
-            : difMin === 1
-                ? 'Hace 1 min'
-                : `Hace ${difMin} min`;
+        const tiempoTexto = !sesion.ultima_actividad
+            ? 'Sin sesión'
+            : difMin < 1
+                ? 'Hace menos de 1 min'
+                : difMin === 1
+                    ? 'Hace 1 min'
+                    : `Hace ${difMin} min`;
 
         const badgeClase  = `mon-badge-${estado}`;
         const dotClase    = `dot-${estado}`;

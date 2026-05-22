@@ -2,7 +2,7 @@
 // VARIABLES GLOBALES
 // ============================================
 let todasLasPolizas = [];
-let modoFiltroEstado = 'mercado';
+let modoFiltroEstado = 'compania';
 let polizasFiltradas = [];
 let paginaActual = 1;
 let polizasPorPagina = 10;
@@ -1382,7 +1382,7 @@ function buscarPolizas(termino) {
 function cambiarFiltroEstado(modo) {
     modoFiltroEstado = modo;
 
-    document.getElementById('btnFiltroMercado').classList.toggle('active', modo === 'mercado');
+    // document.getElementById('btnFiltroMercado').classList.toggle('active', modo === 'mercado');
     document.getElementById('btnFiltroCompania').classList.toggle('active', modo === 'compania');
 
     // Usar el sistema real de estadísticas

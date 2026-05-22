@@ -50,6 +50,29 @@ async function inicializarActividad() {
             document.addEventListener(ev, registrarAccion, { passive: true });
         });
 
+        document.addEventListener('visibilitychange', async () => {
+        if (!actividadUsuarioId) return;
+
+        if (document.hidden) {
+            // Cambió de pestaña o minimizó → inactivo
+            await supabaseClient
+                .from('actividad_sesiones')
+                .update({ estado: 'inactivo' })
+                .eq('usuario_id', actividadUsuarioId);
+        } else {
+            // Volvió a la pestaña → activo
+            actividadUltimaAccion = Date.now();
+            await supabaseClient
+                .from('actividad_sesiones')
+                .update({
+                    estado: 'activo',
+                    ultima_actividad: new Date().toISOString(),
+                    pagina_actual: obtenerNombrePagina()
+                })
+                .eq('usuario_id', actividadUsuarioId);
+        }
+    });
+
         // Ping periódico para mantener sesión activa
         intervaloPing = setInterval(pingActividad, INTERVALO_PING_MS);
 
@@ -75,13 +98,18 @@ async function pingActividad() {
     const nuevoEstado = minutosInactivo >= INACTIVIDAD_MINUTOS ? 'inactivo' : 'activo';
 
     try {
+
+        const updateData = {
+            pagina_actual: obtenerNombrePagina(),
+            estado: nuevoEstado
+        };
+
+        if (nuevoEstado === 'activo') {
+            updateData.ultima_actividad = new Date().toISOString();
+        }
         await supabaseClient
             .from('actividad_sesiones')
-            .update({
-                ultima_actividad: new Date().toISOString(),
-                pagina_actual:    obtenerNombrePagina(),
-                estado:           nuevoEstado
-            })
+            .update({updateData})
             .eq('usuario_id', actividadUsuarioId);
     } catch (error) {
         console.warn('⚠️ Error en ping actividad:', error);

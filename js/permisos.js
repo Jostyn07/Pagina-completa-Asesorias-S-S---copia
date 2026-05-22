@@ -28,7 +28,7 @@ async function cargarRolUsuario() {
         // Leer rol Directo de la tabla usuarios en supabase
         const { data: usuarioDB, error: dbError } = await supabaseClient
             .from('usuarios')
-            .select('id, nombre, email, rol, activo')
+            .select('id, nombre, email, rol, activo, puede_ver_monitoreo, es_supervisor')
             .eq('email', user.email)
             .single();
         

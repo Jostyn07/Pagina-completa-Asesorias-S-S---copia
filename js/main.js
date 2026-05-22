@@ -513,7 +513,7 @@ async function inicializarMenuAdmin() {
     }
 
     const menuMonitoreo = document.getElementById('menuMonitoreo');
-    if (menuMonitoreo && datosUsuario?.puede_ver_monitoreo) {
+    if (menuMonitoreo && datosUsuario?.puede_ver_monitoreo === true) {
         menuMonitoreo.style.display = 'flex';
     }
 }
