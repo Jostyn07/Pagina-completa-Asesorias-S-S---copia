@@ -138,10 +138,13 @@ async function limpiarSesionActividad() {
     clearInterval(intervaloPing);
     clearInterval(intervaloCheck);
 
-    // Usar sendBeacon para garantizar que se envíe aunque se cierre la página
-    const url = `${supabaseUrl}/rest/v1/actividad_sesiones?usuario_id=eq.${actividadUsuarioId}`;
-    const payload = JSON.stringify({ estado: 'desconectado' });
-    navigator.sendBeacon(url, payload);
+    // Usar update normal en vez de sendBeacon
+    try {
+        await supabaseClient
+            .from('actividad_sesiones')
+            .update({ estado: 'desconectado' })
+            .eq('usuario_id', actividadUsuarioId);
+    } catch (e) {}
 }
 
 function obtenerNombrePagina() {
