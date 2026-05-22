@@ -26,11 +26,17 @@ async function cargarPolizasParaGrafico() {
     try {
         ;
         
-        //  CARGAR TODAS las pólizas (sin filtros hardcodeados)
         const { data, error } = await supabaseClient
             .from('polizas')
             .select(`
-                *,
+                id,
+                operador_nombre,
+                estado_compania,
+                estado_mercado,
+                fecha_efectividad,
+                created_at,
+                compania,
+                estado_documentos,
                 cliente:clientes (
                     id,
                     nombres,
@@ -40,7 +46,7 @@ async function cargarPolizasParaGrafico() {
                     tipo_registro,
                     tipo_modificacion,
                     venta_realizada_por
-            )
+                )
             `)
             .not('fecha_efectividad', 'is', null);
         
