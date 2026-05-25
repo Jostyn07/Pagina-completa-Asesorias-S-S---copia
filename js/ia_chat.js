@@ -9,67 +9,67 @@ let iaModuloActual  = 'general';
 let iaContextoCache = null;
 
 const IA_MODULOS = {
-    'home.html':                           'home',
-    'polizas.html':                        'polizas',
-    'monitoreo.html':                      'monitoreo',
-    'cliente_crear.html':                  'clientes',
-    'cliente_editar.html':                 'clientes',
-    'cliente_recuperado-cambioDeVida.html':'clientes',
-    'clientes_archivados.html':            'archivados',
-    'control_calidad.html':                'calidad',
-    'historial_evaluacion.html':           'calidad',
-    'graficas.html':                       'graficas',
-    'para-revisar.html':                   'revision',
-    'usuarios.html':                       'usuarios'
+    'home.html':                            'home',
+    'polizas.html':                         'polizas',
+    'monitoreo.html':                       'monitoreo',
+    'cliente_crear.html':                   'clientes',
+    'cliente_editar.html':                  'clientes',
+    'cliente_recuperado-cambioDeVida.html': 'clientes',
+    'clientes_archivados.html':             'archivados',
+    'control_calidad.html':                 'calidad',
+    'historial_evaluacion.html':            'calidad',
+    'graficas.html':                        'graficas',
+    'para-revisar.html':                    'revision',
+    'usuarios.html':                        'usuarios'
 };
 
 const IA_CHIPS = {
     home: [
-        { label: '📊 Resumen del período',       texto: 'Dame un resumen de las pólizas y estadísticas del período actual.' },
-        { label: '🏆 Ranking de operadores',      texto: 'Muéstrame el ranking actual de operadores por ventas.' },
-        { label: '🎂 Cumplen años hoy',           texto: 'Muéstrame los clientes que cumplen años hoy.' },
-        { label: '⚠️ Docs incompletos',          texto: 'Muéstrame los clientes con documentación incompleta o pendiente.' },
+        { label: '📊 Resumen del período',        texto: 'Dame un resumen de las pólizas y estadísticas del período actual.' },
+        { label: '🏆 Ranking de operadores',       texto: 'Muéstrame el ranking actual de operadores por ventas.' },
+        { label: '🎂 Cumplen años hoy',            texto: 'Muéstrame los clientes que cumplen años hoy.' },
+        { label: '⚠️ Docs incompletos',           texto: 'Muéstrame los clientes con documentación incompleta o pendiente.' },
     ],
     polizas: [
-        { label: '📋 Resumen de cartera',         texto: 'Dame un resumen general de la cartera de pólizas.' },
-        { label: '📅 Próximas a vencer',          texto: 'Muéstrame los clientes con pólizas próximas a vencer en 30 días.' },
-        { label: '❌ Canceladas recientes',       texto: 'Muéstrame los clientes con pólizas canceladas recientemente.' },
-        { label: '🏢 Por compañía',               texto: '¿Cómo están distribuidas las pólizas por compañía aseguradora?' },
-        { label: '📄 Docs pendientes',            texto: 'Muéstrame los clientes con documentación pendiente o incompleta.' },
+        { label: '📋 Resumen de cartera',          texto: 'Dame un resumen general de la cartera de pólizas.' },
+        { label: '📅 Próximas a vencer',           texto: 'Muéstrame los clientes con pólizas próximas a vencer en 30 días.' },
+        { label: '❌ Canceladas recientes',        texto: 'Muéstrame los clientes con pólizas canceladas recientemente.' },
+        { label: '🏢 Por compañía',                texto: '¿Cómo están distribuidas las pólizas por compañía aseguradora?' },
+        { label: '📄 Docs pendientes',             texto: 'Muéstrame los clientes con documentación pendiente o incompleta.' },
     ],
     monitoreo: [
-        { label: '👀 Estado actual',              texto: 'Dame un resumen del estado actual de todos los usuarios conectados.' },
-        { label: '😴 Más tiempo inactivo',        texto: '¿Quién lleva más tiempo inactivo? Ordénalos de mayor a menor.' },
-        { label: '🗂️ Páginas en uso',             texto: '¿En qué páginas están trabajando los usuarios ahora mismo?' },
-        { label: '⚠️ Usuarios preocupantes',      texto: 'Identifica usuarios desconectados o inactivos en horario laboral.' },
+        { label: '👀 Estado actual',               texto: 'Dame un resumen del estado actual de todos los usuarios conectados.' },
+        { label: '😴 Más tiempo inactivo',         texto: '¿Quién lleva más tiempo inactivo? Ordénalos de mayor a menor.' },
+        { label: '🗂️ Páginas en uso',              texto: '¿En qué páginas están trabajando los usuarios ahora mismo?' },
+        { label: '⚠️ Usuarios preocupantes',       texto: 'Identifica usuarios desconectados o inactivos en horario laboral.' },
     ],
     clientes: [
-        { label: '📝 Resumen del cliente',        texto: 'Dame un resumen completo del cliente que estoy viendo ahora.' },
-        { label: '📋 Docs pendientes',            texto: '¿Qué documentos están pendientes para este cliente?' },
-        { label: '👨‍👩‍👧 Dependientes',           texto: 'Muéstrame el detalle de los dependientes registrados.' },
+        { label: '📝 Resumen del cliente',         texto: 'Dame un resumen completo del cliente que estoy viendo ahora.' },
+        { label: '📋 Docs pendientes',             texto: '¿Qué documentos están pendientes para este cliente?' },
+        { label: '👨‍👩‍👧 Dependientes',            texto: 'Muéstrame el detalle de los dependientes registrados.' },
     ],
     archivados: [
-        { label: '🔄 Candidatos a recuperar',     texto: 'Muéstrame los clientes archivados que podrían recuperarse.' },
-        { label: '📦 Motivos de archivado',       texto: 'Analiza los motivos más frecuentes de archivado de clientes.' },
+        { label: '🔄 Candidatos a recuperar',      texto: 'Muéstrame los clientes archivados que podrían recuperarse.' },
+        { label: '📦 Motivos de archivado',        texto: 'Analiza los motivos más frecuentes de archivado de clientes.' },
     ],
     calidad: [
-        { label: '📊 Tendencia de evaluaciones',  texto: 'Analiza la tendencia de las evaluaciones de calidad recientes.' },
-        { label: '⚠️ Áreas de mejora',            texto: 'Identifica las áreas donde más se repiten errores o bajas puntuaciones.' },
+        { label: '📊 Tendencia de evaluaciones',   texto: 'Analiza la tendencia de las evaluaciones de calidad recientes.' },
+        { label: '⚠️ Áreas de mejora',             texto: 'Identifica las áreas donde más se repiten errores o bajas puntuaciones.' },
     ],
     graficas: [
-        { label: '📈 Interpretar tendencia',      texto: 'Interpreta la tendencia de ventas que estoy viendo.' },
-        { label: '🔍 Anomalías',                  texto: '¿Hay algún mes con comportamiento inusual en los datos?' },
+        { label: '📈 Interpretar tendencia',       texto: 'Interpreta la tendencia de ventas que estoy viendo.' },
+        { label: '🔍 Anomalías',                   texto: '¿Hay algún mes con comportamiento inusual en los datos?' },
     ],
     revision: [
-        { label: '📋 Pendientes urgentes',        texto: 'Muéstrame los casos para revisar más urgentes o con más tiempo sin atender.' },
+        { label: '📋 Pendientes urgentes',         texto: 'Muéstrame los casos para revisar más urgentes o con más tiempo sin atender.' },
     ],
     usuarios: [
-        { label: '👥 Resumen del equipo',         texto: 'Dame un resumen del equipo: roles, supervisores y operadores activos.' },
-        { label: '🔐 Permisos especiales',        texto: '¿Qué usuarios tienen permisos especiales como monitoreo o IA?' },
+        { label: '👥 Resumen del equipo',          texto: 'Dame un resumen del equipo: roles, supervisores y operadores activos.' },
+        { label: '🔐 Permisos especiales',         texto: '¿Qué usuarios tienen permisos especiales como monitoreo o IA?' },
     ],
     general: [
-        { label: '📊 Resumen general',            texto: 'Dame un resumen general de la plataforma.' },
-        { label: '❓ ¿Qué puedes hacer?',         texto: '¿Qué tipo de consultas puedes responder sobre mis datos?' },
+        { label: '📊 Resumen general',             texto: 'Dame un resumen general de la plataforma.' },
+        { label: '❓ ¿Qué puedes hacer?',          texto: '¿Qué tipo de consultas puedes responder sobre mis datos?' },
     ]
 };
 
@@ -117,9 +117,6 @@ function inyectarIAChatPanel() {
                     <button class="ia-icon-btn" onclick="limpiarIAChat()" title="Nueva conversación">
                         <span class="material-symbols-rounded">refresh</span>
                     </button>
-                    <button class="ia-icon-btn" onclick="abrirConfigIA()" title="API Key">
-                        <span class="material-symbols-rounded">key</span>
-                    </button>
                     <button class="ia-icon-btn" onclick="toggleIAChat()" title="Cerrar">
                         <span class="material-symbols-rounded">close</span>
                     </button>
@@ -159,41 +156,29 @@ function inyectarIAChatPanel() {
                 </button>
             </div>
         </div>
-
-        <div class="ia-config-overlay" id="iaConfigOverlay" style="display:none">
-            <div class="ia-config-modal">
-                <h3>🔑 API Key de Anthropic</h3>
-                <p>Se guarda en tu navegador y nunca se comparte.</p>
-                <input type="password" id="iaApiKeyInput" class="ia-config-input"
-                    placeholder="sk-ant-api03-..." autocomplete="off"/>
-                <div class="ia-config-btns">
-                    <button class="ia-config-cancel" onclick="cerrarConfigIA()">Cancelar</button>
-                    <button class="ia-config-save" onclick="guardarApiKeyIA()">Guardar</button>
-                </div>
-            </div>
-        </div>
     `;
     document.body.appendChild(wrap);
 }
 
 // ── Abrir / cerrar ────────────────────────────
 async function toggleIAChat() {
-    const panel  = document.getElementById('iaPanel');
-    const fab    = document.getElementById('iaFab');
+    const panel   = document.getElementById('iaPanel');
+    const fab     = document.getElementById('iaFab');
     const abierto = panel.classList.toggle('ia-panel-abierto');
     fab.classList.toggle('ia-fab-activo', abierto);
 
-    if (abierto) {
-        if (!obtenerApiKeyIA()) { abrirConfigIA(); return; }
-        if (!iaContextoCache) await cargarContextoIA();
-    }
+    if (abierto && !iaContextoCache) await cargarContextoIA();
 }
 
+// ── Contexto ──────────────────────────────────
 async function cargarContextoIA() {
     const bar = document.getElementById('iaContextoBar');
     if (bar) bar.style.display = 'flex';
     try {
         iaContextoCache = await construirContextoIA(iaModuloActual);
+        if (['home', 'polizas', 'general'].includes(iaModuloActual)) {
+            verificarAlertasProactivasIA();
+        }
     } catch (e) {
         console.error('❌ Contexto IA:', e);
         iaContextoCache = null;
@@ -211,12 +196,60 @@ async function refrescarContextoIA() {
     mostrarToastIA('✅ Datos actualizados');
 }
 
+// ── Alertas proactivas ────────────────────────
+async function verificarAlertasProactivasIA() {
+    try {
+        const clientes = await obtenerClientesParaIA();
+        const alertas  = [];
+        const hoy      = new Date();
+        const en7dias  = new Date(hoy.getTime() + 7 * 86400000);
+
+        const cumple = clientes.filter(c => c.cumple_semana);
+        if (cumple.length > 0)
+            alertas.push({ tipo: 'cumple', msg: `${cumple.length} cumpleaños esta semana` });
+
+        const sinDocs = clientes.filter(c =>
+            c.estado_docs && c.estado_docs !== 'Documentos completos'
+        );
+        if (sinDocs.length > 0)
+            alertas.push({ tipo: 'docs', msg: `${sinDocs.length} clientes con docs incompletos` });
+
+        const porVencer = clientes.filter(c => {
+            if (!c.fecha_vencimiento) return false;
+            const vence = new Date(c.fecha_vencimiento);
+            return vence >= hoy && vence <= en7dias;
+        });
+        if (porVencer.length > 0)
+            alertas.push({ tipo: 'vence', msg: `${porVencer.length} pólizas vencen en 7 días` });
+
+        actualizarBadgeAlertasIA(alertas);
+    } catch (e) {
+        console.error('❌ Alertas IA:', e);
+    }
+}
+
+function actualizarBadgeAlertasIA(alertas) {
+    const fab   = document.getElementById('iaFab');
+    let badge   = document.getElementById('iaBadgeAlertas');
+    if (!fab) return;
+
+    if (alertas.length === 0) {
+        if (badge) badge.remove();
+        return;
+    }
+
+    if (!badge) {
+        badge            = document.createElement('span');
+        badge.id         = 'iaBadgeAlertas';
+        badge.className  = 'ia-badge-alertas';
+        fab.appendChild(badge);
+    }
+    badge.textContent = alertas.length;
+}
+
 // ── Enviar mensaje ────────────────────────────
 async function enviarMensajeIA(textoForzado) {
     if (iaTyping) return;
-
-    const apiKey  = obtenerApiKeyIA();
-    if (!apiKey) { abrirConfigIA(); return; }
 
     const inputEl = document.getElementById('iaInput');
     const texto   = textoForzado ?? inputEl.value.trim();
@@ -235,42 +268,114 @@ async function enviarMensajeIA(textoForzado) {
     if (!iaContextoCache) await cargarContextoIA();
 
     try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true'
-            },
-            body: JSON.stringify({
-                model:      'claude-sonnet-4-6',
-                max_tokens: datosUsuario?.rol === 'admin' ? 2048 : 1024,
-                system:     construirSystemPromptSeguro(iaContextoCache),
-                messages:   iaChatHistorial
-            })
-        });
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session?.access_token) {
+            typingEl.remove();
+            agregarMensajeIADOM('error', '❌ Sesión expirada. Recarga la página.');
+            iaChatHistorial.pop();
+            return;
+        }
+
+        const response = await fetch(
+            `${supabaseClient.supabaseUrl}/functions/v1/bright-processor`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type':  'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    model:      'claude-sonnet-4-6',
+                    max_tokens: datosUsuario?.rol === 'admin' ? 2048 : 1024,
+                    stream:     true,
+                    system:     construirSystemPromptSeguro(iaContextoCache),
+                    messages:   iaChatHistorial
+                })
+            }
+        );
 
         typingEl.remove();
 
         if (!response.ok) {
             const err     = await response.json().catch(() => ({}));
             const detalle = err?.error?.message || `HTTP ${response.status}`;
-            if (response.status === 401) {
-                agregarMensajeIADOM('error', `❌ API Key inválida. (${detalle})`);
-                abrirConfigIA();
+            if (response.status === 401 || response.status === 403) {
+                agregarMensajeIADOM('error', `❌ Sin acceso: ${detalle}`);
             } else {
                 agregarMensajeIADOM('error', `❌ Error: ${detalle}`);
             }
-            console.error('❌ Anthropic:', response.status, err);
+            console.error('❌ IA proxy:', response.status, err);
             iaChatHistorial.pop();
             return;
         }
 
-        const data      = await response.json();
-        const respuesta = data.content?.[0]?.text || 'Sin respuesta.';
-        iaChatHistorial.push({ role: 'assistant', content: respuesta });
-        agregarMensajeIADOM('assistant', respuesta);
+        // Streaming
+        const { div: divBurbuja, burbuja, colWrapper } = crearBurbujaStreaming();
+        const mensajesEl   = document.getElementById('iaMensajes');
+        const reader       = response.body.getReader();
+        const decoder      = new TextDecoder();
+        let textoCompleto  = '';
+        let tokensEntrada  = 0;
+        let tokensSalida   = 0;
+        let streamActivo   = true;
+
+        while (streamActivo) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk  = decoder.decode(value, { stream: true });
+            const lineas = chunk.split('\n').filter(l => l.startsWith('data: '));
+
+            for (const linea of lineas) {
+                const json = linea.replace('data: ', '').trim();
+                if (json === '[DONE]') { streamActivo = false; break; }
+
+                try {
+                    const evento = JSON.parse(json);
+
+                    // Capturar tokens
+                    if (evento.type === 'message_start') {
+                        tokensEntrada = evento.message?.usage?.input_tokens || 0;
+                    }
+                    if (evento.type === 'message_delta') {
+                        tokensSalida = evento.usage?.output_tokens || 0;
+                    }
+
+                    const delta = evento?.delta?.text || '';
+                    if (delta) {
+                        textoCompleto += delta;
+                        burbuja.innerHTML     = formatearRespuestaIA(textoCompleto);
+                        mensajesEl.scrollTop  = mensajesEl.scrollHeight;
+                    }
+                } catch (_) {}
+            }
+        }
+
+        iaChatHistorial.push({ role: 'assistant', content: textoCompleto });
+
+        // Feedback
+        const feedbackId = `ia-fb-${Date.now()}`;
+        colWrapper.insertAdjacentHTML('beforeend', `
+            <div class="ia-feedback" id="${feedbackId}">
+                <button onclick="enviarFeedbackIA('${feedbackId}', 1)"  title="Útil">👍</button>
+                <button onclick="enviarFeedbackIA('${feedbackId}', -1)" title="No útil">👎</button>
+            </div>
+        `);
+
+        // Botón recordatorio si es accionable
+        const palabrasClave = ['vence', 'pendiente', 'revisar', 'llamar', 'contactar', 'seguimiento'];
+        if (palabrasClave.some(p => textoCompleto.toLowerCase().includes(p))) {
+            colWrapper.insertAdjacentHTML('beforeend', `
+                <div class="ia-accion-rapida">
+                    <button onclick="abrirCrearRecordatorioDesdeIA()" class="ia-btn-accion">
+                        <span class="material-symbols-rounded">add_task</span>
+                        Crear recordatorio
+                    </button>
+                </div>
+            `);
+        }
+
+        await registrarUsoIA(tokensEntrada, tokensSalida, texto);
 
     } catch (error) {
         typingEl?.remove();
@@ -280,6 +385,77 @@ async function enviarMensajeIA(textoForzado) {
     } finally {
         iaTyping = false;
         actualizarBtnSendIA(false);
+    }
+}
+
+// ── Burbuja streaming ─────────────────────────
+function crearBurbujaStreaming() {
+    const cont = document.getElementById('iaMensajes');
+    const div  = document.createElement('div');
+    div.className = 'ia-msg ia-msg-assistant';
+
+    const colWrapper = document.createElement('div');
+    colWrapper.className = 'ia-msg-col';
+
+    const burbuja = document.createElement('div');
+    burbuja.className = 'ia-msg-burbuja';
+
+    colWrapper.appendChild(burbuja);
+    div.innerHTML = `<div class="ia-msg-avatar">✦</div>`;
+    div.appendChild(colWrapper);
+    cont.appendChild(div);
+    cont.scrollTop = cont.scrollHeight;
+    return { div, burbuja, colWrapper };
+}
+
+// ── Feedback ──────────────────────────────────
+async function enviarFeedbackIA(feedbackId, valor) {
+    const contenedor = document.getElementById(feedbackId);
+    if (contenedor) {
+        contenedor.innerHTML  = valor === 1 ? '✅ Gracias' : '📝 Anotado';
+        contenedor.style.opacity = '0.6';
+    }
+    try {
+        const { data } = await supabaseClient
+            .from('ia_uso')
+            .select('id')
+            .eq('usuario_id', datosUsuario?.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (data?.id) {
+            await supabaseClient.from('ia_uso').update({ feedback: valor }).eq('id', data.id);
+        }
+    } catch (e) {
+        console.warn('⚠️ Feedback IA:', e);
+    }
+}
+
+// ── Recordatorio desde IA ─────────────────────
+function abrirCrearRecordatorioDesdeIA() {
+    if (typeof abrirDrawerRecordatorios === 'function') {
+        abrirDrawerRecordatorios();
+        setTimeout(() => {
+            const btn = document.querySelector('.dr-btn-nuevo, [onclick*="abrirFormNuevo"]');
+            if (btn) btn.click();
+        }, 300);
+    }
+}
+
+// ── Registrar uso ─────────────────────────────
+async function registrarUsoIA(tokensEntrada = 0, tokensSalida = 0, pregunta = '') {
+    try {
+        await supabaseClient.from('ia_uso').insert({
+            usuario_id:      datosUsuario?.id,
+            modulo:          iaModuloActual,
+            tokens_entrada:  tokensEntrada,
+            tokens_salida:   tokensSalida,
+            tokens_total:    tokensEntrada + tokensSalida,
+            mensaje_usuario: pregunta.slice(0, 500)
+        });
+    } catch (e) {
+        console.warn('⚠️ No se pudo registrar uso IA:', e);
     }
 }
 
@@ -313,9 +489,8 @@ function renderizarClientesIA(jsonStr) {
         `).join('');
 
         return `<div class="ia-clientes-lista">${items}</div>`;
-
     } catch (e) {
-        console.warn('⚠️ IA: no se pudo parsear bloque <clientes>', e);
+        console.warn('⚠️ IA bloque <clientes>:', e);
         return '';
     }
 }
@@ -327,33 +502,26 @@ function obtenerInicialesIA(nombre) {
     return (p[0][0] + p[p.length - 1][0]).toUpperCase();
 }
 
-// ── Formato de respuesta ──────────────────────
+// ── Formato respuesta ─────────────────────────
 function formatearRespuestaIA(texto) {
-    // 1. Extraer y renderizar bloques <clientes>
     let html = texto.replace(
         /<clientes>([\s\S]*?)<\/clientes>/g,
         (_, json) => `__CLIENTES__${btoa(encodeURIComponent(json))}__`
     );
 
-    // 2. Escapar HTML del texto restante
     html = escapeIAHtml(html);
 
-    // 3. Restaurar bloques de clientes ya renderizados
-    html = html.replace(
-        /&lt;clientes&gt;([\s\S]*?)&lt;\/clientes&gt;/g, ''
-    );
+    html = html.replace(/&lt;clientes&gt;([\s\S]*?)&lt;\/clientes&gt;/g, '');
     html = html.replace(
         /__CLIENTES__(.*?)__/g,
         (_, b64) => renderizarClientesIA(decodeURIComponent(atob(b64)))
     );
 
-    // 4. Markdown inline
-    const lineas  = html.split('\n');
-    const result  = [];
-    let enLista   = false;
+    const lineas = html.split('\n');
+    const result = [];
+    let enLista  = false;
 
     for (const linea of lineas) {
-        // Saltear líneas que ya son HTML de clientes
         if (linea.includes('ia-clientes-lista') || linea.includes('ia-cliente-card')) {
             result.push(linea);
             continue;
@@ -381,9 +549,14 @@ function agregarMensajeIADOM(rol, texto) {
     div.className = `ia-msg ia-msg-${rol}`;
 
     if (rol === 'assistant') {
-        div.innerHTML = `
-            <div class="ia-msg-avatar">✦</div>
-            <div class="ia-msg-burbuja">${formatearRespuestaIA(texto)}</div>`;
+        const colWrapper  = document.createElement('div');
+        colWrapper.className = 'ia-msg-col';
+        const burbuja     = document.createElement('div');
+        burbuja.className = 'ia-msg-burbuja';
+        burbuja.innerHTML = formatearRespuestaIA(texto);
+        colWrapper.appendChild(burbuja);
+        div.innerHTML     = `<div class="ia-msg-avatar">✦</div>`;
+        div.appendChild(colWrapper);
     } else if (rol === 'user') {
         div.innerHTML = `<div class="ia-msg-burbuja">${escapeIAHtml(texto)}</div>`;
     } else {
@@ -441,38 +614,11 @@ function actualizarBtnSendIA(cargando) {
 }
 
 function mostrarToastIA(msg) {
-    const t = document.createElement('div');
+    const t       = document.createElement('div');
     t.className   = 'ia-toast';
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3000);
-}
-
-// ── API Key ───────────────────────────────────
-const IA_KEY_STORAGE = 'ss_anthropic_key';
-
-function obtenerApiKeyIA()  { return localStorage.getItem(IA_KEY_STORAGE) || ''; }
-
-function abrirConfigIA() {
-    const o = document.getElementById('iaConfigOverlay');
-    const i = document.getElementById('iaApiKeyInput');
-    if (!o || !i) return;
-    i.value = obtenerApiKeyIA();
-    o.style.display = 'flex';
-    setTimeout(() => i.focus(), 100);
-}
-
-function cerrarConfigIA() {
-    const o = document.getElementById('iaConfigOverlay');
-    if (o) o.style.display = 'none';
-}
-
-function guardarApiKeyIA() {
-    const key = document.getElementById('iaApiKeyInput').value.trim();
-    if (!key) { alert('Ingresa una API key válida'); return; }
-    localStorage.setItem(IA_KEY_STORAGE, key);
-    cerrarConfigIA();
-    mostrarToastIA('✅ API Key guardada');
 }
 
 // ── Utils ─────────────────────────────────────

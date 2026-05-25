@@ -47,18 +47,16 @@ async function cargarUsuarios() {
 // Renderizar tabla
 function renderizarTabla() {
     const tbody = document.getElementById('tablaUsuarios');
-    
     if (!tbody) return;
     
     if (usuarios.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 40px;">
-                    <span class="material-symbols-rounded" style="font-size: 48px; opacity: 0.3;">group_off</span>
+                <td colspan="8" style="text-align:center;padding:40px;">
+                    <span class="material-symbols-rounded" style="font-size:48px;opacity:0.3;">group_off</span>
                     <p>No hay usuarios registrados</p>
                 </td>
-            </tr>
-        `;
+            </tr>`;
         return;
     }
     
@@ -67,14 +65,13 @@ function renderizarTabla() {
     usuarios.forEach(usuario => {
         const tr = document.createElement('tr');
         
-        const rolClass = usuario.rol === 'admin' ? 'badge-admin' : 
-                        usuario.rol === 'operador' ? 'badge-operador' : 'badge-soporte';
-        
+        const rolClass    = usuario.rol === 'admin' ? 'badge-admin' : usuario.rol === 'operador' ? 'badge-operador' : 'badge-soporte';
         const estadoClass = usuario.activo ? 'badge-activo' : 'badge-inactivo';
         const estadoTexto = usuario.activo ? 'Activo' : 'Inactivo';
-        const estadoIcon = usuario.activo ? 'check_circle' : 'cancel';
-        const supervisor = usuarios.find(u => u.id === usuario.supervisor_id);
-        const nombreSupervisor = supervisor ? supervisor.nombre : '-'
+        const estadoIcon  = usuario.activo ? 'check_circle' : 'cancel';
+        const supervisor  = usuarios.find(u => u.id === usuario.supervisor_id);
+        const nombreSupervisor = supervisor ? supervisor.nombre : '-';
+        const usaIA       = usuario.puede_usar_ia || usuario.rol === 'admin';
         
         tr.innerHTML = `
             <td>${usuario.nombre}</td>
@@ -82,12 +79,18 @@ function renderizarTabla() {
             <td><span class="badge-rol ${rolClass}">${usuario.rol}</span></td>
             <td>
                 <span class="badge-estado ${estadoClass}">
-                    <span class="material-symbols-rounded" style="font-size: 16px;">${estadoIcon}</span>
+                    <span class="material-symbols-rounded" style="font-size:16px;">${estadoIcon}</span>
                     ${estadoTexto}
                 </span>
             </td>
-            <td>${usuario.es_supervisor ? '<span class="badge-rol badge-admin">Supervisor</span>' : nombreSupervisor }</td>
+            <td>${usuario.es_supervisor ? '<span class="badge-rol badge-admin">Supervisor</span>' : nombreSupervisor}</td>
             <td>${new Date(usuario.created_at).toLocaleDateString('es-ES')}</td>
+            <td style="text-align:center">
+                ${usaIA
+                    ? '<span style="color:#8b5cf6;font-size:0.85rem;font-weight:700;">✦ IA</span>'
+                    : '<span style="color:#cbd5e1;font-size:0.85rem;">—</span>'
+                }
+            </td>
             <td>
                 <button class="btn-edit" onclick="editarUsuario('${usuario.id}')">
                     <span class="material-symbols-rounded">edit</span>
@@ -280,10 +283,7 @@ async function eliminarUsuario(id, nombre) {
 function buscarUsuarios() {
     const busqueda = document.getElementById('searchUsuarios').value.toLowerCase();
     
-    if (!busqueda) {
-        renderizarTabla();
-        return;
-    }
+    if (!busqueda) { renderizarTabla(); return; }
     
     const filtrados = usuarios.filter(u => 
         u.nombre?.toLowerCase().includes(busqueda) ||
@@ -297,24 +297,22 @@ function buscarUsuarios() {
     if (filtrados.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 40px;">
-                    <span class="material-symbols-rounded" style="font-size: 48px; opacity: 0.3;">search_off</span>
+                <td colspan="8" style="text-align:center;padding:40px;">
+                    <span class="material-symbols-rounded" style="font-size:48px;opacity:0.3;">search_off</span>
                     <p>No se encontraron usuarios</p>
                 </td>
-            </tr>
-        `;
+            </tr>`;
         return;
     }
     
     filtrados.forEach(usuario => {
         const tr = document.createElement('tr');
         
-        const rolClass = usuario.rol === 'admin' ? 'badge-admin' : 
-                        usuario.rol === 'operador' ? 'badge-operador' : 'badge-soporte';
-        
+        const rolClass    = usuario.rol === 'admin' ? 'badge-admin' : usuario.rol === 'operador' ? 'badge-operador' : 'badge-soporte';
         const estadoClass = usuario.activo ? 'badge-activo' : 'badge-inactivo';
         const estadoTexto = usuario.activo ? 'Activo' : 'Inactivo';
-        const estadoIcon = usuario.activo ? 'check_circle' : 'cancel';
+        const estadoIcon  = usuario.activo ? 'check_circle' : 'cancel';
+        const usaIA       = usuario.puede_usar_ia || usuario.rol === 'admin';
         
         tr.innerHTML = `
             <td>${usuario.nombre}</td>
@@ -322,11 +320,17 @@ function buscarUsuarios() {
             <td><span class="badge-rol ${rolClass}">${usuario.rol}</span></td>
             <td>
                 <span class="badge-estado ${estadoClass}">
-                    <span class="material-symbols-rounded" style="font-size: 16px;">${estadoIcon}</span>
+                    <span class="material-symbols-rounded" style="font-size:16px;">${estadoIcon}</span>
                     ${estadoTexto}
                 </span>
             </td>
             <td>${new Date(usuario.created_at).toLocaleDateString('es-ES')}</td>
+            <td style="text-align:center">
+                ${usaIA
+                    ? '<span style="color:#8b5cf6;font-size:0.85rem;font-weight:700;">✦ IA</span>'
+                    : '<span style="color:#cbd5e1;font-size:0.85rem;">—</span>'
+                }
+            </td>
             <td>
                 <button class="btn-edit" onclick="editarUsuario('${usuario.id}')">
                     <span class="material-symbols-rounded">edit</span>
