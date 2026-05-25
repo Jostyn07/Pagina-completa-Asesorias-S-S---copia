@@ -57,8 +57,8 @@ const IA_CHIPS = {
         { label: '⚠️ Áreas de mejora',             texto: 'Identifica las áreas donde más se repiten errores o bajas puntuaciones.' },
     ],
     graficas: [
-        { label: '📈 Interpretar tendencia',       texto: 'Interpreta la tendencia de ventas que estoy viendo.' },
-        { label: '🔍 Anomalías',                   texto: '¿Hay algún mes con comportamiento inusual en los datos?' },
+        { label: '📊 Resumen general',            texto: 'Dame un resumen general de las estadísticas de la plataforma.' },
+        { label: '❓ ¿Qué puedes hacer?',         texto: '¿Qué tipo de consultas puedes responder sobre los datos?' },
     ],
     revision: [
         { label: '📋 Pendientes urgentes',         texto: 'Muéstrame los casos para revisar más urgentes o con más tiempo sin atender.' },

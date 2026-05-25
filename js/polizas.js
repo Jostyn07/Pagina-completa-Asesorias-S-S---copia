@@ -2513,7 +2513,7 @@ function actualizarIndicadorFiltros() {
             padding: 12px 20px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-            z-index: 1000;
+            z-index: 2;
             font-size: 0.9rem;
             font-weight: 500;
             display: flex;

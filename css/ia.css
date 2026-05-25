@@ -1,5 +1,5 @@
 /* ============================================
-   IA.CSS — Asistente S&S Asesorías
+   IA.CSS
    ============================================ */
 
 /* ── Botón flotante ───────────────────────── */
@@ -72,6 +72,7 @@
     opacity: 1;
     pointer-events: all;
     transform: translateY(0) scale(1);
+    z-index: 99999;
 }
 
 /* ── Header del panel ─────────────────────── */
@@ -577,4 +578,62 @@
         max-height: 70vh;
         bottom: 72px;
     }
+}
+
+.ia-feedback {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+    padding-left: 36px;
+}
+
+.ia-feedback button {
+    background: none;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.ia-feedback button:hover {
+    background: #f1f5f9;
+}
+
+.ia-accion-rapida {
+    padding-left: 36px;
+    margin-top: 4px;
+}
+
+.ia-btn-accion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 8px;
+    color: #4338ca;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+}
+
+.ia-btn-accion:hover {
+    background: #e0e7ff;
+}
+
+.ia-btn-accion .material-symbols-rounded {
+    font-size: 0.95rem;
+}
+
+.ia-msg-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 82%;
+    min-width: 0;
 }
