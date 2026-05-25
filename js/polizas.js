@@ -2,7 +2,7 @@
 // VARIABLES GLOBALES
 // ============================================
 let todasLasPolizas = [];
-let modoFiltroEstado = 'compania';
+let modoFiltroEstado = 'mercado';
 let polizasFiltradas = [];
 let paginaActual = 1;
 let polizasPorPagina = 10;
@@ -538,10 +538,18 @@ async function cargarPolizas() {
         }
         
         const { data, error } = await query;
-        
+
         if (error) {
             console.error('❌ Error:', error);
-            throw error;
+            // Si es error 500, reintentar una vez después de 2 seg
+            if (error.code === 'PGRST' || error.message?.includes('500')) {
+                await new Promise(r => setTimeout(r, 2000));
+                const { data: data2, error: error2 } = await query;
+                if (error2) throw error2;
+                // usar data2
+            } else {
+                throw error;
+            }
         }
         
         ;
