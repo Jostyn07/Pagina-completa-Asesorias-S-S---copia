@@ -192,25 +192,70 @@
                             </select>
                         </div>
 
-                        <!-- Es supervisor -->
-                        <div class="form-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="esSupervisor">
-                                Es supervisor
-                            </label>
-                        </div>
+                        <!-- Permisos y configuración -->
+                        <div class="toggles-section">
+                            <span class="toggles-section-label">Permisos y acceso</span>
 
-                        <div class="form-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="activo" checked>
-                                <span>Usuario activo</span>
+                            <label class="toggle-row toggle-supervisor" for="esSupervisor">
+                                <div class="toggle-row-info">
+                                    <span class="material-symbols-rounded">manage_accounts</span>
+                                    <div class="toggle-row-text">
+                                        <strong>Es supervisor</strong>
+                                        <small>Puede ver y gestionar su equipo de operadores</small>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="esSupervisor">
+                                    <span class="toggle-track"></span>
+                                </div>
                             </label>
-                        </div>
 
-                        <div class="form-group">
-                            <label >
-                                <input type="checkbox" id="puedeVerMonitoreo">
-                                Puede ver monitoreo
+                            <div class="toggle-divider"></div>
+
+                            <label class="toggle-row" for="activo">
+                                <div class="toggle-row-info">
+                                    <span class="material-symbols-rounded">verified_user</span>
+                                    <div class="toggle-row-text">
+                                        <strong>Usuario activo</strong>
+                                        <small>Puede iniciar sesión en la plataforma</small>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="activo" checked>
+                                    <span class="toggle-track"></span>
+                                </div>
+                            </label>
+
+                            <div class="toggle-divider"></div>
+
+                            <label class="toggle-row toggle-monitoreo" for="puedeVerMonitoreo">
+                                <div class="toggle-row-info">
+                                    <span class="material-symbols-rounded">monitor_heart</span>
+                                    <div class="toggle-row-text">
+                                        <strong>Puede ver Monitoreo</strong>
+                                        <small>Acceso a la pantalla de actividad en tiempo real</small>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="puedeVerMonitoreo">
+                                    <span class="toggle-track"></span>
+                                </div>
+                            </label>
+
+                            <div class="toggle-divider"></div>
+
+                            <label class="toggle-row toggle-ia" for="puedeUsarIA">
+                                <div class="toggle-row-info">
+                                    <span class="material-symbols-rounded">auto_awesome</span>
+                                    <div class="toggle-row-text">
+                                        <strong>Puede usar IA</strong>
+                                        <small>Acceso al asistente de inteligencia artificial</small>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="puedeUsarIA">
+                                    <span class="toggle-track"></span>
+                                </div>
                             </label>
                         </div>
                     </div>

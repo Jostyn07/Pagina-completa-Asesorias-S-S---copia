@@ -28,7 +28,7 @@ async function cargarRolUsuario() {
         // Leer rol Directo de la tabla usuarios en supabase
         const { data: usuarioDB, error: dbError } = await supabaseClient
             .from('usuarios')
-            .select('id, nombre, email, rol, activo, puede_ver_monitoreo, es_supervisor')
+            .select('id, nombre, email, rol, activo, puede_ver_monitoreo, es_supervisor, puede_usar_ia')
             .eq('email', user.email)
             .single();
         
@@ -83,4 +83,31 @@ function obtenerUsuarioEmail() {
 
 function obtenerRolUsuario() {
     return rolUsuario;
+}
+
+function puedeUsarIA() {
+    if (!datosUsuario) return false;
+    // Admin siempre tiene acceso
+    if (datosUsuario.rol === 'admin') return true;
+    return datosUsuario.puede_usar_ia === true;
+}
+
+function obtenerNivelContextoIA() {
+    if (!datosUsuario) return null;
+    const rol = datosUsuario.rol;
+    return {
+        usuarioId:    datosUsuario.id,
+        nombre:       datosUsuario.nombre,
+        rol:          rol,
+        esSupervisor: datosUsuario.es_supervisor || false,
+        // Define hasta dónde llega la consulta a la BD
+        // 'global'     → admin: ve todo
+        // 'equipo'     → supervisor: ve su equipo
+        // 'propio'     → operador/soporte: solo sus datos
+        alcance: rol === 'admin'
+            ? 'global'
+            : datosUsuario.es_supervisor
+                ? 'equipo'
+                : 'propio'
+    };
 }

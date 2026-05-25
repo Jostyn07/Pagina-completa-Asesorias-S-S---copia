@@ -464,3 +464,142 @@ body {
         width: 95%;
     }
 }
+
+/* ============================================
+   TOGGLE SWITCHES
+   ============================================ */
+.toggles-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 6px 4px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.toggles-section-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 8px 12px 4px;
+}
+
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    gap: 12px;
+}
+
+.toggle-row:hover {
+    background: var(--border-color);
+}
+
+.toggle-row-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.toggle-row-info .material-symbols-rounded {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.toggle-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.toggle-row-text strong {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.toggle-row-text small {
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* Switch visual */
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-track {
+    position: absolute;
+    inset: 0;
+    background: #cbd5e1;
+    border-radius: 100px;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.toggle-track::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-switch input:checked + .toggle-track {
+    background: var(--primary-color);
+}
+
+.toggle-switch input:checked + .toggle-track::after {
+    transform: translateX(20px);
+}
+
+.toggle-switch input:focus-visible + .toggle-track {
+    outline: 3px solid rgba(37, 99, 235, 0.35);
+    outline-offset: 2px;
+}
+
+/* Colores por tipo de permiso */
+.toggle-row.toggle-supervisor .toggle-switch input:checked + .toggle-track {
+    background: #8b5cf6;
+}
+
+.toggle-row.toggle-ia .toggle-switch input:checked + .toggle-track {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.toggle-row.toggle-monitoreo .toggle-switch input:checked + .toggle-track {
+    background: #0ea5e9;
+}
+
+/* Divider entre toggles */
+.toggle-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 2px 12px;
+}

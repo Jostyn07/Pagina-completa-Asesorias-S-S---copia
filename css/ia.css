@@ -1,0 +1,580 @@
+/* ============================================
+   IA.CSS — Asistente S&S Asesorías
+   ============================================ */
+
+/* ── Botón flotante ───────────────────────── */
+#iaChatWrap {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 1000;
+}
+
+.ia-fab {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.45);
+    transition: transform 0.2s, box-shadow 0.2s, border-radius 0.2s;
+    color: white;
+}
+
+.ia-fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.55);
+}
+
+.ia-fab.ia-fab-activo {
+    border-radius: 14px;
+}
+
+.ia-fab-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.ia-fab-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+/* ── Panel principal ──────────────────────── */
+.ia-panel {
+    position: absolute;
+    bottom: 68px;
+    right: 0;
+    width: 380px;
+    background: var(--card-background, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 18px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14);
+    display: flex;
+    flex-direction: column;
+    max-height: 580px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px) scale(0.97);
+    transform-origin: bottom right;
+    transition: opacity 0.22s, transform 0.22s;
+    overflow: hidden;
+}
+
+.ia-panel.ia-panel-abierto {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0) scale(1);
+}
+
+/* ── Header del panel ─────────────────────── */
+.ia-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    border-radius: 18px 18px 0 0;
+    flex-shrink: 0;
+}
+
+.ia-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ia-panel-icon {
+    font-size: 1.4rem;
+}
+
+.ia-panel-title strong {
+    font-size: 0.92rem;
+    display: block;
+    line-height: 1.2;
+}
+
+.ia-panel-title small {
+    font-size: 0.72rem;
+    opacity: 0.85;
+}
+
+.ia-panel-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.ia-icon-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.ia-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.ia-icon-btn .material-symbols-rounded {
+    font-size: 1rem;
+}
+
+/* ── Barra de carga de contexto ───────────── */
+.ia-contexto-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    color: #6366f1;
+    background: #eef2ff;
+    border-bottom: 1px solid #e0e7ff;
+    flex-shrink: 0;
+}
+
+/* ── Área de mensajes ─────────────────────── */
+.ia-mensajes {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+}
+
+/* ── Bienvenida ───────────────────────────── */
+.ia-bienvenida {
+    text-align: center;
+    padding: 20px 16px 8px;
+    color: var(--text-muted, #64748b);
+}
+
+.ia-bienvenida-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    color: #8b5cf6;
+}
+
+.ia-bienvenida p {
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+
+/* ── Chips de sugerencia ──────────────────── */
+.ia-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ia-chip {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: #374151;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    font-family: inherit;
+}
+
+.ia-chip:hover {
+    background: #ede9fe;
+    border-color: #c4b5fd;
+    color: #6d28d9;
+}
+
+.ia-chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Burbujas de mensajes ─────────────────── */
+.ia-msg {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.ia-msg-user {
+    flex-direction: row-reverse;
+}
+
+.ia-msg-error {
+    justify-content: center;
+}
+
+.ia-msg-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.ia-msg-burbuja {
+    max-width: 82%;
+    padding: 10px 13px;
+    border-radius: 16px;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    word-break: break-word;
+}
+
+.ia-msg-assistant .ia-msg-burbuja {
+    background: #f8fafc;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-bottom-left-radius: 4px;
+    color: var(--text-color, #1e293b);
+}
+
+.ia-msg-user .ia-msg-burbuja {
+    background: linear-gradient(135deg, #6366f1, #7c3aed);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.ia-msg-error-burbuja {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    max-width: 100%;
+}
+
+/* Contenido markdown dentro de burbujas */
+.ia-msg-burbuja p {
+    margin: 0 0 6px;
+}
+
+.ia-msg-burbuja p:last-child {
+    margin-bottom: 0;
+}
+
+.ia-msg-burbuja ul {
+    margin: 4px 0;
+    padding-left: 16px;
+}
+
+.ia-msg-burbuja li {
+    margin-bottom: 2px;
+}
+
+.ia-msg-burbuja strong {
+    font-weight: 700;
+}
+
+.ia-msg-burbuja code {
+    background: rgba(0, 0, 0, 0.07);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-family: monospace;
+}
+
+.ia-msg-user .ia-msg-burbuja code {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Lista de clientes con links ──────────── */
+.ia-clientes-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 6px 0;
+    width: 100%;
+}
+
+.ia-cliente-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--card-background, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text-color, #1e293b);
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    cursor: pointer;
+}
+
+.ia-cliente-card:hover {
+    background: #f5f3ff;
+    border-color: #6366f1;
+    transform: translateX(2px);
+}
+
+.ia-cliente-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ia-cliente-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.ia-cliente-info strong {
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ia-cliente-info small {
+    font-size: 0.72rem;
+    color: var(--text-muted, #64748b);
+}
+
+.ia-cliente-arrow {
+    font-size: 0.9rem !important;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+/* ── Typing indicator ─────────────────────── */
+.ia-typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 14px !important;
+}
+
+.ia-typing span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #94a3b8;
+    display: inline-block;
+    animation: ia-bounce 1.2s infinite;
+}
+
+.ia-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ia-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ia-bounce {
+    0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+    40%           { transform: scale(1.1); opacity: 1; }
+}
+
+/* ── Input area ───────────────────────────── */
+.ia-input-area {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    flex-shrink: 0;
+}
+
+.ia-textarea {
+    flex: 1;
+    resize: none;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    padding: 9px 12px;
+    font-size: 0.83rem;
+    font-family: inherit;
+    background: var(--background-page, #f8fafc);
+    color: var(--text-color, #1e293b);
+    outline: none;
+    line-height: 1.4;
+    transition: border-color 0.15s;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.ia-textarea:focus {
+    border-color: #8b5cf6;
+}
+
+.ia-send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border: none;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s, transform 0.1s;
+    flex-shrink: 0;
+}
+
+.ia-send-btn:hover:not(:disabled) {
+    transform: scale(1.07);
+}
+
+.ia-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ia-send-btn .material-symbols-rounded {
+    font-size: 1.1rem;
+}
+
+/* ── Modal API Key ────────────────────────── */
+.ia-config-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ia-config-modal {
+    background: var(--card-background, #fff);
+    border-radius: 16px;
+    padding: 28px 24px;
+    width: 360px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.ia-config-modal h3 {
+    font-size: 1rem;
+    margin-bottom: 8px;
+    color: var(--text-color, #1e293b);
+}
+
+.ia-config-modal p {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-bottom: 16px;
+}
+
+.ia-config-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+    outline: none;
+    background: var(--background-page, #f8fafc);
+    color: var(--text-color, #1e293b);
+    font-family: monospace;
+    box-sizing: border-box;
+}
+
+.ia-config-input:focus {
+    border-color: #8b5cf6;
+}
+
+.ia-config-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.ia-config-cancel {
+    padding: 8px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.84rem;
+    color: #64748b;
+    font-family: inherit;
+}
+
+.ia-config-save {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.84rem;
+    color: white;
+    font-weight: 600;
+    font-family: inherit;
+}
+
+/* ── Toast ────────────────────────────────── */
+.ia-toast {
+    position: fixed;
+    bottom: 100px;
+    right: 28px;
+    background: #1e293b;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 0.84rem;
+    z-index: 3000;
+    animation: ia-toast-in 0.2s ease;
+    pointer-events: none;
+}
+
+@keyframes ia-toast-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Animación spin ───────────────────────── */
+@keyframes ia-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.ia-spin {
+    display: inline-block;
+    animation: ia-spin 0.8s linear infinite;
+}
+
+/* ── Responsive ───────────────────────────── */
+@media (max-width: 480px) {
+    #iaChatWrap {
+        bottom: 16px;
+        right: 16px;
+    }
+
+    .ia-panel {
+        width: calc(100vw - 32px);
+        max-height: 70vh;
+        bottom: 72px;
+    }
+}

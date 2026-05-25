@@ -118,6 +118,7 @@ async function abrirModalCrear() {
     document.getElementById('grupoSupervisor').style.display = 'none';
     document.getElementById('esSupervisor').checked = false;
     document.getElementById('puedeVerMonitoreo').checked = false;
+    document.getElementById('puedeUsarIA').checked = false;
     await cargarSupervisores();
 }
 
@@ -139,7 +140,9 @@ async function editarUsuario(id) {
     document.getElementById('rol').value = usuario.rol;
     document.getElementById('activo').checked = usuario.activo;
     document.getElementById('puedeVerMonitoreo').checked = usuario.puede_ver_monitoreo || false;
+    document.getElementById('puedeUsarIA').checked = usuario.puede_usar_ia || false;
     document.getElementById('esSupervisor').checked = usuario.es_supervisor || false;
+
     
     // Ocultar campo contraseña en edición
     document.getElementById('grupoPassword').style.display = 'none';
@@ -189,12 +192,11 @@ async function guardarUsuario(event) {
                         return val || null;
                     })(),
                     puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
+                    puede_usar_ia: document.getElementById('puedeUsarIA').checked,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', idEditando)
                 .select();
-                
-            console.log('Resultado update:', data, 'Error:', error);
             
             
             if (error) throw error;
@@ -234,6 +236,7 @@ async function guardarUsuario(event) {
                     es_supervisor: document.getElementById('esSupervisor').checked,
                     supervisor_id: rol === 'operador' ? (document.getElementById('supervisorId').value || null) : null,
                     puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
+                    puede_usar_ia: document.getElementById('puedeUsarIA').checked,
                 });
             
             if (dbError) throw dbError;
