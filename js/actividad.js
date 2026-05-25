@@ -109,7 +109,7 @@ async function pingActividad() {
         }
         await supabaseClient
             .from('actividad_sesiones')
-            .update({updateData})
+            .update(updateData)
             .eq('usuario_id', actividadUsuarioId);
     } catch (error) {
         console.warn('⚠️ Error en ping actividad:', error);

@@ -55,6 +55,9 @@ async function obtenerPolizasParaIA(limite) {
                 fecha_efectividad,
                 fecha_vencimiento,
                 created_at,
+                estado_documentos,
+                documentos_pendientes,
+                operador_nombre,
                 cliente:clientes (
                     id,
                     nombres,
@@ -64,8 +67,7 @@ async function obtenerPolizasParaIA(limite) {
                     tipo_registro,
                     tipo_modificacion,
                     venta_realizada_por,
-                    operador_nombre,
-                    estado_documentos
+                    operador_nombre
                 )
             `)
             .limit(max);
@@ -127,7 +129,7 @@ async function obtenerClientesParaIA() {
             operador:        p.operador_nombre || c.operador_nombre,
             compania:        p.compania,
             estado_compania: p.estado_compania,
-            estado_docs:     p.estado_documentos || c.estado_documentos,
+            estado_docs:     p.estado_documentos,
             tipo_registro:   c.tipo_registro,
             fecha_nacimiento: c.fecha_nacimiento,
             cumple_hoy:      cumpleHoy,
