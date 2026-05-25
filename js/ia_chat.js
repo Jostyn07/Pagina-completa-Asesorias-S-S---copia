@@ -265,7 +265,13 @@ async function enviarMensajeIA(textoForzado) {
     actualizarBtnSendIA(true);
     const typingEl = mostrarTypingIA();
 
-    if (!iaContextoCache) await cargarContextoIA();
+    // Determinar si esta pregunta necesita el listado de clientes
+    const necesitaClientes = preguntaNecesitaClientes(texto);
+
+    // Cargar contexto con o sin clientes según la pregunta
+    if (!iaContextoCache || (necesitaClientes && !iaContextoCache.datos?.clientes)) {
+        iaContextoCache = await construirContextoIA(iaModuloActual, necesitaClientes);
+    }
 
     try {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -635,6 +641,18 @@ function iaKeydown(e) {
 function autoResizeIA(el) {
     el.style.height = 'auto';
     el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// Palabras que indican que el usuario quiere ver clientes individuales
+const PALABRAS_CLIENTES = [
+    'muéstrame', 'mostrar', 'listar', 'lista', 'trae', 'traer',
+    'clientes', 'personas', 'quién', 'quienes', 'cumpleaños',
+    'cumplen', 'vencen', 'pendientes', 'incompletos', 'cancelados'
+];
+
+function preguntaNecesitaClientes(texto) {
+    const lower = texto.toLowerCase();
+    return PALABRAS_CLIENTES.some(p => lower.includes(p));
 }
 
 // ── Init ──────────────────────────────────────
