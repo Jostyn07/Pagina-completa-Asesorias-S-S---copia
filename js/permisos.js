@@ -28,7 +28,7 @@ async function cargarRolUsuario() {
         // Leer rol Directo de la tabla usuarios en supabase
         const { data: usuarioDB, error: dbError } = await supabaseClient
             .from('usuarios')
-            .select('id, nombre, email, rol, activo, puede_ver_monitoreo, es_supervisor, puede_usar_ia')
+            .select('id, nombre, email, rol, activo, puede_ver_monitoreo, es_supervisor, puede_usar_ia, puede_ver_movimientos')
             .eq('email', user.email)
             .single();
         
@@ -110,4 +110,10 @@ function obtenerNivelContextoIA() {
                 ? 'equipo'
                 : 'propio'
     };
+}
+
+function puderVerMovimientos() {
+    if (!datosUsuario) return false;
+    if (datosUsuario.rol == 'admin') return true
+    return datosUsuario.puede_ver_movimientos === true;
 }

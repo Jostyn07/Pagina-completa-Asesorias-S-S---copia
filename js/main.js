@@ -516,6 +516,11 @@ async function inicializarMenuAdmin() {
     if (menuMonitoreo && datosUsuario?.puede_ver_monitoreo === true) {
         menuMonitoreo.style.display = 'flex';
     }
+
+    const menuMovimientos = document.getElementById('menuMovimientos');
+    if (menuMovimientos && puderVerMovimientos()) {
+        menuMovimientos.style.display = 'flex';
+    }
 }
 document.addEventListener('DOMContentLoaded', inicializarMenuAdmin);
 

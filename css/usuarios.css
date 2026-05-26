@@ -603,3 +603,7 @@ body {
     background: var(--border-color);
     margin: 2px 12px;
 }
+
+.toggle-row.toggle-movimientos .toggle-switch input:checked + .toggle-track {
+    background: #f59e0b;
+}

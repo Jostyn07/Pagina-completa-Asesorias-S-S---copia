@@ -62,6 +62,12 @@
                 <span class="material-symbols-rounded">monitor_heart</span>
                 <span>Monitoreo</span>
             </a>
+
+            <a href="./movimientos.html" class="menu-item" id="menuMovimientos" style="display:none">
+                <span class="material-symbols-rounded">swap_horiz</span>
+                <span>Movimientos</span>
+            </a>
+            
             <a href="./usuarios.html" class="menu-item">
                 <span class="material-symbols-rounded">group</span>
                 <span>Usuarios</span>
@@ -157,19 +163,65 @@
                     <div class="mov-card-label">Cambios de vida</div>
                 </div>
             </div>
+
+            <div class="mov-card mov-card-mod">
+                <span class="mov-card-icon material-symbols-rounded">edit_note</span>
+                <div class="mov-card-num" id="cardMods">0</div>
+                <div class="mov-card-label">Modificaciones</div>
+            </div>
           </div>
-    </main>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../js/supabase_config.js"></script>
-    <script src="../js/permisos.js"></script>
-    <script src="../js/main.js"></script>
-    <script src="../js/movimientos.js"></script>
-    <script src="../js/recordatorios.js"></script>
-    <script src="../js/actividad.js"></script>
-    <script src="../js/ia_contexto.js"></script>
-    <script src="../js/ia_chat.js"></script>
+
+          <!-- Ranking operadores -->
+           <div class="mov-ranking" id="movRanking" style="display: none;">
+                <h3>Ranking del periodo</h3>
+                <div class="mov-ranking-lista" id="movRankingLista"></div>
+           </div>
+
+           <!-- Tabla -->
+            <div class="mov.tabla.wrap">
+                <div class="mov-tabla-header">
+                    <span id="movContador">0 movimientos</span>
+                </div>
+
+                <div class="mov-tabla-scroll">
+                    <table class="mov-tabla" id="movTabla">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Operador</th>
+                                <th>Cliente</th>
+                                <th>Teléfono</th>
+                                <th>Compañia</th>
+                                <th>Tipo</th>
+                                <th>Detalle</th>
+                                <th>Observación</th>
+                                <th id="thObsSup" style="display: none;">Obs. supervisor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="movTbody">
+                            <tr>
+                                <td colspan="9" class="mov-loading">
+                                    <div class="mov-spinner"></div>
+                                    Cargando movimientos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="../js/supabase_config.js"></script>
+        <script src="../js/permisos.js"></script>
+        <script src="../js/main.js"></script>
+        <script src="../js/movimientos.js"></script>
+        <script src="../js/recordatorios.js"></script>
+        <script src="../js/actividad.js"></script>
+        <script src="../js/ia_contexto.js"></script>
+        <script src="../js/ia_chat.js"></script>
 </body>
 </html>
