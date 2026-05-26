@@ -154,7 +154,19 @@ function restaurarFiltrosDesdeStorage() {
         actualizarTextoTipoVentas
     }
     set('tipoModificacion', datos.filtroTipoModificacion)
-    set('filtroOperador', datos.operador);
+    if (datos.operadores && Array.isArray(datos.operadores) && datos.operadores.length > 0) {
+        document.querySelectorAll('#panelOperadores input[type="checkbox"]').forEach(cb => {
+            cb.checked = datos.operadores.includes(cb.value);
+        });
+        actualizarTextoOperadores();
+    }
+
+    if (datos.ventaRealizadaPor && Array.isArray(datos.ventaRealizadaPor) && datos.ventaRealizadaPor.length > 0) {
+    document.querySelectorAll('#panelVentaRealizadaPor input[type="checkbox"]').forEach(cb => {
+        cb.checked = datos.ventaRealizadaPor.includes(cb.value);
+    });
+    actualizarTextoVentaRealizadaPor();
+}
     set('filtroDocumentos', datos.documentos);
     set('mesPagado', datos.mesPagado);
     set('filtroSeguimientoEfectivo', datos.seguimientoEfectivo);
@@ -206,7 +218,7 @@ function restaurarFiltrosDesdeStorage() {
         prima: datos.prima || '',
         filtroTipoModificacion: datos.filtroTipoModificacion || '',
         tiposVenta: datos.tiposVenta || [],
-        operador: datos.operador || '',
+        operadores: datos.operadores || [],
         ventaRealizadaPor: datos.ventaRealizadaPor || [],
         mesPagado: datos.mesPagado || '',
         documentos: datos.documentos || '',

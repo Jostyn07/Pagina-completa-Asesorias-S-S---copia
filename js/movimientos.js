@@ -75,7 +75,7 @@ function obtenerRangoFechas() {
         
         case 'semana': {
             const lunes = newDate(hoy);
-            const dia = hoy.(getDate() - dia +1);
+            const dia = hoy.getDay() || 7;
             lunes.setDate(hoy.getDate() - dia + 1);
             return { desde: fISO(lunes), hasta: fISO(hoy)}
         }
@@ -87,7 +87,7 @@ function obtenerRangoFechas() {
             };
         }
 
-        case 'anio' {
+        case 'anio': {
             return { desde: `${hoy.getFullYear()}-01-01`, hasta: fISO(hoy)}
         }
 
