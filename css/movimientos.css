@@ -1,3 +1,211 @@
 .mov-main { 
-    
+    margin-left: 260px;
+    padding: 28px 30px;
+    min-height: 100vh;
+    background: var(--background-page, #f8fafc);
+    transition: margin-left 0.3s;
+}
+
+/* Header */
+.mov-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.mov-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-color, #1e293b);
+    margin-bottom: 4px;
+}
+
+.mov-header p {
+    color: var(--text-muted, #64748b);
+    font-size: 0.88rem;
+    margin: 0;
+}
+
+.mov-btn-excel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: #16a34a;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+}
+
+.mov-btn-excel:hover { background: #15803d;}
+
+/* Filtros */
+.mov-filtros {
+    background: var(--card-background, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.mov-periodo-tabs {
+    display: flex;
+    gap: 6px;
+    flex: wrap;
+}
+
+.mov-tab {
+    padding: 7px 16px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    background: var(--background-page, #f8fafc);
+    color: var(--text-color, #374151);
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.mov-tab:hover {
+    border-color: #6366f1;
+    color: #6366f1;
+}
+
+.mov-tab.active {
+    background-color: #6366f1;
+    color: white;
+    border-color: #6366f1;
+}
+
+.mov-fechas-custom { 
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.mov-fecha-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mov-fecha-grupo label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.mov-fecha-grupo input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    font-size: 0.84rem;
+    background: var(--background-page, #f8fafc);
+    color: var(--text-color, #374151);
+    outline: none;
+    width: 140px;
+}
+
+.mov-fecha-grupo input:focus { border-color: #6366f1;}
+
+.mov-filtro-row {
+    display: flex;
+    gap: 10px;;
+    flex-wrap: wrap;
+}
+
+.mov-select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    font-size: 0.84rem;
+    background: var(--background-page, #f8fafc);
+    color: var(--text-color, #374151);
+    outline: none;
+    min-width: 180px;
+    cursor: pointer;
+}
+
+.mov-select:focus { border-color: #6366f1; }
+
+.mov-search {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color, #e2e8f0);;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    background: var(--background-page, #f8fafc);
+    color: var(--text-color, #374151);
+    outline: none;
+    min-width: 200px;
+    flex: 1;
+}
+
+.mov-search:focus { border-color: #6366f1;}
+
+/* Cards */
+.mov-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.mov-card {
+    background: var(--card-background, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.mov-card-icon {
+    font-size: 1.6rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mov-card-total .mov-card-icon { background: #eef2ff; color:#6366f1;}
+.mov-card-nuevas .mov-card-icon { background: #dcfce7; color: #16a34a;}
+.mov-card-recuperada .mov-card-icon { background: #f3f3c7; color: #d97706}
+.mov-card-cambio .mov-card-icon {background: #cffafe; color: #0891b2;}
+.mov-card-mod .mov-card-icon {background: #f1f5f9; color: #64748b;}
+
+.mov-card-num {
+    font-size: 0.78rem;
+    color: var(--text-muted, #64748b);
+    margin-top: 2px;
+}
+
+/* Ranking */
+.mov-ranking {
+    background: var(--card-background, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
 }

@@ -46,10 +46,6 @@
                 <span>Recordatorios</span>
                 <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
             </a>
-            <a href="./movimientos.html" class="menu-item active">
-                <span class="material-symbols-rounded">swap_horiz</span>
-                <span>Movimientos</span>
-            </a>
             <a href="./control_calidad.html" class="menu-item">
                 <span class="material-symbols-rounded">verified</span>
                 <span>Control de calidad</span>
@@ -63,7 +59,7 @@
                 <span>Monitoreo</span>
             </a>
 
-            <a href="./movimientos.html" class="menu-item" id="menuMovimientos" style="display:none">
+            <a href="./movimientos.html" class="menu-item active" id="menuMovimientos" style="display:none">
                 <span class="material-symbols-rounded">swap_horiz</span>
                 <span>Movimientos</span>
             </a>
@@ -98,13 +94,15 @@
         </div>
 
         <!-- Filtros -->
-         <div class="mov-periodo-tabs" id="periodTabs">
-            <button class="mov-tab acive" data-periodo="hoy" onclick="cambiarPeriodo('hoy', this)">Hoy</button>
-            <button class="mov-tab acive" data-periodo="semana" onclick="cambiarPeriodo('semana', this)">Esta semana</button>
-            <button class="mov-tab acive" data-periodo="mes" onclick="cambiarPeriodo('mes', this)">Este mes</button>
-            <button class="mov-tab acive" data-periodo="anio" onclick="cambiarPeriodo('anio', this)">Este año</button>
-            <button class="mov-tab acive" data-periodo="custom" onclick="cambiarPeriodo('custom', this)">Personalizado</button>
-         </div>
+        <div class="mov-filtros">
+            <div class="mov-periodo-tabs" id="periodTabs">
+                <button class="mov-tab active" data-periodo="hoy" onclick="cambiarPeriodo('hoy', this)">Hoy</button>
+                <button class="mov-tab" data-periodo="semana" onclick="cambiarPeriodo('semana', this)">Esta semana</button>
+                <button class="mov-tab" data-periodo="mes" onclick="cambiarPeriodo('mes', this)">Este mes</button>
+                <button class="mov-tab" data-periodo="anio" onclick="cambiarPeriodo('anio', this)">Este año</button>
+                <button class="mov-tab" data-periodo="custom" onclick="cambiarPeriodo('custom', this)">Personalizado</button>
+            </div>
+        </div>
 
          <div class="mov-fechas-custom" id="movFechasCustom" style="display: none;">
             <div class="mov-fecha-grupo">
@@ -140,8 +138,17 @@
             <input type="text" class="mov-search" id="movBusqueda" placeholder="Buscar cliente..." oninput="aplicarFiltros()">
           </div>
 
-          <div class="mov-cards" id="movCars">
+          <div class="mov-cards" id="movCards">
             <div class="mov-card mov-card-total">
+                <span class="mov-card-icon material-symbols-rounded">swap_horiz</span>
+                <div>
+                    <div class="mov-card-num" id="cardTotal">0</div>
+                    <div class="mov-card-label">Total movimientos</div>
+                </div>
+            </div>
+            
+
+            <div class="mov-card mov-card-nuevas">
                 <span class="mov-card-icon material-symbols-rounded">swap_horiz</span>
                 <div>
                     <div class="mov-card-num" id="cardNuevas">0</div>
@@ -157,7 +164,7 @@
             </div>
 
             <div class="mov-card mov-card-cambio">
-                <span class="mov.card-icon material-symbols-rounded">published_with_changes</span>
+                <span class="mov-card-icon material-symbols-rounded">published_with_changes</span>
                 <div>
                     <div class="mov-card-num" id="cardCambios">0</div>
                     <div class="mov-card-label">Cambios de vida</div>
