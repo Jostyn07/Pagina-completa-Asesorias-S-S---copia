@@ -212,14 +212,113 @@ async function cargarPolizasMovimientos(desde, hasta) {
             )
         `)
         .gte('updated_at', desde)
-        .gte('updated_at', hasta)
+        .lte('updated_at', hasta)
         .not('cliente.tipo_modificacion', 'is', null)
         .order('updated_at', { asceding: false});
     if (!esAdministrador() && !datosUsuario?.es_supervisor) {
         query2 = query2.eq('operador_nombre', datosUsuario?.nombre);
     }
 
-    const { data: data2 } = await query2 
+    const { data: data2 } = await query2;
+
+    return [...TIPOS_MOV(data || []), ...(data2 || [])];
+}
+
+async function cargarHistorialMovimientos(desde, hasta) {
+    let query = supabaseClient
+        .from('historial_cambios')
+        .select(`
+            id,
+            cliente_id,
+            tipo_cambio,
+            seccion,
+            campo_modificado,
+            valor_anterior,
+            valor_nuevo,
+            usuario_nombre,
+            created_at,
+            cliente:clientes (
+                id,
+                nombres,
+                apellidos,
+                telefono1
+            ),
+            poliza:polizas (
+                id,
+                compania,
+                operador_nombre
+            )
+        `)
+        gte('create_at', desde)
+        lte('create_at', desde)
+        .order('create_at', {asceding: false})
+
+    if (!esAdministrador() && !datosUsuario?.es_supervisor) {
+        query = query.eq ('usuario_nombre', datosUsuario?.nombre);
+    }
+
+    const { data } = await query;
+
+    // Agrupar por cliente + tipo_cambio + día
+    const grupos = new Map();
+    (data || []).forEach(h => {
+        const dia = h.created_at.split('T')[0];
+        const key = `${h.cliente_id}_${h.tipo_cambio}_${h.dia}_${h.usuario_nombre}`;
+        if (!grupos.has(key)) {
+            grupos.set(key, { ...h, campos: []});
+        }
+        grupos.get(key).campos.push(h.campo_modificado);
+    });
+
+    return Array.from(grupos.values());
+}
+
+async function cargarSeguimientosMovimientos(desde, hasta) {
+    let query = supabaseClient
+        .from('seguimientos')
+        .select(`
+            id,
+            fecha_seguimiento,
+            medio_comunicacion,
+            observacion,
+            seguimiento_efectivo,
+            poliza:polizas (
+                id,
+                operador_nombre,
+                compania,
+                cliente:clientes (
+                    id,
+                    nombres,
+                    apellidos,
+                    telefono1,
+                )
+            )
+        `)
+        .gte('fecha_seguimiento', desde)
+        .lte('fecha_seguimiento', hasta)
+        .order('fecha_seguimiento', { ascending: false});
+    
+    const { data } = await query;
+    return data || [];
+}
+
+async function cargarObservaciones() {
+    const { data } = await supabaseClient
+        .from('movimientos_observaciones')
+        .select('*')
+    return data || []
+}
+
+// Normalizar fuentes
+function normalizarPolizas(polzas) {
+    const vistos = new Set();
+    return polizas
+        .filter(p => p.cliente)
+        .map(p => {
+            const c = p.cliente;
+            const tipoMod = (c.tipo_modificacion || '').toLowerCase();
+            const tipoReg = (c.tipo_Registro ||'') 
+        })
 }
 
 // Ranking

@@ -1616,6 +1616,9 @@ async function handleSubmit(event) {
         fecha_inicial_cobertura: formData.displayFechaInicial || '',
         fecha_final_cobertura: formData.displayFechaFinal || formData.fechaFinalCobertura || '',
         estado_compania: formData.estadoCompania || '',
+        email_portal: formData.emailPortal || '',
+        contrasena_portal: formData.contrasenaPortal || '',
+        observacion_compania: formData.observacionCompania || '',
         agente35_estado: formData.agente35_estado || '',
         operador_nombre: formData.operadorNombre || '',
         member_id: formData.memberId || '',
@@ -2488,6 +2491,18 @@ async function cargarEstadoSeguimiento(polizaId) {
                 actualizarBadgeEstado('badgeEstadoCompania', poliza.estado_compania);
             }
 
+            if (poliza.email_portal) {
+                document.getElementById('emailPortal').value = poliza.email_portal
+            }
+            
+            if (poliza.contrasena_portal) {
+                document.getElementById('contrasenaPortal').value = poliza.contrasena_portal
+            }
+
+            if (poliza.observacion_compania) {
+                document.getElementById('observacionCompania').value = poliza.observacion_compania
+            }
+
             if (poliza.pagado_hasta) document.getElementById('pagadoHasta').value = formatoUS(poliza.pagado_hasta);
             if (poliza.fecha_confirmacion) document.getElementById('fechaConfirmacion').value = formatoUS(poliza.fecha_confirmacion);
 
@@ -2639,6 +2654,9 @@ async function guardarEstadoSeguimiento(polizaId) {
             fecha_revision_compania: document.getElementById('fechaRevisionCompania')?.value || null,
             nombre_agente_compania: document.getElementById('nombreAgenteCompania')?.value || null,
             estado_compania: document.getElementById('estadoCompania')?.value || null,
+            email_portal: document.getElementById('emailPortal')?.value || null,
+            contrasena_portal: document.getElementById('contrasenaPortal')?.value || null,
+            observacion_compania: document.getElementById('observacion_compania')?.value || null,
             pagado_hasta: document.getElementById('pagadoHasta')?.value || null,
             fecha_confirmacion: document.getElementById('fechaConfirmacion')?.value || null,
             observacion_pagos: document.getElementById('observacionPago')?.value || null,
@@ -3619,6 +3637,9 @@ function obtenerDatosFormularioPoliza() {
         coaseguro: document.getElementById('coaseguro')?.value || '',
         maximo_bolsillo: document.getElementById('maximoBolsillo')?.value || '',
         estado_compania: document.getElementById('estadoCompania')?.value || '',
+        email_portal: document.getElementById('emailPortal') || '',
+        contrasena_portal: document.getElementById('contrasenaPortal') || '',
+        observacion_compania: document.getElementById('observacionCompania') || '',
         pagado_hasta: document.getElementById('pagadoHasta')?.value || '',
         fecha_confirmacion: document.getElementById('fechaConfirmacion')?.value || '',
         observacion_pagos: document.getElementById('observacionPago')?.value || '',
