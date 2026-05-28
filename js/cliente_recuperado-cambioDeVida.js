@@ -892,6 +892,27 @@ async function guardarYEnviar(e) {
             `${tipoCambio === 'recuperado' ? 'Recuperado' : 'Cambio de vida'} programado para ${fechaEfectiva}`, 
             'success'
         );
+
+        // Registrar en movimientos
+        try {
+            const tipoMov = tipoCambio === 'recuperado' ? 'Recuperada'
+                            : tipoCambio === 'cambio_de_vida' ? 'Cambio de vida'
+                            : 'Editado';
+            
+            await supabaseClient.from('movimientos').insert({
+                cliente_id: clienteIdSeleccionado,
+                poliza_id: polizaIdSeleccionada,
+                operador_nombre: nombreOperador,
+                tipo: tipoMov,
+                detalle: camposModificados || 'Sin campos modificados',
+                compania: formData.compania || '',
+                cliente_nombre: `${formData.nombres} ${formData.apellidos}`.trim(),
+                cliente_telefono: (formData.telefono1 || '').replace(/\D/g, ''),
+            });
+        } catch (e) {
+            console.warn('Error registrando movimientos', e);
+        }
+
         localStorage.removeItem('borrador_recuperado');
         detenerGuardadoBorrador();
 

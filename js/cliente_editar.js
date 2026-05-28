@@ -1652,6 +1652,28 @@ async function handleSubmit(event) {
             await registrarCambio(clienteId, 'poliza_editada', 'Póliza', cambiosPoliza);
         }
 
+        // Registrar movimientos
+        const tipoMov = determinarTipoMovimiento(
+            datosOriginalesCliente.tipo_modificacion,
+            formData.tipoModificacion,
+            formData.tipoRegistro
+        );
+
+        const todosCambios = [...cambiosCliente, ...cambiosPoliza];
+        const detalleMov = todosCambios.length > 0
+            ? todosCambios.map(c => formatearNombreCampo(c.campo)).join(', ')
+            : 'Sin cambios de campos';
+
+        await registrarMovimientos({
+            clienteId,
+            polizaId,
+            tipo: tipoMov,
+            detalle: detalleMov,
+            compania: formData.compania,
+            clienteNombre: `${formData.nombres} ${formData.apellidos}`.trim(),
+            clienteTelefono: formData.telefono1?.replace(/\D/g, '') || '',
+        });
+
         // Actualizar datos originales
         capturarDatosOriginales(datosClienteNuevos, datosPolizaNuevos);
         
@@ -2867,7 +2889,34 @@ async function guardarSeguimientoModal() {
                 valorNuevo: `${seguimiento.fecha_seguimiento} - ${seguimiento.medio_comunicacion}`,
                 seccion: 'Seguimientos'
             }]);
+            
+            supabaseClient
+                .from('polizas')
+                .select('compania, cliente:cliente(nombres, apellidos, telefono1)')
+                .eq('id', polizasId)
+                .single()
+                then(async ({ data: polizaData }) => {
+                    const { data: { user } } = await supabaseClient.auth.getUser()
+                    const { data: usuarioData } = await supabaseClient
+                        .from('usuarios').select('nombre').eq('email', user.email).single()
+
+                    return supabaseClient.from('movimientos').insert({
+                        cliente_id: clienteId,
+                        poliza_id: polizaId,
+                        operador_nombre: usuarioData?.nombre || user.email,
+                        tipo: 'Seguimiento',
+                        detalle: `${seguimiento.medio_comunicacion}${seguimiento.seguimiento_efectivo === 'Si' ? ' — Efectivo ✅' : ''}`,
+                        compania: polizaData?.compania || '',
+                        cliente_nombre: polizaData?.cliente
+                                        ? `${polizaData.cliente.nombre} ${polizaData.cliente.apellidos}`.trim()
+                                        : '',
+                        cliente_telefono: polizaData?.cliente.telefono1?.replace(/\D/g, '') || '',
+                    });
+                })
+                .catch(e => console.warn('Error registrando movimiento de seguimiento', e));
         }
+
+        // Registrar en movimientos
         
         // Recargar seguimientos
         await cargarSeguimientos(polizaId);
@@ -3819,6 +3868,43 @@ async function cargarHistorial(clienteId, pagina = 1) {
                 </div>
             `;
         }
+    }
+}
+
+// Determinar tipo de movimiento
+function determinarTipoMovimiento(tipoModAnterior, tipoModNuevo, tipoRegistro) {
+    const TIPOS_ESPECIALES = ['Recuperada', 'Cambio de vida', 'Renovación'];
+
+    const anterior = (tipoModAnterior || '').trim();
+    const nuevo = (tipoModNuevo || '').trim();
+
+    if (anterior !== nuevo && TIPOS_ESPECIALES.includes(nuevo)) {
+        return nuevo;
+    }
+
+    // Sin cambio o cambio a valor no especial
+    return 'Editado'
+}
+
+// Registrar movimiento
+async function registrarMovimientos({ clienteId, polizaId, tipo, detalle, compania, clienteNombre, clienteTelefono}) {
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: usuarioData } = await supabaseClient
+            .from('usuarios').select('nombre').eq('email', user.email).single();
+
+        await supabaseClient.from('movimientos').insert({
+            cliente_id: clienteId,
+            poliza_id: polizaId,
+            operador_nombre: usuarioData?.nombre || user.email,
+            tipo,
+            detalle,
+            compania,
+            cliente_nombre: clienteNombre,
+            cliente_telefono: clienteTelefono,
+        });
+    } catch (e) {
+        console.warn('Error registrando movimento:', e);
     }
 }
 

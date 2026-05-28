@@ -1484,7 +1484,7 @@ async function guardarNotas(clienteId) {
             nombreOperador:         formData.operadorNombre || '',
             registradoPor:          formData.operadorNombre || '',
             fecha:                  formData.fechaRegistro || new Date().toISOString().split('T')[0],
-            tipoVenta:              formData.tipoRegistro || '',
+            tipoVenta:              formData.tipoVenta || '',
             tipoRegistro:           formData.tipoRegistro || '',
             ventaRealizadaPor:      formData.ventaRealizadaPor || '',
 
@@ -1543,6 +1543,23 @@ async function guardarNotas(clienteId) {
         ;
     } catch (errorSheets) {
         console.error('⚠️ Error al enviar a Google Sheets:', errorSheets);
+    }
+
+    try {
+        await supabaseClient.from('movimientos').insert({
+            cliente_id: cliente.id,
+            poliza_id: poliza.id,
+            operador_nombre: formData.ventaRealizadaPor || formData.operadorNombre,
+            tipo: formData.tipoRegistro === 'Venta con registro' ? 'Venta con registro
+                : formData.tipoRegistro === 'Renovacion' ? 'Renovación'
+                : 'Nueva',
+            detalle: `Nueva póliza ${poliza.numero_poliza} - ${formData.compania} / ${formData.plan}`,
+            compania: formData.compania || '',
+            cliente_nombre: `${formData.nombres} ${formData.apellidos}`.trim(),
+            cliente_telefono: formData.telefono1?.replace(/\D/g, '') || '',
+        });
+    } catch (e) {
+        console.warn('Error registrando movimiento:', e)
     }
     
     localStorage.removeItem('borrador_cliente');

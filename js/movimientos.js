@@ -1,18 +1,20 @@
-let todosLosMovimientos   = [];
-let movimientosFiltrados  = [];
-let observacionesCache    = {};
-let periodoActual         = 'mes';
-let esSupervisorOAdmin    = false;
+// ============================================
+// MOVIMIENTOS.JS — Lee directamente de la tabla movimientos
+// ============================================
 
-// ── Tipos de movimiento ───────────────────────
+let todosLosMovimientos  = [];
+let movimientosFiltrados = [];
+let periodoActual        = 'mes';
+let esSupervisorOAdmin   = false;
+
+// ── Configuración de tipos ────────────────────
+// Las claves deben coincidir EXACTAMENTE con lo que se guarda en movimientos.tipo
 const TIPOS_MOV = {
-    nueva:          { label: 'Nueva póliza',      color: '#22c55e', icon: 'add_circle' },
-    renovacion:     { label: 'Renovación',         color: '#3b82f6', icon: 'autorenew' },
-    venta_registro: { label: 'Venta con registro', color: '#8b5cf6', icon: 'point_of_sale' },
-    recuperada:     { label: 'Recuperada',         color: '#f59e0b', icon: 'published_with_changes' },
-    cambio_vida:    { label: 'Cambio de vida',     color: '#06b6d4', icon: 'family_restroom' },
-    modificacion:   { label: 'Modificación',       color: '#94a3b8', icon: 'edit_note' },
-    seguimiento:    { label: 'Seguimiento',        color: '#ec4899', icon: 'phone_in_talk' },
+    'Nueva':          { label: 'Nueva',          color: '#22c55e', icon: 'add_circle' },
+    'Recuperada':     { label: 'Recuperada',      color: '#f59e0b', icon: 'published_with_changes' },
+    'Cambio de vida': { label: 'Cambio de vida',  color: '#06b6d4', icon: 'family_restroom' },
+    'Editado':        { label: 'Editado',         color: '#94a3b8', icon: 'edit_note' },
+    'Renovación':     { label: 'Renovación',      color: '#3b82f6', icon: 'autorenew' },
 };
 
 // ── Init ──────────────────────────────────────
@@ -20,7 +22,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await cargarRolUsuario();
     esSupervisorOAdmin = esAdministrador() || datosUsuario?.es_supervisor;
 
-    // Mostrar columna de obs. supervisor si aplica
     if (esSupervisorOAdmin) {
         document.getElementById('thObsSup').style.display = '';
     }
@@ -37,7 +38,8 @@ function inicializarFlatpickr() {
         locale: {
             months: {
                 shorthand: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
-                longhand:  ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+                longhand:  ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto',
+                            'Septiembre','Octubre','Noviembre','Diciembre']
             },
             weekdays: {
                 shorthand: ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],
@@ -62,8 +64,8 @@ function cambiarPeriodo(periodo, btn) {
 
 // ── Calcular rango de fechas ──────────────────
 function obtenerRangoFechas() {
-    const hoy   = new Date();
-    const fISO  = d => d.toISOString().split('T')[0];
+    const hoy  = new Date();
+    const fISO = d => d.toISOString().split('T')[0];
 
     switch (periodoActual) {
         case 'hoy':
@@ -100,7 +102,7 @@ function obtenerRangoFechas() {
     }
 }
 
-// ── Cargar operadores en dropdown ─────────────
+// ── Dropdown operadores ───────────────────────
 async function cargarOperadoresDropdown() {
     const { data } = await supabaseClient
         .from('usuarios')
@@ -117,7 +119,7 @@ async function cargarOperadoresDropdown() {
     });
 }
 
-// ── Cargar todos los movimientos ──────────────
+// ── Carga principal — directo de movimientos ──
 async function cargarMovimientos() {
     mostrarCargando(true);
 
@@ -125,30 +127,36 @@ async function cargarMovimientos() {
     const hastaFin = hasta + 'T23:59:59';
 
     try {
-        const [polizas, historial, seguimientos, observaciones] = await Promise.all([
-            cargarPolizasMovimientos(desde, hastaFin),
-            cargarHistorialMovimientos(desde, hastaFin),
-            cargarSeguimientosMovimientos(desde, hastaFin),
-            cargarObservaciones()
-        ]);
+        let query = supabaseClient
+            .from('movimientos')
+            .select('*')
+            .gte('fecha', desde)
+            .lte('fecha', hastaFin)
+            .order('fecha', { ascending: false });
 
-        // Construir cache de observaciones
-        observacionesCache = {};
-        (observaciones || []).forEach(o => {
-            observacionesCache[`${o.referencia_id}_${o.tipo_ref}`] = o;
-        });
+        // Filtro por rol: operador solo ve los suyos
+        if (!esAdministrador() && !datosUsuario?.es_supervisor) {
+            query = query.eq('operador_nombre', datosUsuario?.nombre);
+        }
 
-        // Normalizar y unificar
-        const movPolizas   = normalizarPolizas(polizas || []);
-        const movHistorial = normalizarHistorial(historial || []);
-        const movSeg       = normalizarSeguimientos(seguimientos || []);
+        const { data, error } = await query;
+        if (error) throw error;
 
-        todosLosMovimientos = [...movPolizas, ...movHistorial, ...movSeg]
-            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        todosLosMovimientos = (data || []).map(m => ({
+            uid:           m.id,
+            fecha:         m.fecha || m.created_at,
+            operador:      m.operador_nombre  || '—',
+            cliente:       m.cliente_nombre   || '—',
+            cliente_id:    m.cliente_id,
+            telefono:      m.cliente_telefono || '—',
+            compania:      m.compania         || '—',
+            tipo:          m.tipo             || 'Editado',
+            detalle:       m.detalle          || '',
+            observacion:   m.observacion_operador   || '',
+            obs_supervisor: m.observacion_supervisor || '',
+        }));
 
-        // Poblar dropdown compañías
         poblarDropdownCompanias();
-
         aplicarFiltros();
 
     } catch (e) {
@@ -157,258 +165,22 @@ async function cargarMovimientos() {
     }
 }
 
-// ── Queries a Supabase ────────────────────────
-async function cargarPolizasMovimientos(desde, hasta) {
-    // Filtro por rol
-    let query = supabaseClient
-        .from('polizas')
-        .select(`
-            id,
-            operador_nombre,
-            compania,
-            created_at,
-            cliente:clientes (
-                id,
-                nombres,
-                apellidos,
-                telefono1,
-                tipo_registro,
-                tipo_modificacion,
-                venta_realizada_por
-            )
-        `)
-        .gte('created_at', desde)
-        .lte('created_at', hasta)
-        .in('cliente.tipo_registro', ['Nuevo', 'Venta con registro', 'Renovacion'])
-        .order('created_at', { ascending: false });
-
-    if (!esAdministrador() && !datosUsuario?.es_supervisor) {
-        query = query.eq('operador_nombre', datosUsuario?.nombre);
-    }
-
-    const { data } = await query;
-
-    // También recuperadas y cambios de vida (por fecha de updated_at)
-    let query2 = supabaseClient
-        .from('polizas')
-        .select(`
-            id,
-            operador_nombre,
-            compania,
-            updated_at,
-            cliente:clientes (
-                id,
-                nombres,
-                apellidos,
-                telefono1,
-                tipo_registro,
-                tipo_modificacion,
-                venta_realizada_por
-            )
-        `)
-        .gte('updated_at', desde)
-        .lte('updated_at', hasta)
-        .not('cliente.tipo_modificacion', 'is', null)
-        .order('updated_at', { ascending: false });
-
-    if (!esAdministrador() && !datosUsuario?.es_supervisor) {
-        query2 = query2.eq('operador_nombre', datosUsuario?.nombre);
-    }
-
-    const { data: data2 } = await query2;
-
-    return [...(data || []), ...(data2 || [])];
-}
-
-async function cargarHistorialMovimientos(desde, hasta) {
-    let query = supabaseClient
-        .from('historial_cambios')
-        .select(`
-            id,
-            cliente_id,
-            tipo_cambio,
-            seccion,
-            campo_modificado,
-            valor_anterior,
-            valor_nuevo,
-            usuario_nombre,
-            created_at,
-            cliente:clientes (
-                id,
-                nombres,
-                apellidos,
-                telefono1
-            ),
-            poliza:polizas (
-                id,
-                compania,
-                operador_nombre
-            )
-        `)
-        .gte('created_at', desde)
-        .lte('created_at', hasta)
-        .order('created_at', { ascending: false });
-
-    if (!esAdministrador() && !datosUsuario?.es_supervisor) {
-        query = query.eq('usuario_nombre', datosUsuario?.nombre);
-    }
-
-    const { data } = await query;
-
-    // Agrupar por cliente + tipo_cambio + día para no mostrar 40 filas por una edición
-    const grupos = new Map();
-    (data || []).forEach(h => {
-        const dia  = h.created_at.split('T')[0];
-        const key  = `${h.cliente_id}_${h.tipo_cambio}_${dia}_${h.usuario_nombre}`;
-        if (!grupos.has(key)) {
-            grupos.set(key, { ...h, campos: [] });
-        }
-        grupos.get(key).campos.push(h.campo_modificado);
-    });
-
-    return Array.from(grupos.values());
-}
-
-async function cargarSeguimientosMovimientos(desde, hasta) {
-    let query = supabaseClient
-        .from('seguimientos')
-        .select(`
-            id,
-            fecha_seguimiento,
-            medio_comunicacion,
-            observacion,
-            seguimiento_efectivo,
-            poliza:polizas (
-                id,
-                operador_nombre,
-                compania,
-                cliente:clientes (
-                    id,
-                    nombres,
-                    apellidos,
-                    telefono1
-                )
-            )
-        `)
-        .gte('fecha_seguimiento', desde)
-        .lte('fecha_seguimiento', hasta)
-        .order('fecha_seguimiento', { ascending: false });
-
-    const { data } = await query;
-    return data || [];
-}
-
-async function cargarObservaciones() {
-    const { data } = await supabaseClient
-        .from('movimientos_observaciones')
-        .select('*');
-    return data || [];
-}
-
-// ── Normalizar fuentes ────────────────────────
-function normalizarPolizas(polizas) {
-    const vistos = new Set();
-    return polizas
-        .filter(p => p.cliente)
-        .map(p => {
-            const c        = p.cliente;
-            const tipoMod  = (c.tipo_modificacion || '').toLowerCase();
-            const tipoReg  = (c.tipo_registro || '').toLowerCase();
-            const esRecup  = tipoMod === 'recuperada';
-            const esCambio = tipoMod === 'cambio de vida';
-
-            let tipo;
-            if (esRecup)               tipo = 'recuperada';
-            else if (esCambio)         tipo = 'cambio_vida';
-            else if (tipoReg === 'nuevo') tipo = 'nueva';
-            else if (tipoReg === 'renovacion') tipo = 'renovacion';
-            else if (tipoReg.includes('venta')) tipo = 'venta_registro';
-            else return null;
-
-            const fecha = esRecup || esCambio ? p.updated_at : p.created_at;
-            const uid   = `poliza_${p.id}_${tipo}`;
-            if (vistos.has(uid)) return null;
-            vistos.add(uid);
-
-            return {
-                uid,
-                ref_id:    p.id,
-                tipo_ref:  'poliza',
-                fecha,
-                operador:  p.operador_nombre || c.venta_realizada_por || '—',
-                cliente:   `${c.nombres || ''} ${c.apellidos || ''}`.trim(),
-                cliente_id: c.id,
-                telefono:  c.telefono1 || '—',
-                compania:  p.compania || '—',
-                tipo,
-                detalle:   TIPOS_MOV[tipo]?.label || tipo,
-                observacion: '',
-            };
-        })
-        .filter(Boolean);
-}
-
-function normalizarHistorial(grupos) {
-    return grupos
-        .filter(h => h.cliente)
-        .map(h => {
-            const c = h.cliente;
-            const p = h.poliza;
-            return {
-                uid:       `historial_${h.id}`,
-                ref_id:    h.id,
-                tipo_ref:  'historial',
-                fecha:     h.created_at,
-                operador:  h.usuario_nombre || '—',
-                cliente:   `${c.nombres || ''} ${c.apellidos || ''}`.trim(),
-                cliente_id: c.id,
-                telefono:  c.telefono1 || '—',
-                compania:  p?.compania || '—',
-                tipo:      'modificacion',
-                detalle:   h.campos?.length
-                    ? `${h.tipo_cambio}: ${h.campos.slice(0,3).join(', ')}${h.campos.length > 3 ? ` +${h.campos.length - 3} más` : ''}`
-                    : h.tipo_cambio,
-                observacion: '',
-            };
-        });
-}
-
-function normalizarSeguimientos(seguimientos) {
-    return seguimientos
-        .filter(s => s.poliza?.cliente)
-        .map(s => {
-            const p = s.poliza;
-            const c = p.cliente;
-            return {
-                uid:       `seg_${s.id}`,
-                ref_id:    s.id,
-                tipo_ref:  'seguimiento',
-                fecha:     s.fecha_seguimiento,
-                operador:  p.operador_nombre || '—',
-                cliente:   `${c.nombres || ''} ${c.apellidos || ''}`.trim(),
-                cliente_id: c.id,
-                telefono:  c.telefono1 || '—',
-                compania:  p.compania || '—',
-                tipo:      'seguimiento',
-                detalle:   `${s.medio_comunicacion || 'Seguimiento'}${s.seguimiento_efectivo === 'Si' ? ' ✅' : ''}`,
-                observacion: s.observacion || '',
-            };
-        });
-}
-
 // ── Filtros ───────────────────────────────────
 function aplicarFiltros() {
     const operador = document.getElementById('filtroOperador')?.value || '';
-    const tipo     = document.getElementById('filtroTipo')?.value || '';
+    // NOTA: el HTML tiene un typo "filroTipo" — corregir en movimientos.html también
+    const tipo     = document.getElementById('filroTipo')?.value
+                  || document.getElementById('filtroTipo')?.value || '';
     const compania = document.getElementById('filtroCompania')?.value || '';
     const busqueda = (document.getElementById('movBusqueda')?.value || '').toLowerCase();
 
     movimientosFiltrados = todosLosMovimientos.filter(m => {
-        if (operador && m.operador !== operador) return false;
-        if (tipo     && m.tipo     !== tipo)     return false;
-        if (compania && m.compania !== compania) return false;
-        if (busqueda && !m.cliente.toLowerCase().includes(busqueda) &&
-                        !m.telefono.includes(busqueda))              return false;
+        if (operador && m.operador !== operador)     return false;
+        if (tipo     && m.tipo    !== tipo)          return false;
+        if (compania && m.compania !== compania)     return false;
+        if (busqueda &&
+            !m.cliente.toLowerCase().includes(busqueda) &&
+            !m.telefono.includes(busqueda))          return false;
         return true;
     });
 
@@ -417,9 +189,12 @@ function aplicarFiltros() {
     renderizarTabla();
 }
 
-// ── Dropdown compañías ────────────────────────
+// ── Poblar dropdown compañías ─────────────────
 function poblarDropdownCompanias() {
-    const companias = [...new Set(todosLosMovimientos.map(m => m.compania).filter(Boolean))].sort();
+    const companias = [...new Set(
+        todosLosMovimientos.map(m => m.compania).filter(Boolean)
+    )].sort();
+
     const sel = document.getElementById('filtroCompania');
     sel.innerHTML = '<option value="">Todas las compañías</option>';
     companias.forEach(c => {
@@ -430,40 +205,54 @@ function poblarDropdownCompanias() {
     });
 }
 
-// ── Cards ─────────────────────────────────────
+// ── Cards de resumen ──────────────────────────
 function actualizarCards() {
     const m = movimientosFiltrados;
-    document.getElementById('cardTotal').textContent      = m.length;
-    document.getElementById('cardNuevas').textContent     = m.filter(x => x.tipo === 'nueva' || x.tipo === 'venta_registro' || x.tipo === 'renovacion').length;
-    document.getElementById('cardRecuperadas').textContent = m.filter(x => x.tipo === 'recuperada').length;
-    document.getElementById('cardCambios').textContent    = m.filter(x => x.tipo === 'cambio_vida').length;
-    document.getElementById('cardMods').textContent       = m.filter(x => x.tipo === 'modificacion' || x.tipo === 'seguimiento').length;
+    document.getElementById('cardTotal').textContent =
+        m.length;
+    document.getElementById('cardNuevas').textContent =
+        m.filter(x => x.tipo === 'Nueva' || x.tipo === 'Renovación').length;
+    document.getElementById('cardRecuperadas').textContent =
+        m.filter(x => x.tipo === 'Recuperada').length;
+    document.getElementById('cardCambios').textContent =
+        m.filter(x => x.tipo === 'Cambio de vida').length;
+    document.getElementById('cardMods').textContent =
+        m.filter(x => x.tipo === 'Editado').length;
 }
 
-// ── Ranking ───────────────────────────────────
+// ── Ranking de operadores ─────────────────────
 function renderizarRanking() {
     if (!esSupervisorOAdmin) return;
+
     const ranking = document.getElementById('movRanking');
     const lista   = document.getElementById('movRankingLista');
     if (!lista) return;
 
+    // Agrupar por operador — solo tipos productivos
+    const TIPOS_PRODUCTIVOS = ['Nueva', 'Recuperada', 'Cambio de vida', 'Renovación'];
     const conteo = {};
-    movimientosFiltrados.forEach(m => {
-        const op = m.operador || '—';
-        conteo[op] = (conteo[op] || 0) + 1;
-    });
+    movimientosFiltrados
+        .filter(m => TIPOS_PRODUCTIVOS.includes(m.tipo))
+        .forEach(m => {
+            const op = m.operador || '—';
+            conteo[op] = (conteo[op] || 0) + 1;
+        });
 
-    const ordenado = Object.entries(conteo).sort((a,b) => b[1]-a[1]);
-    if (ordenado.length === 0) { ranking.style.display = 'none'; return; }
+    const ordenado = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
+
+    if (ordenado.length === 0) {
+        ranking.style.display = 'none';
+        return;
+    }
 
     const max = ordenado[0][1];
     lista.innerHTML = ordenado.map(([op, n], i) => `
         <div class="mov-rank-item">
-            <span class="mov-rank-pos">${i+1}</span>
+            <span class="mov-rank-pos">${i + 1}</span>
             <div class="mov-rank-info">
                 <span class="mov-rank-nombre">${op}</span>
                 <div class="mov-rank-bar">
-                    <div class="mov-rank-fill" style="width:${(n/max*100).toFixed(0)}%"></div>
+                    <div class="mov-rank-fill" style="width:${(n / max * 100).toFixed(0)}%"></div>
                 </div>
             </div>
             <span class="mov-rank-total">${n}</span>
@@ -492,19 +281,19 @@ function renderizarTabla() {
     }
 
     tbody.innerHTML = movimientosFiltrados.map(m => {
-        const conf  = TIPOS_MOV[m.tipo] || TIPOS_MOV.modificacion;
+        const conf = TIPOS_MOV[m.tipo] || { label: m.tipo, color: '#94a3b8', icon: 'edit_note' };
         const fecha = formatearFechaCorta(m.fecha);
-        const obsKey = `${m.ref_id}_${m.tipo_ref}`;
-        const obsSup = observacionesCache[obsKey]?.observacion || '';
 
-        const celdaObs = esSupervisorOAdmin
+        // Celda de observación para supervisor/admin
+        const celdaObsSup = esSupervisorOAdmin
             ? `<td class="mov-td-obs">
-                <div class="mov-obs-wrap" data-uid="${m.uid}" data-ref="${m.ref_id}" data-tipo="${m.tipo_ref}">
-                    <span class="mov-obs-texto ${obsSup ? '' : 'mov-obs-vacia'}" onclick="editarObservacion(this)">
-                        ${obsSup || '+ Agregar nota'}
+                <div class="mov-obs-wrap" data-uid="${m.uid}">
+                    <span class="mov-obs-texto ${m.obs_supervisor ? '' : 'mov-obs-vacia'}"
+                          onclick="editarObservacion(this)">
+                        ${m.obs_supervisor || '+ Agregar nota'}
                     </span>
                     <div class="mov-obs-editor" style="display:none">
-                        <textarea class="mov-obs-input" rows="2">${obsSup}</textarea>
+                        <textarea class="mov-obs-input" rows="2">${m.obs_supervisor}</textarea>
                         <div class="mov-obs-btns">
                             <button onclick="guardarObservacion(this)" class="mov-obs-guardar">Guardar</button>
                             <button onclick="cancelarObservacion(this)" class="mov-obs-cancelar">Cancelar</button>
@@ -515,7 +304,7 @@ function renderizarTabla() {
             : '';
 
         return `
-            <tr class="mov-tr mov-tr-${m.tipo}">
+            <tr>
                 <td class="mov-td-fecha">${fecha}</td>
                 <td class="mov-td-op">${m.operador}</td>
                 <td class="mov-td-cliente">
@@ -526,68 +315,53 @@ function renderizarTabla() {
                 <td>${m.telefono}</td>
                 <td>${m.compania}</td>
                 <td>
-                    <span class="mov-badge" style="background:${conf.color}20;color:${conf.color};border-color:${conf.color}40">
+                    <span class="mov-badge"
+                          style="background:${conf.color}20;color:${conf.color};border-color:${conf.color}40">
                         <span class="material-symbols-rounded" style="font-size:0.9rem">${conf.icon}</span>
                         ${conf.label}
                     </span>
                 </td>
                 <td class="mov-td-detalle">${m.detalle}</td>
                 <td class="mov-td-obs-op">${m.observacion || '—'}</td>
-                ${celdaObs}
+                ${celdaObsSup}
             </tr>
         `;
     }).join('');
 
-    // Mostrar/ocultar columna supervisor
     document.getElementById('thObsSup').style.display = esSupervisorOAdmin ? '' : 'none';
     mostrarCargando(false);
 }
 
 // ── Observaciones supervisor ──────────────────
 function editarObservacion(spanEl) {
-    const wrap   = spanEl.closest('.mov-obs-wrap');
+    const wrap = spanEl.closest('.mov-obs-wrap');
     spanEl.style.display = 'none';
     wrap.querySelector('.mov-obs-editor').style.display = 'block';
     wrap.querySelector('.mov-obs-input').focus();
 }
 
 function cancelarObservacion(btnEl) {
-    const wrap   = btnEl.closest('.mov-obs-wrap');
-    const span   = wrap.querySelector('.mov-obs-texto');
+    const wrap = btnEl.closest('.mov-obs-wrap');
     wrap.querySelector('.mov-obs-editor').style.display = 'none';
-    span.style.display = '';
+    wrap.querySelector('.mov-obs-texto').style.display = '';
 }
 
 async function guardarObservacion(btnEl) {
-    const wrap   = btnEl.closest('.mov-obs-wrap');
-    const texto  = wrap.querySelector('.mov-obs-input').value.trim();
-    const refId  = wrap.dataset.ref;
-    const tipoRef = wrap.dataset.tipo;
-    const obsKey = `${refId}_${tipoRef}`;
+    const wrap  = btnEl.closest('.mov-obs-wrap');
+    const texto = wrap.querySelector('.mov-obs-input').value.trim();
+    const movId = wrap.dataset.uid;
 
     try {
-        const existente = observacionesCache[obsKey];
+        const { error } = await supabaseClient
+            .from('movimientos')
+            .update({ observacion_supervisor: texto })
+            .eq('id', movId);
 
-        if (existente) {
-            await supabaseClient
-                .from('movimientos_observaciones')
-                .update({ observacion: texto, updated_at: new Date().toISOString() })
-                .eq('id', existente.id);
-            observacionesCache[obsKey].observacion = texto;
-        } else {
-            const { data } = await supabaseClient
-                .from('movimientos_observaciones')
-                .insert({
-                    referencia_id:     refId,
-                    tipo_ref:          tipoRef,
-                    observacion:       texto,
-                    supervisor_id:     datosUsuario?.id,
-                    supervisor_nombre: datosUsuario?.nombre
-                })
-                .select()
-                .single();
-            if (data) observacionesCache[obsKey] = data;
-        }
+        if (error) throw error;
+
+        // Actualizar en memoria para no recargar toda la lista
+        const mov = todosLosMovimientos.find(m => m.uid === movId);
+        if (mov) mov.obs_supervisor = texto;
 
         const span = wrap.querySelector('.mov-obs-texto');
         span.textContent = texto || '+ Agregar nota';
@@ -604,26 +378,21 @@ async function guardarObservacion(btnEl) {
 function exportarExcel() {
     const { desde, hasta } = obtenerRangoFechas();
 
-    const filas = movimientosFiltrados.map(m => {
-        const conf   = TIPOS_MOV[m.tipo];
-        const obsKey = `${m.ref_id}_${m.tipo_ref}`;
-        return {
-            'Fecha':            formatearFechaCorta(m.fecha),
-            'Operador':         m.operador,
-            'Cliente':          m.cliente,
-            'Teléfono':         m.telefono,
-            'Compañía':         m.compania,
-            'Tipo':             conf?.label || m.tipo,
-            'Detalle':          m.detalle,
-            'Observación':      m.observacion,
-            'Obs. Supervisor':  observacionesCache[obsKey]?.observacion || '',
-        };
-    });
+    const filas = movimientosFiltrados.map(m => ({
+        'Fecha':           formatearFechaCorta(m.fecha),
+        'Operador':        m.operador,
+        'Cliente':         m.cliente,
+        'Teléfono':        m.telefono,
+        'Compañía':        m.compania,
+        'Tipo':            TIPOS_MOV[m.tipo]?.label || m.tipo,
+        'Detalle':         m.detalle,
+        'Observación':     m.observacion,
+        'Obs. Supervisor': m.obs_supervisor,
+    }));
 
-    const wb  = XLSX.utils.book_new();
-    const ws  = XLSX.utils.json_to_sheet(filas);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(filas);
 
-    // Ancho de columnas
     ws['!cols'] = [
         { wch: 12 }, { wch: 20 }, { wch: 28 },
         { wch: 14 }, { wch: 18 }, { wch: 18 },
@@ -638,7 +407,9 @@ function exportarExcel() {
 function formatearFechaCorta(fecha) {
     if (!fecha) return '—';
     const d = new Date(fecha);
-    return d.toLocaleDateString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric' });
+    return d.toLocaleDateString('es-CO', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+    });
 }
 
 function mostrarCargando(show) {
@@ -650,10 +421,4 @@ function mostrarCargando(show) {
                 Cargando movimientos...
             </td>
         </tr>`;
-}
-
-function puedeVerMovimientos() {
-    if (!datosUsuario) return false;
-    if (datosUsuario.rol === 'admin') return true;
-    return datosUsuario.puede_ver_movimientos === true;
 }
