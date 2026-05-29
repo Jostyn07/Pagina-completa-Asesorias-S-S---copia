@@ -479,4 +479,6 @@
 
 .mov-btn-unicos.active {
     color: white;
+    background: #6366f1;
+    border-color: #6366f1;
 }
