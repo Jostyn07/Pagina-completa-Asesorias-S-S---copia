@@ -1483,7 +1483,8 @@ function validarInfoGeneral() {
         { id: 'compania', nombre: 'Compañía' },
         { id: 'plan', nombre: 'Plan' },
         { id: 'prima', nombre: 'Prima' },
-        { id: 'aplica', nombre: 'Tipo de registro'}
+        { id: 'tipoModificacion', nombre: 'Tipo de modificación'},
+        { id: 'ventaRealizadaPor', nombre: 'Venta realizada por' }
     ];
     
     for (const campo of camposRequeridos) {
