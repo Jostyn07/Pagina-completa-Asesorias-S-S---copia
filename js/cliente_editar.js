@@ -2892,10 +2892,10 @@ async function guardarSeguimientoModal() {
             
             supabaseClient
                 .from('polizas')
-                .select('compania, cliente:cliente(nombres, apellidos, telefono1)')
-                .eq('id', polizasId)
+                .select('compania, cliente:clientes(nombres, apellidos, telefono1)')
+                .eq('id', polizaId)
                 .single()
-                then(async ({ data: polizaData }) => {
+                .then(async ({ data: polizaData }) => {
                     const { data: { user } } = await supabaseClient.auth.getUser()
                     const { data: usuarioData } = await supabaseClient
                         .from('usuarios').select('nombre').eq('email', user.email).single()
@@ -2908,7 +2908,7 @@ async function guardarSeguimientoModal() {
                         detalle: `${seguimiento.medio_comunicacion}${seguimiento.seguimiento_efectivo === 'Si' ? ' — Efectivo ✅' : ''}`,
                         compania: polizaData?.compania || '',
                         cliente_nombre: polizaData?.cliente
-                                        ? `${polizaData.cliente.nombre} ${polizaData.cliente.apellidos}`.trim()
+                                        ? `${polizaData.cliente.nombres} ${polizaData.cliente.apellidos}`.trim()
                                         : '',
                         cliente_telefono: polizaData?.cliente.telefono1?.replace(/\D/g, '') || '',
                     });
