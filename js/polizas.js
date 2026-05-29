@@ -53,8 +53,8 @@ function guardarFiltrosEnStorage() {
             documentos: document.getElementById('filtroDocumentos')?.value || '',
             seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo')?.value || '',
             filtroAgenteMercado: document.getElementById('agenteMercado')?.value || '',
-            estadoMercado: document.getElementById('filtroEstadoMercado')?.value || '',
-            estadoCompania: document.getElementById('filtroEstadoCompania')?.value || '',
+            estadoMercado:  Array.from(document.querySelectorAll('#panelEstadoMercado input:checked')).map(cb => cb.value),
+            estadoCompania: Array.from(document.querySelectorAll('#panelEstadoCompania input:checked')).map(cb => cb.value),
             estadoAgente35: document.getElementById('estadoAgente35')?.value || '',
             nullPlazoDocumentos: document.getElementById('nullPlazoDocumentos')?.checked || '',
             nullFechaEfectividad: document.getElementById('nullFechaEfectividad')?.checked || '',
@@ -171,8 +171,18 @@ function restaurarFiltrosDesdeStorage() {
     set('mesPagado', datos.mesPagado);
     set('filtroSeguimientoEfectivo', datos.seguimientoEfectivo);
     set('agenteMercado', datos.filtroAgenteMercado)
-    set('filtroEstadoMercado', datos.estadoMercado);
-    set('filtroEstadoCompania', datos.estadoCompania);
+    if (datos.estadoMercado && Array.isArray(datos.estadoMercado)) {
+        document.querySelectorAll('#panelEstadoMercado input[type="checkbox"]').forEach(cb => {
+            cb.checked = datos.estadoMercado.includes(cb.value);
+        });
+        actualizarTextoEstadoMercado();
+    }
+    if (datos.estadoCompania && Array.isArray(datos.estadoCompania)) {
+        document.querySelectorAll('#panelEstadoCompania input[type="checkbox"]').forEach(cb => {
+            cb.checked = datos.estadoCompania.includes(cb.value);
+        });
+        actualizarTextoEstadoCompania();
+    }
     set('filtroEstado', datos.estado);
     set('estadoAgente35', datos.estadoAgente35);
     setChecked('nullFechaEfectividad', datos.nullFechaEfectividad);
@@ -224,8 +234,8 @@ function restaurarFiltrosDesdeStorage() {
         documentos: datos.documentos || '',
         seguimientoEfectivo: datos.seguimientoEfectivo || '',
         filtroAgenteMercado: datos.filtroAgenteMercado || '',
-        estadoMercado: datos.estadoMercado || '',
-        estadoCompania: datos.estadoCompania || '',
+        estadoMercado:  Array.isArray(datos.estadoMercado)  ? datos.estadoMercado  : [],
+        estadoCompania: Array.isArray(datos.estadoCompania) ? datos.estadoCompania : [],
         estado: datos.estado || '',
         estadoAgente35: datos.estadoAgente35 || '',
         nullPlazoDocumentos: datos.nullPlazoDocumentos || '',
@@ -337,14 +347,18 @@ function restaurarFiltrosDesdeStorage() {
             if (filtrosActivos.filtroTipoModificacion && cliente.tipo_modificacion !== filtrosActivos.filtroTipoModificacion) return false; 
             if (filtrosActivos.operadores?.length > 0 && !filtrosActivos.operadores.includes(poliza.operador_nombre)) return false;
             if (filtrosActivos.ventaRealizadaPor?.length > 0 && !filtrosActivos.ventaRealizadaPor.includes(poliza.cliente?.venta_realizada_por)) return false;
-            if (filtrosActivos.estadoMercado) {
-                if (filtrosActivos.estadoMercado === '__null__') {
-                    if (poliza.estado_mercado !== null && poliza.estado_mercado !== '' && poliza.estado_mercado !== undefined) return false;
-                } else {
-                    if (poliza.estado_mercado !== filtrosActivos.estadoMercado) return false;
-                }
+            if (filtrosActivos.estadoMercado?.length > 0) {
+                const esNull = filtrosActivos.estadoMercado.includes('__null__');
+                const estaVacio = !poliza.estado_mercado || poliza.estado_mercado === '';
+                const coincide  = filtrosActivos.estadoMercado.includes(poliza.estado_mercado);
+                if (!(coincide || (esNull && estaVacio))) return false;
             }
-            if (filtrosActivos.estadoCompania && poliza.estado_compania !== filtrosActivos.estadoCompania) return false;
+            if (filtrosActivos.estadoCompania?.length > 0) {
+                const esNull = filtrosActivos.estadoCompania.includes('__null__');
+                const estaVacio = !poliza.estado_compania || poliza.estado_compania === '';
+                const coincide  = filtrosActivos.estadoCompania.includes(poliza.estado_compania);
+                if (!(coincide || (esNull && estaVacio))) return false;
+            }
             if (filtrosActivos.estado && cliente.estado !== filtrosActivos.estado) return false;
             if (filtrosActivos.estadoAgente35 && poliza.agente35_estado !== filtrosActivos.estadoAgente35) return false;
 
@@ -2285,9 +2299,9 @@ function limpiarFiltros() {
     document.querySelectorAll('#panelVentaRealizadaPor input[type="checkbox"]').forEach(cb => cb.checked = false);
     actualizarTextoVentaRealizadaPor();
     document.getElementById('filtroModificadoPor').value = '';
-    document.getElementById('filtroEstadoMercado').value = '';
     document.getElementById('agenteMercado').value = '';
-    document.getElementById('filtroEstadoCompania').value = '';
+    limpiarEstadoMercado();
+    limpiarEstadoCompania();
     document.getElementById('filtroEstado').value = '';
     document.getElementById('estadoAgente35').value = '';
     document.getElementById('nullPlazoDocumentos').checked = false;
@@ -2588,8 +2602,8 @@ function aplicarFiltrosAvanzados() {
         modificadoPor: document.getElementById('filtroModificadoPor').value,
         documentos: document.getElementById('filtroDocumentos').value,
         filtroAgenteMercado: document.getElementById('agenteMercado').value,
-        estadoMercado: document.getElementById('filtroEstadoMercado').value,
-        estadoCompania: document.getElementById('filtroEstadoCompania').value,
+        estadoMercado:  Array.from(document.querySelectorAll('#panelEstadoMercado input:checked')).map(cb => cb.value),
+        estadoCompania: Array.from(document.querySelectorAll('#panelEstadoCompania input:checked')).map(cb => cb.value),
         estado: document.getElementById('filtroEstado').value,
         estadoAgente35: document.getElementById('estadoAgente35').value,
         nullPlazoDocumentos: document.getElementById('nullPlazoDocumentos').checked,
@@ -2773,12 +2787,11 @@ function aplicarFiltrosAvanzados() {
         }
         
         // Filtro por estado mercado
-        if (filtrosActivos.estadoMercado) {
-            if (filtrosActivos.estadoMercado === '__null__') {
-                if (poliza.estado_mercado !== null && poliza.estado_mercado !== '' && poliza.estado_mercado !== undefined) return false;
-            } else {
-                if (poliza.estado_mercado !== filtrosActivos.estadoMercado) return false;
-            }
+        if (filtrosActivos.estadoMercado?.length > 0) {
+            const esNull   = filtrosActivos.estadoMercado.includes('__null__');
+            const estaVacio = !poliza.estado_mercado || poliza.estado_mercado === '';
+            const coincide  = filtrosActivos.estadoMercado.includes(poliza.estado_mercado);
+            if (!(coincide || (esNull && estaVacio))) return false;
         }
 
         if (filtrosActivos.filtroAgenteMercado && poliza.nombre_agente_mercado !== filtrosActivos.filtroAgenteMercado) {
@@ -2786,12 +2799,11 @@ function aplicarFiltrosAvanzados() {
         }
         
         // Filtro por estado compañía
-        if (filtrosActivos.estadoCompania) {
-            if (filtrosActivos.estadoCompania === '__null__') {
-                if (poliza.estado_compania !== null && poliza.estado_compania !== '' && poliza.estado_compania !== undefined) return false;
-            } else {
-                if (poliza.estado_compania !== filtrosActivos.estadoCompania) return false;
-            }
+        if (filtrosActivos.estadoCompania?.length > 0) {
+            const esNull   = filtrosActivos.estadoCompania.includes('__null__');
+            const estaVacio = !poliza.estado_compania || poliza.estado_compania === '';
+            const coincide  = filtrosActivos.estadoCompania.includes(poliza.estado_compania);
+            if (!(coincide || (esNull && estaVacio))) return false;
         }
 
         // Filtro por estado
@@ -3204,6 +3216,108 @@ async function seleccionarOperador(clienteId, nuevoOperador, itemEl) {
 function cerrarSelectorOperador() {
     document.getElementById('selectorOperadorDropdown')?.remove();
 }
+
+// ============================================
+// DROPDOWN ESTADO MERCADO
+// ============================================
+function toggleDropdownEstadoMercado(event) {
+    event.stopPropagation();
+    document.getElementById('panelEstadoMercado').classList.toggle('active');
+    document.getElementById('triggerEstadoMercado').classList.toggle('active');
+}
+function cerrarDropdownEstadoMercado() {
+    document.getElementById('panelEstadoMercado').classList.remove('active');
+    document.getElementById('triggerEstadoMercado').classList.remove('active');
+}
+function limpiarEstadoMercado() {
+    document.querySelectorAll('#panelEstadoMercado input[type="checkbox"]').forEach(cb => cb.checked = false);
+    actualizarTextoEstadoMercado();
+    guardarFiltrosEnStorage();
+    aplicarFiltros();
+}
+function actualizarTextoEstadoMercado() {
+    const checked = document.querySelectorAll('#panelEstadoMercado input:checked');
+    const texto   = document.getElementById('textoEstadoMercado');
+    if (checked.length === 0) {
+        texto.textContent = 'Seleccionar estados...';
+        texto.style.color = '#94a3b8';
+    } else if (checked.length === 1) {
+        texto.textContent = checked[0].value === '__null__' ? 'Pendiente' : checked[0].value;
+        texto.style.color = '#1e293b';
+    } else {
+        texto.textContent = `${checked.length} estados seleccionados`;
+        texto.style.color = '#6366f1';
+    }
+}
+document.addEventListener('click', e => {
+    const panel = document.getElementById('panelEstadoMercado');
+    const trigger = document.getElementById('triggerEstadoMercado');
+    if (panel && trigger && !panel.contains(e.target) && !trigger.contains(e.target))
+        cerrarDropdownEstadoMercado();
+});
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        document.querySelectorAll('#panelEstadoMercado input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', () => {
+                actualizarTextoEstadoMercado();
+                guardarFiltrosEnStorage();
+                aplicarFiltros();
+            });
+        });
+        actualizarTextoEstadoMercado();
+    }, 100);
+});
+
+// ============================================
+// DROPDOWN ESTADO COMPAÑÍA
+// ============================================
+function toggleDropdownEstadoCompania(event) {
+    event.stopPropagation();
+    document.getElementById('panelEstadoCompania').classList.toggle('active');
+    document.getElementById('triggerEstadoCompania').classList.toggle('active');
+}
+function cerrarDropdownEstadoCompania() {
+    document.getElementById('panelEstadoCompania').classList.remove('active');
+    document.getElementById('triggerEstadoCompania').classList.remove('active');
+}
+function limpiarEstadoCompania() {
+    document.querySelectorAll('#panelEstadoCompania input[type="checkbox"]').forEach(cb => cb.checked = false);
+    actualizarTextoEstadoCompania();
+    guardarFiltrosEnStorage();
+    aplicarFiltros();
+}
+function actualizarTextoEstadoCompania() {
+    const checked = document.querySelectorAll('#panelEstadoCompania input:checked');
+    const texto   = document.getElementById('textoEstadoCompania');
+    if (checked.length === 0) {
+        texto.textContent = 'Seleccionar estados...';
+        texto.style.color = '#94a3b8';
+    } else if (checked.length === 1) {
+        texto.textContent = checked[0].value === '__null__' ? 'Pendiente' : checked[0].value;
+        texto.style.color = '#1e293b';
+    } else {
+        texto.textContent = `${checked.length} estados seleccionados`;
+        texto.style.color = '#6366f1';
+    }
+}
+document.addEventListener('click', e => {
+    const panel = document.getElementById('panelEstadoCompania');
+    const trigger = document.getElementById('triggerEstadoCompania');
+    if (panel && trigger && !panel.contains(e.target) && !trigger.contains(e.target))
+        cerrarDropdownEstadoCompania();
+});
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        document.querySelectorAll('#panelEstadoCompania input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', () => {
+                actualizarTextoEstadoCompania();
+                guardarFiltrosEnStorage();
+                aplicarFiltros();
+            });
+        });
+        actualizarTextoEstadoCompania();
+    }, 100);
+});
 
 window.abrirSelectorOperador  = abrirSelectorOperador;
 window.cerrarSelectorOperador = cerrarSelectorOperador;

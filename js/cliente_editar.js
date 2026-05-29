@@ -3742,15 +3742,20 @@ async function registrarNotaAgregada(clienteId, mensaje) {
             }]);
 
             // Registrar en movimientos
+            const nombres   = document.getElementById('nombres')?.value   || '';
+            const apellidos = document.getElementById('apellidos')?.value || '';
+            const telefono  = document.getElementById('telefono1')?.value?.replace(/\D/g, '') || '';
+            const compania  = document.getElementById('compania')?.value  || '';
+
             await supabaseClient.from('movimientos').insert({
-                cliente_id: clienteId,
-                poliza_id: polizaId,
-                operador_nombre: operador,
-                tipo: 'Nota',
-                detalle: `Nueva nota agregada: "${mensaje.replace(/<[^>]+>/g, '').substring(0, 100)}${mensaje.length > 100 ? '...' : ''}.trim()}"`,
+                cliente_id:       clienteId,
+                poliza_id:        polizaId,
+                operador_nombre:  operador,
+                tipo:             'Nota',
+                detalle:          `Nueva nota: "${mensaje.replace(/<[^>]+>/g, '').substring(0, 100).trim()}${mensaje.length > 100 ? '...' : ''}"`,
                 compania,
-                cliente_nombre: `${nombres} ${apellidos}`.trim(),
-                clienteTelefono: telefono,
+                cliente_nombre:   `${nombres} ${apellidos}`.trim(),
+                cliente_telefono: telefono,
             });
         
     } catch (error) {

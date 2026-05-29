@@ -701,32 +701,57 @@
                                 <div class="filtro-grid">
                                     <div class="filtro-group">
                                         <label>Estado en Mercado</label>
-                                        <select id="filtroEstadoMercado">
-                                            <option value="">Todos</option>
-                                            <option value="Activo">Activo</option>
-                                            <option value="Inactivo">Inactivo</option>
-                                            <option value="Cancelado">Cancelado</option>
-                                            <option value="Robado">Robado</option>
-                                            <option value="Doble poliza">Doble póliza</option>
-                                            <option value="Triple póliza">Triple póliza</option>
-                                            <option value="No registra">No registra</option>
-                                            <option value="Cancelado a P.C">Cancelado a P.C</option>
-                                            <option value="__null__">Pendiente</option>
-                                        </select>
+                                        <div class="dropdown-filter">
+                                            <button type="button" class="dropdown-trigger" id="triggerEstadoMercado"
+                                                    onclick="toggleDropdownEstadoMercado(event)">
+                                                <span id="textoEstadoMercado">Seleccionar estados...</span>
+                                                <span class="material-symbols-rounded">expand_more</span>
+                                            </button>
+                                            <div class="dropdown-panel" id="panelEstadoMercado">
+                                                <div class="checkbox-list-scroll">
+                                                    <label class="checkbox-item"><input type="checkbox" value="Activo">Activo</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Inactivo">Inactivo</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Cancelado">Cancelado</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Robado">Robado</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Doble poliza">Doble póliza</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Triple póliza">Triple póliza</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="No registra">No registra</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Cancelado a P.C">Cancelado a P.C</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="__null__">Pendiente</label>
+                                                </div>
+                                                <div class="dropdown-actions">
+                                                    <button type="button" class="btn-dropdown-clear" onclick="limpiarEstadoMercado()">Limpiar</button>
+                                                    <button type="button" class="btn-dropdown-close" onclick="cerrarDropdownEstadoMercado()">Cerrar</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+
                                     <div class="filtro-group">
                                         <label>Estado en Compañía</label>
-                                        <select id="filtroEstadoCompania">
-                                            <option value="">Todos</option>
-                                            <option value="Activo">Activo</option>
-                                            <option value="Cancelado">Cancelado</option>
-                                            <option value="Inactivo">Inactivo</option>
-                                            <option value="Pre-member">Pre-member</option>
-                                            <option value="Periodo de gracias">Periodo de gracia</option>
-                                            <option value="No registra aún">No registra aún</option>
-                                            <option value="Cancelado a P.C">Cancelado a P.C</option>
-                                            <option value="__null__">Pendiente</option>
-                                        </select>
+                                        <div class="dropdown-filter">
+                                            <button type="button" class="dropdown-trigger" id="triggerEstadoCompania"
+                                                    onclick="toggleDropdownEstadoCompania(event)">
+                                                <span id="textoEstadoCompania">Seleccionar estados...</span>
+                                                <span class="material-symbols-rounded">expand_more</span>
+                                            </button>
+                                            <div class="dropdown-panel" id="panelEstadoCompania">
+                                                <div class="checkbox-list-scroll">
+                                                    <label class="checkbox-item"><input type="checkbox" value="Activo">Activo</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Cancelado">Cancelado</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Inactivo">Inactivo</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Pre-member">Pre-member</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Periodo de gracias">Periodo de gracia</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="No registra aún">No registra aún</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="Cancelado a P.C">Cancelado a P.C</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="__null__">Pendiente</label>
+                                                </div>
+                                                <div class="dropdown-actions">
+                                                    <button type="button" class="btn-dropdown-clear" onclick="limpiarEstadoCompania()">Limpiar</button>
+                                                    <button type="button" class="btn-dropdown-close" onclick="cerrarDropdownEstadoCompania()">Cerrar</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="filtro-group">
                                         <label for="estadoAgente35">Estado agente 3.5</label>
