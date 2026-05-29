@@ -1468,7 +1468,6 @@ function validarPestanaActual(tab) {
 
 function validarInfoGeneral() {
     const camposRequeridos = [
-        { id: 'tipoRegistro', nombre: 'Tipo de registro'},
         { id: 'nombres', nombre: 'Nombres' },
         { id: 'apellidos', nombre: 'Apellidos' },
         { id: 'genero', nombre: 'Género' },
