@@ -5138,3 +5138,9 @@ input[readonly] {
     border-color: #86efac;
     color: #16a34a;
 }
+
+.campo-bloqueado {
+    pointer-events: none;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
