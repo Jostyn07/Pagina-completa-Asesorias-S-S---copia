@@ -453,3 +453,30 @@
 /* Responsive */
 @media (max-width: 1024px) { .mov-main { margin-left: 80px; } }
 @media (max-width: 768px)  { .mov-main { margin-left: 0; padding: 16px; } }
+
+.mov-btn-unicos {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    background: var(--background-page, #f8fafc);
+    color: var(--text-color, #374151);
+    font-size: 0.84rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.mov-btn-unicos:hover { border-color: #6366f1; color: #6366f1; }
+.mov-btn-unicos.activo {
+    background: #6366f1;
+    color: white;
+    border-color: #6366f1;
+} 
+
+.mov-btn-unicos.active {
+    color: white;
+}

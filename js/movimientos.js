@@ -6,6 +6,7 @@ let todosLosMovimientos  = [];
 let movimientosFiltrados = [];
 let periodoActual        = 'mes';
 let esSupervisorOAdmin   = false;
+let modoUnico            = false;
 
 // ── Configuración de tipos ────────────────────
 // Las claves deben coincidir EXACTAMENTE con lo que se guarda en movimientos.tipo
@@ -15,6 +16,7 @@ const TIPOS_MOV = {
     'Cambio de vida': { label: 'Cambio de vida',  color: '#06b6d4', icon: 'family_restroom' },
     'Editado':        { label: 'Editado',         color: '#94a3b8', icon: 'edit_note' },
     'Renovación':     { label: 'Renovación',      color: '#3b82f6', icon: 'autorenew' },
+    'Nota':           { label: 'Nota',            color: '#64748b', icon: 'sticky_note_2' },
 };
 
 // ── Init ──────────────────────────────────────
@@ -183,6 +185,18 @@ function aplicarFiltros() {
             !m.telefono.includes(busqueda))          return false;
         return true;
     });
+
+    // Filtros unicos, 1 cliente por día (para ver cuántos clientes únicos se movieron)
+    if (modoUnico) {
+        const vistos = new Set();
+        movimientosFiltrados = movimientosFiltrados.filter(m => {
+            const dia = (m.fecha || '').split('T')[0]; // YYYY-MM-DD
+            const clave = `{dia}_${m.cliente_id}`;
+            if (vistos.has(clave)) return false;
+            vistos.add(clave);
+            return true;
+        })
+    }
 
     actualizarCards();
     renderizarRanking();
@@ -421,4 +435,15 @@ function mostrarCargando(show) {
                 Cargando movimientos...
             </td>
         </tr>`;
+}
+
+function toggleModoUnico() {
+    modoUnico = !modoUnico;
+    const btn = document.getElementById('btnUnicos');
+    btn.classList.toggle('active', modoUnico);
+    // Actualizar texto para reflejar el estado
+    btn.innerHTML = modoUnico
+        ? `<span class="material-symbols-rounded">person</span> Únicos <span class="material-symbols-rounded" style="font-size: 0.8rem;">check</span>`
+        : `<span class="material-symbols-rounded">person</span> Únicos`;
+    aplicarFiltros(); 
 }

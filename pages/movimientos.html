@@ -128,6 +128,7 @@
                 <option value="Cambio de vida">Cambio de vida</option>
                 <option value="Modificacion">Modificación</option>
                 <option value="Seguimiento">Seguimiento</option>
+                <option value="Nota">Nota</option>
             </select>
 
             <select id="filtroCompania" class="mov-select" onchange="aplicarFiltros()">
@@ -135,6 +136,12 @@
             </select>
 
             <input type="text" class="mov-search" id="movBusqueda" placeholder="Buscar cliente..." oninput="aplicarFiltros()">
+            
+            <button class="mov-btn-unicos" id="btnUnicos" onclick="toggleModoUnico()" title="Mostrar cada cliente solo una vez al día">
+                <span class="material-symbols-rounded">person</span>
+                Únicos
+            </button>
+
           </div>
 
           <div class="mov-cards" id="movCards">

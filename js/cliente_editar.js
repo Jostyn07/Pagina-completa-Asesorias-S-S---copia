@@ -3725,6 +3725,8 @@ async function registrarNotaAgregada(clienteId, mensaje) {
             .select('nombre')
             .eq('email', user.email)
             .single();
+
+        const operador = usuarioData?.nombre || user.email;
         
         await supabaseClient
             .from('historial_cambios')
@@ -3738,6 +3740,18 @@ async function registrarNotaAgregada(clienteId, mensaje) {
                 usuario_nombre: usuarioData?.nombre || user.email,
                 usuario_email: user.email
             }]);
+
+            // Registrar en movimientos
+            await supabaseClient.from('movimientos').insert({
+                cliente_id: clienteId,
+                poliza_id: polizaId,
+                operador_nombre: operador,
+                tipo: 'Nota',
+                detalle: `Nueva nota agregada: "${mensaje.replace(/<[^>]+>/g, '').substring(0, 100)}${mensaje.length > 100 ? '...' : ''}.trim()}"`,
+                compania,
+                cliente_nombre: `${nombres} ${apellidos}`.trim(),
+                clienteTelefono: telefono,
+            });
         
     } catch (error) {
         console.error('❌ Error al registrar nota en historial:', error);
