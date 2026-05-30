@@ -176,7 +176,7 @@ async function cargarRecordatorios() {
 
         let query = supabaseClient
             .from('recordatorios')
-            .select('*, usuario:usuarios(nombre)')
+            .select('*, usuario:usuarios!usuario_id(nombre)')
             .order('fecha_recordatorio', { ascending: true });
 
         // Filtrar según permisos
@@ -283,7 +283,15 @@ function renderizarRecordatorios(estado) {
                             ${escapeHtml(r.cliente_nombre)}
                         </a>
                     ` : ''}
-                    ${r.usuario?.nombre ? `<span class="dr-item-usuario">${escapeHtml(r.usuario.nombre)}</span>` : ''}
+                    ${r.creado_por_id && r.creado_por_id !== r.usuario_id
+                        ? `<span class="dr-item-creado-por">
+                            <span class="material-symbols-rounded" style="font-size:0.85rem">supervisor_account</span>
+                            De: ${escapeHtml(r.creado_por_nombre || 'Supervisor')}
+                        </span>`
+                        : (r.usuario?.nombre
+                            ? `<span class="dr-item-usuario">${escapeHtml(r.usuario.nombre)}</span>`
+                            : '')
+                    }
                 </div>
             </div>
         `;
@@ -354,6 +362,39 @@ async function guardarRecordatorio() {
                 .from('recordatorios')
                 .insert({ ...datos, usuario_id: user.id, estado: 'pendiente' });
             if (error) throw error;
+
+            // Si tiene cliente copiar al asesor asignado
+            if (clienteId) {
+                const { data: cliente } = await supabaseClient
+                    .from('clientes')
+                    .select('operador_id, operador_nombre')
+                    .eq('id', clienteId)
+                    .single();
+
+                let operadorId = cliente?.operador_id || null;
+
+                if (!operadorId && cliente?.operador_id) {
+                    const { data: op } = await supabaseClient
+                        .from('usuarios')
+                        .select('id')
+                        .eq('nombre', cliente.operador_nombre)
+                        .single();
+                    operadorId = op?.id || null;
+                }
+
+                // solo copiar si el asesor es diferente al creador
+                if (operadorId && operadorId !== user.id) {
+                    await supabaseClient
+                        .from('recordatorios')
+                        .insert({
+                            ...datos,
+                            usuario_id: operadorId,
+                            creado_por_id: user.id,
+                            creador_por_nombre: usuarioData?.nombre || '',
+                            estado: 'pendiente'
+                        })
+                }
+            }
         }
 
         cancelarFormRecordatorio();

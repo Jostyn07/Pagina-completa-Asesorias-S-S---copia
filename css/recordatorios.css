@@ -515,3 +515,12 @@
 }
 
 .dr-toast button:hover { opacity: 1; }
+
+.dr-item-creado-por {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.75rem;
+    color: #6366f1;
+    font-weight: 500;
+}
