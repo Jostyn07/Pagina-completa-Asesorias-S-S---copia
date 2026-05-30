@@ -1669,6 +1669,7 @@ async function handleSubmit(event) {
             polizaId,
             tipo: tipoMov,
             detalle: detalleMov,
+            observacionOperador: null,
             compania: formData.compania,
             clienteNombre: `${formData.nombres} ${formData.apellidos}`.trim(),
             clienteTelefono: formData.telefono1?.replace(/\D/g, '') || '',
@@ -3753,7 +3754,7 @@ async function registrarNotaAgregada(clienteId, mensaje) {
                 operador_nombre:  operador,
                 tipo:             'Editado',
                 detalle:          'Nota agregada',
-                observacion_operador: mensaje.replace(/<[^>]+>/g, '').substring(0, 200), 
+                observacion_operador: mensaje.replace(/<[^>]+>/g, '').substring(0, 200).trim(), 
                 compania,
                 cliente_nombre:   `${nombres} ${apellidos}`.trim(),
                 cliente_telefono: telefono,
@@ -3907,7 +3908,7 @@ function determinarTipoMovimiento(tipoModAnterior, tipoModNuevo, tipoRegistro) {
 }
 
 // Registrar movimiento
-async function registrarMovimientos({ clienteId, polizaId, tipo, detalle, compania, clienteNombre, clienteTelefono}) {
+async function registrarMovimientos({ clienteId, polizaId, tipo, detalle, observacionOperador, compania, clienteNombre, clienteTelefono}) {
     try {
         const { data: { user } } = await supabaseClient.auth.getUser();
         const { data: usuarioData } = await supabaseClient
@@ -3919,6 +3920,7 @@ async function registrarMovimientos({ clienteId, polizaId, tipo, detalle, compan
             operador_nombre: usuarioData?.nombre || user.email,
             tipo,
             detalle,
+            observacion_operador: observacionOperador || null,
             compania,
             cliente_nombre: clienteNombre,
             cliente_telefono: clienteTelefono,
