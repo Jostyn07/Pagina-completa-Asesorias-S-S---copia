@@ -168,7 +168,7 @@ async function cargarRecordatorios() {
 
         const { data: usuarioActual, error: errorUsuario } = await supabaseClient
             .from('usuarios')
-            .select('id, rol, es_supervisor, puede_ver_monitoreo, supervisor_id')
+            .select('id, rol, es_supervisor, puede_ver_monitoreo, supervisor_id, nombre')
             .eq('id', user.id)
             .single();
         if (errorUsuario) throw errorUsuario;
@@ -373,7 +373,7 @@ async function guardarRecordatorio() {
 
                 let operadorId = cliente?.operador_id || null;
 
-                if (!operadorId && cliente?.operador_id) {
+                if (!operadorId && cliente?.operador_nombre) {
                     const { data: op } = await supabaseClient
                         .from('usuarios')
                         .select('id')
@@ -390,7 +390,7 @@ async function guardarRecordatorio() {
                             ...datos,
                             usuario_id: operadorId,
                             creado_por_id: user.id,
-                            creador_por_nombre: usuarioData?.nombre || '',
+                            creado_por_nombre: usuarioData?.nombre || '',
                             estado: 'pendiente'
                         })
                 }

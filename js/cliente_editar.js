@@ -917,6 +917,13 @@ async function cargarDocumentos(clienteId) {
                             <span class="material-symbols-rounded">visibility</span>
                             Ver
                         </a>
+
+                            <button type="button" class="btn-ver-doc" 
+                                    onclick="descargarArchivo('${doc.url_archivo}', '${doc.nombre_archivo}')">
+                                <span class="material-symbols-rounded">download</span>
+                                Descargar
+                            </button>
+
                         <button type="button" class="btn-eliminar-doc" onclick="confirmarEliminarDocumento('${doc.id}')">
                             <span class="material-symbols-rounded">delete</span>
                         </button>
