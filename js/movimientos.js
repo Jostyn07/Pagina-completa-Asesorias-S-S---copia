@@ -11,17 +11,33 @@ let modoUnico            = false;
 // ── Configuración de tipos ────────────────────
 // Las claves deben coincidir EXACTAMENTE con lo que se guarda en movimientos.tipo
 const TIPOS_MOV = {
-    'Nueva':          { label: 'Nueva',          color: '#22c55e', icon: 'add_circle' },
-    'Recuperada':     { label: 'Recuperada',      color: '#f59e0b', icon: 'published_with_changes' },
-    'Cambio de vida': { label: 'Cambio de vida',  color: '#06b6d4', icon: 'family_restroom' },
-    'Editado':        { label: 'Editado',         color: '#94a3b8', icon: 'edit_note' },
-    'Renovación':     { label: 'Renovación',      color: '#3b82f6', icon: 'autorenew' },
-    'Nota':           { label: 'Nota',            color: '#64748b', icon: 'sticky_note_2' },
+    'Nueva':              { label: 'Nueva',              color: '#22c55e', icon: 'add_circle' },
+    'Renovación':         { label: 'Renovación',         color: '#3b82f6', icon: 'autorenew' },
+    'Venta con registro': { label: 'Venta con registro', color: '#8b5cf6', icon: 'point_of_sale' },
+    'Recuperada':         { label: 'Recuperada',         color: '#f59e0b', icon: 'published_with_changes' },
+    'Cambio de vida':     { label: 'Cambio de vida',     color: '#06b6d4', icon: 'family_restroom' },
+    'Editado':            { label: 'Editado',            color: '#94a3b8', icon: 'edit_note' },
+    'Seguimiento':        { label: 'Seguimiento',        color: '#ec4899', icon: 'phone_in_talk' },
 };
 
 // ── Init ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarRolUsuario();
+
+    const { data: usuario } = await supabaseClient
+        .from('usuarios')
+        .select('puede_ver_monitoreo, es_supervisor, rol')
+        .eq('id', datosUsuario?.id || '')
+        .single();
+    
+    const tieneAcceso = usuario?.rol === 'admin' || usuario?.es_supervisor || usuario?.puede_ver_monitoreo;
+
+    if (!tieneAcceso) {
+        alert('No tienes permiso para ver esta página.');
+        window.location.href = './index.html';
+        return;
+    }
+
     esSupervisorOAdmin = esAdministrador() || datosUsuario?.es_supervisor;
 
     if (esSupervisorOAdmin) {
@@ -57,6 +73,7 @@ function inicializarFlatpickr() {
 // ── Cambiar período ───────────────────────────
 function cambiarPeriodo(periodo, btn) {
     periodoActual = periodo;
+    todosLosMovimientos = [];
     document.querySelectorAll('.mov-tab').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('movFechasCustom').style.display =
@@ -134,7 +151,7 @@ async function cargarMovimientos() {
             .select('*')
             .gte('fecha', desde)
             .lte('fecha', hastaFin)
-            .order('fecha', { ascending: false });
+            .order('fecha', { ascending: false })
 
         // Filtro por rol: operador solo ve los suyos
         if (!esAdministrador() && !datosUsuario?.es_supervisor) {
@@ -163,8 +180,34 @@ async function cargarMovimientos() {
 
     } catch (e) {
         console.error('❌ Error cargando movimientos:', e);
+        mostrarError('No se pudieron cargar los movimientos. Intenta recargar la página.');
         mostrarCargando(false);
     }
+}
+function recargarMovimientos() {
+    todosLosMovimientos = [];
+    cargarMovimientos();
+}
+
+function mostrarError(mensaje) {
+    const tbody = document.getElementById('movTbody');
+    if (!tbody) return;
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="9" style="text-align:center; padding: 60px 20px; color: #ef4444;">
+                <span class="material-symbols-rounded" style="font-size:2rem; display:block; margin-bottom:8px;">
+                    error_outline
+                </span>
+                ${mensaje}
+                <br><br>
+                <button onclick="recargarMovimientos()" style="
+                    padding: 8px 20px; border-radius: 8px;
+                    background: #6366f1; color: white;
+                    border: none; cursor: pointer;
+                    font-size: 0.84rem; font-weight: 600;
+                ">Reintentar</button>
+            </td>
+        </tr>`;
 }
 
 // ── Filtros ───────────────────────────────────
@@ -191,7 +234,7 @@ function aplicarFiltros() {
         const vistos = new Set();
         movimientosFiltrados = movimientosFiltrados.filter(m => {
             const dia = (m.fecha || '').split('T')[0]; // YYYY-MM-DD
-            const clave = `{dia}_${m.cliente_id}`;
+            const clave = `${dia}_${m.cliente_id}`;
             if (vistos.has(clave)) return false;
             vistos.add(clave);
             return true;
@@ -440,7 +483,7 @@ function mostrarCargando(show) {
 function toggleModoUnico() {
     modoUnico = !modoUnico;
     const btn = document.getElementById('btnUnicos');
-    btn.classList.toggle('active', modoUnico);
+    btn.classList.toggle('activo', modoUnico);
     // Actualizar texto para reflejar el estado
     btn.innerHTML = modoUnico
         ? `<span class="material-symbols-rounded">person</span> Únicos <span class="material-symbols-rounded" style="font-size: 0.8rem;">check</span>`

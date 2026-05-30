@@ -296,6 +296,9 @@
 }
 
 .mov-tabla-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 14px 20px;
     border-bottom: 1px solid var(--border-color, #e2e8f0);
     font-size: 0.84rem;
@@ -481,4 +484,22 @@
     color: white;
     background: #6366f1;
     border-color: #6366f1;
+}
+.mov-btn-reload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 10px;
+    background: var(--background-page, #f8fafc);
+    color: var(--text-color, #374151);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mov-btn-reload:hover {
+    border-color: #6366f1;
+    color: #6366f1;
 }
