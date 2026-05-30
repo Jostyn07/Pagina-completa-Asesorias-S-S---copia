@@ -116,17 +116,18 @@
          </div>
 
          <!-- Filtros secundarios -->
-          <div class="mov-filtos-row">
+          <div class="mov-filtros-row">
             <select id="filtroOperador" class="mov-select" onchange="aplicarFiltros()">
                 <option value="">Todos los operadores</option>
             </select>
             <select class="mov-select" id="filroTipo" onchange="aplicarFiltros()">
                 <option value="">Todos los Tipo</option>
                 <option value="Nueva">Nueva póliza / organica</option>
+                <option value="Venta con registro">Venta con registro</option>
                 <option value="Renovacion">Renovacion</option>
                 <option value="Recuperada">Recuperada</option>
                 <option value="Cambio de vida">Cambio de vida</option>
-                <option value="Modificacion">Modificación</option>
+                <option value="Editado">Editado</option>
                 <option value="Seguimiento">Seguimiento</option>
                 <option value="Nota">Nota</option>
             </select>
@@ -179,8 +180,10 @@
 
             <div class="mov-card mov-card-mod">
                 <span class="mov-card-icon material-symbols-rounded">edit_note</span>
-                <div class="mov-card-num" id="cardMods">0</div>
-                <div class="mov-card-label">Modificaciones</div>
+                <div>
+                    <div class="mov-card-num" id="cardMods">0</div>
+                    <div class="mov-card-label">Modificaciones</div>
+                </div>
             </div>
           </div>
 
@@ -191,7 +194,7 @@
            </div>
 
            <!-- Tabla -->
-            <div class="mov.tabla.wrap">
+            <div class="mov-tabla-wrap">
                 <div class="mov-tabla-header">
                     <span id="movContador">0 movimientos</span>
                 </div>
