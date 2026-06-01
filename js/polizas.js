@@ -2938,7 +2938,6 @@ async function cargarDatosOperador() {
     const { data: operadores, error } = await supabaseClient
         .from('usuarios')
         .select('id, nombre')
-        .eq('rol', 'operador')
         .eq('activo', true)
         .order('nombre', { ascending: true });
 

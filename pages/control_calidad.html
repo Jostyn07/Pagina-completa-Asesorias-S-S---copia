@@ -178,30 +178,14 @@
                         </label>
                         <input type="text" id="evaluador" name="evaluator" placeholder="Nombre del evaluador" required>
                     </div>
-
-                    <div class="form-group">
-                        <label for="asesorNombre">
-                            <i class="fas fa-user-tie"></i>
-                            Nombre del Asesor
+                    
+                    <div>
+                        <label>
+                            <i class="fas fa-search"></i>
+                            Buscar cliente
                             <span class="required">*</span>
                         </label>
-                        <input type="text" id="asesorNombre" name="advisorName" placeholder="Nombre completo" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="asesorId">
-                            <i class="fas fa-id-card"></i>
-                            ID del Asesor
-                        </label>
-                        <input type="text" id="asesorId" name="advisorId" placeholder="ID o código">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="clienteIdVenta">
-                            <i class="fas fa-receipt"></i>
-                            ID Cliente/Venta
-                        </label>
-                        <input type="text" id="clienteIdVenta" name="clientSaleId" placeholder="Ej: CLI-12345">
+                        <input type="text" class="ccBuscarCliente" placeholder="Nombre o télefono del cliente" oninput="buscarClienteCC(this.value)" autocomplete="off">
                     </div>
 
                     <div class="form-group">
@@ -542,6 +526,7 @@
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
+    <script src="../js/permisos.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/control_calidad.js"></script>
     <script src="../js/actividad.js"></script>

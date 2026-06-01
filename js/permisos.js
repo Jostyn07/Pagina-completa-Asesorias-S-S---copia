@@ -56,10 +56,12 @@ function esAdministrador() {
 }
 
 function esOperador() {
+    if (!datosUsuario) return false;
     return rolUsuario === 'operador';
 }
 
 function esSoporte() {
+    if (!datosUsuario) return false;
     return rolUsuario === 'soporte';
 }
 
@@ -112,7 +114,7 @@ function obtenerNivelContextoIA() {
     };
 }
 
-function puderVerMovimientos() {
+function puedeVerMovimientos() {
     if (!datosUsuario) return false;
     if (datosUsuario.rol == 'admin') return true
     return datosUsuario.puede_ver_movimientos === true;

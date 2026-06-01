@@ -214,18 +214,7 @@ async function refrescarToken() {
 // ============================================
 
 function obtenerUsuario() {
-    const usuarioData = localStorage.getItem('usuario');
-    return usuarioData ? JSON.parse(usuarioData) : null;
-}
-
-function obtenerRolUsuario() {
-    const usuario = obtenerUsuario();
-    return usuario ? usuario.rol : null;
-}
-
-function esAdmin() {
-    const rol = obtenerRolUsuario();
-    return rol === 'admin' || rol === 'administrador';
+    return datosUsuario || null;
 }
 
 function esEvaluador() {
@@ -518,7 +507,7 @@ async function inicializarMenuAdmin() {
     }
 
     const menuMovimientos = document.getElementById('menuMovimientos');
-    if (menuMovimientos && puderVerMovimientos()) {
+    if (menuMovimientos && puedeVerMovimientos()) {
         menuMovimientos.style.display = 'flex';
     }
 }

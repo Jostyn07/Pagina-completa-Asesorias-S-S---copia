@@ -1,18 +1,17 @@
 // ============================================
 // VARIABLES GLOBALES
 // ============================================
-let usuarioActual = null;
 let autoguardadoTimer = null;
 const AUTOSAVE_DELAY = 30000; // 30 segundos
 
 // ============================================
 // INICIALIZACIÓN
 // ============================================
-document.addEventListener('DOMContentLoaded', function() {
-    ;
-    
+document.addEventListener('DOMContentLoaded', async function() {
+    await cargarRolUsuario();
+
     // Obtener usuario actual
-    usuarioActual = obtenerUsuario();
+   const usuarioActual = obtenerUsuario();
     
     if (!usuarioActual) {
         console.error('❌ No hay usuario autenticado');
@@ -21,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Verificar que sea admin o supervisor
-    if (usuarioActual.rol !== 'admin' && usuarioActual.rol !== 'supervisor') {
+    if (!esAdministrador()) {
         alert('⚠️ No tienes permisos para acceder a esta página');
         window.location.href = './home.html';
         return;
