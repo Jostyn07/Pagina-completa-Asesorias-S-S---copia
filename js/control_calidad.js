@@ -152,7 +152,7 @@ async function enviarEvaluacion() {
             limpiarFormulario();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
-            window.location.href = './historial_evaluaciones.html';
+            window.location.href = '../pages/historial_evaluacion.html';
         }
         
     } catch (error) {
@@ -183,8 +183,8 @@ async function guardarEvaluacionEnSupabase(formData) {
         fecha_evaluacion: formData.get('evaluationDate'),
         evaluador: formData.get('evaluator'),
         asesor_nombre: formData.get('advisorName'),
-        asesor_id: document.getElementById('ccClienteId').value || null,
-        cliente_id: document.getElementById('ccOperadorId').value || null,
+        cliente_id: document.getElementById('ccClienteId').value || null,
+        operador_id: document.getElementById('ccOperadorId').value || null,
         canal: formData.get('channel'),
         duracion_audio: formData.get('audioDuration') || null,
         resultado: formData.get('result'),
@@ -235,7 +235,7 @@ async function guardarEvaluacionEnSupabase(formData) {
             evaluacion_id: data.id,
             cliente_nombre: document.getElementById('ccClienteNombre').textContent,
             resultado: evaluacionData.resultado,
-        });
+        })
     }
 
     return data;
@@ -479,48 +479,47 @@ window.addEventListener('beforeunload', function(e) {
 // Buscar cliente
 let timeoutCC;
 async function buscarClienteCC(texto) {
-    clearTimeout(timeoutCC)
-    const sugerencias = document.getElementById('ccSugerencias')
-        clearTimeout(timeoutCC);
-        const suegerencias = document.getElementById('ccSugerencias');
-    
-        if (texto.trim().length < 2) {
-            sugerencias.style.display = 'none'
-            return;
-        }
+    clearTimeout(timeoutCC);
+    const sugerencias = document.getElementById('ccSugerencias');
+    if (texto.trim().length < 2) {
+        sugerencias.style.display = 'none';
+        return;
+    }
 
     timeoutCC = setTimeout(async () => {
-        const termino = texto.replace(/[%,]/g, '').trim()
+        const termino = texto.replace(/[%,]/g, '').trim();
         const { data } = await supabaseClient
             .from('clientes')
             .select('id, nombres, apellidos, telefono1, operador_id, operador_nombre')
-            .or(`nombres.ilike.%${termino}%, apellidos.ilike%${termino}%, telefono.ilike.%${termino}%`)
-            .eq('archivado', false)
+            .or(`nombres.ilike.%${termino}%,apellidos.ilike.%${termino}%,telefono1.ilike.%${termino}%`)
+            .neq('archivado', true)
             .limit(8);
-    if (!data || data.length === 0) {
-        sugerencias.innerHTML = `<div style="padding: 12px; color: #94a3b8; font-size: 0.84rem;">Sin resultados</div>`;
-        sugerencias.style.display = 'block'
-        return;
-    }
+
+        if (!data || data.length === 0) {
+            sugerencias.innerHTML = `<div style="padding:12px;color:#94a3b8;font-size:0.84rem">Sin resultados</div>`;
+            sugerencias.style.display = 'block';
+            return;
+        }
+
         sugerencias.innerHTML = data.map(c => {
             const nombre = `${c.nombres} ${c.apellidos}`.trim();
-            const nSafe = nombre.replace(/'/g, "\\'");
-            const tSafe = (c.operador_nombre || '').replace(/'/g,"\\'");
+            const nSafe  = nombre.replace(/'/g, "\\'");
+            const tSafe  = (c.operador_nombre || '').replace(/'/g, "\\'");
             return `
-                <div onlick="seleccioarClienteCC('${c.id}', '${nSafe}' , '${c.telefono1 || ''}', '${c.operador_id || ''}', '${tSafe}')">
-                    style="padding:10px 14px; cursor: pointer; display:flex; aling-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem;"
-                    onmouseover="this.style.background='#f8fafc'"
-                    onmouseout="this.style.background='white'";
-                    <span class="material-symbols-rounded" style="color: #6366f1; font-size: 1.1rem">person</span>
+                <div onclick="seleccionarClienteCC('${c.id}','${nSafe}','${c.telefono1 || ''}','${c.operador_id || ''}','${tSafe}')"
+                     style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;font-size:0.88rem;"
+                     onmouseover="this.style.background='#f8fafc'"
+                     onmouseout="this.style.background='white'">
+                    <span class="material-symbols-rounded" style="color:#6366f1;font-size:1.1rem">person</span>
                     <div>
-                        <strong style="display:block; color: #1e293b">${nombre}</strong>
-                        <samll style="color: #64748b">${c.telefono1 || ''} - ${c.operador_nombre || 'Sin operador'}</samll>
+                        <strong style="display:block;color:#1e293b">${nombre}</strong>
+                        <small style="color:#64748b">${c.telefono1 || ''} • ${c.operador_nombre || 'Sin operador'}</small>
                     </div>
                 </div>
             `;
         }).join('');
-        sugerencias.style.display = 'block'
-    }, 300)
+        sugerencias.style.display = 'block';
+    }, 300);
 }
 
 function seleccionarClienteCC(clienteId, nombre, telefono, operadorId, operadorNombre) {
@@ -547,7 +546,7 @@ function limpiarClienteCC() {
 
 document.addEventListener('click', e => {
     const sug = document.getElementById('ccSugerencias');
-    if (sug && !sug.contains(e.target) && e.target.id !== 'cc.BuscarCliente') {
+    if (sug && !sug.contains(e.target) && e.target.id !== 'ccBuscarCliente') {
         sug.style.display = 'none';
     }
 });
