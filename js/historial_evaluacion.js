@@ -1,20 +1,16 @@
 // ============================================
 // VARIABLES GLOBALES
 // ============================================
-let usuarioActual = null;
 let todasEvaluaciones = [];
 let evaluacionesFiltradas = [];
 
 // ============================================
 // INICIALIZACIÓN
 // ============================================
-document.addEventListener('DOMContentLoaded', async function() {
-    ;
-    
-    // Obtener usuario actual
-    usuarioActual = obtenerUsuario();
-    
-    if (!usuarioActual) {
+document.addEventListener('DOMContentLoaded', async function() {        
+    await cargarRolUsuario();
+
+    if (!datosUsuario) {
         console.error('❌ No hay usuario autenticado');
         window.location.href = './login.html';
         return;
@@ -26,7 +22,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Cargar evaluaciones
     await cargarEvaluaciones();
     
-    ;
+    // Destacar evaluación si viene desde notifiación
+    const params = new URLSearchParams(window.location.search);
+    const evalId = params.get('evalId');
 });
 
 // ============================================
@@ -299,7 +297,7 @@ function crearEvaluacionHTML(evaluacion) {
     const total = checklistItems.length;
     
     return `
-        <div class="evaluacion-card ${claseResultado}" onclick="verDetalleEvaluacion('${evaluacion.id}')">
+        <div class="evaluacion-card ${claseResultado}" data-eval-id="${evaluacion.id}" onclick="verDetalleEvaluacion('${evaluacion.id}')">
             <div class="evaluacion-header">
                 <div class="evaluacion-info">
                     <h3>${evaluacion.asesor_nombre}</h3>
@@ -650,6 +648,24 @@ async function cargarDatosOperador() {
             select.innerHTML += `<option value="${op.nombre}">${op.nombre}</option>`
         })
     }
+}
+
+function destacarEvaluacion(evalId) {
+    setTimeout(() => {
+        const card = document.querySelector(`[data-eval-id="${evalId}"]`);
+        if (!card) return;
+
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.outline = '3px solid #6366f1';
+        card.style.boxShadow = '0 0 0 6px rgba(99,102,241,0.15)';
+        card.style.transition = 'all 0.3s';
+
+        // quitar highlight dspues de 4s
+        setTimeout(() => {
+            card.style.outline = '';
+            card.style.boxShadow = '';
+        }, 4000);
+    }, 500)
 }
 
 // Cargar datos de operadores para filtro

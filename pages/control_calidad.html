@@ -196,7 +196,21 @@
                                     <small id="ccClienteTelefono" style="color: #64748b;"></small>
                                 </div>
                             </div>
+                            <button type="button" onclick="limpiarClienteCC()" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 1.2rem;">X</button>
                         </div>
+
+                        <input type="hidden" id="ccClienteId" name="clienteId">
+                        <input type="hidden" id="ccOperadorId" name="operadorId">
+                    </div>
+
+                    <!-- Operador se llena automaticamente -->
+                    <div class="form-group">
+                        <label for="asesorNombre">
+                            <i class="fas fa-user-tie"></i>
+                            Operador asignado
+                            <span class="requiered">*</span>
+                        </label>
+                        <input type="text" id="asesorNombre" name="advisorName" placeholder="Se rellena al seleccionar cliente" readonly required style="background: #f8fafc; cursor: not-allowed; opacity: 0.8;">
                     </div>
 
                     <div class="form-group">
@@ -394,7 +408,7 @@
                     </label>
                 </div>
 
-                <div class="form-grid" style="margin-top: 20px;">
+                <div class="form-grid" style="margin-top: 20px; position: relative;">
                     <div class="form-group">
                         <label for="minutoError">
                             <i class="far fa-clock"></i>
@@ -544,5 +558,6 @@
     <script src="../js/recordatorios.js"></script>
     <script src="../js/ia_contexto.js"></script>
     <script src="../js/ia_chat.js"></script>
+    <script src="../js/notificaciones_calidad.js"></script>
 </body>
 </html>

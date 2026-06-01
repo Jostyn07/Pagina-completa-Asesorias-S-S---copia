@@ -9,11 +9,8 @@ const AUTOSAVE_DELAY = 30000; // 30 segundos
 // ============================================
 document.addEventListener('DOMContentLoaded', async function() {
     await cargarRolUsuario();
-
-    // Obtener usuario actual
-   const usuarioActual = obtenerUsuario();
     
-    if (!usuarioActual) {
+    if (!datosUsuario) {
         console.error('❌ No hay usuario autenticado');
         window.location.href = './login.html';
         return;
@@ -186,8 +183,8 @@ async function guardarEvaluacionEnSupabase(formData) {
         fecha_evaluacion: formData.get('evaluationDate'),
         evaluador: formData.get('evaluator'),
         asesor_nombre: formData.get('advisorName'),
-        asesor_id: formData.get('advisorId') ? parseInt(formData.get('advisorId')) : null,
-        cliente_id_venta: formData.get('clientSaleId') || null,
+        asesor_id: document.getElementById('ccClienteId').value || null,
+        cliente_id: document.getElementById('ccOperadorId').value || null,
         canal: formData.get('channel'),
         duracion_audio: formData.get('audioDuration') || null,
         resultado: formData.get('result'),
@@ -228,15 +225,19 @@ async function guardarEvaluacionEnSupabase(formData) {
         .select()
         .single();
     
-    if (error) {
-        // Si la tabla no existe, mostrar mensaje específico
-        if (error.message && error.message.includes('relation')) {
-            throw new Error('La tabla de evaluaciones no existe. Por favor, ejecuta el script SQL primero.');
-        }
-        throw error;
+    if (error) throw error;
+
+    // Notificar al operador
+    const opId = document.getElementById('ccOperadorId').value;
+    if (opId) {
+        await supabaseClient.from('notificaciones_calidad').insert({
+            operadorId: opId,
+            evaluacion_id: data.id,
+            cliente_nombre: document.getElementById('ccClienteNombre').textContent,
+            resultado: evaluacionData.resultado,
+        });
     }
-    
-    ;
+
     return data;
 }
 
@@ -475,14 +476,78 @@ window.addEventListener('beforeunload', function(e) {
     }
 });
 
-// ============================================
-// LOG DE DESARROLLO
-// ============================================
-;
-;
-;
-;
-;
-;
-;
-;
+// Buscar cliente
+let timeoutCC;
+async function buscarClienteCC(texto) {
+    clearTimeout(timeoutCC)
+    const sugerencias = document.getElementById('ccSugerencias')
+        clearTimeout(timeoutCC);
+        const suegerencias = document.getElementById('ccSugerencias');
+    
+        if (texto.trim().length < 2) {
+            sugerencias.style.display = 'none'
+            return;
+        }
+
+    timeoutCC = setTimeout(async () => {
+        const termino = texto.replace(/[%,]/g, '').trim()
+        const { data } = await supabaseClient
+            .from('clientes')
+            .select('id, nombres, apellidos, telefono1, operador_id, operador_nombre')
+            .or(`nombres.ilike.%${termino}%, apellidos.ilike%${termino}%, telefono.ilike.%${termino}%`)
+            .eq('archivado', false)
+            .limit(8);
+    if (!data || data.length === 0) {
+        sugerencias.innerHTML = `<div style="padding: 12px; color: #94a3b8; font-size: 0.84rem;">Sin resultados</div>`;
+        sugerencias.style.display = 'block'
+        return;
+    }
+        sugerencias.innerHTML = data.map(c => {
+            const nombre = `${c.nombres} ${c.apellidos}`.trim();
+            const nSafe = nombre.replace(/'/g, "\\'");
+            const tSafe = (c.operador_nombre || '').replace(/'/g,"\\'");
+            return `
+                <div onlick="seleccioarClienteCC('${c.id}', '${nSafe}' , '${c.telefono1 || ''}', '${c.operador_id || ''}', '${tSafe}')">
+                    style="padding:10px 14px; cursor: pointer; display:flex; aling-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem;"
+                    onmouseover="this.style.background='#f8fafc'"
+                    onmouseout="this.style.background='white'";
+                    <span class="material-symbols-rounded" style="color: #6366f1; font-size: 1.1rem">person</span>
+                    <div>
+                        <strong style="display:block; color: #1e293b">${nombre}</strong>
+                        <samll style="color: #64748b">${c.telefono1 || ''} - ${c.operador_nombre || 'Sin operador'}</samll>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        sugerencias.style.display = 'block'
+    }, 300)
+}
+
+function seleccionarClienteCC(clienteId, nombre, telefono, operadorId, operadorNombre) {
+    document.getElementById('ccClienteId').value = clienteId;
+    document.getElementById('ccOperadorId').value = operadorId; 
+    document.getElementById('ccClienteNombre').textContent = nombre; 
+    document.getElementById('ccClienteTelefono').textContent = telefono; 
+    document.getElementById('ccClienteSeleccionado').style.display = 'flex';
+    document.getElementById('ccSugerencias').style.display = 'none'; 
+    document.getElementById('ccBuscarCliente').value = nombre;
+    document.getElementById('asesorNombre').value = operadorNombre; 
+}
+
+function limpiarClienteCC() {
+    document.getElementById('ccClienteId').value = '';
+    document.getElementById('ccOperadorId').value = ''; 
+    document.getElementById('ccClienteNombre').textContent = ''; 
+    document.getElementById('ccClienteTelefono').textContent = ''; 
+    document.getElementById('ccClienteSeleccionado').style.display = 'none';
+    document.getElementById('ccSugerencias').style.display = 'none'; 
+    document.getElementById('ccBuscarCliente').value = '';
+    document.getElementById('asesorNombre').value = ''; 
+}
+
+document.addEventListener('click', e => {
+    const sug = document.getElementById('ccSugerencias');
+    if (sug && !sug.contains(e.target) && e.target.id !== 'cc.BuscarCliente') {
+        sug.style.display = 'none';
+    }
+});
