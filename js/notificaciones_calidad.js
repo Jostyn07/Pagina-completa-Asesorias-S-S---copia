@@ -181,7 +181,18 @@ async function irAEvaluacionCC(notif, el) {
 }
 
 // Llamar al cargar
-document.addEventListener('DOMContentLoaded', async () => {
-    // Esperar a que cargarRolUsuario() se ejecute primero
-    setTimeout(verificarNotificacionesCalidad, 1500);
+document.addEventListener('DOMContentLoaded', async function() {
+    await cargarRolUsuario();
+
+    if (!datosUsuario) {
+        window.location.href = './login.html';
+        return;
+    }
+
+    verificarPermisosYAjustarUI();
+    await cargarEvaluaciones();
+
+    const params = new URLSearchParams(window.location.search);
+    const evalId = params.get('eval');
+    if (evalId) destacarEvaluacion(evalId);
 });

@@ -510,6 +510,8 @@ async function inicializarMenuAdmin() {
     if (menuMovimientos && puedeVerMovimientos()) {
         menuMovimientos.style.display = 'flex';
     }
+
+    await verificarNotificacionesCalidad();
 }
 document.addEventListener('DOMContentLoaded', inicializarMenuAdmin);
 

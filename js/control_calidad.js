@@ -31,8 +31,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Cargar nombre del evaluador
     const evaluadorInput = document.getElementById('evaluador');
-    if (evaluadorInput && usuarioActual.nombre) {
-        evaluadorInput.value = usuarioActual.nombre;
+    if (evaluadorInput && datosUsuario.nombre) {
+        evaluadorInput.value = datosUsuario.nombre;
     }
     
     // Intentar cargar borrador guardado
@@ -184,7 +184,7 @@ async function guardarEvaluacionEnSupabase(formData) {
         evaluador: formData.get('evaluator'),
         asesor_nombre: formData.get('advisorName'),
         cliente_id: document.getElementById('ccClienteId').value || null,
-        operador_id: document.getElementById('ccOperadorId').value || null,
+        operador_id: opId || null,
         canal: formData.get('channel'),
         duracion_audio: formData.get('audioDuration') || null,
         resultado: formData.get('result'),
@@ -214,7 +214,7 @@ async function guardarEvaluacionEnSupabase(formData) {
         conclusion: formData.get('conclusion') || null,
         
         // Metadatos
-        autor_nombre: usuarioActual.nombre || 'Evaluador'
+        autor_nombre: datosUsuario.nombre || 'Evaluador'
     };
     
     ;
@@ -228,10 +228,21 @@ async function guardarEvaluacionEnSupabase(formData) {
     if (error) throw error;
 
     // Notificar al operador
+    const asesorNombreVal = document.getElementById('asesorNombre').value;
     const opId = document.getElementById('ccOperadorId').value;
+
+    if (asesorNombreVal) {
+    const { data: userData } = await supabaseClient
+        .from('usuarios')
+        .select('id')
+        .eq('nombre', asesorNombreVal)
+        .single();
+    if (userData?.id) opId = userData.id;
+}
+
     if (opId) {
         await supabaseClient.from('notificaciones_calidad').insert({
-            operadorId: opId,
+            operador_id: opId,
             evaluacion_id: data.id,
             cliente_nombre: document.getElementById('ccClienteNombre').textContent,
             resultado: evaluacionData.resultado,
@@ -369,8 +380,8 @@ function limpiarFormulario() {
     
     // Restablecer evaluador
     const evaluadorInput = document.getElementById('evaluador');
-    if (evaluadorInput && usuarioActual.nombre) {
-        evaluadorInput.value = usuarioActual.nombre;
+    if (evaluadorInput && datosUsuario.nombre) {
+        evaluadorInput.value = datosUsuario.nombre;
     }
     
     // Limpiar borrador

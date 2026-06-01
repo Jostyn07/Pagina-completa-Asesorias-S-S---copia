@@ -25,13 +25,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Destacar evaluación si viene desde notifiación
     const params = new URLSearchParams(window.location.search);
     const evalId = params.get('evalId');
+
+    if (evalId) destacarEvaluacion(evalId)
 });
 
 // ============================================
 // VERIFICAR PERMISOS Y AJUSTAR UI
 // ============================================
 function verificarPermisosYAjustarUI() {
-    const esAdmin = usuarioActual.rol === 'admin' || usuarioActual.rol === 'supervisor';
+    const esAdmin = datosUsuario.rol === 'admin' || datosUsuario.rol === 'supervisor';
     
     const headerTitle = document.getElementById('headerTitle');
     const headerSubtitle = document.getElementById('headerSubtitle');
@@ -101,9 +103,9 @@ async function cargarEvaluaciones() {
             .order('fecha_evaluacion', { ascending: false });
         
         // Si NO es admin, solo cargar evaluaciones propias
-        const esAdmin = usuarioActual.rol === 'admin' || usuarioActual.rol === 'supervisor';
+        const esAdmin = datosUsuario.rol === 'admin' || datosUsuario.rol === 'supervisor';
         if (!esAdmin) {
-            query = query.eq('asesor_id', usuarioActual.id);
+            query = query.eq('operador_id', datosUsuario.id);
         }
         
         const { data, error } = await query;
@@ -134,105 +136,6 @@ async function cargarEvaluaciones() {
         renderizarEvaluaciones();
         actualizarEstadisticas();
     }
-}
-
-// ============================================
-// DATOS DE EJEMPLO
-// ============================================
-function obtenerEvaluacionesEjemplo() {
-    const esAdmin = usuarioActual.rol === 'admin' || usuarioActual.rol === 'supervisor';
-    
-    const todasLasEvaluaciones = [
-        {
-            id: 1,
-            fecha_evaluacion: '2024-12-15',
-            evaluador: 'Supervisor Principal',
-            asesor_nombre: 'Jostyn Aragón',
-            asesor_id: 1,
-            cliente_id_venta: 'CLI-12345',
-            canal: 'Teléfono',
-            duracion_audio: '05:30',
-            resultado: 'approved',
-            checklist_presentacion: 'Sí',
-            checklist_identificacion: 'Sí',
-            checklist_explicacion: 'Sí',
-            checklist_condiciones: 'Sí',
-            checklist_consentimiento: 'Sí',
-            checklist_cierre: 'Sí',
-            checklist_lenguaje: 'Sí',
-            errores_criticos: [],
-            hecho_observado: 'Excelente manejo de objeciones y claridad en la explicación de beneficios.',
-            impacto: 'Cliente quedó muy satisfecho y completó la venta sin dudas.',
-            accion_esperada: 'Continuar con esta metodología y compartir técnicas con el equipo.',
-            buenas_practicas: 'Uso efectivo de pausa para dejar pensar al cliente.',
-            seguimiento: ['Capacitación'],
-            conclusion: 'Venta aprobada con reconocimiento por excelente desempeño.',
-            autor_nombre: 'Supervisor Principal',
-            created_at: new Date().toISOString()
-        },
-        {
-            id: 2,
-            fecha_evaluacion: '2024-12-14',
-            evaluador: 'Supervisor Principal',
-            asesor_nombre: 'Jostyn Aragón',
-            asesor_id: 1,
-            cliente_id_venta: 'CLI-12346',
-            canal: 'Videollamada',
-            duracion_audio: '08:15',
-            resultado: 'rejected',
-            checklist_presentacion: 'Sí',
-            checklist_identificacion: 'Sí',
-            checklist_explicacion: 'No',
-            checklist_condiciones: 'Parcial',
-            checklist_consentimiento: 'Sí',
-            checklist_cierre: 'No',
-            checklist_lenguaje: 'Sí',
-            errores_criticos: ['No explicó correctamente las condiciones de renovación', 'Omitió el proceso de cancelación'],
-            minuto_error: '04:30',
-            descripcion_error: 'No mencionó el período de renovación automática ni el proceso de cancelación',
-            hecho_observado: 'Faltó claridad en explicación de términos y condiciones.',
-            impacto: 'Cliente podría tener confusión posterior sobre renovación.',
-            accion_esperada: 'Revisar script de condiciones y practicar explicación completa.',
-            seguimiento: ['Capacitación', 'Revisión en 1 semana'],
-            conclusion: 'Venta rechazada por omisión de información crítica. Requiere refuerzo en capacitación.',
-            autor_nombre: 'Supervisor Principal',
-            created_at: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-            id: 3,
-            fecha_evaluacion: '2024-12-13',
-            evaluador: 'Supervisor Principal',
-            asesor_nombre: 'Ana Martínez',
-            asesor_id: 2,
-            cliente_id_venta: 'CLI-12347',
-            canal: 'Teléfono',
-            duracion_audio: '06:45',
-            resultado: 'approved',
-            checklist_presentacion: 'Sí',
-            checklist_identificacion: 'Sí',
-            checklist_explicacion: 'Sí',
-            checklist_condiciones: 'Sí',
-            checklist_consentimiento: 'Sí',
-            checklist_cierre: 'Sí',
-            checklist_lenguaje: 'Sí',
-            errores_criticos: [],
-            hecho_observado: 'Presentación clara y completa de todos los puntos requeridos.',
-            impacto: 'Venta exitosa con cliente satisfecho.',
-            accion_esperada: 'Mantener el nivel de calidad actual.',
-            buenas_practicas: 'Excelente rapport con el cliente.',
-            seguimiento: [],
-            conclusion: 'Venta aprobada sin observaciones.',
-            autor_nombre: 'Supervisor Principal',
-            created_at: new Date(Date.now() - 172800000).toISOString()
-        }
-    ];
-    
-    // Si NO es admin, filtrar solo las del usuario actual
-    if (!esAdmin) {
-        return todasLasEvaluaciones.filter(ev => ev.asesor_id === usuarioActual.id);
-    }
-    
-    return todasLasEvaluaciones;
 }
 
 // ============================================
@@ -573,7 +476,7 @@ function aplicarFiltros() {
         }
         
         // Filtrar por operador (solo para admins)
-        if (operadorId && evaluacion.asesor_id !== parseInt(operadorId)) {
+        if (operadorId && evaluacion.operador_id !== parseInt(operadorId)) {
             return false;
         }
         
