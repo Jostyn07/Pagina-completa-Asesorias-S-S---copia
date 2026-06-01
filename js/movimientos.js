@@ -268,7 +268,7 @@ function actualizarCards() {
     document.getElementById('cardTotal').textContent =
         m.length;
     document.getElementById('cardNuevas').textContent =
-        m.filter(x => x.tipo === 'Nueva' || x.tipo === 'Renovación').length;
+        m.filter(x => x.tipo === 'Nueva' || x.tipo === 'Renovación' || x.tipo === 'Venta con registro').length;
     document.getElementById('cardRecuperadas').textContent =
         m.filter(x => x.tipo === 'Recuperada').length;
     document.getElementById('cardCambios').textContent =

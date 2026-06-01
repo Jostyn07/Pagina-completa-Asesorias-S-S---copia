@@ -179,13 +179,24 @@
                         <input type="text" id="evaluador" name="evaluator" placeholder="Nombre del evaluador" required>
                     </div>
                     
-                    <div>
+                    <div class="form-group">
                         <label>
                             <i class="fas fa-search"></i>
                             Buscar cliente
                             <span class="required">*</span>
                         </label>
                         <input type="text" class="ccBuscarCliente" placeholder="Nombre o télefono del cliente" oninput="buscarClienteCC(this.value)" autocomplete="off">
+                        <div class="ccSugerencias" style="position: obsolute; z-index: 100; background: white; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 200px; overflow: auto; width: 100%; display: none;">
+                        </div>
+                        <div class="ccClienteSeleccionado" style="display: none; margin-top: 8px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 10px; padding: 12px 16px; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="material-symbols-rounded" style="color: #22c55e;">check_circle</span>
+                                <div>
+                                    <strong id="ccClienteNombre" style="display: block; font-size: 0.95rem; color: #1e293b;"></strong>
+                                    <small id="ccClienteTelefono" style="color: #64748b;"></small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
