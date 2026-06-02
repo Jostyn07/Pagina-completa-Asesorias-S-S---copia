@@ -3908,7 +3908,7 @@ function determinarTipoMovimiento(tipoModAnterior, tipoModNuevo, tipoRegistro) {
     const nuevo = (tipoModNuevo || '').trim();
 
     if (anterior !== nuevo && TIPOS_ESPECIALES.includes(nuevo)) {
-        return nuevo;
+        return 'Editado';
     }
 
     // Sin cambio o cambio a valor no especial
