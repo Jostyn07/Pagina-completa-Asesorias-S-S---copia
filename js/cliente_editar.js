@@ -1240,7 +1240,8 @@ async function confirmarEliminarNota(notaId) {
         'juanospino@asesoriasth.com',
         'vivianberdugo@asesoriasth.com',
         'edgarsanchez@asesoriasth.com',
-        'deisyduque@asesoriasth.com'
+        'deisyduque@asesoriasth.com',
+        'juliethgarcia@asesoriasth.com'
     ];
 
     const { data: { session } } = await supabaseClient.auth.getSession();
