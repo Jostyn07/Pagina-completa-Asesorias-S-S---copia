@@ -18,9 +18,9 @@ let dependientesCount = 0;
 // ============================================
 // INICIALIZACIÓN
 // ============================================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     await cargarRolUsuario();
-    
+
     const editorEl = document.getElementById('quillEditor');
     if (editorEl) {
         quillNota = new Quill('#quillEditor', {
