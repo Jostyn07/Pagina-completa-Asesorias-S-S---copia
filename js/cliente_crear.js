@@ -1249,11 +1249,11 @@ function validarFormularioCompleto() {
 } 
 
 function obtenerUsuarioId() {
-    return usuarioActual?.id || null;
+    return datosUsuario?.id || null;
 }
 
 function obtenerUsuarioEmail() {
-    return usuarioActual?.email || null;
+    return datosUsuario?.email || null;
 }
 
 // ============================================
