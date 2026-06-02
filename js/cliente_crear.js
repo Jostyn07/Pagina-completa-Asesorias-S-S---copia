@@ -1248,14 +1248,6 @@ function validarFormularioCompleto() {
     return true;
 } 
 
-function obtenerUsuarioId() {
-    return datosUsuario?.id || null;
-}
-
-function obtenerUsuarioEmail() {
-    return datosUsuario?.email || null;
-}
-
 // ============================================
 // CREAR CLIENTE
 // ============================================
