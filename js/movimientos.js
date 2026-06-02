@@ -286,7 +286,7 @@ function renderizarRanking() {
     if (!lista) return;
 
     // Agrupar por operador — solo tipos productivos
-    const TIPOS_PRODUCTIVOS = ['Nueva', 'Recuperada', 'Cambio de vida', 'Renovación'];
+    const TIPOS_PRODUCTIVOS = ['Nueva', 'Venta con registro'];
     const conteo = {};
     movimientosFiltrados
         .filter(m => TIPOS_PRODUCTIVOS.includes(m.tipo))
