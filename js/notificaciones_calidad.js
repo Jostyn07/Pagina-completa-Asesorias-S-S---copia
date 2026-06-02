@@ -179,20 +179,3 @@ async function irAEvaluacionCC(notif, el) {
     el.remove();
     window.location.href = `./historial_evaluacion.html?eval=${notif.evaluacion_id}`;
 }
-
-// Llamar al cargar
-document.addEventListener('DOMContentLoaded', async function() {
-    await cargarRolUsuario();
-
-    if (!datosUsuario) {
-        window.location.href = './login.html';
-        return;
-    }
-
-    verificarPermisosYAjustarUI();
-    await cargarEvaluaciones();
-
-    const params = new URLSearchParams(window.location.search);
-    const evalId = params.get('eval');
-    if (evalId) destacarEvaluacion(evalId);
-});

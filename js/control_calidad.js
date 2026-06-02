@@ -166,6 +166,16 @@ async function enviarEvaluacion() {
 // GUARDAR EVALUACIÓN EN SUPABASE
 // ============================================
 async function guardarEvaluacionEnSupabase(formData) {
+
+    // Notificar al operador
+    const { data: userData } = await supabaseClient
+        .from('usuarios')
+        .select('id')
+        .eq('nombre', document.getElementById('asesorNombre').value || '')
+        .maybeSingle();
+
+    const opId = userData?.id || null
+
     // Recopilar errores críticos
     const erroresCriticos = [];
     document.querySelectorAll('input[name="criticalError"]:checked').forEach(checkbox => {
@@ -182,7 +192,7 @@ async function guardarEvaluacionEnSupabase(formData) {
     const evaluacionData = {
         fecha_evaluacion: formData.get('evaluationDate'),
         evaluador: formData.get('evaluator'),
-        asesor_nombre: formData.get('advisorName'),
+        asesor_nombre: document.getElementById('asesorNombre').value || null,
         cliente_id: document.getElementById('ccClienteId').value || null,
         operador_id: opId || null,
         canal: formData.get('channel'),
@@ -217,8 +227,6 @@ async function guardarEvaluacionEnSupabase(formData) {
         autor_nombre: datosUsuario.nombre || 'Evaluador'
     };
     
-    ;
-    
     const { data, error } = await supabaseClient
         .from('evaluaciones_calidad')
         .insert([evaluacionData])
@@ -226,19 +234,6 @@ async function guardarEvaluacionEnSupabase(formData) {
         .single();
     
     if (error) throw error;
-
-    // Notificar al operador
-    const asesorNombreVal = document.getElementById('asesorNombre').value;
-    const opId = document.getElementById('ccOperadorId').value;
-
-    if (asesorNombreVal) {
-    const { data: userData } = await supabaseClient
-        .from('usuarios')
-        .select('id')
-        .eq('nombre', asesorNombreVal)
-        .single();
-    if (userData?.id) opId = userData.id;
-}
 
     if (opId) {
         await supabaseClient.from('notificaciones_calidad').insert({

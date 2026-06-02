@@ -179,7 +179,8 @@ function crearEvaluacionHTML(evaluacion) {
     const textoResultado = esAprobada ? 'Aprobada' : 'Rechazada';
     const iconoResultado = esAprobada ? 'check_circle' : 'cancel';
     
-    const fecha = new Date(evaluacion.fecha_evaluacion);
+    const fecha = new Date(evaluacion.fecha_evaluacion + 'T12:00:00');
+    const fechaCreacion = new Date(evaluacion.created_at);
     const fechaFormateada = fecha.toLocaleDateString('es-ES', { 
         year: 'numeric', 
         month: 'long', 
@@ -243,7 +244,7 @@ function crearEvaluacionHTML(evaluacion) {
             <div class="evaluacion-footer">
                 <span class="evaluacion-fecha">
                     <i class="far fa-clock"></i>
-                    ${formatearFechaRelativa(fecha)}
+                    ${formatearFechaRelativa(fechaCreacion)}
                 </span>
                 <span class="evaluacion-autor">
                     <i class="far fa-user"></i>
