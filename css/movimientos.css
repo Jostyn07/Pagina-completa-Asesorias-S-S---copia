@@ -503,3 +503,100 @@
     border-color: #6366f1;
     color: #6366f1;
 }
+
+/* Dropdown filtro multiple */
+.mov-dropdown-wrap {
+    position: relative;
+}
+
+.mov-dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    background: var(--background-page, #f8fafc);
+    color: var(--text-color, #374151);
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    min-width: 180px;
+    justify-content: space-between;
+    transition: 0.15s;
+}
+
+.mov-dropdown-btn:hover,
+.mov-dropdown-btn.activo {
+    border-color: #6366f1;
+    color: #6366f1;
+}
+
+.mov-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 200;
+    background: white;
+    border: 1px solid var (--border-color, #e2e8f0);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    min-width: 220px;
+    overflow: hidden;
+}
+
+.mov-dropdown-list {
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 6px 0;
+}
+
+.mov-chk-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    font-size: 0.84;
+    cursor: pointer;
+    color: var(--text-color, #374151);
+    transition: background 0.1s;
+}
+
+.mov-chk-item:hover {
+    background: #f8fafc;
+}
+
+.mov-chk-item input[type="checkbox"] {
+    accent-color: #6366f1; /* Permite modificar el color nativo  de controles de formulario nativos, por ejemplo el checkbox*/
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.mov-dropdown-actions {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.mov-dropdown-actions button {
+    flex: 1;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: 1px solid var(--background-page, #f8fafc);
+    color: var(--text-color, #374151);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.mov-dropdown-actions button:last-child{
+    background: #6366f1;
+    color: white;
+    border-color: #6366f1;
+}

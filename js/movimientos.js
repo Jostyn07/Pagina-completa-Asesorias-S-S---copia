@@ -129,13 +129,27 @@ async function cargarOperadoresDropdown() {
         .eq('activo', true)
         .order('nombre');
 
-    const sel = document.getElementById('filtroOperador');
+    const lista = document.getElementById('listaOperadores');
     (data || []).forEach(u => {
-        const opt = document.createElement('option');
-        opt.value = u.nombre;
-        opt.textContent = u.nombre;
-        sel.appendChild(opt);
+        const label = document.createElement('label');
+        label.className = 'mov-chk-item';
+        label.innerHTML = `
+            <input type="checkbox" value="${u.nombre}">
+            ${u.nombre}
+        `;
+
+        label.querySelector('input').addEventListener('change', () => {
+            actualizarTextoFiltro('operador');
+            aplicarFiltros();
+        });
+        lista.appendChild(label)
     });
+
+    document.querySelectorAll('#panelFiltroTipo input[type="checkbox"]')
+        .forEach(cb => cb.addEventListener('change', () => {
+            actualizarTextoFiltro('tipo');
+            aplicarFiltros()
+        }))
 }
 
 // ── Carga principal — directo de movimientos ──
@@ -175,6 +189,26 @@ async function cargarMovimientos() {
             obs_supervisor: m.observacion_supervisor || '',
         }));
 
+        const clienteIds = [...new Set(
+            todosLosMovimientos.map(m => m.cliente_id).filter(Boolean)
+        )];
+
+        if (clienteIds.length > 0 ) {
+            const { data: polizasData, error: polizasError } = await supabaseClient
+                .from('polizas')
+                .select('cliente_id, agente35_estado')
+        
+            const mapaAgente35 = {};
+            (polizasData || []).forEach(p => {
+                mapaAgente35[p.cliente_id] = p.agente35_estado || '-';
+            });
+
+            todosLosMovimientos = todosLosMovimientos.map(m => ({
+                ...m,
+                agente35: mapaAgente35[m.cliente_id] || '-'
+            }));
+        }
+
         poblarDropdownCompanias();
         aplicarFiltros();
 
@@ -194,7 +228,7 @@ function mostrarError(mensaje) {
     if (!tbody) return;
     tbody.innerHTML = `
         <tr>
-            <td colspan="9" style="text-align:center; padding: 60px 20px; color: #ef4444;">
+            <td colspan="10" style="text-align:center; padding: 60px 20px; color: #ef4444;">
                 <span class="material-symbols-rounded" style="font-size:2rem; display:block; margin-bottom:8px;">
                     error_outline
                 </span>
@@ -212,16 +246,20 @@ function mostrarError(mensaje) {
 
 // ── Filtros ───────────────────────────────────
 function aplicarFiltros() {
-    const operador = document.getElementById('filtroOperador')?.value || '';
+    const operadoresSeleccionados = Array.from(
+        document.querySelectorAll('#panelFiltroOperador input:checked')
+    ).map(cb => cb.value);
     // NOTA: el HTML tiene un typo "filroTipo" — corregir en movimientos.html también
-    const tipo     = document.getElementById('filroTipo')?.value
-                  || document.getElementById('filtroTipo')?.value || '';
+    const tiposSeleccionados = Array.from(
+        document.querySelectorAll('#panelFiltroTipo input:checked')
+    ).map(cb => cb.value)
+
     const compania = document.getElementById('filtroCompania')?.value || '';
     const busqueda = (document.getElementById('movBusqueda')?.value || '').toLowerCase();
 
     movimientosFiltrados = todosLosMovimientos.filter(m => {
-        if (operador && m.operador !== operador)     return false;
-        if (tipo     && m.tipo    !== tipo)          return false;
+        if (operadoresSeleccionados.length > 0 && !operadoresSeleccionados.includes(m.operador))     return false;
+        if (tiposSeleccionados.length > 0 && !tiposSeleccionados.includes(m.tipo))          return false;
         if (compania && m.compania !== compania)     return false;
         if (busqueda &&
             !m.cliente.toLowerCase().includes(busqueda) &&
@@ -245,6 +283,55 @@ function aplicarFiltros() {
     renderizarRanking();
     renderizarTabla();
 }
+
+function toggleMovDropdown(cual) {
+    const panel = document.getElementById(
+        cual === 'operador' ? 'panelFiltroOperador' : 'panelFiltroTipo'
+    );
+
+    const btn = panel?.previousElementSibling;
+    const abierto = panel?.style.display !== 'none';
+    // Cerrar todos primero
+    ['panelFiltroOperador', 'panelFiltroTipo'].forEach(id => {
+        const p = document.getElementById(id);
+        if (p) p.style.display= 'none';
+        if (p?.previousElementSibling) p.previousElementSibling.classList.remove('activo');
+    });
+    if (!abierto) {
+        panel.style.display = 'block';
+        btn?.classList.add('activo');
+    }
+}
+
+function limpiarFiltroMultiple(cual) {
+    const panelId = cual === 'operador' ? 'panelFiltroOperador' : 'panelFiltroTipo';
+    document.querySelectorAll(`#${panelId} input[type="checkbox"]`)
+        .forEach(cb => cb.checked = false);
+    actualizarTextoFiltro(cual);
+    acplicarFiltros();
+}
+
+function actualizarTextoFiltro(cual) {
+    const panelId = cual === 'operador' ? 'panelFiltroOperador' : 'panelFiltroTipo'
+    const textoId = cual === 'operador' ? 'textoFiltroOperador' : 'textoFiltroTipo'
+    const defecto = cual === 'operador' ? 'Todos los operadores' : 'Todos los tipos'
+    const checked = document.querySelectorAll(`#${panelId} input:checked`);
+    const el = document.getElementById(textoId);
+    if (!el) return;
+    if (checked.length === 0) el.textContent = defecto;
+    else if (checked.length === 1) el.textContent = checked[0].value;
+    else el.textContent = `${checked.length} seleccionados`;
+}
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('.mov-dropdown-wrap')) {
+        ['panelFiltroOperador', 'panelFiltroTipo'].forEach(id => {
+            const p = document.getElementById(id);
+            if (p) p.style.display = 'none';
+            if (p?.previousElementSibling) p.previousElementSibling.classList.remove('activo');
+        })
+    }
+})
 
 // ── Poblar dropdown compañías ─────────────────
 function poblarDropdownCompanias() {
@@ -328,7 +415,7 @@ function renderizarTabla() {
     if (movimientosFiltrados.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="9" class="mov-empty">
+                <td colspan="10" class="mov-empty">
                     <span class="material-symbols-rounded">search_off</span>
                     <p>No hay movimientos en este período</p>
                 </td>
@@ -371,6 +458,12 @@ function renderizarTabla() {
                 </td>
                 <td>${m.telefono}</td>
                 <td>${m.compania}</td>
+                <td>
+                    <span style="padding: 3px 10px; border-radius: 20px; font-size: 0.76; font-weight: 600; text-wrap: nowrap; background: ${m.agente35 === 'Procesado' ? '#dcfce7' : m.agente35 === 'Pendiente' ? '#d97706' : m.agente35 === 'Cambio necesario' ? '#943b8' : '#94a3b8' };
+                    color: ${m.agente35 === 'Procesado' ? '#16a34a' : m.agente35 === 'Pendiente' ? '#d97706' : m.agente35 === 'Cambio necesario' ? '#dc2626' : '#fff'};"
+                    >${m.agente35 || '-'}
+                    </span>
+                </td>
                 <td>
                     <span class="mov-badge"
                           style="background:${conf.color}20;color:${conf.color};border-color:${conf.color}40">

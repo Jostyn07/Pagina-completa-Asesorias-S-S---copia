@@ -116,34 +116,55 @@
          </div>
 
          <!-- Filtros secundarios -->
-          <div class="mov-filtros-row">
-            <select id="filtroOperador" class="mov-select" onchange="aplicarFiltros()">
-                <option value="">Todos los operadores</option>
-            </select>
-            <select class="mov-select" id="filroTipo" onchange="aplicarFiltros()">
-                <option value="">Todos los Tipo</option>
-                <option value="Nueva">Nueva póliza / organica</option>
-                <option value="Venta con registro">Venta con registro</option>
-                <option value="Renovacion">Renovacion</option>
-                <option value="Recuperada">Recuperada</option>
-                <option value="Cambio de vida">Cambio de vida</option>
-                <option value="Editado">Editado</option>
-                <option value="Seguimiento">Seguimiento</option>
-                <option value="Nota">Nota</option>
-            </select>
+            <div class="mov-filtros-row">
+                <div class="mov-dropdown-wrap" id="wrapOperador">
+                    <button type="button" class="mov-dropdown-btn" onclick="toggleMovDropdown('operador')">
+                        <span id="textoFiltroOperador">Todos los operadores</span>
+                        <span class="material-symbols-rounded">expand_more</span>
+                    </button>
+                    <div class="mov-dropdown-panel" id="panelFiltroOperador" style="display: none;">
+                        <div class="mov-dropdown-list" id="listaOperadores"></div>
+                        <div class="mov-dropdown-actions">
+                            <button onclick="limpiarFiltroMultiple('operador')">Limpiar</button>
+                            <button onclick="toggleMovDropdown('operador')">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
 
-            <select id="filtroCompania" class="mov-select" onchange="aplicarFiltros()">
-                <option value="">Todas las compañias</option>
-            </select>
+                <div class="mov-dropdown-wrap" id="wrapTipo" >
+                    <button type="button" class="mov-dropdown-btn" onclick="toggleMovDropdown('tipo')">
+                        <span id="textoFiltroTipo">Todos los tipos</span>
+                        <span class="material-symbols-rounded">expand_more</span>
+                    </button>
+                    <div class="mov-dropdown-panel" id="panelFiltroTipo" style="display: none;">
+                        <div class="mov-dropown-list">
+                            <label class="mov-chk-item"><input type="checkbox" value="Nueva"> Nueva poliza / Organica</label>
+                            <label class="mov-chk-item"><input type="checkbox" value="Venta con registro"> Venta con registro</label>
+                            <label class="mov-chk-item"><input type="checkbox" value="Renovacion"> Renovación</label>
+                            <label class="mov-chk-item"><input type="checkbox" value="Recuperada"> Recuperada</label>
+                            <label class="mov-chk-item"><input type="checkbox" value="Cambio de vida"> Cambio de vida</label>
+                            <label class="mov-chk-item"><input type="checkbox" value="Editado"> Editado</label>
+                            <label class="mov-chk-item"><input type="checkbox" value="Seguimiento"> Seguimiento</label>
+                        </div>
+                        <div class="mov-dropdown-actions">
+                            <button onclick="limpiarFiltroMultiple('tipo')">Limpiar</button>
+                            <button onclick="toggleMovDropdown('tipo')">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
 
-            <input type="text" class="mov-search" id="movBusqueda" placeholder="Buscar cliente..." oninput="aplicarFiltros()">
-            
-            <button class="mov-btn-unicos" id="btnUnicos" onclick="toggleModoUnico()" title="Mostrar cada cliente solo una vez al día">
-                <span class="material-symbols-rounded">person</span>
-                Únicos
-            </button>
+                <select id="filtroCompania" class="mov-select" onchange="aplicarFiltros()">
+                    <option value="">Todas las compañias</option>
+                </select>
 
-          </div>
+                <input type="text" class="mov-search" id="movBusqueda" placeholder="Buscar cliente..." oninput="aplicarFiltros()">
+                
+                <button class="mov-btn-unicos" id="btnUnicos" onclick="toggleModoUnico()" title="Mostrar cada cliente solo una vez al día">
+                    <span class="material-symbols-rounded">person</span>
+                    Únicos
+                </button>
+
+            </div>
 
           <div class="mov-cards" id="movCards">
             <div class="mov-card mov-card-total">
@@ -210,6 +231,7 @@
                                 <th>Cliente</th>
                                 <th>Teléfono</th>
                                 <th>Compañia</th>
+                                <th>Agente3.5</th>
                                 <th>Tipo</th>
                                 <th>Detalle</th>
                                 <th>Observación</th>
