@@ -1793,6 +1793,7 @@ async function actualizarCliente(id, formData) {
         aplica: formData.aplica,
         direccion: formData.direccion,
         casa_apartamento: formData.casaApartamento,
+        po_box: formData.poBox || null,
         condado: formData.condado,
         ciudad: formData.ciudad,
         estado: formData.estado,
@@ -2701,6 +2702,8 @@ async function guardarEstadoSeguimiento(polizaId) {
             estadoData.nombre_agente_mercado = document.getElementById('nombreAgenteMercado')?.value || null;
             estadoData.observacion_mercado = document.getElementById('observacionMercado')?.value || null;
             estadoData.estado_documentos = document.getElementById('estadoDocumentos')?.value || null;
+            estadoData.documentos_pendientes = document.getElementById('documentosPendientes')?.value || '-';
+            estadoData.fecha_plazo_documentos = document.getElementById('fechaPlazoDocumento')?.value || null;
             if(containtAgenteExterno) estadoData.agente_externo_mercado = document.getElementById('agenteExterno')?.value || null;
         }
                 

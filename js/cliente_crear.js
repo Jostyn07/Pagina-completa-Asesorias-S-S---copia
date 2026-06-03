@@ -1283,7 +1283,7 @@ async function crearCliente(formData) {
         codigo_postal: formData.codigoPostal,
         operador_nombre: formData.operadorNombre || null,
         venta_realizada_por: formData.ventaRealizadaPor || null,
-        agente_nombre: formData.portalNPN || null,
+        agente_nombre: formData.agenteNombre || null,
     };
     
     const { data: cliente, error: clienteError } = await supabaseClient
@@ -1323,7 +1323,7 @@ async function crearCliente(formData) {
         clave_seguridad: formData.claveSeguridad || null,
         enlace_poliza: formData.enlacePoliza || null,
         operador_nombre: formData.operadorNombre || null,
-        agente_nombre: formData.portalNPN || null,
+        agente_nombre: formData.agenteNombre || null,
         estado_compania: 'pendiente',
         estado_mercado: 'pendiente',
         agente35_estado: 'Policy change',
@@ -1436,31 +1436,6 @@ async function crearCliente(formData) {
             ;
         }
     }
-
-    // ============================================
-    // GUARDAR NOTAS
-    // ============================================
-async function guardarNotas(clienteId) {
-    if (notasTemporales.length === 0) return;
-    
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    
-    const notasData = notasTemporales.map(nota => ({
-        cliente_id: clienteId,
-        mensaje: nota.mensaje,
-        imagenes: null,
-        usuario_email: user.email,
-        usuario_nombre: user.user_metadata?.nombre || user.email
-    }));
-    
-    const { error } = await supabaseClient
-        .from('notas')
-        .insert(notasData);
-    
-    if (error) throw error;
-    ;
-    notasTemporales = [];
-}
     
     const { data: poliza, error: polizaError } = await supabaseClient
         .from('polizas')
@@ -1563,6 +1538,31 @@ async function guardarNotas(clienteId) {
     alert(`✅ Cliente y póliza creados exitosamente\n\nCliente: ${cliente.nombres} ${cliente.apellidos}\nPóliza: ${poliza.numero_poliza}`);
     
     window.location.href = './polizas.html';
+}
+
+// ============================================
+// GUARDAR NOTAS
+// ============================================
+async function guardarNotas(clienteId) {
+    if (notasTemporales.length === 0) return;
+    
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    
+    const notasData = notasTemporales.map(nota => ({
+        cliente_id: clienteId,
+        mensaje: nota.mensaje,
+        imagenes: null,
+        usuario_email: user.email,
+        usuario_nombre: user.user_metadata?.nombre || user.email
+    }));
+    
+    const { error } = await supabaseClient
+        .from('notas')
+        .insert(notasData);
+    
+    if (error) throw error;
+    ;
+    notasTemporales = [];
 }
 
 async function generarNumeroPoliza() {
