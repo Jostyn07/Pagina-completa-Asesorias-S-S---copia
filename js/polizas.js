@@ -979,6 +979,11 @@ async function abrirDetalles(polizaId) {
                             <label>Fecha creación</label>
                             <p>${poliza.created_at ? formatoUS(poliza.created_at) : 'N/A'}</p>
                         </div>
+
+                        <div class="detalle-item">
+                            <label>Pagado hasta</label>
+                            <p>${poliza.pagado_hasta ? formatoUS(poliza.pagado_hasta) : 'N/A'}</p>
+                        </div>
                     </div>
                 </div>
                 
