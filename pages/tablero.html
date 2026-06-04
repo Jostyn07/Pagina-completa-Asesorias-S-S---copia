@@ -46,7 +46,6 @@
             </a>
             <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
                 <span class="material-symbols-rounded">task_alt</span>
-                <span>Recordatorios</span>
                 <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
             </a>
             <a href="./para-revisar.html" class="menu-item">
@@ -108,57 +107,74 @@
             <div class="toolbar-btn"></div>
 
             <!-- Negrita -->
-             <button class="toolbar-btn" id="btnNegrita" onclick="aplicarFormato('negrita')" title="Negrita">
-                <span class="material-symbols-rounded">format_bold</span>
-                <span>Negrita</span>
-             </button>
-
-             <!-- Tamaño texto -->
-              <select name="toolbar-select" id="selectTamano" onchange="aplicarFormato('tamano')" title="Tamaño de texto">
-                <option value="11">11</option>
-                <option value="12">12</option>
-                <option value="13">13</option>
-                <option value="14" selected>14</option>
-                <option value="16">16</option>
-                <option value="18">18</option>
-                <option value="20">20</option>
-                <option value="24">24</option>
-                <option value="28">28</option>
-                <option value="32">32</option>
-              </select>
-
-              <div class="toolbar-divider"></div>
-
-              <!-- Color de fondo -->
-               <div class="color-picker-wrap">
-                    <button class="color-preview-btn" onclick="document.getElementById('inputColorFondo').click()" title="Color de fondo">
-                        <span class="material-symbols-rounded">format_color_fill</span>
-                        <span class="color-dot" id="dotColorFondo" style="background-color: #fff;"></span>
-                    </button>
-                    <input type="color" id="inputColorFondo" class="color-input-hidden" value="fff" oninput="aplicarFormato('colorFondo')">
-               </div>
-
-               <!-- Color texto -->
-                <div class="color-picker-wrap">
-                    <button class="color-preview-btn" onclick="document.getElementById('inputColorTexto').click()" title="Color del texto">
-                        <span class="material-symbols-rounded">format_color_text</span>
-                        <span class="color-dot" id="dotColorTexto" style="background: #1e293b;"></span>
-                    </button>
-                    <input type="color" id="inputColorTexto" class="color.-input-hidden" value="#1e293b" oninput="aplicarFormato('colorTexto')">
-                </div>
-
-                <!-- Limpiar formato -->
-                 <button class="toolbar-btn" onclick="aplicarFormato('limpiar')" title="Limpiar formato">
-                    <span class="material-symbols-rounded">format_clear</span>
-                    <span>Limpiar</span>
+            <button class="toolbar-btn" id="btnNegrita" onclick="aplicarFormato('negrita')" title="Negrita">
+               <span class="material-symbols-rounded">format_bold</span>
+               <span>Negrita</span>
+            </button>
+            <!-- Tamaño texto -->
+            <select name="toolbar-select" id="selectTamano" onchange="aplicarFormato('tamano')" title="Tamaño de texto">
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14" selected>14</option>
+              <option value="16">16</option>
+              <option value="18">18</option>
+              <option value="20">20</option>
+              <option value="24">24</option>
+              <option value="28">28</option>
+              <option value="32">32</option>
+            </select>
+            <div class="toolbar-divider"></div>
+            <!-- Color de fondo -->
+            <div class="color-picker-wrap">
+                 <button class="color-preview-btn" onclick="document.getElementById('inputColorFondo').click()" title="Color de fondo">
+                     <span class="material-symbols-rounded">format_color_fill</span>
+                     <span class="color-dot" id="dotColorFondo" style="background-color: #ffffff;"></span>
                  </button>
+                 <input type="color" id="inputColorFondo" class="color-input-hidden" value="#ffffff" oninput="aplicarFormato('colorFondo')">
+            </div>
+            <!-- Color texto -->
+            <div class="color-picker-wrap">
+                <button class="color-preview-btn" onclick="document.getElementById('inputColorTexto').click()" title="Color del texto">
+                    <span class="material-symbols-rounded">format_color_text</span>
+                    <span class="color-dot" id="dotColorTexto" style="background: #1e293b;"></span>
+                </button>
+                <input type="color" id="inputColorTexto" class="color.-input-hidden" value="#1e293b" oninput="aplicarFormato('colorTexto')">
+            </div>
+            <!-- Limpiar formato -->
+             <button class="toolbar-btn" onclick="aplicarFormato('limpiar')" title="Limpiar formato">
+                <span class="material-symbols-rounded">format_clear</span>
+                <span>Limpiar</span>
+             </button>
+            <div class="admin-section" id="seccionAdmin" style="display: none;">
+                <span class="admin-badge">Admin</span>
+                <button class="toolbar-btn" onclick="agregarFila()" title="Agregar fila">
+                    <span class="material-symbols-rounded">add_row_above</span>
+                    <span>+ Fila</span>
+                </button>
+                <button class="toolbar-btn" onclick="agregarColumna()" title="Agregar columna">
+                    <span class="material-symbols-rounded">add_column_right</span>
+                    <span>+ Columna</span>
+                </button>
+            </div>
+            <!-- Indicador de guardado -->
+            <div class="save-indicator" id="saveIndicator">
+                <span class="material-symbols-rounded">cloud_done</span>
+                <span id="saveText">Guardado</span>
+            </div>
+        </div>
 
-                 <div class="admin-section" id="seccionAdmin" style="display: none;">
-                    <span class="admin-badge">Admin</span>
-                    <button class="toolbar-btn" onclick="agregarFila()" title="Agregar fila">
-                        <span class="material-symbols-rounded">add_row_above</span>
-                    </button>
-                 </div>
+        <!-- Area del tablero -->
+         <div class="tablero-workspace" id="tableroWorkspace">
+            <div class="tablero-scroll-area" id="tableroScrollArea">
+                <div class="tablero-table-wrap" id="tableroTableWrap">
+                    <!-- La tabla se genera dinamicamente con js -->
+                     <div style="padding: 40px; text-align: center; color: #94a3b8;">
+                        <span class="material-symbols-rounded" style="font-size: 40px; display: block; margin-bottom: 10px; ">hourglass_empty</span>
+                        Cargando tablero...
+                     </div>
+                </div>
+            </div>
          </div>
     </div>
     <!-- SCRIPTS -->

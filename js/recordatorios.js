@@ -390,7 +390,7 @@ async function guardarRecordatorio() {
                             ...datos,
                             usuario_id: operadorId,
                             creado_por_id: user.id,
-                            creado_por_nombre: usuarioData?.nombre || '',
+                            creado_por_nombre: datosUsuario?.nombre || '',
                             estado: 'pendiente'
                         })
                 }
