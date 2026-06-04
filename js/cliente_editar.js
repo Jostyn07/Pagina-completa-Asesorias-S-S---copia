@@ -3093,7 +3093,7 @@ async function registrarCambioEstado(clienteId, estadoData) {
         // Obtener estado anterior
         const { data: polizaAnterior } = await supabaseClient
             .from('polizas')
-            .select('estado_compania, estado_mercado, estado_documentos')
+            .select('estado_compania, estado_mercado, estado_documentos, observacion_compania, email_portal, contrasena_portal')
             .eq('id', polizaId)
             .single();
         

@@ -1,0 +1,200 @@
+/* Layaout principal */
+.tablero-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg-primary, #f8fafc);
+}
+
+/* Header / Toolbar */
+
+.tablero-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--bg-card, #f8fafc);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    z-index: 10;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
+.tablero-header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-primary, #1e293b);
+    margin-right: 8px;
+}
+
+.tablero-header-title span.material-symbols-rounded {
+    color: #6366f1;
+    font-size: 22px;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--border-color, #e2e8f0);
+    margin: 0 4px;
+}
+
+/* Botones de toolbar */
+.toolbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border: 1px solid var(--bordr-color, #e2e8f0);
+    border-radius: 7px;
+    background: var(--bg-primary, #f8fafc);
+    color: var(--text-primary, #1e293b);
+    cursor: pointer;
+    font-size: 0.82;
+    font-weight: 600;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.toolbar-btn:hover {
+    background: #6366f1;
+    color: #fff;
+    border-color: #6366f1;
+}
+
+.toolbar-btn.active {
+    background: #6366f1;
+    color: #fff;
+    border-color: #6366f1;
+}
+
+.toolbar-btn .material-symbols-rounded {
+    font-size: 18px;
+}
+
+.toolbar-select {
+    padding: 5px 8px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 7px;
+    background: var(--bg-primary, #f8fafc);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+}
+
+/* color picker */
+.color-picker-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.color-preview-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 7px;
+    background-color: var(--bg-primary, #f8fafc);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+    transform: all  0.15s;    
+}
+.color-preview-btn:hover {
+    border-color: #6366f1;
+}
+
+.color-preview-btn .material-symbols-rounded {
+    font-size: 18px;
+}
+
+.color-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.15);
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.color-input-hidden {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+/* Indicado de guardado */
+.save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    color: var(--text-secondary, #64748b);
+    margin-left: auto;
+    padding: 4px 10px;
+    border-radius: 20px;
+    transform: all 0.3s;
+}
+
+.save-indicator.saving {
+    color: #f59e0b;
+}
+
+.save-indicator.saved {
+    color: #10b981;
+}
+
+.save-indicator .material-symbols-rounded {
+    font-size: 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg);}
+}
+
+.save-indicator.saving .material-symbols-rounded {
+    animation: spin 1s linear infinite;
+}
+
+/* Area del tablero */
+.tablero-workspace {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    cursor: default;
+}
+
+.tablero-scroll-area {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Tabla */
+.talero-table-wrap {
+    display: inline-block;
+    min-width: 100%;
+}
+
+.tablero-table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    background: var(--bg-card, #fff);
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    overflow: hidden;
+}

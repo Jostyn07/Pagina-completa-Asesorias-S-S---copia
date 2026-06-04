@@ -140,10 +140,25 @@
 
                <!-- Color texto -->
                 <div class="color-picker-wrap">
-                    <button class="color-preview-btn" onclick="document.getElementById('inputColorTexto').click" title="Color del texto">
+                    <button class="color-preview-btn" onclick="document.getElementById('inputColorTexto').click()" title="Color del texto">
                         <span class="material-symbols-rounded">format_color_text</span>
+                        <span class="color-dot" id="dotColorTexto" style="background: #1e293b;"></span>
                     </button>
+                    <input type="color" id="inputColorTexto" class="color.-input-hidden" value="#1e293b" oninput="aplicarFormato('colorTexto')">
                 </div>
+
+                <!-- Limpiar formato -->
+                 <button class="toolbar-btn" onclick="aplicarFormato('limpiar')" title="Limpiar formato">
+                    <span class="material-symbols-rounded">format_clear</span>
+                    <span>Limpiar</span>
+                 </button>
+
+                 <div class="admin-section" id="seccionAdmin" style="display: none;">
+                    <span class="admin-badge">Admin</span>
+                    <button class="toolbar-btn" onclick="agregarFila()" title="Agregar fila">
+                        <span class="material-symbols-rounded">add_row_above</span>
+                    </button>
+                 </div>
          </div>
     </div>
     <!-- SCRIPTS -->
