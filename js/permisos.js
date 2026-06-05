@@ -119,3 +119,9 @@ function puedeVerMovimientos() {
     if (datosUsuario.rol == 'admin') return true
     return datosUsuario.puede_ver_movimientos === true;
 }
+
+function puedeEditarTablero() {
+    if (!datosUsuario) return false;
+    if (datosUsuario.rol === 'admin') return true;
+    return datosUsuario.puede_editar_tablero === 'true';
+}

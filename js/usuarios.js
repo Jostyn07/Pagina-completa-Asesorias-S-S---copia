@@ -123,6 +123,7 @@ async function abrirModalCrear() {
     document.getElementById('puedeVerMonitoreo').checked = false;
     document.getElementById('puedeUsarIA').checked = false;
     document.getElementById('puedeVerMovimientos').checked = false;
+    document.getAnimations('puedeEditarTablero').checked = false
     await cargarSupervisores();
 }
 
@@ -147,6 +148,7 @@ async function editarUsuario(id) {
     document.getElementById('puedeUsarIA').checked = usuario.puede_usar_ia || false;
     document.getElementById('esSupervisor').checked = usuario.es_supervisor || false;
     document.getElementById('puedeVerMovimientos').checked = usuario.puede_ver_movimientos || false;
+    document.getElementById('puedeEditarTablero').checked = usuario.puede_editar_tablero || false;
 
     
     // Ocultar campo contraseña en edición
@@ -199,6 +201,7 @@ async function guardarUsuario(event) {
                     puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
                     puede_usar_ia: document.getElementById('puedeUsarIA').checked,
                     puede_ver_movimientos: document.getElementById('puedeVerMovimientos').checked,
+                    puede_editar_tablero: document.getElementById('puedeEditarTablero').checked,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', idEditando)
@@ -244,6 +247,7 @@ async function guardarUsuario(event) {
                     puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
                     puede_usar_ia: document.getElementById('puedeUsarIA').checked,
                     puede_ver_movimientos: document.getElementById('puedeVerMovimientos').checked,
+                    puede_editar_tablero: document.getElementById('puedeEditarTablero').checked,
                 });
             
             if (dbError) throw dbError;

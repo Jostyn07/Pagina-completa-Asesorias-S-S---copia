@@ -46,7 +46,12 @@
             </a>
             <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
                 <span class="material-symbols-rounded">task_alt</span>
+                <span>recordatorios</span>
                 <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
+            </a>
+            <a href="./tablero.html" class="menu-item active">
+                <span class="material-symbols-rounded">grid_view</span>
+                <span>Tablero</span>
             </a>
             <a href="./para-revisar.html" class="menu-item">
                 <span class="material-symbols-rounded">fact_check</span>
@@ -71,10 +76,6 @@
             <a href="./movimientos.html" class="menu-item" id="menuMovimientos" style="display:none">
                 <span class="material-symbols-rounded">swap_horiz</span>
                 <span>Movimientos</span>
-            </a>
-            <a href="./tablero.html" class="menu-item active">
-                <span class="material-symbols-rounded">grid_view</span>
-                <span>Tablero</span>
             </a>
             <a href="./usuarios.html" class="menu-item">
                 <span class="material-symbols-rounded">group</span>
@@ -104,7 +105,7 @@
                 Tablero
             </div>
 
-            <div class="toolbar-btn"></div>
+            <div class="toolbar-divider"></div>
 
             <!-- Negrita -->
             <button class="toolbar-btn" id="btnNegrita" onclick="aplicarFormato('negrita')" title="Negrita">
@@ -112,7 +113,7 @@
                <span>Negrita</span>
             </button>
             <!-- Tamaño texto -->
-            <select name="toolbar-select" id="selectTamano" onchange="aplicarFormato('tamano')" title="Tamaño de texto">
+            <select class="toolbar-select" id="selectTamano" onchange="aplicarFormato('tamano')" title="Tamaño de texto">
               <option value="11">11</option>
               <option value="12">12</option>
               <option value="13">13</option>
@@ -139,7 +140,7 @@
                     <span class="material-symbols-rounded">format_color_text</span>
                     <span class="color-dot" id="dotColorTexto" style="background: #1e293b;"></span>
                 </button>
-                <input type="color" id="inputColorTexto" class="color.-input-hidden" value="#1e293b" oninput="aplicarFormato('colorTexto')">
+                <input type="color" id="inputColorTexto" class="color-input-hidden" value="#1e293b" oninput="aplicarFormato('colorTexto')">
             </div>
             <!-- Limpiar formato -->
              <button class="toolbar-btn" onclick="aplicarFormato('limpiar')" title="Limpiar formato">
@@ -148,7 +149,7 @@
              </button>
             <div class="admin-section" id="seccionAdmin" style="display: none;">
                 <span class="admin-badge">Admin</span>
-                <button class="toolbar-btn" onclick="agregarFila()" title="Agregar fila">
+                <button class="toolbar-btn add-row-btn-row" onclick="agregarFila()" title="Agregar fila">
                     <span class="material-symbols-rounded">add_row_above</span>
                     <span>+ Fila</span>
                 </button>

@@ -5,6 +5,7 @@
     height: 100vh;
     overflow: hidden;
     background: var(--bg-primary, #f8fafc);
+    margin-left: 270px;
 }
 
 /* Header / Toolbar */
@@ -19,7 +20,7 @@
     flex-shrink: 0;
     flex-wrap: wrap;
     z-index: 10;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
 .tablero-header-title {
@@ -56,7 +57,7 @@
     background: var(--bg-primary, #f8fafc);
     color: var(--text-primary, #1e293b);
     cursor: pointer;
-    font-size: 0.82;
+    font-size: 0.82rem;
     font-weight: 600;
     transition: all 0.15s;
     white-space: nowrap;
@@ -108,7 +109,7 @@
     font-size: 0.82rem;
     font-weight: 600;
     color: var(--text-primary, #1e293b);
-    transform: all  0.15s;    
+    transition: all 0.15s;    
 }
 .color-preview-btn:hover {
     border-color: #6366f1;
@@ -145,7 +146,7 @@
     margin-left: auto;
     padding: 4px 10px;
     border-radius: 20px;
-    transform: all 0.3s;
+    transition: all 0.3s;
 }
 
 .save-indicator.saving {
@@ -185,7 +186,7 @@
 }
 
 /* Tabla */
-.talero-table-wrap {
+.tablero-table-wrap {
     display: inline-block;
     min-width: 100%;
 }
@@ -208,7 +209,7 @@
     color: var(--text-secondary, #94a3b8);
     font-size: 0.72rem;
     font-weight: 600;
-    border: 1px sollid var(--border-color, #e2e8f0);
+    border: 1px solid var(--border-color, #e2e8f0);
     user-select: none;
     padding: 0 4px;
 }
@@ -223,6 +224,16 @@
     position: sticky;
     top: 0;
     z-index: 2;
+    transition: all 1000ms;
+}
+
+.header-cell-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 10px;
+    min-height: 36px;
 }
 
 .header-editable {
@@ -231,4 +242,377 @@
     font-size: 0.82rem;
     font-weight: 700;
     color: var(--text-primary, #1e293b);
+    background: transparent;
+    border: none;
+    outline: none;
+    min-width: 0;
+    cursor: default;
+}
+
+.header-editable[contenteditable="true"] {
+    cursor: text;
+    background: rgba(99, 102, 241, 0.06);
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.btn-del-col {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ef4444;
+    padding: 2px;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+.btn-del-col .material-symbols-rounded {
+    font-size: 15px;
+}
+
+.tablero-table thead tr th:hover .btn-del-col {
+    display: flex;
+}
+
+/* Celdas */
+.tablero-table tbody tr td {
+    border: 1px solid var(--border-color, #e2e8f0);
+    padding: 0;
+    min-width: 130px;
+    width: 130px;
+    vertical-align: top;
+    position: relative;
+}
+
+.tablero-table tbody tr td.row-number {
+    min-width: 42px;
+    width: 42px;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+}
+
+.cell-content {
+    display: block;
+    width: 100%;
+    min-height: 34px;
+    padding: 6px 9px;
+    outline: none;
+    font-size: 14px;
+    line-height: 1.4;
+    /* word-break: break-word; */
+    white-space: pre-wrap;
+    box-sizing: border-box;
+    cursor: default;
+}
+
+.cell-content[contenteditable="true"] {
+    cursor: text;
+}
+
+/* Seleccion de celda */
+.tablero-table tbody tr td.selected {
+    outline: 2px solid #6366f1;
+    outline-offset: -2px;
+    z-index: 1;
+}
+
+.tablero-table tbody tr td.selected .cell-content {
+    background: rgba(99, 102, 241, 0.025);
+}
+
+/* Fila hover */
+.tablero-table tbody tr:hover td:not(.row-number) {
+    background: rgba(99, 102, 241, 0.025);
+}
+
+/* Botón eliminar fila */
+.btn-del-row {
+    display: none;
+    position: absolute;
+    right: -28px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #ef4444;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 4px;
+    line-height: 1;
+    z-index: 5;
+}
+
+.btn-del-row .material-symbols-rounded {
+    font-size: 15px;
+}
+
+.add-row-btn-row td {
+    background: var(--bg-primary, #f8fafc) !important;
+    padding: 6px !important;
+    text-align: center;
+    border: 1px dashed var(--border-color, #e2e8f0) !important;
+}
+
+/* Botonoes add col */
+.add-col-th {
+    background: var(--bg-primary, #f1f5f9) !important;
+    border: 1px solid var(--border-color, #e2e8f0) !important;
+    min-width: 44px !important;
+    width: 44px !important;
+    text-align: center; 
+}
+
+.btn-add-small {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6366f1;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 6px;
+    margin: 0 auto;
+    transition: background 0.15s;
+}
+
+.btn-add-small:hover {
+    background: rgba(99,102,241,0.1);
+}
+
+.btn-add-small .material-symbols-rounded {
+    font-size: 16px;
+}
+
+.no-permission-banner {
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 0;
+    flex-shrink: 0;
+}
+
+.no-permission-banner .material-symbols-rounded {
+    font-size: 18px;
+}
+
+/* Admin badge en toolbar */
+.admin-section {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(99, 102, 241, 0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(99,102,241,0.2);
+}
+
+.admin-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #6366f1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Resposive */
+@media (max-width: 768px) {
+    .tablero-header {
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .toolbar-btn span:not(.material-symbols-rounded) {
+        display: none;
+    }
+}
+
+/* Dark mode */
+/* Fondo general */
+[data-theme="dark"] .tablero-page,
+[data-theme="dark"] .tablero-scroll-area {
+    background: #121218;
+}
+ 
+/* ── Toolbar ── */
+[data-theme="dark"] .tablero-header {
+    background: #1a1a24;
+    border-bottom-color: #2e2e3e;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.4);
+}
+ 
+[data-theme="dark"] .tablero-header-title {
+    color: #e2e4e9;
+}
+ 
+[data-theme="dark"] .tablero-header-title span.material-symbols-rounded {
+    color: #8b8ef8;
+}
+ 
+[data-theme="dark"] .toolbar-divider {
+    background: #2e2e3e;
+}
+ 
+[data-theme="dark"] .toolbar-btn {
+    background: #22222e;
+    border-color: #2e2e3e;
+    color: #9ca3b4;
+}
+ 
+[data-theme="dark"] .toolbar-btn:hover {
+    background: #8b8ef8;
+    border-color: #8b8ef8;
+    color: #fff;
+}
+ 
+[data-theme="dark"] .toolbar-btn.active {
+    background: #8b8ef8;
+    border-color: #8b8ef8;
+    color: #fff;
+}
+ 
+[data-theme="dark"] .toolbar-select {
+    background: #22222e;
+    border-color: #2e2e3e;
+    color: #e2e4e9;
+}
+ 
+[data-theme="dark"] .toolbar-select option {
+    background: #22222e;
+    color: #e2e4e9;
+}
+ 
+[data-theme="dark"] .color-preview-btn {
+    background: #22222e;
+    border-color: #2e2e3e;
+    color: #9ca3b4;
+}
+ 
+[data-theme="dark"] .color-preview-btn:hover {
+    border-color: #8b8ef8;
+}
+ 
+[data-theme="dark"] .color-dot {
+    border-color: rgba(255,255,255,0.2);
+}
+ 
+/* ── Sección admin ── */
+[data-theme="dark"] .admin-section {
+    background: rgba(139, 142, 248, 0.1);
+    border-color: rgba(139, 142, 248, 0.25);
+}
+ 
+[data-theme="dark"] .admin-badge {
+    color: #8b8ef8;
+}
+ 
+/* ── Indicador guardado ── */
+[data-theme="dark"] .save-indicator {
+    color: #6b7280;
+}
+ 
+[data-theme="dark"] .save-indicator.saving {
+    color: #e5b44e;
+}
+ 
+[data-theme="dark"] .save-indicator.saved {
+    color: #5ecd8a;
+}
+ 
+/* ── Tabla estructura ── */
+[data-theme="dark"] .tablero-table {
+    background: #1a1a24;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+ 
+/* ── Cabeceras ── */
+[data-theme="dark"] .tablero-table thead tr th {
+    background: #22222e;
+    border-color: #2e2e3e;
+}
+ 
+[data-theme="dark"] .header-editable {
+    color: #e2e4e9;
+}
+ 
+[data-theme="dark"] .header-editable[contenteditable="true"] {
+    background: rgba(139, 142, 248, 0.1);
+    color: #e2e4e9;
+}
+ 
+[data-theme="dark"] .btn-del-col {
+    color: #f07070;
+}
+ 
+/* ── Números de fila ── */
+[data-theme="dark"] .row-number {
+    background: #22222e;
+    color: #6b7280;
+    border-color: #2e2e3e;
+}
+ 
+/* ── Celdas ── */
+[data-theme="dark"] .tablero-table tbody tr td {
+    border-color: #2e2e3e;
+    background: #1a1a24;
+}
+ 
+[data-theme="dark"] .cell-content {
+    color: #e2e4e9;
+}
+ 
+/* ── Hover de fila ── */
+[data-theme="dark"] .tablero-table tbody tr:hover td:not(.row-number) {
+    background: #22222e;
+}
+ 
+/* ── Celda seleccionada ── */
+[data-theme="dark"] .tablero-table tbody tr td.selected {
+    outline-color: #8b8ef8;
+}
+ 
+[data-theme="dark"] .tablero-table tbody tr td.selected .cell-content {
+    background: rgba(139, 142, 248, 0.08);
+}
+ 
+/* ── Botón eliminar fila ── */
+[data-theme="dark"] .btn-del-row {
+    background: #f07070;
+}
+ 
+/* ── Botones add fila / col ── */
+[data-theme="dark"] .add-col-th {
+    background: #22222e !important;
+    border-color: #2e2e3e !important;
+}
+ 
+[data-theme="dark"] .add-row-btn-row td {
+    background: #22222e !important;
+    border-color: #2e2e3e !important;
+}
+ 
+[data-theme="dark"] .btn-add-small {
+    color: #8b8ef8;
+}
+ 
+[data-theme="dark"] .btn-add-small:hover {
+    background: rgba(139, 142, 248, 0.12);
+}
+ 
+/* ── Banner sin permiso ── */
+[data-theme="dark"] .no-permission-banner {
+    background: #2a2010;
+    border-color: #5a4a1e;
+    color: #e5b44e;
 }

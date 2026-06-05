@@ -59,6 +59,11 @@
                 <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
             </a>
 
+            <a href="./tablero.html" class="menu-item" target="_blank">
+                <span class="material-symbols-rounded">grid_view</span>
+                <span>Tablero</span>
+            </a>
+
             <a href="./clientes_archivados.html" class="menu-item" id="menuArchivados">
                 <span class="material-symbols-rounded">inventory_2</span>
                 <span>Archivados</span>
@@ -272,12 +277,27 @@
                                 <div class="toggle-row-info">
                                     <span class="material-symbols-rounded">swap_horiz</span>
                                     <div class="toggle-row-text">
-                                        <strong>Puede ver monitoreo</strong>
+                                        <strong>Puede ver movimientos</strong>
                                         <small>Acceso al control de actividad y movimientos</small>
                                     </div>
                                 </div>
                                 <div class="toggle-switch">
                                     <input type="checkbox" id="puedeVerMovimientos">
+                                    <span class="toggle-track"></span>
+                                </div>
+                            </label>
+
+                            <div class="toggle-divider"></div>
+                            <label for="puedeEditarTablero" class="toggle-row toggle-tablero">
+                                <div class="toggle-row-info">
+                                    <span class="material-symbols-rounded">grid_view</span>
+                                    <div class="toggle-row-text">
+                                        <strong>Pude editar</strong>
+                                        <small>Permiso para escribir y formatear en el tablero compartido</small>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="puedeEditarTablero">
                                     <span class="toggle-track"></span>
                                 </div>
                             </label>

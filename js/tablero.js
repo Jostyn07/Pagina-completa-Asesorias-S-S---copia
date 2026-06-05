@@ -29,9 +29,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     puedeEditar = esAdminTablero || datosUsuario.puede_editar_tablero === true;
 
     // Mostrar / ocultar secciones
-    if (esAdminTablero) {
+    if (!puedeEditar) {
         document.getElementById('noBanner').style.display = 'flex';
         deshabilitarToolbar();
+    }
+
+    if (esAdminTablero) {
+        document.getElementById('seccionAdmin').style.display = 'flex';
     }
 
     // Iniciar pan
@@ -75,7 +79,7 @@ async function cargarTablero() {
         });
 
         renderizarTabla();
-        mostrarGuardando();
+        mostrarGuardado();
     } catch (err) {
         console.error('Error cargando tablero: ', err);
         document.getElementById('tableroTableWrap').innerHTML =
@@ -91,17 +95,17 @@ function renderizarTabla() {
     const { num_filas, num_columnas, cabeceras} = tableroConfig;
     const wrap = document.getElementById('tableroTableWrap');
 
-    let html = `<table class="tablero_table" id="tableroTable"></table>`
+    let html = `<table class="tablero-table" id="tableroTable">`;
 
     // THEAD
     html += `<thead><tr>`;
-    html += `<th class="row-number" style="top:0; left:0; postion: sticky; z-index:3;"></th>`
+    html += `<th class="row-number" style="top:0; left:0; position: sticky; z-index:3;"></th>`
 
     for (let c = 0; c < num_columnas; c++) {
         const nombre = (cabeceras && cabeceras[c]) ? cabeceras[c] : `Col ${c+1}`;
         html += `<th>
-            <div class="header_cell_inner">
-                <span class="header_editable" id="header-${c}" ${esAdminTablero ? 'contenteditable === "true' : ''} onblur="guardarCabecera(${c}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur()}">${escapeHtml(nombre)}</span>
+            <div class="header-cell-inner">
+                <span class="header-editable" id="header-${c}" ${esAdminTablero ? 'contenteditable = "true"' : ''} onblur="guardarCabecera(${c}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur()}">${escapeHtml(nombre)}</span>
                 ${esAdminTablero ? `<button class="btn-del-col" onclick="eliminarColumna(${c})" title="Eliminar columna">
                     <span class="material-symbols-rounded">close</span>
 
@@ -112,25 +116,26 @@ function renderizarTabla() {
 
     // th vacío para botón añadir col (solo admin)
     if (esAdminTablero) {
-        HTML += `<th class="add-col-th">
-            <button class="btn-add-small" onclick="agegarColumna()" title="Añadir columna">
+        html += `<th class="add-col-th">
+            <button class="btn-add-small" onclick="agregarColumna()" title="Añadir columna">
                 <span class="material-symbols-rounded">add</span>
             </button>
         </th>`;
     }
+
 
     // TBODY
 
     html += `<tbody>`;
 
     for(let f = 0; f < num_filas; f++) {
-        html += `<tr id="fila.${f}">`;
+        html += `<tr id="fila-${f}">`;
 
         // Número de fila
         html += `<td class="row-number" style="position:sticky; left: 0;">${f + 1}
-            ${esAdminTablero} ? <button class="btn-del-row" onclick="eliminarFila(${f}}" title="Eliminar fila">
+            ${esAdminTablero ? `<button class="btn-del-row" onclick="eliminarFila(${f})" title="Eliminar fila">
                     <span class="material-symbols-rounded">close</span>
-                </button>
+                </button>` : ''}
         </td>`;
 
         for (let c = 0; c < num_columnas; c++) {
@@ -143,12 +148,24 @@ function renderizarTabla() {
         }
 
         html += `</tr>`
+    }
+    html += `</tbody></table>`
 
-        wrap.innerHTML = html;
-        
-        asignarEventosCeldas()
+
+    if (esAdminTablero) {
+        html += `<tr class="add-row-btn-row">
+            <td colspan="${num_columnas + 2}">
+                <button class="btn-add-small" onclick="agregarFila()">
+                    <span class="material-symbols-rounded">add</span>
+                    Agregar fila
+                </button>
+            </td>
+        </tr>`;
     }
 
+    wrap.innerHTML = html;
+    
+    asignarEventosCeldas()
 }
 
 function construirCeldaHtml(fila, col) {
@@ -168,7 +185,7 @@ function construirCeldaHtml(fila, col) {
     ].join('');
 
     return `<td id="td-${fila}-${col}" data-fila="${fila}" data-col="${col}" onclick="seleccionarCelda(${fila}, ${col})">
-        <span class="cell-content" id="cell-${fila}-${col}" style="${style}" ${puedeEditar ? 'contenteditable="true"' : ''} onblur="onblur(${fila},${col},this)" onkeydown="onCeldaKeydown(event,${fila},${col})">${escapeHtml(cont)}</span>
+        <span class="cell-content" id="cell-${fila}-${col}" style="${style}" ${puedeEditar ? 'contenteditable="true"' : ''} onblur="onCeldaBlur(${fila},${col},this)" onkeydown="onCeldaKeydown(event,${fila},${col})">${escapeHtml(cont)}</span>
     </td>`;
 }
 
@@ -191,13 +208,13 @@ function seleccionarCelda(fila, col) {
 
     // Actualizar toolbar con valore de la celda
     const key = `${fila}-${col}`;
-    const dato = tableroCelda[key] || {};
+    const dato = tableroCeldas[key] || {};
     actualizarToolbarConCelda(dato);
 }
 
 function actualizarToolbarConCelda(dato) {
-    const bg = dato.color_fondo || rgb(255, 255, 255);
-    const fg = dato.color_texto || rgb(30, 41, 59);
+    const bg = dato.color_fondo || '#ffffff';
+    const fg = dato.color_texto || '#1e293b';
     const tam = dato.tamano_texto || 14;
     const bold = dato.negrita || false;
 
@@ -208,14 +225,14 @@ function actualizarToolbarConCelda(dato) {
     document.getElementById('dotColorTexto').style.background = fg;
 
     const slectTam = document.getElementById('selectTamano');
-    selectTam.value = tam.toString();
+    slectTam.value = tam.toString();
 
     const btnNeg = document.getElementById('btnNegrita');
     btnNeg.classList.toggle('active', bold);
 }
 
 function onCeldaBlur(fila, col, el) {
-    const contenido = el.innerHTML || '';
+    const contenido = el.innerText || '';
     programarGuardadoCelda(fila, col, { contenido });
 }
 
@@ -227,13 +244,13 @@ function onCeldaKeydown(event, fila, col) {
         let nextCol = col + 1;
         let nextFila = fila;
         if (nextCol >= numCols) { nextCol = 0; nextFila++; }
-        const nextCell = document.getElementById(`cell-${fila + 1}-${col}`);
-        if (nextCell) { seleccionarCelda(fila + 1, col); nextCell.focus(); }
+        const nextCell = document.getElementById(`cell-${nextFila}-${nextCol}`);
+        if (nextCell) { seleccionarCelda(nextFila, nextCol); nextCell.focus(); }
         return;
     }
 
     if (event.key === 'Escape') {
-        document. getElementById(`cell-${fila}-${col}`?.blur());
+        document. getElementById(`cell-${fila}-${col}`)?.blur();
     }
 }
 
@@ -264,7 +281,7 @@ function aplicarFormato(tipo) {
         const color = document.getElementById('inputColorFondo').value;
         dato.color_fondo = color;
         cel.style.backgroundColor = color;
-        document.getElementById('dotColorTexto').style.background = color;
+        document.getElementById('dotColorFondo').style.background = color;
     }
 
     if (tipo === 'colorTexto') {
@@ -292,7 +309,7 @@ function aplicarFormato(tipo) {
 
 // Guardar celdas cada 8 segundos
 function programarGuardadoCelda(fila, col, cambios) {
-    const key = `${fila}.${col}`;
+    const key = `${fila}-${col}`;
     tableroCeldas[key] = { ...tableroCeldas[key], ...cambios };
     pendingGuardar[key] = { fila, col, ...tableroCeldas[key] };
 
@@ -318,7 +335,7 @@ async function ejecutarGuardado() {
             tamano_texto: d.tamano_texto || 14,
             negrita: d.negrita || false,
             updated_at: new Date().toISOString(),
-            updated_by: datosUsuario
+            updated_by: datosUsuario.id
         }));
 
         const { error } = await supabaseClient
@@ -336,13 +353,13 @@ async function ejecutarGuardado() {
 // Cabeceras
 async function guardarCabecera(col, el) {
     if (!esAdminTablero) return;
-    const nuevo = el.innerHTML.trim() || `Col ${col + 1}`;
+    const nuevo = el.innerText.trim() || `Col ${col + 1}`;
     tableroConfig.cabeceras[col] = nuevo;
 
     try {
         const { error } = await supabaseClient
             .from('tablero_config')
-            .updated({
+            .update({
                 cabeceras: tableroConfig.cabeceras,
                 updated_at: new Date().toISOString(),
                 updated_by: datosUsuario.id
@@ -429,7 +446,7 @@ async function eliminarFila(fila) {
 async function eliminarColumna(col) {
     if (!esAdminTablero) return;
     const nombreCol = tableroConfig.cabeceras[col] || `Col ${col + 1}`;
-    if (!confirm(`¿Eliminar columnaa "${nombrCol}"? Se borrarán todos sus datos.`)) return;
+    if (!confirm(`¿Eliminar columna "${nombreCol}"? Se borrarán todos sus datos.`)) return;
 
     mostrarGuardando('Eliminando...');
 
@@ -463,9 +480,9 @@ async function eliminarColumna(col) {
         const nuevoMapa = {};
         Object.entries(tableroCeldas).forEach(([key, val]) => {
             const [f,c] = key.split('-').map(Number);
-            if (C === col) return;
+            if (c === col) return;
             const nuevaCol = c > col ? c - 1 : c;
-            nuevoMapa[`${f}-{nuevaCol}`] = val;
+            nuevoMapa[`${f}-${nuevaCol}`] = val;
         });
         tableroCeldas = nuevoMapa;
 
@@ -473,11 +490,85 @@ async function eliminarColumna(col) {
         renderizarTabla();
         mostrarGuardado();
     } catch (err) {
-
+        console.error('Error eliminando columna: ', err)
+        mostrarGuardado('Error')
     }
 }
 
+async function guardarConfigEstructura() {
+    const { error } = await supabaseClient
+        .from('tablero_config')
+        .update({
+            num_filas: tableroConfig.num_filas,
+            num_columnas: tableroConfig.num_columnas,
+            cabeceras: tableroConfig.cabeceras,
+            updated_at: new Date().toISOString(),
+            updated_by: datosUsuario.id
+        })
+        .eq('id', tableroConfig.id);
+    
+    if (error) console.error('Error guardando config:', error);
+}
 
+// PAN - Arrastrar para movel el tablero
+function iniciarPan() {
+    const area = document.getElementById('tableroScrollArea');
+    if (!area) return;
+
+    area.addEventListener('mousedown', e => {
+        // Solo con boton medio o si no hay celda enfocada
+        if (e.button === 1 || e.target.classList.contains('tablero-scroll-area') || e.target.classList.contains('tablero-table-wrap')) {
+            panActivo = true;
+            panStartX = e.clientX;
+            panStartY = e.clientY;
+            panScrollX = area.scrollLeft;
+            panScrollY = area.scrollTop;
+            area.style.cursor = 'grabbing';
+            e.preventDefault();
+        }
+    });
+
+    window.addEventListener('mousemove', e => {
+        if (!panActivo) return;
+        const dx = e.clientX - panStartX;
+        const dy = e.clientY - panStartY;
+        area.scrollLeft = panScrollX - dx;
+        area.scrollTop = panScrollY - dy;
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (panActivo) {
+            panActivo = false;
+            area.style.cursor = '';
+        }
+    });
+}
+
+// Indicador de guardado
+function mostrarGuardando(texto = 'Guardando...') {
+    const ind = document.getElementById('saveIndicator');
+    const txt = document.getElementById('saveText');
+    if (!ind || !txt) return;
+    ind.className = 'save-indicator saving';
+    ind.querySelector('.material-symbols-rounded').textContent = 'sync';
+    txt.textContent = texto;
+}
+
+function mostrarGuardado(texto = 'Guardado') {
+    const ind = document.getElementById('saveIndicator')
+    const txt = document.getElementById('saveText');
+    if (!ind || !txt) return;
+    ind.className = 'save-indicator saved';
+    ind.querySelector('.material-symbols-rounded').textContent = 'cloud_done';
+    txt.textContent = texto;
+    setTimeout(() => {
+        if (ind) {
+            ind.className = 'save-indicator';
+            ind.querySelector('.material-symbols-rounded').textContent = 'cloud_done';
+            txt.textContent = 'Guardado';
+        }
+    }, 2500);
+}
 
 // Utilidades
 function deshabilitarToolbar() {
@@ -495,5 +586,5 @@ function escapeHtml(str) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replae(/"/g, '&quot;')
+        .replace(/"/g, '&quot;')
 }
