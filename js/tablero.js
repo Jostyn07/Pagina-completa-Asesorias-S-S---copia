@@ -1,12 +1,13 @@
 // Estado global
-let tableroConfig = null;
-let tableroCeldas = {};
+let tableroConfig   = null;
+let tableroCeldas   = {};
 let celdaSeleccionada = null;
-let puedeEditar = false;
-let esAdminTablero = false;
+let puedeEditar     = false;
+let esAdminTablero  = false;
+let modoEdicion     = false; // true = celda activa en escritura (doble clic / F2)
 
-let saveTimer = null;
-let pendingGuardar = {}
+let saveTimer       = null;
+let pendingGuardar  = {};
 
 // Arrastre para configurar tamaño de celdas (pan)
 let panActivo = false;
@@ -40,6 +41,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Iniciar pan
     iniciarPan();
+
+    // Navegación global con teclado
+    iniciarNavegacionTeclado();
 
     // cargar datos
     await cargarTablero();
@@ -123,7 +127,6 @@ function renderizarTabla() {
         </th>`;
     }
 
-
     // TBODY
 
     html += `<tbody>`;
@@ -149,19 +152,18 @@ function renderizarTabla() {
 
         html += `</tr>`
     }
-    html += `</tbody></table>`
-
 
     if (esAdminTablero) {
-        html += `<tr class="add-row-btn-row">
-            <td colspan="${num_columnas + 2}">
-                <button class="btn-add-small" onclick="agregarFila()">
-                    <span class="material-symbols-rounded">add</span>
-                    Agregar fila
-                </button>
-            </td>
-        </tr>`;
+            html += `<tr class="add-row-btn-row">
+                <td colspan="${num_columnas + 2}">
+                    <button class="btn-add-small" onclick="agregarFila()">
+                        <span class="material-symbols-rounded">add</span>
+                        Agregar fila
+                    </button>
+                </td>
+            </tr>`;
     }
+    html += `</tbody></table>`
 
     wrap.innerHTML = html;
     
@@ -184,8 +186,20 @@ function construirCeldaHtml(fila, col) {
         bold
     ].join('');
 
-    return `<td id="td-${fila}-${col}" data-fila="${fila}" data-col="${col}" onclick="seleccionarCelda(${fila}, ${col})">
-        <span class="cell-content" id="cell-${fila}-${col}" style="${style}" ${puedeEditar ? 'contenteditable="true"' : ''} onblur="onCeldaBlur(${fila},${col},this)" onkeydown="onCeldaKeydown(event,${fila},${col})">${escapeHtml(cont)}</span>
+    const dblclick = puedeEditar
+        ? `ondblclick="entrarModoEdicion(${fila},${col})"`
+        : '';
+
+    // SIN contenteditable por defecto — se activa solo en modo edición (dblclick/F2)
+    return `<td id="td-${fila}-${col}" data-fila="${fila}" data-col="${col}"
+               tabindex="-1"
+               onclick="seleccionarCelda(${fila}, ${col})"
+               ${dblclick}>
+        <span class="cell-content"
+              id="cell-${fila}-${col}"
+              style="${style}"
+              onblur="onCeldaBlur(${fila},${col},this)"
+              onkeydown="onCeldaKeydown(event,${fila},${col})">${escapeHtml(cont)}</span>
     </td>`;
 }
 
@@ -195,20 +209,26 @@ function asignarEventosCeldas() {
 }
 
 function seleccionarCelda(fila, col) {
+    // Si había otra celda en edición, salir primero
+    if (celdaSeleccionada && modoEdicion) {
+        salirModoEdicion(celdaSeleccionada.fila, celdaSeleccionada.col);
+    }
+
     if (celdaSeleccionada) {
-        const tdPrev = document.getElementById(`td-${celdaSeleccionada.fila}-${celdaSeleccionada.col}`);
-        if (tdPrev) tdPrev.classList.remove('selected');
+        document.getElementById(`td-${celdaSeleccionada.fila}-${celdaSeleccionada.col}`)
+            ?.classList.remove('selected');
     }
 
     const td = document.getElementById(`td-${fila}-${col}`);
     if (!td) return;
     td.classList.add('selected');
 
-    celdaSeleccionada = { fila, col, tdEl: td };
+    celdaSeleccionada = { fila, col };
 
-    // Actualizar toolbar con valore de la celda
-    const key = `${fila}-${col}`;
-    const dato = tableroCeldas[key] || {};
+    // Foco en el TD para que el teclado global lo reciba
+    td.focus();
+
+    const dato = tableroCeldas[`${fila}-${col}`] || {};
     actualizarToolbarConCelda(dato);
 }
 
@@ -232,26 +252,169 @@ function actualizarToolbarConCelda(dato) {
 }
 
 function onCeldaBlur(fila, col, el) {
-    const contenido = el.innerText || '';
-    programarGuardadoCelda(fila, col, { contenido });
+    // Solo guarda y sale si realmente estaba en modo edición
+    if (modoEdicion && celdaSeleccionada?.fila === fila && celdaSeleccionada?.col === col) {
+        salirModoEdicion(fila, col);
+    }
 }
 
+// onCeldaKeydown — solo actúa cuando la celda está en MODO EDICIÓN
 function onCeldaKeydown(event, fila, col) {
-    // Tab -> siguiente celda
-    if (event.key == 'Tab') {
-        event.preventDefault()
-        const numCols = tableroConfig.num_columnas;
-        let nextCol = col + 1;
-        let nextFila = fila;
-        if (nextCol >= numCols) { nextCol = 0; nextFila++; }
-        const nextCell = document.getElementById(`cell-${nextFila}-${nextCol}`);
-        if (nextCell) { seleccionarCelda(nextFila, nextCol); nextCell.focus(); }
+    // Escape → salir de edición, mantener celda seleccionada
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        salirModoEdicion(fila, col);
         return;
     }
 
-    if (event.key === 'Escape') {
-        document. getElementById(`cell-${fila}-${col}`)?.blur();
+    // Enter → salir de edición y bajar una celda
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        salirModoEdicion(fila, col);
+        moverACelda(fila + 1, col);
+        return;
     }
+
+    // Tab → salir de edición y avanzar celda
+    if (event.key === 'Tab') {
+        event.preventDefault();
+        salirModoEdicion(fila, col);
+        const numCols = tableroConfig.num_columnas;
+        let nextCol   = col + 1;
+        let nextFila  = fila;
+        if (nextCol >= numCols) { nextCol = 0; nextFila++; }
+        moverACelda(nextFila, nextCol);
+        return;
+    }
+}
+
+// Mueve el foco a una celda respetando los límites (modo navegación)
+function moverACelda(fila, col) {
+    if (fila < 0 || fila >= tableroConfig.num_filas) return;
+    if (col  < 0 || col  >= tableroConfig.num_columnas) return;
+
+    seleccionarCelda(fila, col);
+    // seleccionarCelda ya hace el focus en el TD
+}
+
+// Entrar en modo edición — activado por doble clic o F2
+function entrarModoEdicion(fila, col, charInicial = null) {
+    if (!puedeEditar) return;
+
+    modoEdicion = true;
+    const cel = document.getElementById(`cell-${fila}-${col}`);
+    const td  = document.getElementById(`td-${fila}-${col}`);
+    if (!cel || !td) return;
+
+    cel.contentEditable = 'true';
+    td.classList.add('editing');
+    cel.focus();
+
+    if (charInicial) {
+        // El usuario empezó a escribir: limpiar y poner el carácter
+        cel.innerText = charInicial;
+    }
+
+    // Cursor al final del contenido
+    const range = document.createRange();
+    const sel   = window.getSelection();
+    range.selectNodeContents(cel);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
+// Salir del modo edición — guardar y volver a modo navegación
+function salirModoEdicion(fila, col) {
+    if (!modoEdicion) return;
+
+    modoEdicion = false;
+    const cel = document.getElementById(`cell-${fila}-${col}`);
+    const td  = document.getElementById(`td-${fila}-${col}`);
+    if (!cel) return;
+
+    const contenido = cel.innerText || '';
+    cel.contentEditable = 'false';
+    td?.classList.remove('editing');
+
+    programarGuardadoCelda(fila, col, { contenido });
+
+    // Devolver foco al TD para seguir navegando con teclado
+    td?.focus();
+}
+
+// Limpiar contenido de celda con Delete/Backspace
+function limpiarCelda(fila, col) {
+    if (!puedeEditar) return;
+    const cel = document.getElementById(`cell-${fila}-${col}`);
+    if (!cel) return;
+    cel.innerText = '';
+    programarGuardadoCelda(fila, col, { contenido: '' });
+}
+
+// Navegación global con teclado (cuando NO está en modo edición)
+function iniciarNavegacionTeclado() {
+    document.addEventListener('keydown', (e) => {
+        if (!celdaSeleccionada) return;
+
+        // Si está en edición, onCeldaKeydown lo maneja
+        if (modoEdicion) return;
+
+        // No interceptar si el foco está en toolbar (inputs, selects, etc.)
+        const tag = document.activeElement?.tagName;
+        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+        if (document.activeElement?.contentEditable === 'true') return;
+
+        const { fila, col } = celdaSeleccionada;
+
+        switch (e.key) {
+            case 'ArrowUp':
+                e.preventDefault();
+                moverACelda(fila - 1, col);
+                break;
+
+            case 'ArrowDown':
+                e.preventDefault();
+                moverACelda(fila + 1, col);
+                break;
+
+            case 'ArrowLeft':
+                e.preventDefault();
+                moverACelda(fila, col - 1);
+                break;
+
+            case 'ArrowRight':
+                e.preventDefault();
+                moverACelda(fila, col + 1);
+                break;
+
+            case 'Tab':
+                e.preventDefault();
+                let nextCol  = col + 1;
+                let nextFila = fila;
+                if (nextCol >= tableroConfig.num_columnas) { nextCol = 0; nextFila++; }
+                moverACelda(nextFila, nextCol);
+                break;
+
+            case 'Enter':
+            case 'F2':
+                e.preventDefault();
+                entrarModoEdicion(fila, col);
+                break;
+
+            case 'Delete':
+            case 'Backspace':
+                e.preventDefault();
+                limpiarCelda(fila, col);
+                break;
+
+            default:
+                // Cualquier tecla imprimible arranca edición directamente
+                if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    entrarModoEdicion(fila, col, e.key);
+                }
+        }
+    });
 }
 
 // formato

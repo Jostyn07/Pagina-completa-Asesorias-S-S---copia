@@ -689,6 +689,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'TOKEN_REFRESHED') return;
+    
+    if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        alert('⚠️ Tu sesión fue cerrada porque el usuario fue abierto en otro dispositivo.');
+        window.location.href = '../index.html';
+    }
+});
+
 // ============================================
 // LOG DE DESARROLLO
 // ============================================
