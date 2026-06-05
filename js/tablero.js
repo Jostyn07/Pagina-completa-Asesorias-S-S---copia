@@ -280,7 +280,7 @@ function onCeldaKeydown(event, fila, col) {
         event.preventDefault();
         salirModoEdicion(fila, col);
         const numCols = tableroConfig.num_columnas;
-        let nextCol   = col + 1;
+        let nextCol   = col;
         let nextFila  = fila;
         if (nextCol >= numCols) { nextCol = 0; nextFila++; }
         moverACelda(nextFila, nextCol);
