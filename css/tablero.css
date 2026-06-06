@@ -280,8 +280,8 @@
 .tablero-table tbody tr td {
     border: 1px solid var(--border-color, #e2e8f0);
     padding: 0;
-    min-width: 130px;
-    width: 130px;
+    min-width: 180px;
+    width: 160px;
     vertical-align: top;
     position: relative;
 }
