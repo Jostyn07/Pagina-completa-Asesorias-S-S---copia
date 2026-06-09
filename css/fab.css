@@ -1,0 +1,225 @@
+.fab-container {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+/* Boton principal */
+
+.fab-main {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: #6366f1;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45);
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.fab-main:hover {
+    background: #4f46e5;
+    transform: scale(1.07);
+    box-shadow: 0 6px 22px rgba(99, 102, 241, 0.55);
+}
+
+.fab-main .material-symbols-rounded {
+    font-size: 26px;
+    color: #fff;
+    transition: transform 0.3s ease;
+}
+
+.fab-container.open .fab-main .material-symbols-rounded {
+    transform: rotate(90deg);
+}
+
+.fab-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #fff;
+    pointer-events: none;
+    transition: transform 0.2s;
+}
+
+.fab-badge.hidden {
+    display: none;
+}
+
+/* Sub botones */
+
+.fab-actions {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 10px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.fab-container.open .fab-action {
+    pointer-events: all;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Casa sub boton con su etiqueta */
+
+.fab-action-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.fab-action-label {
+    background: var(--bg-card, #fff);
+    color: var(--text-primary, #1e293b);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    white-space: nowrap;
+    pointer-events: none;
+    border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.fab-action-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.fab-action-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
+}
+
+.fab-action-btn .material-symbols-rounded {
+    font-size: 20px;
+    color: #fff;
+}
+
+/* Colores individuales de cada sub boton */
+.fab-btn-recordatorios {
+    background: #10b981;
+}
+
+.fab-btn-recordatorios:hover {
+    background: #059669;
+}
+
+.fab-btn-banners {
+    background: #f59e0b;
+}
+
+.fab-btn-banners:hover {
+    background: #d97706;
+}
+
+.fab-btn-ia {
+    background: #7c3aed;
+}
+
+.fab-btn-ia:hover {
+    background: #7c3aed;
+}
+
+.fab-action-btn .fab-sub-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    border: 2px solid #fff;
+    pointer-events: none;
+}
+
+/* Animación escalonada de sub-botones */
+.fab-action-item:nth-child(1) {transition-delay: 0.00s;}
+.fab-action-item:nth-child(2) {transition-delay: 0.05s;}
+.fab-action-item:nth-child(3) {transition-delay: 0.1s;}
+
+/* Dark mode */
+[data-theme="dark"] .fab-main {
+    background: #8b8ef8;
+    box-shadow: 0 4px 16px rgba(129, 142, 248, 0.4);
+}
+
+[data-theme="dark"] .fab-main:hover {
+    background: #6366f1;
+}
+
+[data-theme="dark"] .fab-badge {
+    border-color: #121218
+}
+
+[data-theme="dark"] .fav-action-label {
+    background: #1a1a24;
+    color: #e2e4e9;
+    border-color: #2e2e3e;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .fab-action-btn .fab-sub-badge {
+    border-color: #121218;
+}
+
+[data-theme="dark"] .fab-btn-recordatorios { background: #059669; }
+[data-theme="dark"] .fab-btn-banners { background: #d97706; }
+[data-theme="dark"] .fab-btn-ia { background: #7c3aed; }
+
+/* Responsive */
+
+@media (max-width: 768px) {
+    .fav-container {
+        bottom: 20px;
+        right: 16px;
+    }
+
+    .fab-action-label {
+        display: none;
+    }
+}

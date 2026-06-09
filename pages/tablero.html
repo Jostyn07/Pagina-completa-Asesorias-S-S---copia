@@ -18,6 +18,8 @@
     <link rel="icon" type="image/svg+xml" href="../images/Logo.png">
     <link rel="icon" type="image/x-icon" href="../images/Logo.png" sizes="any">
     <link rel="apple-touch-icon" href="../images/Logo.png">
+    <link rel="stylesheet" href="../css/fab.css">
+
 </head>
 <body>
         <aside class="sidebar-unified" id="sidebar">
@@ -147,6 +149,17 @@
                 <span class="material-symbols-rounded">format_clear</span>
                 <span>Limpiar</span>
              </button>
+            <div class="toolbar-divider"></div>
+            <!-- Combinar celdas: aparece cuando hay 2+ celdas seleccionadas -->
+            <button class="toolbar-btn toolbar-btn-merge" id="btnCombinar" onclick="combinarCeldas()" title="Combinar celdas seleccionadas" style="display:none">
+                <span class="material-symbols-rounded">merge</span>
+                <span>Combinar</span>
+            </button>
+            <!-- Separar celda: aparece cuando la celda seleccionada está combinada -->
+            <button class="toolbar-btn toolbar-btn-split" id="btnDescombinar" onclick="descombinarCelda()" title="Separar celda combinada" style="display:none">
+                <span class="material-symbols-rounded">call_split</span>
+                <span>Separar</span>
+            </button>
             <div class="admin-section" id="seccionAdmin" style="display: none;">
                 <span class="admin-badge">Admin</span>
                 <button class="toolbar-btn add-row-btn-row" onclick="agregarFila()" title="Agregar fila">
@@ -183,6 +196,7 @@
     <script src="../js/supabase_config.js"></script>
     <script src="../js/permisos.js"></script>
     <script src="../js/main.js"></script>
+    <script src="../js/fab.js"></script>
     <script src="../js/tablero.js"></script>
     <script src="../js/recordatorios.js"></script>
     <script src="../js/actividad.js"></script>

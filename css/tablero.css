@@ -648,3 +648,56 @@
 [data-theme="dark"] .tablero-table tbody tr td.editing .cell-content {
     background: rgba(94, 205, 138, 0.06);
 }
+/* ============================================
+   SELECCIÓN MÚLTIPLE
+   ============================================ */
+
+/* Rango seleccionado (celdas no-ancla) — fondo sutil + borde fino */
+.tablero-table tbody tr td.selected-range {
+    outline: 1px solid rgba(99, 102, 241, 0.5);
+    outline-offset: -1px;
+    z-index: 1;
+}
+
+.tablero-table tbody tr td.selected-range .cell-content {
+    background: rgba(99, 102, 241, 0.10);
+}
+
+/* Dark mode — rango */
+[data-theme="dark"] .tablero-table tbody tr td.selected-range {
+    outline-color: rgba(139, 142, 248, 0.5);
+}
+
+[data-theme="dark"] .tablero-table tbody tr td.selected-range .cell-content {
+    background: rgba(139, 142, 248, 0.12);
+}
+
+/* ============================================
+   BOTONES COMBINAR / SEPARAR
+   ============================================ */
+
+.toolbar-btn-merge {
+    color: #6366f1;
+    border-color: rgba(99, 102, 241, 0.4);
+    background: rgba(99, 102, 241, 0.06);
+}
+
+.toolbar-btn-merge:hover {
+    background: #6366f1;
+    color: #fff;
+    border-color: #6366f1;
+}
+
+.toolbar-btn-split {
+    color: #64748b;
+}
+
+[data-theme="dark"] .toolbar-btn-merge {
+    color: #8b8ef8;
+    border-color: rgba(139, 142, 248, 0.35);
+    background: rgba(139, 142, 248, 0.08);
+}
+
+[data-theme="dark"] .toolbar-btn-split {
+    color: #9ca3b4;
+}

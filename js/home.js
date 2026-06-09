@@ -45,7 +45,8 @@ async function cargarPolizasParaGrafico() {
                     operador_nombre,
                     tipo_registro,
                     tipo_modificacion,
-                    venta_realizada_por
+                    venta_realizada_por,
+                    archivado
                 )
             `)
             .not('fecha_efectividad', 'is', null);
@@ -55,7 +56,7 @@ async function cargarPolizasParaGrafico() {
         ;
         
         // Guardar TODAS las pólizas
-        todasLasPolizas = data || [];
+        todasLasPolizas = ( data || []).filter(p => !p.cliente?.archivado);
         
         // Aplicar filtros iniciales
         return aplicarFiltros();
