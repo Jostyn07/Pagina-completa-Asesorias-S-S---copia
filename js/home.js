@@ -37,6 +37,7 @@ async function cargarPolizasParaGrafico() {
                 created_at,
                 compania,
                 estado_documentos,
+                aplicantes,
                 cliente:clientes (
                     id,
                     nombres,
