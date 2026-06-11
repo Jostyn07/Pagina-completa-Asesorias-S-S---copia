@@ -6,7 +6,7 @@ let operadoresSeleccionados = new Set();
 let audienciaSeleccionada = 'global';
 let fuenteSeleccionada = 'Inter';
 let colorFondoSeleccionado = '#6366f1';
-let colorTextoSeleccionado = '#fff';
+let colorTextoSeleccionado = '#ffffff';
 
 // Inicialización
 
@@ -79,12 +79,12 @@ function crearTarjetaBanner(banner) {
     div.className = 'banner-card' + (minimizado ? ' minimizado' : '');
     div.id = `banner-${banner.id}`;
     div.style.background = banner.color_fondo || '#6366f1';
-    div.style.color = banner.color_texto || '#fff';
+    div.style.color = banner.color_texto || '#ffffff';
     div.style.fontFamily = banner.tipo_letra || 'Inter';
     
     const esCreador = datosUsuario && banner.creado_por === datosUsuario.id;
     const esAdmin = datosUsuario && datosUsuario.rol === 'admin';
-    const colorTxt = banner.color_texto || '#fff';
+    const colorTxt = banner.color_texto || '#ffffff';
     
     div.innerHTML = `
         <div class="banner-header">
@@ -213,7 +213,7 @@ async function abrirGestorBanners() {
     audienciaSeleccionada = 'global';
     fuenteSeleccionada = 'Inter';
     colorFondoSeleccionado = '#6366f1'
-    colorTextoSeleccionado = '#fff'
+    colorTextoSeleccionado = '#ffffff'
 
     await cargarOperadoresParaBanner();
 
@@ -378,7 +378,7 @@ function seleccionarAudiencia(tipo) {
 }
 
 function filtrarOperadoresBanner(texto) {
-    const filtrados = todosLosOperadores.filter(op => op.nombre_completo.toLowerCase().includes(texto.toLowerCase()));
+    const filtrados = todosLosOperadores.filter(op => op.nombre.toLowerCase().includes(texto.toLowerCase()));
     renderizarOperadoresBanner(filtrados);
 }
 
@@ -388,7 +388,7 @@ function renderizarOperadoresBanner(lista) {
 
     contenedor.innerHTML = lista.map(op => `
         <label class="banner-operador-item">
-            <input type="checkbox" value="${op.id}" ${operadoresSeleccionados.has(op.id) ? 'checked' : ''} onchange="toggleOperadorBanner('${op.id}')"> ${escapeHtml(op.nombre_completo)}
+            <input type="checkbox" value="${op.id}" ${operadoresSeleccionados.has(op.id) ? 'checked' : ''} onchange="toggleOperadorBanner('${op.id}')"> ${escapeHtml(op.nombre)}
         </label>
     `).join('');
 }
@@ -433,7 +433,7 @@ function actualizarPreviewBanner() {
             <div class="banner-header-left">
                 <span class="material-symbols-rounded" style="font-size: 16px; color:${ctxt}">campaign</span>
                 <span class="banner-emisor" style="color:${ctxt}">
-                    ${escapeHtml(datosUsuario?.nombre_completo || 'Tú')}
+                    ${escapeHtml(datosUsuario?.nombre || 'Tú')}
                 </span>
             </div>
         </div>
@@ -548,7 +548,7 @@ async function publicarBanner() {
                 color_texto: colorTextoSeleccionado,
                 tipo_letra: fuenteSeleccionada,
                 creado_por: datosUsuario.id,
-                creado_por_nombre: datosUsuario.nombre_completo || datosUsuario.email,
+                creado_por_nombre: datosUsuario.nombre || datosUsuario.email,
                 audiencia: audienciaSeleccionada,
                 operadores_destino: audienciaSeleccionada === 'seleccionados' ? [...operadoresSeleccionados] : [],
                 duracion_minutos: duracion,
@@ -585,10 +585,10 @@ async function cargarOperadoresParaBanner() {
     try {
         const { data, error } = await supabaseClient
             .from('usuarios')
-            .select('id, nombre_completo')
+            .select('id, nombre')
             .eq('activo', true)
             .neq('id', datosUsuario.id)
-            .order('nombre_completo')
+            .order('nombre')
 
         if (error) throw error;
         todosLosOperadores = data || [];

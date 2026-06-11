@@ -53,7 +53,7 @@ function iniciarFAB() {
     })
 
     // Mostrar boton de banner segun el rol
-    verificarPermisoBanner()
+    esperarUsuarioYVerificarFAB()
 }
 
 function toggleFAB() {
@@ -70,16 +70,27 @@ function cerrarFAB() {
     document.getElementById('fabContainer').classList.remove('open');
 }
 
+
 // Permisos
 function verificarPermisoBanner() {
-    if (!datosUsuario) return;
 
+    if (!datosUsuario) return;
     const puedeCrear = datosUsuario.puede_crear_banner === true || datosUsuario.rol === 'admin';
+
 
     const itemBanner = document.getElementById('fabItemBanner');
     if (itemBanner) {
         itemBanner.style.display = puedeCrear ? 'flex' : 'none';
     }
+}
+
+function esperarUsuarioYVerificarFAB(intentos = 0) {
+    if (datosUsuario) {
+        verificarPermisoBanner();
+        return;
+    }
+    if (intentos > 30) return; // máximo 3 segundos
+    setTimeout(() => esperarUsuarioYVerificarFAB(intentos + 1), 100);
 }
 
 // Badges
