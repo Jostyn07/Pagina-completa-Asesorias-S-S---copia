@@ -10,3 +10,30 @@
     pointer-events: none;
 }
 
+/* Tarjeta individual */
+.banner-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    overflow: hidden;
+    pointer-events: all;
+    transition: transfor 0.2s, box-shadow 0.2s;
+    animation: bannerEntrada 0.3s ease;
+}
+
+.banner-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes bannerEntrada {
+    from { opacity: 0; transform: translateY(30px);}
+    to {opacity: 1; transform: translateX(0) ;}
+}
+
+.banner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(00, 0, 0, 0.15);
+}
