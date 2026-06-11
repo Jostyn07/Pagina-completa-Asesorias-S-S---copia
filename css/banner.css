@@ -1,0 +1,12 @@
+.banners-container {
+    position: flex;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 340px;
+    pointer-events: none;
+}
+
