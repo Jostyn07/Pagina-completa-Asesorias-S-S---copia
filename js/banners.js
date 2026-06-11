@@ -70,6 +70,7 @@ function renderizarBanners() {
     container.innerHTML = '';
     bannersActivos.forEach(banner => {
         container.appendChild(crearTarjetaBanner(banner));
+        verificarYSonarBanner(banner.id);
     });
 }
 
@@ -83,7 +84,6 @@ function crearTarjetaBanner(banner) {
     div.style.fontFamily = banner.tipo_letra || 'Inter';
     
     const esCreador = datosUsuario && banner.creado_por === datosUsuario.id;
-    const esAdmin = datosUsuario && datosUsuario.rol === 'admin';
     const colorTxt = banner.color_texto || '#ffffff';
     
     div.innerHTML = `
@@ -98,7 +98,7 @@ function crearTarjetaBanner(banner) {
                     <span class="material-symbols-rounded" style="color: ${colorTxt}; font-family:'Material Symbols Rounded';">${minimizado ? 'expand_more' : 'expand_less'}</span>
                 </button>
 
-                ${(esCreador || esAdmin) ? `
+                ${(esCreador) ? `
                 <button class="banner-btn" onclick="eliminarBanner('${banner.id}')" title="Eliminar anuncio">
                     <span class="material-symbols-rounded" style="color: ${colorTxt}; font-family:'Material Symbols Rounded'">close</span>
                 </button>` : ''}
@@ -136,6 +136,49 @@ function calcularTiempoRestante(fechaFin) {
     if (diffDias > 0) return `${diffDias}d ${diffHoras % 24}h restantes`;
     if (diffHoras > 0) return `${diffHoras}h ${diffMin % 60}m restantes`;
     return `${diffMin}m restantes`;
+}
+
+function reproducirSonidoBanner() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Nota 1
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.frequency.setValueAtTime(520, ctx.currentTime);
+        gain1.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc1.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + 0.3);
+
+        // Nota 2 (más alta, medio segundo después)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.frequency.setValueAtTime(680, ctx.currentTime + 0.18);
+        gain2.gain.setValueAtTime(0.0001, ctx.currentTime + 0.18);
+        gain2.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.28);
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+        osc2.start(ctx.currentTime + 0.18);
+        osc2.stop(ctx.currentTime + 0.55);
+
+    } catch (err) {
+        console.warn('No se pudo reproducir sonido:', err);
+    }
+}
+
+function verificarYSonarBanner(bannerId) {
+    const key = 'banners_sonados';
+    const sonados = JSON.parse(sessionStorage.getItem(key) || '[]');
+
+    if (sonados.includes(bannerId)) return; // Ya sonó en esta sesión
+
+    sonados.push(bannerId);
+    sessionStorage.setItem(key, JSON.stringify(sonados));
+    reproducirSonidoBanner();
 }
 
 // Minimizar y expandir
