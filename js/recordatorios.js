@@ -150,6 +150,8 @@ function abrirDrawerRecordatorios() {
     document.getElementById('drawerRecordatorios').classList.add('abierto');
     filtrarRecordatoriosPorEstado('pendiente',
         document.querySelector('.dr-tab.active'));
+    
+    cerrarFAB()
 }
 
 function cerrarDrawerRecordatorios() {

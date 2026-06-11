@@ -47,7 +47,7 @@ async function cargarBannerActivo() {
 }
 
 function bannerAplicaAlUsuario(banner) {
-    if (banner.audiencia == 'global') return true;
+    if (banner.audiencia === 'global') return true;
     
     if (banner.audiencia === 'seleccionados') {
         const destinos = banner.operadores_destino || [];
@@ -89,18 +89,18 @@ function crearTarjetaBanner(banner) {
     div.innerHTML = `
         <div class="banner-header">
             <div class="banner-header-left">
-                <span class="material-symbols-rounded" style="color:${colorTxt}">campaign</span>
+                <span class="material-symbols-rounded" style="color:${colorTxt}; font-family:'Material Symbols Rounded'">campaign</span>
                 <span class="banner-emisor" style="color:${colorTxt}">${escapeHtml(banner.creado_por_nombre || 'Anuncio')}</span>
             </div>
 
             <div class="banner-header-right">
                 <button class="banner-btn" onclick="toggleMinimizarBanner('${banner.id}')" title="${minimizado ? 'Expandir' : 'Minimizar'}">
-                    <span class="material-symbols-rounded" style="color: ${colorTxt}">${minimizado ? 'expand_more' : 'expand_less'}</span>
+                    <span class="material-symbols-rounded" style="color: ${colorTxt}; font-family:'Material Symbols Rounded';">${minimizado ? 'expand_more' : 'expand_less'}</span>
                 </button>
 
                 ${(esCreador || esAdmin) ? `
                 <button class="banner-btn" onclick="eliminarBanner('${banner.id}')" title="Eliminar anuncio">
-                    <span class="material-symbols-rounded" style="color: ${colorTxt}">close</span>
+                    <span class="material-symbols-rounded" style="color: ${colorTxt}; font-family:'Material Symbols Rounded'">close</span>
                 </button>` : ''}
             </div>
         </div>
@@ -111,7 +111,7 @@ function crearTarjetaBanner(banner) {
             </p>
             <div class="banner-footer" style="color:${colorTxt}">
                 <span class="banner-tiempo">
-                    <span class="material-symbols-rounded">schedule</span>
+                    <span class="material-symbols-rounded" style="font-family:'Material Symbols Rounded'">schedule</span>
                     ${calcularTiempoRestante(banner.fecha_fin)}
                 </span>
                 <span>${banner.audiencia === 'global' ? 'Para todos' : 'Mensaje personal'}</span>
@@ -124,8 +124,11 @@ function crearTarjetaBanner(banner) {
 
 function calcularTiempoRestante(fechaFin) {
     const diffMs = new Date(fechaFin) - new Date();
-    if (diffMs <= 0) return 'Expirando...'
-
+    if (diffMs <= 0) {
+        // Disparar limpieza inmediata sin esperar el intervalo
+        setTimeout(() => cargarBannerActivo(), 1500);
+        return 'Expirando...';
+    }
     const diffMin = Math.floor(diffMs / 60000);
     const diffHoras = Math.floor(diffMin / 60);
     const diffDias = Math.floor(diffHoras / 24);
@@ -181,7 +184,7 @@ function iniciarCheckExpiracion() {
                     .update({ activo: false })
                     .eq('id', b.id);
             }
-            await cargarBannersActivos();
+            await cargarBannerActivo();
         } else {
             renderizarBanners();
         }
@@ -225,12 +228,12 @@ async function abrirGestorBanners() {
         <div class="banner-modal" id="bannerModal">
             <div class="banner-modal-header">
                 <div class="banner-modal-titulo">
-                    <span class="material-symbols-rounded">campaign</span>
+                    <span class="material-symbols-rounded" style="font-family:'Material Symbols Rounded'">campaign</span>
                     Nuevo Anuncio
                 </div>
 
                 <button class="banner-modal-cerrar" onclick="cerrarGestorBanners()">
-                    <span class="material-symbols-rounded">close</span>
+                    <span class="material-symbols-rounded" style="font-family:'Material Symbols Rounded'">close</span>
                 </button>
             </div>
 
@@ -240,7 +243,7 @@ async function abrirGestorBanners() {
             
                 <!-- Mensaje de error -->
                 <div class="banner-error" id="bannerError">
-                    <span class="material-symbols-rounded">error</span>
+                    <span class="material-symbols-rounded" style="font-family:'Material Symbols Rounded'">error</span>
                     <span id="bannerErrorTexto"></span>
                 </div>
                 
@@ -286,15 +289,25 @@ async function abrirGestorBanners() {
 
                 <!-- Duración -->
                 <div class="banner-campo">
-                    <button class="banner-audiencia-btn activo" id="btnAudienciaGlobal" onclick="seleccionarAudiencia('global')">Todos</button>
-                    <button class="banner-audiencia-btn" id="btnAudienciaSeleccionados" onclick="seleccionarAudiencia('seleccionados')">Seleccionar personas</button>
+                    <span class="banner-label">Duración</span>
+                    <div class="banner-duracion-row">
+                        <input type="number" class="banner-duracion-input"
+                            id="bannerDuracion" min="1" max="1440" value="60"
+                            oninput="actualizarPreviewBanner()">
+                        <span class="banner-duracion-unidad">minutos</span>
+                    </div>
                 </div>
 
                 <!-- Audiencia -->
                 <div class="banner-campo">
                     <span class="banner-label">Dirigido a</span>
-                    <div class="banner-audiencia-btn activo">
-                        <button class="banner-audiencia-btn activo" id="btnAudienciaGlobal" onclick="seleccionarAudiencia('seleccionados')">Seleccionar personas</button>
+                    <div class="banner-audiencia-opciones">
+                        <button class="banner-audiencia-btn activo"
+                                id="btnAudienciaGlobal"
+                                onclick="seleccionarAudiencia('global')">Todos</button>
+                        <button class="banner-audiencia-btn"
+                                id="btnAudienciaSeleccionados"
+                                onclick="seleccionarAudiencia('seleccionados')">Seleccionar personas</button>
                     </div>
                 </div>
 
@@ -320,7 +333,7 @@ async function abrirGestorBanners() {
                     Cancelar
                 </button>
                 <button class="banner-btn-publicar" id="btnPublicarBanner" onclick="publicarBanner()">
-                    <span class="material-symbols-rounded">send</span>
+                    <span class="material-symbols-rounded" style="font-family:'Material Symbols Rounded'">send</span>
                     Publicar anuncio
                 </button>
             </div>
@@ -354,7 +367,9 @@ function onColorBannerChange(tipo, valor) {
 
 function seleccionarFuente(fuente, el) {
     fuenteSeleccionada = fuente;
-    document.querySelector('.banner-fuente-opcion').forEach(o => o.classList.remove('activo'));
+    document.querySelectorAll('.banner-fuente-opcion').forEach(o => {
+        o.classList.remove('activo')}
+    );
     el.classList.add('activo');
     actualizarPreviewBanner();
 }
@@ -412,7 +427,7 @@ function actualizarContadorSeleccionados() {
     const todosSeleccionados = todosLosOperadores.length > 0 && count >= todosLosOperadores.length;
 
     el.textContent = todosSeleccionados ? 'Seleccionaste a todos - usa la opción "Todos"' : `${count} seleccionado${count !== 1 ? 's' : ''}`;
-    el.classList.toggle('limite', todosSeleccionados);
+    el.classList.toggle('limit', todosSeleccionados);
 }
 
 function actualizarPreviewBanner() {
@@ -429,22 +444,22 @@ function actualizarPreviewBanner() {
 
 
     preview.innerHTML = `
-        <div class="banner-header" style="background: rgba(0,0,0,0.15)">
+        <div class="banner-header" style="background: rgba(0,0,0,0.15); padding:8px 12px;">
             <div class="banner-header-left">
-                <span class="material-symbols-rounded" style="font-size: 16px; color:${ctxt}">campaign</span>
+                <span class="material-symbols-rounded" style="font-size: 16px; color:${ctxt}; font-family:'Material Symbols Rounded'">campaign</span>
                 <span class="banner-emisor" style="color:${ctxt}">
                     ${escapeHtml(datosUsuario?.nombre || 'Tú')}
                 </span>
             </div>
         </div>
 
-        <div class="banner-body">
-            <p class="banner-mensaje" style="color:${ctxt}">
+        <div class="banner-body" style="padding:8px 12px;">
+            <p class="banner-mensaje" style="color:${ctxt}; font-family:${fuenteSeleccionada}">
                 ${escapeHtml(mensaje)}
             </p>
             <div class="banner-footer" style="color:${ctxt}">
                 <span class="banner-tiempo">
-                    <span class="material-symbols-rounded">schedule</span>
+                    <span class="material-symbols-rounded" style="font-family:'Material Symbols Rounded'">schedule</span>
                     ${duracion} min de duración
                 </span>
             </div>    
@@ -472,10 +487,10 @@ async function verificarBannerGlobalActivo() {
 
         infoEl.innerHTML = `
             <div style="background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; padding: 10px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;"> 
-                <span class="material-symbols-rounded" style="font-size: 17px; flex-shrink: 0;">info</span>
+                <span class="material-symbols-rounded" style="font-size: 17px; flex-shrink: 0; font-family:'Material Symbols Rounded'">info</span>
                 Hay un banner global activo de <strong style="margin: 0 3px;">${escapeHtml(b.creado_por_nombre)}</strong>
                 ${esCreador ? 'Puede eliminarlo desde la pantalla' : ''}
-                Solo puedes envar a maximo 5 personas.
+                Solo puedes enviar a maximo 5 personas.
             </div>
         `;
     } catch (err) {
@@ -491,6 +506,7 @@ async function publicarBanner() {
 
     if (!mensaje) {
         mostrarErrorBanner('Elmensaje no puede estar vacio')
+        return;
     }
 
     if (!duracion || duracion < 1) {
@@ -514,7 +530,7 @@ async function publicarBanner() {
         .from('banners')
         .select('id')
         .eq('activo', true)
-        .eq('audiencia', global)
+        .eq('audiencia', 'global')
         .limit(1);
 
     const hayGlobal = globalesActivos && globalesActivos.length > 0;
@@ -527,7 +543,7 @@ async function publicarBanner() {
 
     // Con banner global activo, maximo 5 destinatarios
     if (hayGlobal && audienciaSeleccionada === 'seleccionados' && operadoresSeleccionados.size > 5) {
-        mostrarErrorBanner('con n banner global activo solo puedes enviar a máximo 5 personass');
+        mostrarErrorBanner('con un banner global activo solo puedes enviar a máximo 5 personas.');
         return;
     }
 
@@ -565,7 +581,7 @@ async function publicarBanner() {
         console.error('Error publicando banner: ', err);
         btnPublicar.disabled = false;
         btnPublicar.innerHTML = `
-            <span class="material-symbols-rounded">send</span>
+            <span class="material-symbols-rounded" style="font-family:'Material Symbols Rounded'">send</span>
             publicar anuncio
         `;
     }
