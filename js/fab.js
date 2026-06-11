@@ -63,11 +63,14 @@ function toggleFAB() {
 function abrirFAB() {
     fabAbierto = true;
     document.getElementById('fabContainer').classList.add('open');
+    document.getElementById('fabContainer').style.zIndex = "9999";
+
 }
 
 function cerrarFAB() {
     fabAbierto = false;
     document.getElementById('fabContainer').classList.remove('open');
+    document.getElementById('fabContainer').style.zIndex = "1";
 }
 
 

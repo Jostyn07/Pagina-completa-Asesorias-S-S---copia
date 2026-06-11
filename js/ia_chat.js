@@ -96,10 +96,6 @@ function inyectarIAChatPanel() {
     const wrap = document.createElement('div');
     wrap.id = 'iaChatWrap';
     wrap.innerHTML = `
-        <button class="ia-fab" id="iaFab" onclick="toggleIAChat()" title="Asistente IA">
-            <span class="ia-fab-icon">✦</span>
-            <span class="ia-fab-label">IA</span>
-        </button>
 
         <div class="ia-panel" id="iaPanel">
             <div class="ia-panel-header">
