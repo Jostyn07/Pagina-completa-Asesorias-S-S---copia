@@ -551,6 +551,10 @@ body {
     box-shadow: var(--shadow-md);
 }
 
+.btn-submit {
+    z-index: 10;
+}
+
 .btn-secondary {
     background: var(--color-bg-white);
     color: var(--color-text-primary);
