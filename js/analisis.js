@@ -52,8 +52,7 @@ async function cargarDatosAnalisis() {
                 fecha_plazo_documentos,
                 operador_nombre,
                 compania,
-                telefono1,
-                cliente:clientes (
+                clientes (
                     id,
                     nombres,
                     apellidos,
@@ -63,8 +62,6 @@ async function cargarDatosAnalisis() {
                     telefono1,
                     archivado,
                     metodos_pago (
-                        tiene_metodo_pago,
-                        tiene_pago_automatico,
                         pago_enero,
                         pago_febrero,
                         pago_marzo,
@@ -84,7 +81,7 @@ async function cargarDatosAnalisis() {
                     fecha_seguimiento,
                     seguimiento_efectivo,
                     observacion
-                ),
+                )
                 
             `)
             .eq('estado_compania', 'Activo');
