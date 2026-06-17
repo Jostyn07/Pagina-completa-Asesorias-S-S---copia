@@ -84,8 +84,6 @@ async function cargarDatosAnalisis() {
                 )
                 
             `)
-            .eq('estado_compania', 'Activo');
-
         if (esOperadorSimple) {
             query = query.eq('operador_nombre', datosUsuario.nombre_completo);
         }
@@ -95,7 +93,8 @@ async function cargarDatosAnalisis() {
 
         // Filtrar archivados
         todasLasPolizasAnalisis = (data || []).filter(p =>
-            p.clientes && !p.clientes.archivado
+            p.clientes && !p.clientes.archivado && p.operador_nombre !== 'Jostyn Aragón' &&
+            p.operador_nombre !== 'Jostyn Aragon'
         );
 
         // Pre-calcular scoring para todos
