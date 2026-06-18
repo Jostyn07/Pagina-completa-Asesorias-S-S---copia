@@ -52,6 +52,7 @@ async function cargarDatosAnalisis() {
                 fecha_plazo_documentos,
                 operador_nombre,
                 compania,
+                prima,
                 clientes (
                     id,
                     nombres,
@@ -192,9 +193,6 @@ function calcularScoring(poliza) {
     const cliente      = poliza.clientes || {};
     const seguimientos = (poliza.seguimientos || [])
         .sort((a, b) => new Date(b.fecha_seguimiento) - new Date(a.fecha_seguimiento));
-    const metodosPago  = Array.isArray(poliza.metodos_pago)
-        ? (poliza.metodos_pago[0] || {})
-        : (poliza.metodos_pago   || {});
 
     // Factor 1: Documentos pendientes / vencidos
     const docStatus = (poliza.estado_documentos || '').toLowerCase();
@@ -223,12 +221,20 @@ function calcularScoring(poliza) {
     }
 
     // Factor 2: Pago del mes actual
-    const campoPago  = obtenerCampoPagoMesActual();
-    const estadoPago = (metodosPago[campoPago] || '').toLowerCase();
-    if (!estadoPago || estadoPago.includes('no') ||
-        estadoPago.includes('pendiente') || estadoPago.includes('atrasa')) {
-        score += 20;
-        factores.push('Pago del mes pendiente');
+    const metodosPagoCliente = Array.isArray(poliza.clientes?.metodos_pago)
+        ? (poliza.clientes.metodos_pago[0] || {})
+        : (poliza.clientes?.metodos_pago || {});
+
+    const primaMensual = parseFloat(poliza?.prima || 0);
+    const campoPago    = obtenerCampoPagoMesActual();
+    const estadoPago   = (metodosPagoCliente[campoPago] || '').toLowerCase();
+
+    if (primaMensual > 0) {
+        if (!estadoPago || estadoPago.includes('no') ||
+            estadoPago.includes('pendiente') || estadoPago.includes('atrasa')) {
+            score += 20;
+            factores.push('Pago del mes pendiente');
+        }
     }
 
     // Factor 3: Imposible de contactar
@@ -278,7 +284,7 @@ function calcularScoring(poliza) {
 
     // Factor 7: Estatus migratorio temporal
     const migStatus = (cliente.estado_migratorio || '').toLowerCase();
-    if (/temporal|permiso|asilo|daca|tps|ead/.test(migStatus)) {
+    if (/temporal|asilo|daca|tps|ead|otro|I-94/.test(migStatus)) {
         score += 15;
         factores.push('Estatus migratorio temporal');
     }
@@ -659,7 +665,7 @@ function renderizarTabla() {
     if (lista.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="analisis-tabla-vacia">
+                <td colspan="9" class="analisis-tabla-vacia">
                     <span class="material-symbols-rounded">search_off</span>
                     No hay clientes en este nivel de riesgo
                 </td>
@@ -701,6 +707,7 @@ function renderizarTabla() {
                         ${escapeHtml(p.compania || '')}
                     </div>
                 </td>
+                <td>${p.estado_mercado || "Pendiente revisión"}</td>
                 <td style="font-size:0.82rem">${escapeHtml(p.operador_nombre || '—')}</td>
                 <td><span class="score-badge ${sc.nivel}">${sc.score}</span></td>
                 <td>
