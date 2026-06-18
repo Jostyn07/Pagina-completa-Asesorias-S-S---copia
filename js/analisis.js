@@ -85,7 +85,7 @@ async function cargarDatosAnalisis() {
                 
             `)
         if (esOperadorSimple) {
-            query = query.eq('operador_nombre', datosUsuario.nombre_completo);
+            query = query.eq('operador_nombre', datosUsuario.nombre);
         }
 
         const { data, error } = await query;
