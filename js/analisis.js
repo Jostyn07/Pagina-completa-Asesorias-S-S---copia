@@ -95,7 +95,7 @@ async function cargarDatosAnalisis() {
         // Filtrar archivados
         todasLasPolizasAnalisis = (data || []).filter(p =>
             p.clientes && !p.clientes.archivado && p.operador_nombre !== 'Jostyn Aragón' &&
-            p.operador_nombre !== 'Jostyn Aragon'
+            p.operador_nombre !== 'Jostyn Aragon' && p.estado_mercado !== "Cancelado a P.C"
         );
 
         // Pre-calcular scoring para todos
@@ -262,13 +262,13 @@ function calcularScoring(poliza) {
             factores.push(`Sin contacto ${dias} días`);
         }
     } else {
-        score += 15;
+        score += 25;
         factores.push('Sin seguimientos registrados');
     }
 
     // Factor 5: Palabras clave en notas (riesgo básico, antes de IA)
     const notas = seguimientos.map(s => s.observacion || '').join(' ').toLowerCase();
-    if (/cancel|cambiar|competenci|caro|costoso|otra agencia|no quiere|no puede pagar|quiere salir/.test(notas)) {
+    if (/cancelar|cambiar|competencia|caro|costoso|otra agencia|no quiere|no puede pagar|quiere salir/.test(notas)) {
         score += 25;
         factores.push('Señales de abandono en notas');
     }
