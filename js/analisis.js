@@ -255,10 +255,10 @@ function calcularScoring(poliza) {
             (new Date() - new Date(seguimientos[0].fecha_seguimiento)) / 86400000
         );
         if (dias > 60) {
-            score += 20;
+            score += 30;
             factores.push(`Sin contacto ${dias} días`);
         } else if (dias > 30) {
-            score += 10;
+            score += 15;
             factores.push(`Sin contacto ${dias} días`);
         }
     } else {
