@@ -546,7 +546,7 @@ function renderizarGraficasOperador() {
     destruirGrafica('graficaCompaniaOp');
     graficasInstancias['graficaCompaniaOp'] = new Chart(
         document.getElementById('graficaCompaniaOp').getContext('2d'), {
-            type: 'doughnut',
+            type: 'bar',
             data: {
                 labels: Object.keys(conteoCompania),
                 datasets: [{
@@ -563,7 +563,7 @@ function renderizarGraficasOperador() {
     destruirGrafica('graficaMercadoOp');
     graficasInstancias['graficaMercadoOp'] = new Chart(
         document.getElementById('graficaMercadoOp').getContext('2d'), {
-            type: 'doughnut',
+            type: 'bar',
             data: {
                 labels: Object.keys(conteoMercado),
                 datasets: [{
