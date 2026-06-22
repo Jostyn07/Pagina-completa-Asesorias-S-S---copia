@@ -1844,8 +1844,6 @@ async function actualizarPoliza(polizaId, formData) {
         operador_nombre: formData.operadorNombre || null,
         agente_nombre: formData.agenteNombre || null,
         observaciones: formData.observaciones || null,
-        documentos_pendientes: formData.documentosPendientes || '-',
-        fecha_plazo_documentos: formData.fechaPlazoDocumento || null,
         agente35_estado: formData.agente35_estado || null,
         agente35_notas: formData.agente35_notas || null,
         updated_at: new Date().toISOString(),
