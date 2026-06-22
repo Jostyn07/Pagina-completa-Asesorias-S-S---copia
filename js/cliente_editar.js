@@ -133,14 +133,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     // ===========================================
 
         const containtAgenteExterno = document.getElementById('containtAgenteExterno')
+        const containtAgenteExterno2 = document.getElementById('containtAgenteExterno2')
         const estadoMercadoInput = document.getElementById('estadoMercado')
 
         function cargarRobado() {
             
-            if(estadoMercadoInput.value == 'Robado' || estadoMercadoInput.value == 'Doble poliza') {
+            if(estadoMercadoInput.value == 'Robado' || estadoMercadoInput.value == 'Doble poliza' || estadoMercadoInput.value == 'Triple poliza') {
                 containtAgenteExterno.style.display = 'block';
+                containtAgenteExterno2.style.display = 'block';
             } else {
                 containtAgenteExterno.style.display = 'none';
+                containtAgenteExterno2.style.display = esRelevante ? 'block' : 'none';
             }
         }
 
@@ -2555,6 +2558,7 @@ async function cargarEstadoSeguimiento(polizaId) {
             }
             
             if (poliza.agente_externo_mercado) document.getElementById('agenteExterno').value = poliza.agente_externo_mercado;
+            if (poliza.agente_externo_mercado2) document.getElementById('agenteExterno2').value = poliza.agente_externo_mercado2;
         }
         
         // Cargar seguimientos
@@ -2676,7 +2680,7 @@ async function actualizarComunicacionEfectiva(esEfectivo) {
 // GUARDAR ESTADO Y SEGUIMIENTO
 // ============================================
 
-async function guardarEstadoSeguimiento(polizaId) {
+async function guardarEstadoSeguimiento(polizaId, formData) {
     try {
         
         const estadoData = {
@@ -2703,6 +2707,7 @@ async function guardarEstadoSeguimiento(polizaId) {
             estadoData.documentos_pendientes = document.getElementById('documentosPendientes')?.value || '-';
             estadoData.fecha_plazo_documentos = document.getElementById('fechaPlazoDocumento')?.value || null;
             if(containtAgenteExterno) estadoData.agente_externo_mercado = document.getElementById('agenteExterno')?.value || null;
+            if(containtAgenteExterno2) estadoData.agente_externo_mercado2 = document.getElementById('agenteExterno2')?.value || null;
         }
                 
         const { error } = await supabaseClient
@@ -2715,15 +2720,68 @@ async function guardarEstadoSeguimiento(polizaId) {
         
         // Registrar cambio en historial
         await registrarCambioEstado(polizaId, estadoData);
-        
+
+        const ESTADOS_GATILLO_REVISION = ['Robado', 'Cancelado a P.C', 'Doble poliza', 'Triple poliza', 'No registra'];
+
+        if (esAdmministrador()
+            && ESTADOS_GATILLO_REVISION.includes(esdatoData.estado_mercado) && estadoData.estado_mercado !== datosOriginalesPoliza.estado_mercado) {
+            await registrarParaRevisar(clienteId, polizaId, formData, estadoData);
+        }
+
     } catch (error) {
         console.error('❌ Error al guardar estado:', error);
         throw error;
     }
 }
 
+// ===========================================
+// 3) REGISTRO EN "PARA REVISAR" (revision_mercado)
+// ===========================================
+
+async function registrarParaRevisar(clienteId, polizaId, formData, estadoData) {
+    try {
+        const ultimaNota = await supabaseClient
+            .from ('revision_mercado')
+            .insert([{
+                cliente_id: clienteId,
+                poliza_id: polizaId,
+                operador_nombre: formData.operadorNombre || '',
+                nombre_cliente: `${formData.nombres} ${formData.apellidos}`.trim(),
+                telefono: formData.telefono1 ? formData.telefono1.replace(/\D/g, '') : '',
+                compania: formData.compania || '',
+                estado_mercado: estadoData.estado_mercado,
+                notas: ultimaNota,
+                npn1: estadoData.agente_externo_mercado || null,
+                npn2: estadoData.agente_externo_mercado2 || null,
+                recuperado: null,
+                revision_realizado_por: datosUsuario?.nombre || usuarioActual?.email || 'Desconocido',
+            }]);
+        if (error) throw error;
+    } catch (error) {
+        console.error('Error al registrar en Para revisar:', error);
+    }
+}
+
+async function obtenerUltimaNota(clienteId) {
+    try {
+        const {data, error} = await supabaseClient
+            .from('notas')
+            .select('mensajes')
+            .eq('cliente_id', clienteId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        
+        if (error) throw error;
+        return data?.mensaje || null;
+    } catch (error) {
+        console.error('Error al obtener última nota:', error);
+        return null
+    }
+}
+
 // ============================================
-// 3) SEGUIMIENTOS
+// 4) SEGUIMIENTOS
 // ============================================
 
 async function cargarSeguimientos(polizaId) {

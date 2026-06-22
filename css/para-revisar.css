@@ -1,0 +1,345 @@
+/* ============================================
+   PARA REVISAR — Estilos específicos
+   ============================================ */
+.inf__cuadro--activo {
+    border: 2px solid var(--color-hover-primary);
+    box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+    transform: translateY(-2px);
+}
+/* --- Tabla: scroll horizontal --- */
+#tablaRevisarWrapper {
+    width: 100%;
+    overflow-x: auto;
+    transition: opacity 0.2s;
+}
+.tabla-revisar {
+    width: 100%;
+    min-width: 1200px;
+    border-collapse: collapse;
+}
+/* --- Colores de fila por estado "Recuperado" --- */
+.fila-recuperada-si {
+    background-color: #ecfdf5 !important;
+}
+.fila-recuperada-si td {
+    opacity: 0.75;
+}
+.fila-recuperada-no {
+    background-color: #fff5f5 !important;
+}
+[data-theme="dark"] .fila-recuperada-si {
+    background-color: #0d2b1f !important;
+}
+[data-theme="dark"] .fila-recuperada-no {
+    background-color: #2b0d0d !important;
+}
+/* --- Badge estado mercado --- */
+.badge-mercado {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.badge-mercado .material-symbols-rounded { font-size: 14px; }
+.badge-robado     { background: #fee2e2; color: #991b1b; }
+.badge-cancelado  { background: #f3f4f6; color: #374151; }
+.badge-doble      { background: #ede9fe; color: #5b21b6; }
+.badge-triple     { background: #fef3c7; color: #92400e; }
+.badge-noregistra { background: #dbeafe; color: #1e40af; }
+[data-theme="dark"] .badge-robado     { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .badge-cancelado  { background: #1f2937; color: #9ca3af; }
+[data-theme="dark"] .badge-doble      { background: #2e1065; color: #c4b5fd; }
+[data-theme="dark"] .badge-triple     { background: #451a03; color: #fcd34d; }
+[data-theme="dark"] .badge-noregistra { background: #1e3a5f; color: #93c5fd; }
+/* --- Botón Recuperado --- */
+.btn-recuperado {
+    border: none;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.btn-rec-null { background: #f3f4f6; color: #6b7280; }
+.btn-rec-si   { background: #d1fae5; color: #047857; }
+.btn-rec-no   { background: #fee2e2; color: #991b1b; }
+.btn-recuperado:hover { filter: brightness(0.92); transform: scale(1.04); }
+[data-theme="dark"] .btn-rec-null { background: #374151; color: #9ca3af; }
+[data-theme="dark"] .btn-rec-si   { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .btn-rec-no   { background: #7f1d1d; color: #fca5a5; }
+/* --- Celdas editables --- */
+.celda-editable {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 4px;
+    display: block;
+    min-height: 20px;
+    transition: background 0.15s;
+}
+.celda-editable:hover {
+    background: rgba(99,102,241,0.08);
+}
+.input-inline-edit {
+    border: 1px solid var(--color-hover-primary);
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 0.85rem;
+    width: 100%;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    outline: none;
+}
+.text-muted { color: var(--color-text-placeholder); font-style: italic; }
+.link-cliente {
+    color: var(--color-hover-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+.link-cliente:hover { text-decoration: underline; }
+/* --- Sizing de celdas --- */
+.celda-fecha       { font-size: 0.8rem; white-space: nowrap; }
+.celda-npn         { min-width: 110px; }
+.celda-notas       { min-width: 160px; max-width: 220px; }
+.celda-observacion { min-width: 160px; max-width: 220px; }
+.celda-recuperado  { text-align: center; }
+.celda-revision-por{ font-size: 0.82rem; white-space: nowrap; }
+.nota-preview, .obs-preview { font-size: 0.82rem; line-height: 1.4; }
+/* --- Barra de herramientas --- */
+.barra-herramientas {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 0 30px 12px;
+}
+.btn-toggle-rec {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: var(--color-text-primary);
+    transition: all 0.2s;
+}
+.btn-toggle-rec:hover { background: var(--color-hover-secondary); }
+.btn-toggle-rec .material-symbols-rounded { font-size: 18px; }
+.contador-resultados {
+    margin-left: auto;
+    font-size: 0.82rem;
+    color: var(--color-text-placeholder);
+}
+.badge-filtros-rev {
+    display: none;
+    background: var(--color-hover-primary);
+    color: #fff;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+}
+/* --- Indicador de carga --- */
+#loadingRevisar {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    color: var(--color-text-placeholder);
+}
+.loading-spinner {
+    width: 22px; height: 22px;
+    border: 3px solid var(--color-border-hr, #e2e8f0);
+    border-top-color: var(--color-hover-primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+/* ============================================
+   MODAL FILTROS AVANZADOS
+   ============================================ */
+.modal-rev-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 10000;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 60px;
+}
+.modal-rev-overlay.show { display: flex; }
+.modal-rev {
+    background: var(--color-bg-primary, #fff);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 620px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.modal-rev-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--color-border-hr, #e2e8f0);
+}
+.modal-rev-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modal-rev-header h3 .material-symbols-rounded { color: var(--color-hover-primary); }
+.modal-rev-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--color-text-placeholder);
+    font-size: 1.4rem; line-height: 1;
+}
+.modal-rev-body { padding: 22px 28px; }
+.modal-rev-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.modal-rev-group { display: flex; flex-direction: column; gap: 6px; }
+.modal-rev-group label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-placeholder);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.modal-rev-group input {
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.9rem;
+    background: var(--color-bg-primary, #fff);
+    color: var(--color-text-primary, #1e293b);
+    outline: none;
+    transition: border 0.2s;
+}
+.modal-rev-group input:focus { border-color: var(--color-hover-primary); }
+.modal-rev-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-placeholder);
+    margin: 18px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--color-border-hr, #e2e8f0);
+}
+.modal-rev-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 18px 28px;
+    border-top: 1px solid var(--color-border-hr, #e2e8f0);
+}
+.btn-rev-limpiar {
+    background: none;
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 8px 18px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--color-text-primary);
+}
+.btn-rev-aplicar {
+    background: var(--color-hover-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 22px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+/* ============================================
+   MODAL TEXTO LARGO (Notas / Observación)
+   ============================================ */
+#modalTextoOverlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 10001;
+    justify-content: center;
+    align-items: center;
+}
+#modalTextoOverlay.show { display: flex; }
+.modal-texto-content {
+    background: var(--color-bg-primary, #fff);
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 520px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.modal-texto-content h3 {
+    font-size: 1rem;
+    font-weight: 700;
+}
+#modalTextoArea {
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    min-height: 130px;
+    resize: vertical;
+    background: var(--color-bg-primary, #fff);
+    color: var(--color-text-primary, #1e293b);
+    outline: none;
+    transition: border 0.2s;
+}
+#modalTextoArea:focus { border-color: var(--color-hover-primary); }
+.modal-texto-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.btn-texto-cancel {
+    background: none;
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 8px 18px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--color-text-primary);
+}
+.btn-texto-save {
+    background: var(--color-hover-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 22px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+/* --- Dark mode ajustes modales --- */
+[data-theme="dark"] .modal-rev,
+[data-theme="dark"] .modal-texto-content {
+    background: #1e1e2e;
+}
+[data-theme="dark"] .modal-rev-group input,
+[data-theme="dark"] #modalTextoArea { background: #2a2a3e; border-color: #3a3a5e; color: #e2e8f0; }

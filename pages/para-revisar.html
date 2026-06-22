@@ -16,21 +16,17 @@
     <link rel="stylesheet" href="../css/ia.css">
     <link rel="stylesheet" href="../css/fab.css">
     <link rel="stylesheet" href="../css/banner.css">
+    <link rel="stylesheet" href="../css/para-revisar.css">
 
-
-    <!-- For Modern Browsers (SVG) -->
     <link rel="icon" type="image/svg+xml" href="../images/Logo.png">
-
-    <!-- Fallback for Legacy Browsers (ICO) -->
     <link rel="icon" type="image/x-icon" href="../images/Logo.png" sizes="any">
-
-    <!-- For Apple Devices (iOS) -->
     <link rel="apple-touch-icon" href="../images/Logo.png">
+
 
 </head>
 <body>
     <div class="container">
-        <!-- SIDEBAR UNIFICADO -->
+        <!-- SIDEBAR -->
         <aside class="sidebar-unified" id="sidebar">
             <div class="sidebar-header">
                 <a href="./home.html" class="sidebar-logo-link">
@@ -40,103 +36,85 @@
                     <span class="material-symbols-rounded">chevron_left</span>
                 </button>
             </div>
-
             <div class="sidebar-search">
                 <div class="search-box">
                     <span class="material-symbols-rounded">search</span>
                     <input type="text" placeholder="Buscar...">
                 </div>
             </div>
-
             <nav class="sidebar-nav">
                 <a href="./home.html" class="menu-item">
                     <span class="material-symbols-rounded">home</span>
                     <span>Inicio</span>
                 </a>
-
                 <a href="./polizas.html" class="menu-item">
                     <span class="material-symbols-rounded">description</span>
                     <span>Pólizas</span>
                 </a>
-
                 <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
                     <span class="material-symbols-rounded">task_alt</span>
                     <span>Recordatorios</span>
                     <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
                 </a>
-
                 <a href="./tablero.html" class="menu-item" target="_blank">
                     <span class="material-symbols-rounded">grid_view</span>
                     <span>Tablero</span>
                 </a>
-
                 <a href="./analisis.html" class="menu-item" id="menuAnalisis">
                     <span class="material-symbols-rounded">analytics</span>
                     <span>Análisis</span>
                 </a>
-
                 <a href="#" class="menu-item">
                     <span class="material-symbols-rounded">folder</span>
                     <span>Gestiones</span>
                 </a>
-
                 <a href="#" class="menu-item">
                     <span class="material-symbols-rounded">rate_review</span>
                     <span>Solicitud de revisión mercado</span>
                 </a>
-
                 <a href="./para-revisar.html" class="menu-item active">
                     <span class="material-symbols-rounded">fact_check</span>
                     <span>Para revisar</span>
                 </a>
-
                 <a href="./control_calidad.html" class="menu-item">
                     <span class="material-symbols-rounded">verified</span>
                     <span>Control de calidad</span>
                 </a>
-
                 <a href="./historial_evaluacion.html" class="menu-item">
                     <span class="material-symbols-rounded">history</span>
                     <span>Mis Evaluaciones</span>
                 </a>
-
                 <a href="./clientes_archivados.html" class="menu-item" id="menuArchivados">
                     <span class="material-symbols-rounded">inventory_2</span>
                     <span>Archivados</span>
                 </a>
-
                 <a href="./monitoreo.html" class="menu-item" id="menuMonitoreo" style="display:none">
                     <span class="material-symbols-rounded">monitor_heart</span>
                     <span>Monitoreo</span>
                 </a>
-
                 <a href="./movimientos.html" class="menu-item" id="menuMovimientos" style="display:none">
                     <span class="material-symbols-rounded">swap_horiz</span>
                     <span>Movimientos</span>
                 </a>
-
                 <a href="./usuarios.html" class="menu-item">
                     <span class="material-symbols-rounded">group</span>
                     <span>Usuarios</span>
                 </a>
             </nav>
-
             <div class="sidebar-footer">
-        <button id="btnDarkMode" class="theme-toggle" onclick="toggleDarkMode()" title="Cambiar tema">
-            <span class="material-symbols-rounded">dark_mode</span>
-        </button>
+                <button id="btnDarkMode" class="theme-toggle" onclick="toggleDarkMode()" title="Cambiar tema">
+                    <span class="material-symbols-rounded">dark_mode</span>
+                </button>
             </div>
         </aside>
-        
+
         <!-- CONTENIDO PRINCIPAL -->
         <div class="container__flex">
-            <!-- Header Superior -->
+            <!-- Header -->
             <header class="header">
                 <div class="header__welcome">
                     <div class="header__welcome__new">
-                        <label>
-                            Pólizas para Revisar
-                        </label>
+                        <label>Pólizas para Revisar</label>
                     </div>
                     <div class="header__welcome__inf">
                         <p>Hola, <span class="nombre-usuario">Usuario</span></p>
@@ -144,47 +122,50 @@
                     </div>
                 </div>
             </header>
-            
-            <!-- Main Content -->
+
             <main class="main__container">
-                <!-- Tarjetas de Información (Clickeables) -->
+
+                <!-- Tarjetas de resumen -->
                 <div class="container__general-inf">
-                    <div class="header__inf-polizas" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-                        <div class="inf__cuadro" onclick="filtrarPorTipo('robadas')">
+                    <div class="header__inf-polizas" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                        <div class="inf__cuadro" onclick="filtrarPorTipo('robadas')" title="Click para filtrar">
                             <h2>Robadas</h2>
                             <p>Pólizas robadas por competencia</p>
-                            <span id="polizas-robadas">10</span>
+                            <span id="polizas-robadas">—</span>
                         </div>
-                        <div class="inf__cuadro" onclick="filtrarPorTipo('canceladas')">
+                        <div class="inf__cuadro" onclick="filtrarPorTipo('canceladas')" title="Click para filtrar">
                             <h2>Canceladas</h2>
-                            <p>Total de pólizas canceladas</p>
-                            <span id="polizas-canceladas-revision">3</span>
+                            <p>Pólizas canceladas</p>
+                            <span id="polizas-canceladas-revision">—</span>
                         </div>
-                        <div class="inf__cuadro" onclick="filtrarPorTipo('dobles')">
-                            <h2>Doble Pólizas</h2>
+                        <div class="inf__cuadro" onclick="filtrarPorTipo('dobles')" title="Click para filtrar">
+                            <h2>Doble Póliza</h2>
                             <p>Cuentan con dos pólizas</p>
-                            <span id="polizas-dobles">8</span>
+                            <span id="polizas-dobles">—</span>
                         </div>
-                        <div class="inf__cuadro" onclick="filtrarPorTipo('no-registran')">
-                            <h2>No registran</h2>
-                            <p>Pólizas no registran en mercado</p>
-                            <span id="polizas-no-registran">5</span>
+                        <div class="inf__cuadro" onclick="filtrarPorTipo('triples')" title="Click para filtrar">
+                            <h2>Triple Póliza</h2>
+                            <p>Cuentan con tres pólizas</p>
+                            <span id="polizas-triples">—</span>
+                        </div>
+                        <div class="inf__cuadro" onclick="filtrarPorTipo('no-registran')" title="Click para filtrar">
+                            <h2>No Registran</h2>
+                            <p>No registran en mercado</p>
+                            <span id="polizas-no-registran">—</span>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Barra de Búsqueda -->
+
+                <!-- Barra de búsqueda y herramientas -->
                 <div class="container__form">
                     <form class="contents" onsubmit="return false;">
                         <div class="contents__visualizacion">
                             <div class="bar__search">
-                                <input 
-                                    type="text" 
-                                    name="search" 
-                                    id="searchInputRevisar" 
-                                    class="search" 
-                                    placeholder="Buscar por nombre, póliza, teléfono..."
-                                    onkeyup="buscarEnTablaRevisar()"
+                                <input
+                                    type="text"
+                                    id="searchInputRevisar"
+                                    class="search"
+                                    placeholder="Buscar por nombre, operador, teléfono..."
                                 >
                                 <button type="button" class="button__bar btn__buscar" onclick="buscarEnTablaRevisar()">
                                     <span class="material-symbols-rounded">search</span>
@@ -192,75 +173,154 @@
                                 </button>
                                 <button type="button" class="button__bar btn__filtrar" onclick="abrirModalFiltros()">
                                     Filtrar
+                                    <span class="badge-filtros-rev" id="badgeFiltrosRev">0</span>
                                 </button>
                             </div>
                         </div>
                     </form>
                 </div>
-                
-                <!-- Tabla de Pólizas para Revisar -->
-                <table class="content__info-client">
-                    <thead class="thead">
-                        <tr>
-                            <th>Póliza</th>
-                            <th>Operador</th>
-                            <th>Cliente</th>
-                            <th>Número de teléfono</th>
-                            <th>Estado<br>(Mercado)</th>
-                            <th>Compañía</th>
-                            <th>Plan</th>
-                            <th>Prima</th>
-                            <th>Agente</th>
-                            <th>Efectividad</th>
-                            <th>Creación</th>
-                            <th>Modificación</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-polizas-revisar">
-                        <tr>
-                            <td data-label="Póliza">POL-2025-001</td>
-                            <td data-label="Operador">Jostyn Aragón</td>
-                            <td class="td1" data-label="Cliente">
-                                <div class="td1__flex">
-                                    <a href="#">Juanito Pérez</a>
-                                </div>
-                            </td>
-                            <td data-label="Teléfono">6824142301</td>
-                            <td data-label="Estado"><span class="badge-estado activo">Activo</span></td>
-                            <td data-label="Compañía">Florida Blue</td>
-                            <td data-label="Plan">myBlue Bronze 2219</td>
-                            <td data-label="Prima">$0.00</td>
-                            <td data-label="Agente">Joel Nieves</td>
-                            <td data-label="Efectividad">01/01/2026</td>
-                            <td data-label="Creación">09/12/2025</td>
-                            <td data-label="Modificación">12/09/2025</td>
-                        </tr>
-                        <tr>
-                            <td data-label="Póliza">POL-2025-002</td>
-                            <td data-label="Operador">Ana Martínez</td>
-                            <td class="td1" data-label="Cliente">
-                                <div class="td1__flex">
-                                    <a href="#">María González</a>
-                                </div>
-                            </td>
-                            <td data-label="Teléfono">3051234567</td>
-                            <td data-label="Estado"><span class="badge-estado cancelado">Cancelado</span></td>
-                            <td data-label="Compañía">Oscar Health</td>
-                            <td data-label="Plan">Silver Classic</td>
-                            <td data-label="Prima">$250.50</td>
-                            <td data-label="Agente">Joel Nieves</td>
-                            <td data-label="Efectividad">01/02/2025</td>
-                            <td data-label="Creación">08/12/2025</td>
-                            <td data-label="Modificación">12/09/2025</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+                <!-- Barra de herramientas secundaria -->
+                <div class="barra-herramientas">
+                    <button class="btn-toggle-rec" id="btnToggleRecuperados" onclick="toggleVerRecuperados()">
+                        <span class="material-symbols-rounded">visibility</span>
+                        Ver recuperados
+                    </button>
+                    <span class="contador-resultados" id="contadorResultadosRev"></span>
+                </div>
+
+                <!-- Indicador de carga -->
+                <div id="loadingRevisar">
+                    <div class="loading-spinner"></div>
+                    <span>Cargando registros...</span>
+                </div>
+
+                <!-- Tabla -->
+                <div id="tablaRevisarWrapper">
+                    <table class="content__info-client tabla-revisar">
+                        <thead class="thead">
+                            <tr>
+                                <th>Fecha Ingreso</th>
+                                <th>Operador</th>
+                                <th>Cliente</th>
+                                <th>Teléfono</th>
+                                <th>Compañía</th>
+                                <th>Estado Mercado</th>
+                                <th>NPN 1</th>
+                                <th>NPN 2</th>
+                                <th>Notas</th>
+                                <th>Observación Operador</th>
+                                <th>Recuperado</th>
+                                <th>Fecha Recuperación</th>
+                                <th>Revisión realizada por</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-revisar-body">
+                            <tr>
+                                <td colspan="13" style="text-align:center; padding:40px; color: var(--color-text-placeholder)">
+                                    Cargando...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </main>
         </div>
     </div>
 
+    <!-- ============================================
+         MODAL FILTROS AVANZADOS
+         ============================================ -->
+    <div class="modal-rev-overlay" id="modalFiltrosOverlay" onclick="if(event.target===this)cerrarModalFiltros()">
+        <div class="modal-rev">
+            <div class="modal-rev-header">
+                <h3>
+                    <span class="material-symbols-rounded">filter_list</span>
+                    Filtros avanzados
+                </h3>
+                <button class="modal-rev-close" onclick="cerrarModalFiltros()">✕</button>
+            </div>
+            <div class="modal-rev-body">
+
+                <div class="modal-rev-section-title">Persona</div>
+                <div class="modal-rev-grid">
+                    <div class="modal-rev-group">
+                        <label>Operador</label>
+                        <input type="text" id="filtroRevOperador" placeholder="Nombre del operador...">
+                    </div>
+                    <div class="modal-rev-group">
+                        <label>Nombre del cliente</label>
+                        <input type="text" id="filtroRevNombre" placeholder="Nombre o apellido...">
+                    </div>
+                    <div class="modal-rev-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="filtroRevTelefono" placeholder="Número de teléfono...">
+                    </div>
+                    <div class="modal-rev-group">
+                        <label>Revisión realizada por</label>
+                        <input type="text" id="filtroRevRevisionPor" placeholder="Nombre del agente...">
+                    </div>
+                </div>
+
+                <div class="modal-rev-section-title">Agentes (NPN)</div>
+                <div class="modal-rev-grid">
+                    <div class="modal-rev-group">
+                        <label>Agente / NPN 1</label>
+                        <input type="text" id="filtroRevNpn1" placeholder="NPN o nombre...">
+                    </div>
+                    <div class="modal-rev-group">
+                        <label>Agente / NPN 2</label>
+                        <input type="text" id="filtroRevNpn2" placeholder="NPN o nombre...">
+                    </div>
+                </div>
+
+                <div class="modal-rev-section-title">Fechas</div>
+                <div class="modal-rev-grid">
+                    <div class="modal-rev-group">
+                        <label>Ingreso desde</label>
+                        <input type="date" id="filtroRevIngresoDesde">
+                    </div>
+                    <div class="modal-rev-group">
+                        <label>Ingreso hasta</label>
+                        <input type="date" id="filtroRevIngresoHasta">
+                    </div>
+                    <div class="modal-rev-group">
+                        <label>Recuperación desde</label>
+                        <input type="date" id="filtroRevRecupDesde">
+                    </div>
+                    <div class="modal-rev-group">
+                        <label>Recuperación hasta</label>
+                        <input type="date" id="filtroRevRecupHasta">
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-rev-footer">
+                <button class="btn-rev-limpiar" onclick="limpiarFiltrosAvanzados()">Limpiar</button>
+                <button class="btn-rev-aplicar" onclick="aplicarFiltrosAvanzados()">Aplicar filtros</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         MODAL EDICIÓN TEXTO LARGO
+         ============================================ -->
+    <div id="modalTextoOverlay" onclick="if(event.target===this)cerrarModalTexto()">
+        <div class="modal-texto-content">
+            <h3 id="modalTextoTitulo">Editar</h3>
+            <textarea id="modalTextoArea" placeholder="Escribe aquí..."></textarea>
+            <div class="modal-texto-footer">
+                <button class="btn-texto-cancel" onclick="cerrarModalTexto()">Cancelar</button>
+                <button class="btn-texto-save" id="btnGuardarTexto" onclick="guardarModalTexto()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
+    <script src="../js/permisos.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/fab.js"></script>
     <script src="../js/banners.js"></script>
@@ -269,5 +329,6 @@
     <script src="../js/ia_contexto.js"></script>
     <script src="../js/ia_chat.js"></script>
     <script src="../js/notificaciones_calidad.js"></script>
+    <script src="../js/para-revisar.js"></script>
 </body>
 </html>
