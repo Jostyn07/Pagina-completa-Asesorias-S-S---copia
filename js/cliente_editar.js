@@ -2724,7 +2724,7 @@ async function guardarEstadoSeguimiento(polizaId, formData) {
         const ESTADOS_GATILLO_REVISION = ['Robado', 'Cancelado a P.C', 'Doble poliza', 'Triple poliza', 'No registra'];
 
         if (esAdministrador()
-            && ESTADOS_GATILLO_REVISION.includes(esdatoData.estado_mercado) && estadoData.estado_mercado !== datosOriginalesPoliza.estado_mercado) {
+            && ESTADOS_GATILLO_REVISION.includes(estadoData.estado_mercado) && estadoData.estado_mercado !== datosOriginalesPoliza.estado_mercado) {
             await registrarParaRevisar(clienteId, polizaId, formData, estadoData);
         }
 
