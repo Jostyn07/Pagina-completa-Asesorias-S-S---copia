@@ -15,13 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verificar autenticación en páginas protegida
     verificarAutenticacion();
-
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (user) {
-        const nombre = user.user_metadata?.nombre || user.email.split('@')[0];
-        const el = document.querySelector('#userName');
-        if (el) el.textContent = nombre;
-    }
 });
 
 async function handleLogin(event) {
