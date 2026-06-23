@@ -20,6 +20,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     esAdmin = esAdministrador();
     await cargarRegistros();
     configurarBuscador();
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) {
+        const nombre = user.user_metadata?.nombre || user.email.split('@')[0];
+        const el = document.querySelector('.nombre-usuario');
+        if (el) el.textContent = nombre;
+    }
 });
 
 // ============================================
@@ -316,12 +323,16 @@ function iniciarEdicion(span, id, campo) {
 
     const guardar = async () => {
         const nuevoValor = input.value.trim() || null;
-        await guardarCampoSimple(id, campo, nuevoValor);
-        span.innerHTML = nuevoValor || '<em class="text-muted">—</em>';
-        span.dataset.valor = nuevoValor || '';
-
-        const idx = todosLosRegistros.findIndex(r => r.id === id);
-        if (idx !== -1) todosLosRegistros[idx][campo] = nuevoValor;
+        try {
+            await guardarCampoSimple(id, campo, nuevoValor);
+            span.innerHTML = nuevoValor || '<em class="text-muted">—</em>';
+            span.dataset.valor = nuevoValor || '';
+            const idx = todosLosRegistros.findIndex(r => r.id === id);
+            if (idx !== -1) todosLosRegistros[idx][campo] = nuevoValor;
+        } catch (e) {
+            alert('Error al guardar. El valor no se actualizó.');
+            span.innerHTML = valorActual || '<em class="text-muted">—</em>'; // revertir
+        }
     };
 
     input.addEventListener('blur', guardar);
@@ -513,7 +524,8 @@ function mostrarMensajeVacio(msg) {
 function formatearFecha(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
-    return d.toLocaleDateString('es-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    d.toLocaleDateString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    + ' ' + d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatearFechaCorta(str) {

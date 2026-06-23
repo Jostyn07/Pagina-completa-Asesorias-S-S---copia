@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 containtAgenteExterno2.style.display = 'block';
             } else {
                 containtAgenteExterno.style.display = 'none';
-                containtAgenteExterno2.style.display = esRelevante ? 'block' : 'none';
+                containtAgenteExterno2.style.display = 'none';
             }
         }
 
@@ -1151,8 +1151,6 @@ async function cargarNotas(clienteId) {
             thread.insertAdjacentHTML('beforeend', notaHTML);
         });
 
-procesarImagenesEnNotas(thread);
-
         procesarImagenesEnNotas(thread);
         
         actualizarContadorNotas();
@@ -1579,7 +1577,7 @@ async function handleSubmit(event) {
         await actualizarPoliza(polizaId, formData);
 
         // Actualizar estado y seguimiento
-        await guardarEstadoSeguimiento(polizaId);
+        await guardarEstadoSeguimiento(polizaId, formData);
         
         // 3. Actualizar dependientes
         await actualizarDependientes(clienteId, formData);
@@ -2323,7 +2321,7 @@ function cancelarFormulario() {
 async function enviarNota() {
     let enviarNota1 = document.getElementById("enviarNota1")
     await agregarNota(clienteId);
-    enviarNota.disabled
+    enviarNota.disabled = true
 }
 
 async function eliminarNota(notaId) {
@@ -2682,6 +2680,8 @@ async function actualizarComunicacionEfectiva(esEfectivo) {
 
 async function guardarEstadoSeguimiento(polizaId, formData) {
     try {
+        const containtAgenteExterno  = document.getElementById('containtAgenteExterno');
+        const containtAgenteExterno2 = document.getElementById('containtAgenteExterno2');
         
         const estadoData = {
             // 1) Estado en Compañía
@@ -2740,7 +2740,9 @@ async function guardarEstadoSeguimiento(polizaId, formData) {
 
 async function registrarParaRevisar(clienteId, polizaId, formData, estadoData) {
     try {
-        const ultimaNota = await supabaseClient
+        const ultimaNota = await obtenerUltimaNota(clienteId)
+
+        const { error } = await supabaseClient
             .from ('revision_mercado')
             .insert([{
                 cliente_id: clienteId,
@@ -2754,7 +2756,7 @@ async function registrarParaRevisar(clienteId, polizaId, formData, estadoData) {
                 npn1: estadoData.agente_externo_mercado || null,
                 npn2: estadoData.agente_externo_mercado2 || null,
                 recuperado: null,
-                revision_realizado_por: datosUsuario?.nombre || usuarioActual?.email || 'Desconocido',
+                revision_realizada_por: datosUsuario?.nombre || usuarioActual?.email || 'Desconocido',
             }]);
         if (error) throw error;
     } catch (error) {
@@ -2766,7 +2768,7 @@ async function obtenerUltimaNota(clienteId) {
     try {
         const {data, error} = await supabaseClient
             .from('notas')
-            .select('mensajes')
+            .select('mensaje')
             .eq('cliente_id', clienteId)
             .order('created_at', { ascending: false })
             .limit(1)
@@ -3144,7 +3146,7 @@ function formatearEstado(estado) {
     return textos[estado] || estado;
 }
 
-async function registrarCambioEstado(clienteId, estadoData) {
+async function registrarHistorialEstados(clienteId, estadoData) {
     try {
         // Obtener estado anterior
         const { data: polizaAnterior } = await supabaseClient
