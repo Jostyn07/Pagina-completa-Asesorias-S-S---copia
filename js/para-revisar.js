@@ -197,7 +197,8 @@ function buildFila(r) {
 
     const btnRecuperado = `
         <button class="btn-recuperado btn-rec-${(r.recuperado || 'null').toLowerCase()}"
-                onclick="ciclarRecuperado('${r.id}', ${JSON.stringify(r.recuperado)})"
+                data-id="${r.id}"
+                onclick="ciclarRecuperadoDesdeBtn(this)"
                 title="Click para cambiar estado">
             ${r.recuperado === 'Si' ? '✅ Sí' : r.recuperado === 'No' ? '❌ No' : '— Pendiente'}
         </button>`;
@@ -242,16 +243,18 @@ function buildFila(r) {
             <td data-label="NPN 1" class="celda-npn">${npn1}</td>
             <td data-label="NPN 2" class="celda-npn">${npn2}</td>
             <td data-label="Notas" class="celda-notas">
-                <span class="celda-editable celda-notas-inner" 
-                      onclick="abrirModalTexto('${r.id}', 'notas', ${JSON.stringify(r.notas || '')})"
-                      title="Click para editar nota">
+                <span class="celda-editable celda-notas-inner"
+                    data-id="${r.id}"
+                    onclick="abrirModalTextoDesdeEl(this, 'notas')"
+                    title="Click para editar nota">
                     ${notaDisplay}
                 </span>
             </td>
             <td data-label="Observación" class="celda-observacion">
                 <span class="celda-editable celda-obs-inner"
-                      onclick="abrirModalTexto('${r.id}', 'observacion_operador', ${JSON.stringify(r.observacion_operador || '')})"
-                      title="Click para agregar observación">
+                    data-id="${r.id}"
+                    onclick="abrirModalTextoDesdeEl(this, 'observacion_operador')"
+                    title="Click para agregar observación">
                     ${obsDisplay}
                 </span>
             </td>
@@ -300,6 +303,19 @@ async function ciclarRecuperado(id, valorActual) {
         console.error('❌ Error al actualizar recuperado:', error);
         alert('No se pudo actualizar el estado. Intenta de nuevo.');
     }
+}
+
+function ciclarRecuperadoDesdeBtn(btn) {
+    const id = btn.dataset.id;
+    const reg = todosLosRegistros.find(r => r.id === id);
+    ciclarRecuperado(id, reg ? reg.recuperado : null);
+}
+
+function abrirModalTextoDesdeEl(el, campo) {
+    const id = el.dataset.id;
+    const reg = todosLosRegistros.find(r => r.id === id);
+    const valor = reg ? (reg[campo] || '') : '';
+    abrirModalTexto(id, campo, valor);
 }
 
 // ============================================
@@ -524,8 +540,8 @@ function mostrarMensajeVacio(msg) {
 function formatearFecha(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
-    d.toLocaleDateString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit' })
-    + ' ' + d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit' })
+        + ' ' + d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatearFechaCorta(str) {
