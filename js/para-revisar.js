@@ -99,11 +99,6 @@ function filtrarPorTipo(tipo) {
 function aplicarFiltros() {
     let resultado = [...todosLosRegistros];
 
-    // Ocultar recuperados (Sí) a menos que se pida verlos
-    if (!mostrarRecuperados) {
-        resultado = resultado.filter(r => r.recuperado !== 'Si');
-    }
-
     // Filtro por tipo (tarjetas)
     if (filtroTipoActivo) {
         const mapaTipo = {
