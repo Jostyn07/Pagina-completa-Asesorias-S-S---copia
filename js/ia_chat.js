@@ -18,7 +18,6 @@ const IA_MODULOS = {
     'clientes_archivados.html':             'archivados',
     'control_calidad.html':                 'calidad',
     'historial_evaluacion.html':            'calidad',
-    'graficas.html':                        'graficas',
     'para-revisar.html':                    'revision',
     'usuarios.html':                        'usuarios'
 };

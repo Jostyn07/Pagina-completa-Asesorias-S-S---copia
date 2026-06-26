@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title title>Solicitud de Revisión - Asesorías S&S</title>
+    <script>
+        const t = localStorage.getItem('ss_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+    </script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="../css/polizas.css">
+    <link rel="stylesheet" href="../css/thumbnails_modal_styles.css">
+    <link rel="stylesheet" href="../css/darkmode.css">
+    <link rel="stylesheet" href="../css/recordatorios.css">
+    <link rel="stylesheet" href="../css/ia.css">
+    <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/fab.css">
+    <link rel="stylesheet" href="../css/banner.css">
+    <link rel="stylesheet" href="../css/solicitud-revision.css">
+ 
+    <link rel="icon" type="image/svg+xml" href="../images/Logo.png">
+    <link rel="icon" type="image/x-icon" href="../images/Logo.png" sizes="any">
+    <link rel="apple-touch-icon" href="../images/Logo.png">
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar-unified" id="sidebar">
+            <div class="sidebar-header">
+                <a href="./home.html" class="sidebar-logo-link">
+                    <img src="../images/Logo.png" alt="S&S Asesorías" class="sidebar-logo-img">
+                </a>
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+                    <span class="material-symbols-rounded">chevron_left</span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <div class="search-box">
+                    <span class="material-symbols-rounded">search</span>
+                    <input type="text" placeholder="Buscar...">
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="./home.html" class="menu-item">
+                    <span class="material-symbols-rounded">home</span>
+                    <span>Inicio</span>
+                </a>
+                <a href="./polizas.html" class="menu-item">
+                    <span class="material-symbols-rounded">description</span>
+                    <span>Pólizas</span>
+                </a>
+                <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
+                    <span class="material-symbols-rounded">task_alt</span>
+                    <span>Recordatorios</span>
+                    <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
+                </a>
+                <a href="./tablero.html" class="menu-item" target="_blank">
+                    <span class="material-symbols-rounded">grid_view</span>
+                    <span>Tablero</span>
+                </a>
+                <a href="./analisis.html" class="menu-item" id="menuAnalisis">
+                    <span class="material-symbols-rounded">analytics</span>
+                    <span>Análisis</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <span class="material-symbols-rounded">folder</span>
+                    <span>Gestiones</span>
+                </a>
+                <a href="./solicitud-revision.html" class="menu-item active">
+                    <span class="material-symbols-rounded">rate_review</span>
+                    <span>Solicitud de revisión</span>
+                </a>
+                <a href="./para-revisar.html" class="menu-item">
+                    <span class="material-symbols-rounded">fact_check</span>
+                    <span>Para revisar</span>
+                </a>
+                <a href="./control_calidad.html" class="menu-item">
+                    <span class="material-symbols-rounded">verified</span>
+                    <span>Control de calidad</span>
+                </a>
+                <a href="./historial_evaluacion.html" class="menu-item">
+                    <span class="material-symbols-rounded">history</span>
+                    <span>Mis Evaluaciones</span>
+                </a>
+                <a href="./clientes_archivados.html" class="menu-item" id="menuArchivados">
+                    <span class="material-symbols-rounded">inventory_2</span>
+                    <span>Archivados</span>
+                </a>
+                <a href="./monitoreo.html" class="menu-item" id="menuMonitoreo" style="display:none">
+                    <span class="material-symbols-rounded">monitor_heart</span>
+                    <span>Monitoreo</span>
+                </a>
+                <a href="./movimientos.html" class="menu-item" id="menuMovimientos" style="display:none">
+                    <span class="material-symbols-rounded">swap_horiz</span>
+                    <span>Movimientos</span>
+                </a>
+                <a href="./usuarios.html" class="menu-item">
+                    <span class="material-symbols-rounded">group</span>
+                    <span>Usuarios</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="btnDarkMode" class="theme-toggle" onclick="toggleDarkMode()" title="Cambiar tema">
+                    <span class="material-symbols-rounded">dark_mode</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Contenido principal -->
+        <div class="container__flex">
+            <!-- Header -->
+             <header class="header">
+                <div class="header__welcome">
+                    <div class="header__welcome__new">
+                        <h1 class="page-title">Solicitud de revisión</h1>
+                    </div>
+                    <div class="header__welcome__inf">
+                        <p>Hola, <span class="nombre-usuario">Usuario</span></p>
+                        <img src="https://ui-avatars.com/api/?name=Usuario&background=667eea&color=fff&size=40" 
+                            alt="Usuario" 
+                            class="user-avatar">
+                        <span class="material-symbols-rounded dropdown-icon">expand_more</span>
+                    </div>
+                </div>
+             </header>
+            
+             <main class="main__container">
+                <!-- Barra de búsqueda y herramientas -->
+                <div class="container__form">
+                    <form class="contents" onsubmit="return false">
+                        <div class="form__search">
+                            <div class="input-search-wrapper">
+                                <span class="material-symbols-rounded">search</span>
+                                <input type="search" id="searchInputSR" class="input__search" placeholder="Buscar por nombre, teléfono, Compañía">
+                            </div>
+                            <div class="form__buttons">
+                                <button type="button" class="button__bar btn-agregar-sr" onclick="abrirModalAgregar()">
+                                    <span class="material-symbols-rounded">add</span>
+                                    Agregar
+                                </button>
+                                <button type="button" class="button__bar btn__filtrar" onclick="abrirModalFiltrosSR()">
+                                    Filtrar
+                                    <span class="badge-filtros-sr" id="badgeFiltrosSR" style="display: none;">0</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Barra herramientas secundaria -->
+                <div id="loadingSR">
+                   <div class="loading-spinner"></div>
+                   <span>Cargando registros...</span>
+                </div>
+
+                <!-- Tabla -->
+                <div id="tablaSRWrapper">
+                    <table class="content__info-client tabla-sr">
+                        <thead class="thead">
+                            <tr>
+                                <th>Fecha de solicitud</th>
+                                <th>Nombre</th>
+                                <th>Teléfono</th>
+                                <th>Compañía</th>
+                                <th>Actualizado</th>
+                                <th>Nota de actualización</th>
+                                <th>Fecha de actualización</th>
+                                <th>Observación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-sr-body">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 40px; color: var(--color-text-placeholder);">
+                                    Cargando...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL - AGREGAR MANUALMENTE -->
+     <div class="sr-modal-overlay" id="modalAgregarSR" onclick="if(event.target===this)cerrarModalAgregar()">
+        <div class="sr-modal">
+            <div class="sr-modal-header">
+                <h3>
+                    <span class="material-symbols-rounded">add_circle</span>
+                    Nueva solicitud de revisión
+                </h3>
+                <button class="sr-modal-close" onclick="cerrarModalAgregar()">X</button>
+            </div>
+            <div class="sr-modal-body">
+
+                <div class="sr-form-grid">
+                    <div class="sr-form-group">
+                        <label for="srNombre">Nombre <span class="sr-required">*</span></label>
+                        <input type="text" id="srNombre" placeholder="Nombre del cliente">
+                    </div>
+                    <div class="sr-form-group">
+                        <label for="srTelefono"></label>
+                        <input type="text" id="srNombre" placeholder="Nombre del cliente...">
+                    </div>
+                    <div class="sr-form-group">
+                        <label for="srActualizado"></label>
+                        <select name="srActualizado" id="srActualizado">
+                            <option value="">Pendiente</option>
+                            <option value="Si">Sí</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase_config.js"></script>
+    <script src="../js/permisos.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/fab.js"></script>
+    <script src="../js/banners.js"></script>
+    <script src="../js/recordatorios.js"></script>
+    <script src="../js/actividad.js"></script>
+    <script src="../js/ia_contexto.js"></script>
+    <script src="../js/ia_chat.js"></script>
+    <script src="../js/notificaciones_calidad.js"></script>
+    <script src="../js/solicitud-revision.js"></script>
+</body>
+</html>

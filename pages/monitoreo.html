@@ -297,9 +297,16 @@
                 <span class="material-symbols-rounded">home</span>
                 <span>Inicio</span>
             </a>
+
             <a href="./polizas.html" class="menu-item">
                 <span class="material-symbols-rounded">description</span>
                 <span>Pólizas</span>
+            </a>
+
+            <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
+                <span class="material-symbols-rounded">task_alt</span>
+                <span>Recordatorios</span>
+                <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
             </a>
 
             <a href="./tablero.html" class="menu-item" target="_blank">
@@ -311,8 +318,38 @@
                 <span class="material-symbols-rounded">analytics</span>
                 <span>Análisis</span>
             </a>
-            
-            <a href="./monitoreo.html" class="menu-item active">
+
+            <a href="#" class="menu-item">
+                <span class="material-symbols-rounded">folder</span>
+                <span>Gestiones</span>
+            </a>
+
+            <a href="./solicitud-revision.html" class="menu-item">
+                <span class="material-symbols-rounded">rate_review</span>
+                <span>Solicitud de revisión</span>
+            </a>
+
+            <a href="./para-revisar.html" class="menu-item">
+                <span class="material-symbols-rounded">fact_check</span>
+                <span>Para revisar</span>
+            </a>
+
+            <a href="./control_calidad.html" class="menu-item">
+                <span class="material-symbols-rounded">verified</span>
+                <span>Control de calidad</span>
+            </a>
+
+            <a href="./historial_evaluacion.html" class="menu-item active">
+                <span class="material-symbols-rounded">history</span>
+                <span>Mis Evaluaciones</span>
+            </a>
+
+            <a href="./clientes_archivados.html" class="menu-item" id="menuArchivados">
+                <span class="material-symbols-rounded">inventory_2</span>
+                <span>Archivados</span>
+            </a>
+
+            <a href="./monitoreo.html" class="menu-item" id="menuMonitoreo" style="display:none">
                 <span class="material-symbols-rounded">monitor_heart</span>
                 <span>Monitoreo</span>
             </a>
@@ -321,12 +358,13 @@
                 <span class="material-symbols-rounded">swap_horiz</span>
                 <span>Movimientos</span>
             </a>
-            
-            <a href="./usuarios.html" class="menu-item" id="menuArchivados">
+
+            <a href="./usuarios.html" class="menu-item">
                 <span class="material-symbols-rounded">group</span>
                 <span>Usuarios</span>
             </a>
         </nav>
+        
         <div class="sidebar-footer">
             <button id="btnDarkMode" class="theme-toggle" onclick="toggleDarkMode()">
                 <span class="material-symbols-rounded">dark_mode</span>
