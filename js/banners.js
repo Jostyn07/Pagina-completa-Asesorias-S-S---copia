@@ -8,6 +8,91 @@ let fuenteSeleccionada = 'Inter';
 let colorFondoSeleccionado = '#6366f1';
 let colorTextoSeleccionado = '#ffffff';
 
+// ============================================
+// PERSISTENCIA DE MINIMIZADOS — localStorage
+// Duración: 30 minutos
+// ============================================
+const BANNER_LS_KEY    = 'ss_banners_minimizados';
+const BANNER_LS_EXPIRY = 30 * 60 * 1000; // 30 min en ms
+
+/**
+ * Guarda el estado actual de bannersMinimizados en localStorage.
+ * Cada entrada almacena el timestamp de cuando fue minimizada.
+ */
+function guardarMinimizadosLS() {
+    try {
+        const ahora = Date.now();
+        // Leer el objeto existente (puede tener entradas de otros banners)
+        const existing = JSON.parse(localStorage.getItem(BANNER_LS_KEY) || '{}');
+
+        // Agregar / actualizar solo los que están en el Set actual
+        bannersMinimizados.forEach(id => {
+            // Si ya existía, conservar el timestamp original (no resetear el timer)
+            if (!existing[id]) {
+                existing[id] = ahora;
+            }
+        });
+
+        // Eliminar del objeto los que ya NO están en el Set (se expandieron)
+        Object.keys(existing).forEach(id => {
+            if (!bannersMinimizados.has(id)) {
+                delete existing[id];
+            }
+        });
+
+        localStorage.setItem(BANNER_LS_KEY, JSON.stringify(existing));
+    } catch (e) {
+        console.warn('No se pudo guardar estado de banners en localStorage:', e);
+    }
+}
+
+/**
+ * Carga bannersMinimizados desde localStorage,
+ * ignorando las entradas que hayan expirado (> 30 min).
+ * Limpia automáticamente las expiradas.
+ */
+function cargarMinimizadosLS() {
+    try {
+        const stored = JSON.parse(localStorage.getItem(BANNER_LS_KEY) || '{}');
+        const ahora  = Date.now();
+        let   huboLimpieza = false;
+
+        bannersMinimizados = new Set();
+
+        Object.entries(stored).forEach(([id, timestamp]) => {
+            if (ahora - timestamp < BANNER_LS_EXPIRY) {
+                // Aún válido → restaurar
+                bannersMinimizados.add(id);
+            } else {
+                // Expirado → limpiar
+                delete stored[id];
+                huboLimpieza = true;
+            }
+        });
+
+        if (huboLimpieza) {
+            localStorage.setItem(BANNER_LS_KEY, JSON.stringify(stored));
+        }
+    } catch (e) {
+        console.warn('No se pudo leer estado de banners desde localStorage:', e);
+        bannersMinimizados = new Set();
+    }
+}
+
+/**
+ * Elimina una entrada específica del localStorage
+ * (se llama cuando se elimina un banner).
+ */
+function eliminarMinimizadoLS(id) {
+    try {
+        const stored = JSON.parse(localStorage.getItem(BANNER_LS_KEY) || '{}');
+        delete stored[id];
+        localStorage.setItem(BANNER_LS_KEY, JSON.stringify(stored));
+    } catch (e) {
+        console.warn('Error limpiando localStorage de banner:', e);
+    }
+}
+
 // Inicialización
 
 function esperarUsuarioEIniciarBanners(intentos = 0) {
@@ -21,9 +106,10 @@ function esperarUsuarioEIniciarBanners(intentos = 0) {
 }
 
 async function iniciarBanners() {
+    cargarMinimizadosLS(); // ← restaurar minimizados antes de renderizar
     await cargarBannerActivo();
     iniciarCheckExpiracion();
-    suscribirBannersRealtime()
+    suscribirBannersRealtime();
 }
 
 async function cargarBannerActivo() {
@@ -189,6 +275,7 @@ function toggleMinimizarBanner(id) {
     } else {
         bannersMinimizados.add(id);
     }
+    guardarMinimizadosLS(); // ← persistir cambio
     renderizarBanners();
 }
 
@@ -205,6 +292,7 @@ async function  eliminarBanner(id) {
 
         bannersActivos = bannersActivos.filter(b => b.id !== id);
         bannersMinimizados.delete(id);
+        eliminarMinimizadoLS(id); // ← limpiar localStorage
         renderizarBanners();
         actualizarBadgeBanners(bannersActivos.length);
     } catch (err) {
@@ -218,6 +306,10 @@ function iniciarCheckExpiracion() {
     if (bannerCheckTimers) clearInterval(bannerCheckTimers);
     bannerCheckTimers = setInterval(async () => {
         const ahora = new Date();
+
+        // Limpiar entradas expiradas del localStorage en cada ciclo
+        cargarMinimizadosLS();
+
         const expirados = bannersActivos.filter(b => new Date(b.fecha_fin) <= ahora)
 
         if (expirados.length > 0) {
