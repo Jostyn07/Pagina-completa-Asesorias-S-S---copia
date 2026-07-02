@@ -1,0 +1,433 @@
+/* ============================================
+   SOLICITUD DE REVISIÓN — Estilos específicos
+   ============================================ */
+
+/* --- Wrapper tabla con scroll horizontal --- */
+#tablaSRWrapper {
+    width: 100%;
+    overflow-x: auto;
+    transition: opacity 0.2s;
+}
+
+.tabla-sr {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: collapse;
+}
+
+/* --- Colores de fila por estado "Actualizado" --- */
+.fila-sr-actualizado-si {
+    background-color: #ecfdf5 !important;
+}
+.fila-sr-actualizado-si td {
+    opacity: 0.8;
+}
+.fila-sr-actualizado-no {
+    background-color: #fff5f5 !important;
+}
+[data-theme="dark"] .fila-sr-actualizado-si {
+    background-color: #0d2b1f !important;
+}
+[data-theme="dark"] .fila-sr-actualizado-no {
+    background-color: #2b0d0d !important;
+}
+
+/* --- Botón Actualizado --- */
+.btn-actualizado {
+    border: none;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.btn-act-null { background: #f3f4f6; color: #6b7280; }
+.btn-act-si   { background: #d1fae5; color: #047857; }
+.btn-act-no   { background: #fee2e2; color: #991b1b; }
+.btn-actualizado:hover { filter: brightness(0.92); transform: scale(1.04); }
+[data-theme="dark"] .btn-act-null { background: #374151; color: #9ca3af; }
+[data-theme="dark"] .btn-act-si   { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .btn-act-no   { background: #7f1d1d; color: #fca5a5; }
+
+/* --- Celdas editables (hereda de polizas.css o se define aquí) --- */
+.celda-editable {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 4px;
+    display: block;
+    min-height: 20px;
+    transition: background 0.15s;
+}
+.celda-editable:hover {
+    background: rgba(99,102,241,0.08);
+}
+
+/* --- Sizing de celdas --- */
+.celda-fecha         { font-size: 0.8rem; white-space: nowrap; }
+.celda-actualizado   { text-align: center; }
+.celda-nota-act      { min-width: 160px; max-width: 220px; }
+.celda-obs-sr        { min-width: 160px; max-width: 220px; }
+.nota-preview,
+.obs-preview         { font-size: 0.82rem; line-height: 1.4; }
+.text-muted          { color: var(--color-text-placeholder); font-style: italic; }
+
+/* --- Barra de herramientas --- */
+.barra-herramientas {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 0 30px 12px;
+}
+.contador-resultados {
+    margin-left: auto;
+    font-size: 0.82rem;
+    color: var(--color-text-placeholder);
+}
+
+/* --- Botón Agregar --- */
+.btn-agregar-sr, .btn__filtrar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-hover-primary);
+    color: #fff !important;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+.btn-agregar-sr:hover { filter: brightness(0.9); }
+.btn-agregar-sr .material-symbols-rounded { font-size: 18px; }
+
+/* --- Badge filtros activos --- */
+.badge-filtros-sr {
+    display: inline-flex;
+    background: var(--color-hover-primary);
+    color: #fff;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
+
+/* --- Indicador de carga --- */
+#loadingSR {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    color: var(--color-text-placeholder);
+}
+.loading-spinner {
+    width: 22px; height: 22px;
+    border: 3px solid var(--color-border-hr, #e2e8f0);
+    border-top-color: var(--color-hover-primary);
+    border-radius: 50%;
+    animation: spin-sr 0.7s linear infinite;
+}
+@keyframes spin-sr { to { transform: rotate(360deg); } }
+
+/* ============================================
+   MODAL GENERAL — SR
+   ============================================ */
+.sr-modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 10000;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 60px;
+}
+.sr-modal-overlay.show { display: flex; }
+
+.sr-modal {
+    background: var(--color-bg-primary, #fff);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 640px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.sr-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--color-border-hr, #e2e8f0);
+    position: sticky;
+    top: 0;
+    background: var(--color-bg-primary, #fff);
+    z-index: 1;
+}
+.sr-modal-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.sr-modal-header h3 .material-symbols-rounded { color: var(--color-hover-primary); }
+.sr-modal-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--color-text-placeholder);
+    font-size: 1.4rem; line-height: 1;
+}
+
+.sr-modal-body { padding: 24px 28px; }
+
+.sr-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.sr-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.sr-form-group--full {
+    grid-column: 1 / -1;
+}
+.sr-form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-placeholder);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.sr-required { color: #ef4444; }
+
+.sr-form-group input,
+.sr-form-group select,
+.sr-form-group textarea {
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: var(--color-bg-primary, #fff);
+    color: var(--color-text-primary, #1e293b);
+    outline: none;
+    transition: border 0.2s;
+}
+.sr-form-group input:focus,
+.sr-form-group select:focus,
+.sr-form-group textarea:focus {
+    border-color: var(--color-hover-primary);
+}
+.sr-form-group textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.sr-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 18px 28px;
+    border-top: 1px solid var(--color-border-hr, #e2e8f0);
+    position: sticky;
+    bottom: 0;
+    background: var(--color-bg-primary, #fff);
+}
+.btn-sr-cancelar {
+    background: none;
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 8px 18px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--color-text-primary);
+}
+.btn-sr-guardar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-hover-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 22px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+.btn-sr-guardar:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-sr-guardar .material-symbols-rounded { font-size: 16px; }
+
+/* ============================================
+   MODAL TEXTO LARGO
+   ============================================ */
+#modalTextoSROverlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 10001;
+    justify-content: center;
+    align-items: center;
+}
+#modalTextoSROverlay.show { display: flex; }
+
+#modalTextoSROverlay .modal-texto-content {
+    background: var(--color-bg-primary, #fff);
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 520px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+#modalTextoSROverlay .modal-texto-content h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+#modalTextoSROverlay #modalTextoSRArea {
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    min-height: 130px;
+    resize: vertical;
+    background: var(--color-bg-primary, #fff);
+    color: var(--color-text--primary, #1e293b);
+    outline: none;
+    transition: border 0.2s;
+}
+
+#modalTextoSROverlay #modalTextoSRArea:focus {
+    border-color: var(--color-hover-primary);
+}
+
+#modalTextoSROverlay .modal-texto-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+} 
+
+#modalTextoSROvelay .btn-texto-cancel {
+    background: none;
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 8px 18px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--color-text--primary);
+}
+
+#modalTextoSROverlay .btn-texto-save {
+    background: var(--color-hover-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 22px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+[dark-theme="dark"] #modalTextoSROverlay .modal-texto-content {
+    background: #1e1e2e;
+}
+
+[data-theme="dark"] #modalTextoSROverlay #modalTextoSRArea {
+    background: #2a2a3e;
+    border-color: #3a3a5e;
+    color: #e2e8f0;
+}
+
+/* --- Layout barra de búsqueda + botones --- */
+.container__form .form__search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 16px 30px;
+}
+
+.container__form .input-search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 200px;
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: var(--color-bg-primary, #fff);
+}
+
+.container__form .input-search-wrapper .material-symbols-rounded {
+    color: var(--color-text-placeholder);
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.container__form .input__search {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    width: 100%;
+}
+
+.container__form .input__search::placeholder {
+    color: var(--color-text-placeholder);
+}
+
+.container__form .form__buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* dark mode para el input search */
+[data-theme="dark"] .container__form .input-search-wrapper {
+    background: var(--color-bg-secondary, #1e1e2e);
+    border-color: #3a3a5e;
+}
+
+/* ============================================
+   SECCIÓN FILTROS (hereda modal-rev-* de para-revisar.css)
+   ============================================ */
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+[data-theme="dark"] .sr-modal,
+[data-theme="dark"] .sr-modal-header,
+[data-theme="dark"] .sr-modal-footer {
+    background: #1e1e2e;
+}
+[data-theme="dark"] .sr-form-group input,
+[data-theme="dark"] .sr-form-group select,
+[data-theme="dark"] .sr-form-group textarea {
+    background: #2a2a3e;
+    border-color: #3a3a5e;
+    color: #e2e8f0;
+}

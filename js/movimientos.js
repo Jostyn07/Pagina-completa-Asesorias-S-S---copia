@@ -8,6 +8,9 @@ let periodoActual        = 'mes';
 let esSupervisorOAdmin   = false;
 let modoUnico            = false;
 
+const TABLA_TAMANIO_PAGINA = 200;
+let filasVisiblesEnTabla   = TABLA_TAMANIO_PAGINA;
+
 // ── Configuración de tipos ────────────────────
 // Las claves deben coincidir EXACTAMENTE con lo que se guarda en movimientos.tipo
 const TIPOS_MOV = {
@@ -64,7 +67,12 @@ function inicializarFlatpickr() {
                 longhand:  ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']
             }
         },
-        onChange: () => { if (periodoActual === 'custom') cargarMovimientos(); }
+        onChange: () => {
+            if (periodoActual !== 'custom') return;
+            const d1 = document.getElementById('movFechaDesde')._flatpickr?.selectedDates[0];
+            const d2 = document.getElementById('movFechaHasta')._flatpickr?.selectedDates[0];
+            if (d1 && d2) cargarMovimientos();
+        }
     };
     flatpickr('#movFechaDesde', cfg);
     flatpickr('#movFechaHasta', cfg);
@@ -152,6 +160,19 @@ async function cargarOperadoresDropdown() {
         }))
 }
 
+async function fetchTodasLasFilas(construirQuery, tamanioPagina = 1000) {
+    let desdeIdx = 0;
+    let filas = [];
+    while (true) {
+        const { data, error } = await construirQuery().range(desdeIdx, desdeIdx + tamanioPagina - 1);
+        if (error) throw error;
+        filas = filas.concat(data || []);
+        if (!data || data.length < tamanioPagina) break; // ya trajimos la última página
+        desdeIdx += tamanioPagina;
+    }
+    return filas;
+}
+
 // ── Carga principal — directo de movimientos ──
 async function cargarMovimientos() {
     mostrarCargando(true);
@@ -160,20 +181,24 @@ async function cargarMovimientos() {
     const hastaFin = hasta + 'T23:59:59';
 
     try {
-        let query = supabaseClient
-            .from('movimientos')
-            .select('*')
-            .gte('fecha', desde)
-            .lte('fecha', hastaFin)
-            .order('fecha', { ascending: false })
+        const construirQuery = () => {
+            let query = supabaseClient
+                .from('movimientos')
+                .select('*')
+                .gte('fecha', desde)
+                .lte('fecha', hastaFin)
+                .order('fecha', { ascending: false })
+                .order('id', { ascending: false }); // orden estable entre páginas
 
-        // Filtro por rol: operador solo ve los suyos
-        if (!esAdministrador() && !datosUsuario?.es_supervisor) {
-            query = query.eq('operador_nombre', datosUsuario?.nombre);
-        }
+            // Filtro por rol: operador solo ve los suyos
+            if (!esAdministrador() && !datosUsuario?.es_supervisor) {
+                query = query.eq('operador_nombre', datosUsuario?.nombre);
+            }
+            return query;
+        };
 
-        const { data, error } = await query;
-        if (error) throw error;
+        // Trae TODOS los movimientos del rango, sin límite, paginando internamente.
+        const data = await fetchTodasLasFilas(construirQuery);
 
         todosLosMovimientos = (data || []).map(m => ({
             uid:           m.id,
@@ -193,13 +218,22 @@ async function cargarMovimientos() {
             todosLosMovimientos.map(m => m.cliente_id).filter(Boolean)
         )];
 
-        if (clienteIds.length > 0 ) {
-            const { data: polizasData, error: polizasError } = await supabaseClient
-                .from('polizas')
-                .select('cliente_id, agente35_estado')
-        
+        if (clienteIds.length > 0) {
+            const TAMANIO_BLOQUE_IDS = 300;
+            let polizasData = [];
+            for (let i = 0; i < clienteIds.length; i += TAMANIO_BLOQUE_IDS) {
+                const bloque = clienteIds.slice(i, i + TAMANIO_BLOQUE_IDS);
+                const filasBloque = await fetchTodasLasFilas(() =>
+                    supabaseClient
+                        .from('polizas')
+                        .select('cliente_id, agente35_estado')
+                        .in('cliente_id', bloque)
+                );
+                polizasData = polizasData.concat(filasBloque);
+            }
+
             const mapaAgente35 = {};
-            (polizasData || []).forEach(p => {
+            polizasData.forEach(p => {
                 mapaAgente35[p.cliente_id] = p.agente35_estado || '-';
             });
 
@@ -279,6 +313,7 @@ function aplicarFiltros() {
         })
     }
 
+    filasVisiblesEnTabla = TABLA_TAMANIO_PAGINA; // nuevo filtro -> reiniciar paginación visual
     actualizarCards();
     renderizarRanking();
     renderizarTabla();
@@ -424,7 +459,9 @@ function renderizarTabla() {
         return;
     }
 
-    tbody.innerHTML = movimientosFiltrados.map(m => {
+    const filasAMostrar = movimientosFiltrados.slice(0, filasVisiblesEnTabla);
+
+    tbody.innerHTML = filasAMostrar.map(m => {
         const conf = TIPOS_MOV[m.tipo] || { label: m.tipo, color: '#94a3b8', icon: 'edit_note' };
         const fecha = formatearFechaCorta(m.fecha);
 
@@ -478,8 +515,29 @@ function renderizarTabla() {
         `;
     }).join('');
 
+    if (filasVisiblesEnTabla < movimientosFiltrados.length) {
+        const colspan = esSupervisorOAdmin ? 10 : 9;
+        const restantes = movimientosFiltrados.length - filasVisiblesEnTabla;
+        tbody.innerHTML += `
+            <tr>
+                <td colspan="${colspan}" style="text-align:center; padding:14px;">
+                    <button onclick="cargarMasFilasTabla()" style="
+                        padding: 8px 20px; border-radius: 8px;
+                        background: #6366f1; color: white;
+                        border: none; cursor: pointer;
+                        font-size: 0.84rem; font-weight: 600;
+                    ">Mostrar más (${restantes} restantes)</button>
+                </td>
+            </tr>`;
+    }
+
     document.getElementById('thObsSup').style.display = esSupervisorOAdmin ? '' : 'none';
     mostrarCargando(false);
+}
+
+function cargarMasFilasTabla() {
+    filasVisiblesEnTabla += TABLA_TAMANIO_PAGINA;
+    renderizarTabla();
 }
 
 // ── Observaciones supervisor ──────────────────
