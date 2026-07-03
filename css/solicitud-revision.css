@@ -313,7 +313,7 @@
     min-height: 130px;
     resize: vertical;
     background: var(--color-bg-primary, #fff);
-    color: var(--color-text--primary, #1e293b);
+    color: var(--color-text-primary, #1e293b);
     outline: none;
     transition: border 0.2s;
 }
@@ -328,14 +328,14 @@
     gap: 10px;
 } 
 
-#modalTextoSROvelay .btn-texto-cancel {
+#modalTextoSROverlay .btn-texto-cancel {
     background: none;
     border: 1px solid var(--color-border-hr, #e2e8f0);
     border-radius: 8px;
     padding: 8px 18px;
     cursor: pointer;
     font-size: 0.88rem;
-    color: var(--color-text--primary);
+    color: var(--color-text-primary);
 }
 
 #modalTextoSROverlay .btn-texto-save {
@@ -349,7 +349,7 @@
     font-weight: 600;
 }
 
-[dark-theme="dark"] #modalTextoSROverlay .modal-texto-content {
+[data-theme="dark"] #modalTextoSROverlay .modal-texto-content {
     background: #1e1e2e;
 }
 

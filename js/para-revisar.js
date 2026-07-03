@@ -275,6 +275,17 @@ async function ciclarRecuperado(id, valorActual) {
             updateData.fecha_recuperacion = new Date().toISOString().split('T')[0];
         }
 
+        // Activar o cancelar el flag
+        if (siguiente === "Si" || siguiente === 'No') {
+            updateData.sr_pendiente = true;
+            updateData.sr_pendiente_desde = new Date().toISOString();
+            updateData.sr_pendiente_valor = siguiente;
+        } else {
+            updateData.sr_pendiente = false;
+            updateData.sr_pendiente_desde = null;
+            updateData.sr_pendiente_valor = null;
+        }
+
         const { error } = await supabaseClient
             .from('revision_mercado')
             .update(updateData)

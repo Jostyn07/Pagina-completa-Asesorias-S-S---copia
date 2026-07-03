@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await cargarRolUsuario();
     await cargarRegistrosSR();
     configurarBuscadorSR();
+    suscribirRealTimeSR();
 
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (user) {
@@ -50,57 +51,6 @@ async function cargarRegistrosSR() {
     } finally {
         mostrarCargaSR(false);
     }
-}
-
-// ============================================
-// APLICAR FILTROS
-// ============================================
-function aplicarFiltrosSR() {
-    let resultado = [...todosLosSR];
-
-    // Buscador rápido
-    const termino = (document.getElementById('searchInputSR')?.value || '').toLowerCase().trim();
-    if (termino) {
-        resultado = resultado.filter(r =>
-            (r.nombre || '').toLowerCase().includes(termino) ||
-            (r.telefono || '').includes(termino) ||
-            (r.compania || '').toLowerCase().includes(termino) ||
-            (r.observacion || '').toLowerCase().includes(termino)
-        );
-    }
-
-    const f = filtrosSR;
-
-    if (f.nombre) {
-        resultado = resultado.filter(r => (r.nombre || '').toLowerCase().includes(f.nombre.toLowerCase()));
-    }
-    if (f.telefono) {
-        resultado = resultado.filter(r => (r.telefono || '').includes(f.telefono));
-    }
-    if (f.compania) {
-        resultado = resultado.filter(r => (r.compania || '').toLowerCase().includes(f.compania.toLowerCase()));
-    }
-    if (f.actualizado === 'pendiente') {
-        resultado = resultado.filter(r => r.actualizado === null);
-    } else if (f.actualizado) {
-        resultado = resultado.filter(r => r.actualizado === f.actualizado);
-    }
-    if (f.solicitudDesde) {
-        resultado = resultado.filter(r => r.fecha_solicitud && new Date(r.fecha_solicitud) >= new Date(f.solicitudDesde));
-    }
-    if (f.solicitudHasta) {
-        resultado = resultado.filter(r => r.fecha_solicitud && new Date(r.fecha_solicitud) <= new Date(f.solicitudHasta + 'T23:59:59'));
-    }
-    if (f.actDesde) {
-        resultado = resultado.filter(r => r.fecha_actualizacion && new Date(r.fecha_actualizacion) >= new Date(f.actDesde));
-    }
-    if (f.actHasta) {
-        resultado = resultado.filter(r => r.fecha_actualizacion && new Date(r.fecha_actualizacion) <= new Date(f.actHasta + 'T23:59:59'));
-    }
-
-    srFiltrados = resultado;
-    renderTablaSR();
-    actualizarContadorSR();
 }
 
 // ============================================
@@ -488,6 +438,48 @@ function mostrarMensajeVacioSR(msg) {
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">${msg}</td></tr>`;
     }
 }
+
+// REALTIME
+let canalRealtimeSR = null;
+
+function suscribirRealTimeSR() {
+    canalRealtimeSR = supabaseClient
+        .channel('solicitud_revision_realtime')
+        .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'solicitud_revision'
+        }, (payload) => {
+            const existe = todosLosSR.some(r => r.id === payload.new.id);
+            if (!existe) {
+                todosLosSR.unshift(payload.new);
+                aplicarFiltrosSR();
+            }
+        })
+        .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'solicitud_revision'
+        }, (payload) => {
+            const idx = todosLosSR.findIndex(r => r.id === payload.new.id);
+            if (idx !== -1) {
+                todosLosSR[idx] = payload.new;
+            } else {
+                todosLosSR.unshift(payload.new)
+            }
+            aplicarFiltrosSR();
+        })
+        .subscribe()
+}
+
+function desuscribirRealtimeSR() {
+    if (canalRealtimeSR) {
+        supabaseClient.removeChannel(canalRealtimeSR);
+        canalRealtimeSR = null;
+    }
+}
+
+window.addEventListener('beforeunload', desuscribirRealtimeSR);
 
 // ============================================
 // HELPERS
