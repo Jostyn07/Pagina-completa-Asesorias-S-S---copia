@@ -1313,40 +1313,46 @@ async function exportarExcel() {
             'Plazo Documentos', 'Enlace Póliza', 'Observaciones', 'Fecha de seguimiento', 'Fecha Creación'
         ];
 
-        // Crear libro de Excel con XML (formato xlsx simplificado via HTML table)
-        let tabla = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
-        tabla += '<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Pólizas</x:Name><x:WorksheetOptions><x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>';
-        tabla += '<body><table border="1">';
+        // Crear libro de Excel real (.xlsx) con ExcelJS
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Pólizas');
 
-        // Headers con estilo
-        tabla += '<tr>';
-        headers.forEach(h => {
-            tabla += `<th style="background-color:#4472C4; color:white; font-weight:bold; padding:8px; text-align:center; font-family:Arial; font-size:11px;">${h}</th>`;
+        // Definir columnas (encabezado + ancho)
+        worksheet.columns = headers.map(h => ({ header: h, width: 18 }));
+
+        // Agregar filas de datos
+        datos.forEach(fila => worksheet.addRow(fila));
+
+        // Estilo del encabezado (fondo azul, texto blanco, negrita, centrado)
+        const filaEncabezado = worksheet.getRow(1);
+        filaEncabezado.eachCell(celda => {
+            celda.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF4472C4' }
+            };
+            celda.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11, name: 'Arial' };
+            celda.alignment = { horizontal: 'center', vertical: 'middle' };
         });
-        tabla += '</tr>';
+        filaEncabezado.height = 20;
 
-        // Datos
-        datos.forEach(fila => {
-            tabla += '<tr>';
-            fila.forEach(celda => {
-                const valor = String(celda).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                tabla += `<td style="padding:4px; font-family:Arial; font-size:10px; mso-number-format:'\\@';">${valor}</td>`;
-            });
-            tabla += '</tr>';
+        // Congelar la fila de encabezado
+        worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+        // Generar el archivo y descargarlo
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         });
-
-        tabla += '</table></body></html>';
-
-        // Descargar
-        const blob = new Blob([tabla], { type: 'application/vnd.ms-excel;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         const fecha = new Date().toISOString().split('T')[0];
-        link.download = `polizas_${fecha}.xls`;
+        link.download = `polizas_${fecha}.xlsx`;
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
 
         mostrarNotificacion(`Excel exportado: ${datos.length} pólizas`, 'success');
 

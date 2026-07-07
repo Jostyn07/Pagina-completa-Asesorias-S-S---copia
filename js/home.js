@@ -336,7 +336,7 @@ function renderizarGraficaSupervisores() {
 
     chartSupervisores = new ApexCharts(contenedor, {
         chart: {
-            type: 'pie',
+            type: 'donut',
             height: 340,
             events: {
                 dataPointSelection: (e, ctx, config) => {

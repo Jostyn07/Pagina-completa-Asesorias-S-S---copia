@@ -207,25 +207,27 @@
         <div class="sr-modal-body">
 
             <div class="sr-form-grid">
-                <div class="sr-form-group">
-                    <label>Nombre <span class="sr-required">*</span></label>
-                    <input type="text" id="srNombre" placeholder="Nombre del cliente...">
+                <div class="sr-form-group sr-autocomplete-wrapper">
+                    <label>Nombre <span class="required">*</span></label>
+                    <input type="text" id="srNombre" placeholder="Nombre del cliente..." autocomplete="off" oninput="buscarClientesSR(this.value)">
+                    <span class="sr-cliente-vinculado" id="srClienteVinculado" style="display: none;">
+                        <span class="material-symbols-rounded">link</span>
+                        Vinculado a cliente existente
+                    </span>
                 </div>
-                <div class="sr-form-group">
-                    <label>Teléfono</label>
-                    <input type="text" id="srTelefono" placeholder="Número de teléfono...">
+                <div class="sr-form-group sr-autocomplete-wrapper">
+                    <label>Télefono</label>
+                    <input type="text" id="srTelefono" placeholder="Numero de telefono..." autocomplete="off" oninput="buscarClientesSR(this.value)">
                 </div>
-                <div class="sr-form-group">
-                    <label>Compañía</label>
-                    <input type="text" id="srCompania" placeholder="Nombre de la compañía...">
+                <div class="sr-form-group sr-autocomplete-wrapper">
+                    <label>Compañia</label>
+                    <input type="text" id="srCompania" placeholder="nombre de la compañia">
                 </div>
-                <div class="sr-form-group">
+                <div class="sr-form-group sr-autocomplete-wrapper">
                     <label>Actualizado</label>
-                    <select id="srActualizado">
-                        <option value="">— Pendiente —</option>
-                        <option value="Si">Sí</option>
-                        <option value="No">No</option>
-                    </select>
+                    <option value="">Pendiente</option>
+                    <option value="Si">Sí</option>
+                    <option value="No">No</option>
                 </div>
             </div>
 
