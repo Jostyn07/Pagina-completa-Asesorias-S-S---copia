@@ -2856,14 +2856,6 @@ function renderSeguimientoCard(seg) {
                         ${formatearMedioComunicacion(seg.medio_comunicacion)}
                     </div>
                 </div>
-                <div class="seguimiento-actions-btn">
-                    <button class="btn-edit-seg" onclick="editarSeguimiento('${seg.id}')" title="Editar" type="button">
-                        <span class="material-symbols-rounded">edit</span>
-                    </button>
-                    <button class="btn-delete-seg" onclick="eliminarSeguimiento('${seg.id}')" title="Eliminar">
-                        <span class="material-symbols-rounded">delete</span>
-                    </button>
-                </div>
             </div>
             <div class="seguimiento-observacion">
                 ${seg.observacion}
