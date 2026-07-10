@@ -2862,7 +2862,7 @@ function renderSeguimientoCard(seg) {
             <button class="btn-edit-seg" onclick="editarSeguimiento('${seg.id}')" title="Editar" type="button">
                 <span class="material-symbols-rounded">edit</span>
             </button>
-            <button class="btn-delete-seg" onclick="eliminarSeguimiento('${seg.id}')" title="Eliminar">
+            <button class="btn-delete-seg" onclick="eliminarSeguimiento('${seg.id}')" title="Eliminar" type="button">
                 <span class="material-symbols-rounded">delete</span>
             </button>
         </div>` : '';
