@@ -2319,9 +2319,19 @@ function cancelarFormulario() {
 // ============================================
 
 async function enviarNota() {
-    let enviarNota1 = document.getElementById("enviarNota1")
-    await agregarNota(clienteId);
-    enviarNota.disabled = true
+    const btnEnviarNota = document.getElementById("enviarNota1");
+
+    if (btnEnviarNota.disabled) return;
+    btnEnviarNota.disabled = true;
+    const textoOriginal = btnEnviarNota.innerHTML;
+    btnEnviarNota.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span>'
+
+    try {
+        await agregarNota(clienteId);
+    } finally {
+        btnEnviarNota.disabled = false;
+        btnEnviarNota.innerHTML = textoOriginal;
+    }
 }
 
 async function eliminarNota(notaId) {
@@ -2788,6 +2798,10 @@ async function obtenerUltimaNota(clienteId) {
 
 async function cargarSeguimientos(polizaId) {
     try {
+        if (!rolUsuario) {
+            await cargarRolUsuario();
+        }
+
         const { data: seguimientos, error } = await supabaseClient
             .from('seguimientos')
             .select('*')
@@ -2842,6 +2856,16 @@ function renderSeguimientoCard(seg) {
     };
     
     const icono = iconosMedio[seg.medio_comunicacion] || 'contact_support';
+
+    const botonesAccion = esAdministrador() ? `
+        <div class="seguimiento-actions-btn">
+            <button class="btn-edit-seg" onclick="editarSeguimiento('${seg.id}')" title="Editar" type="button">
+                <span class="material-symbols-rounded">edit</span>
+            </button>
+            <button class="btn-delete-seg" onclick="eliminarSeguimiento('${seg.id}')" title="Eliminar">
+                <span class="material-symbols-rounded">delete</span>
+            </button>
+        </div>` : '';
     
     return `
         <div class="seguimiento-card" data-seg-id="${seg.id}">
@@ -2856,6 +2880,7 @@ function renderSeguimientoCard(seg) {
                         ${formatearMedioComunicacion(seg.medio_comunicacion)}
                     </div>
                 </div>
+                ${botonesAccion}
             </div>
             <div class="seguimiento-observacion">
                 ${seg.observacion}
@@ -2915,6 +2940,12 @@ async function guardarSeguimientoModal() {
         return;
     }
     
+    const btnGuardar = document.getElementById('btnGuardarSeguimiento');
+    if (btnGuardar.disabled) return;
+    btnGuardar.disabled = true;
+    const textoOriginal = btnGuardar.innerHTML
+    btnGuardar.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span> Guardando...'
+
     const checkboxSeguimientoEfectivo = document.getElementById("seguimientoEfectivo");
     const seguimientoEfectivo = checkboxSeguimientoEfectivo && checkboxSeguimientoEfectivo.checked ? "Si" : "No";
 
@@ -2989,10 +3020,18 @@ async function guardarSeguimientoModal() {
     } catch (error) {
         console.error('Error al guardar seguimiento:', error);
         alert('Error al guardar el seguimiento: ' + error.message);
+    } finally {
+        btn.guardar.disabled = false;
+        btnGuardar.innerHTML = textoOriginal;
     }
 }
 
 async function editarSeguimiento(segId) {
+    if (!esAdministrador()) {
+        mostrarNotificacion("No tienes permiso para editar segumientos", 'warning')
+        return
+    }
+    
     try {
         const { data: seg, error } = await supabaseClient
             .from('seguimientos')
@@ -3021,6 +3060,11 @@ async function editarSeguimiento(segId) {
 }
 
 async function eliminarSeguimiento(segId) {
+    if (!esAdministrador()) {
+        mostrarNotificacion("No tienes permiso para eliminar seguimiento", 'warning')
+        return
+    }
+
     if (!confirm('¿Eliminar este seguimiento?')) return;
     
     try {
