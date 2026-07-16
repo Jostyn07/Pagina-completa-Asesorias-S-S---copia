@@ -10,6 +10,7 @@ let graficasInstancias      = {};
 let scoringCache            = {};
 let esOperadorSimple        = false;
 let planesGenerados         = {};
+let filtroSSNOscarActivo = false;
 
 // ============================================
 // INICIALIZACIÓN
@@ -62,6 +63,7 @@ async function cargarDatosAnalisis() {
                     ocupacion,
                     telefono1,
                     archivado,
+                    ssn,
                     metodos_pago (
                         pago_enero,
                         pago_febrero,
@@ -153,6 +155,7 @@ function poblarSelectOperadores() {
 function cambiarOperador() {
     operadorSeleccionado = document.getElementById('selectOperador').value;
     filtroNivelActivo    = 'todos';
+    filtroSSNOscarActivo = false;
 
     document.querySelectorAll('.analisis-filtro-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.filtro === 'todos');
@@ -367,6 +370,9 @@ function renderizarGraficasTodos() {
     const conteoOperador = {};
     const riesgoOpMap    = {};
     const conteoFactores = {};
+    let oscarConSSN = 0; 
+    let oscarSinSSN = 0;
+
 
     polizasFiltradas.forEach(p => {
         const sc = scoringCache[p.id];
@@ -374,6 +380,12 @@ function renderizarGraficasTodos() {
 
         const ec = p.estado_compania || 'Sin estado';
         conteoCompania[ec] = (conteoCompania[ec] || 0) + 1;
+
+        const clliente = p.clientes || {};
+        const ssnCompleto = !!(cliente.ssn && cliente.ssn.replace(/\D/g, '').length === 9);
+        if (op === 'Oscar') {
+            ssnCompleto ? oscarConSSN++ : oscarSinSSN;
+        }
 
         const em = p.estado_mercado || 'Sin estado';
         conteoMercado[em] = (conteoMercado[em] || 0) + 1;
@@ -501,6 +513,36 @@ function renderizarGraficasTodos() {
             }
         }
     );
+
+    // Grafica 6 - Pendiente SSN (Oscar)
+    destruirGrafica('graficaPendienteSSn');
+    graficasInstancias['graficaPendienteSSn'] = new Chart(
+        document.getElementById('graficaPendienteSSn').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: ['Sin SSN', 'Con SSN'],
+                datasets: [{
+                    data: [oscarSinSSN, oscarConSSN],
+                    backgroundColor: ['#ef4444', '#22c55e'],
+                    borderWidth: 2, borderColor: '#fff'
+                }]
+            },
+            options: {
+                ...opcionesDonut(),
+                onClick: (evt, elementos) => {
+                    if (!elementos.legth) return;
+                    if (elementos[0].index === 0) toggleFiltroSSNOscar();
+                }
+            }
+        }
+    );
+}
+
+function toggleFiltroSSNOscar() {
+    filtroSSNOscarActivo = !filtroSSNOscarActivo;
+    filtroNivelActivo = 'todos';
+    document.querySelectorAll('.analisis-filtro-btn').forEach(b => b.classList.toggle('active', b.dataset.filro === 'todos'));
+    renderizarTabla()
 }
 
 function renderizarGraficasOperador() {
@@ -639,6 +681,7 @@ function generarColores(n) {
 
 function filtrarTabla(nivel, btn) {
     filtroNivelActivo = nivel;
+    filtroSSNOscarActivo = false;
     document.querySelectorAll('.analisis-filtro-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderizarTabla();
@@ -649,7 +692,14 @@ function renderizarTabla() {
     const countEl = document.getElementById('tablaCount');
 
     let lista = polizasFiltradas;
-    if (filtroNivelActivo !== 'todos') {
+
+    if (filtroSSNOscarActivo) {
+        lista = lista.filter(p => {
+            const cliente = p.clientes || {};
+            const ssnCompleto = !!(cliente.ssn && cliente.ssn.replace(/\D/g, '').length === 9);
+            return p.operador_nombre === 'Oscar' && !ssnCompleto;
+        });
+    } else if (filtroNivelActivo !== 'todos') {
         lista = lista.filter(p => scoringCache[p.id]?.nivel === filtroNivelActivo);
     }
 
