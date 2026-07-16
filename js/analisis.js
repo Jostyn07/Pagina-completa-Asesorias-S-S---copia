@@ -381,10 +381,10 @@ function renderizarGraficasTodos() {
         const ec = p.estado_compania || 'Sin estado';
         conteoCompania[ec] = (conteoCompania[ec] || 0) + 1;
 
-        const clliente = p.clientes || {};
+        const cliente = p.clientes || {};
         const ssnCompleto = !!(cliente.ssn && cliente.ssn.replace(/\D/g, '').length === 9);
         if (op === 'Oscar') {
-            ssnCompleto ? oscarConSSN++ : oscarSinSSN;
+            ssnCompleto ? oscarConSSN++ : oscarSinSSN++;
         }
 
         const em = p.estado_mercado || 'Sin estado';
