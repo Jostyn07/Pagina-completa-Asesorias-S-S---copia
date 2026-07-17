@@ -3681,8 +3681,20 @@ async function registrarCambio(clienteId, tipoCambio, seccion, cambios) {
             .from('historial_cambios')
             .insert(registros);
         
-        if (error) throw error;
-        
+        if (error) {
+            if (error.code === '23503') {
+                console.error('CLIENTE_ID INVÁLIDO DETECTADO:', {
+                    clienteId,
+                    urlActual: window.location.href,
+                    errorCompleto: error
+                });
+                alert(`⚠️ No se pudo guardar el historial: el cliente con ID "${clienteId}" ya no existe en la base de datos.\n\n` +
+                    `Copia este ID y repórtalo (Envialo a Jostyn por Bitrix): ${clienteId}\n\n` +
+                    `URL: ${window.location.href}`
+                );
+            }
+            throw error;
+        }        
         
         // Recargar historial si estamos en ese tab
         if (document.querySelector('#tab-historial.active')) {
