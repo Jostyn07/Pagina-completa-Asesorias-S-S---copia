@@ -2730,7 +2730,7 @@ async function guardarEstadoSeguimiento(polizaId, formData) {
         
         
         // Registrar cambio en historial
-        await registrarCambioEstado(polizaId, estadoData);
+        await registrarCambioEstado(clienteId, estadoData);
 
         const ESTADOS_GATILLO_REVISION = ['Robado', 'Cancelado a P.C', 'Doble poliza', 'Triple poliza', 'No registra'];
 
