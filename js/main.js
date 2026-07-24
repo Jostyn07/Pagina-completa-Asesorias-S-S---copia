@@ -502,7 +502,7 @@ async function inicializarMenuAdmin() {
     }
 
     const menuMonitoreo = document.getElementById('menuMonitoreo');
-    if (menuMonitoreo && datosUsuario?.puede_ver_monitoreo ) {
+    if (menuMonitoreo && tienePermiso('ver_monitoreo') ) {
         menuMonitoreo.style.display = 'flex';
     }
 

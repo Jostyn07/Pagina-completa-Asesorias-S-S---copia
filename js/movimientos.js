@@ -26,14 +26,8 @@ const TIPOS_MOV = {
 // ── Init ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarRolUsuario();
-
-    const { data: usuario } = await supabaseClient
-        .from('usuarios')
-        .select('puede_ver_monitoreo, es_supervisor, rol')
-        .eq('id', datosUsuario?.id || '')
-        .single();
     
-    const tieneAcceso = usuario?.rol === 'admin' || usuario?.es_supervisor || usuario?.puede_ver_monitoreo;
+    const tieneAcceso = tienePermiso('ver_movimientos')
 
     if (!tieneAcceso) {
         alert('No tienes permiso para ver esta página.');

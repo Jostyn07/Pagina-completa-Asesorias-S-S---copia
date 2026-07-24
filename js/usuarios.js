@@ -149,6 +149,10 @@ async function editarUsuario(id) {
     document.getElementById('puedeVerMovimientos').checked = usuario.puede_ver_movimientos || false;
     document.getElementById('puedeEditarTablero').checked = usuario.puede_editar_tablero || false;
 
+    document.querySelectorAll('.chk-portal').forEach(cb => {
+        cb.checked = (usuario.portales || []).includes(cb.value);
+    });
+
     
     // Ocultar campo contraseña en edición
     document.getElementById('grupoPassword').style.display = 'none';
@@ -164,6 +168,10 @@ async function editarUsuario(id) {
     } else {
         grupoSupervisor.style.display = 'none';
     }
+}
+
+function obtenerPortalesSeleccionados() {
+    return Array.from(document-query  )
 }
 
 // Guardar usuario

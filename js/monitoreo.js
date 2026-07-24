@@ -42,14 +42,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function verificarAcceso() {
     try {
-        const rol = await cargarRolUsuario();
-        const { data: usuario } = await supabaseClient
-            .from('usuarios')
-            .select('puede_ver_monitoreo')
-            .eq('id', datosUsuario?.id || '')
-            .single();
+        await cargarRolUsuario();
 
-        if (!usuario?.puede_ver_monitoreo) {
+        if (!tienePermiso('ver_monitoreo')) {
             alert('⚠️ No tienes acceso a esta sección');
             window.location.href = './home.html';
         }

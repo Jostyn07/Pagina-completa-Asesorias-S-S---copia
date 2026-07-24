@@ -3297,7 +3297,7 @@ function cerrarModalArchivar() {
 
 // Ejecutar archivado
 async function ejecutarArchivarCliente() {
-   if (!tienePermiso(archivar_cliente)) {
+   if (!tienePermiso('archivar_cliente')) {
         alert('⚠️ No tienes permisos');
         cerrarModalArchivar();
         return;
