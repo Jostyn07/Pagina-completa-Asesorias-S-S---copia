@@ -109,10 +109,7 @@ function obtenerNivelContextoIA() {
         nombre:       datosUsuario.nombre,
         rol:          rol,
         esSupervisor: datosUsuario.es_supervisor || false,
-        // Define hasta dónde llega la consulta a la BD
-        // 'global'     → admin: ve todo
-        // 'equipo'     → supervisor: ve su equipo
-        // 'propio'     → operador/soporte: solo sus datos
+
         alcance: rol === 'admin'
             ? 'global'
             : datosUsuario.es_supervisor
@@ -168,7 +165,7 @@ async function cargarPermisosEfectivos() {
         supabaseClient
             .from('permisos_rol')
             .select('portal, permiso_clave, valor')
-            .eq('rol')
+            .eq('rol', rol)
             .in('portal', portalesConsulta),
         supabaseClient
             .from('permisos_usuario')
@@ -182,7 +179,7 @@ async function cargarPermisosEfectivos() {
     (filasRol || []).filter(f => f.portal === 'TODOS')
         .forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor; });
 
-    (filasRol || []).filter(f => f.porta !== 'TODOS')
+    (filasRol || []).filter(f => f.portal !== 'TODOS')
         .forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor; });
 
     (filasRol || []).forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor});

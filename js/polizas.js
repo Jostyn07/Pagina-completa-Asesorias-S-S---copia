@@ -467,7 +467,8 @@ async function cargarPolizas() {
         const usuarioActual = usuarioData;
         rolUsuario = usuarioData?.rol || 'operador';
         const nombreOperador = usuarioData?.nombre;
-        
+         
+        console.log(rolUsuario)
         const esAdmin = tienePermiso('ver_todos_clientes');
         
         ;
