@@ -15,16 +15,15 @@ async function cargarUsuarios() {
             return;
         }
         
-        // Verificar permisos
-        const rol = await cargarRolUsuario();
+        await cargarRolUsuario();
         
-        if (rol !== 'admin') {
-            alert('⚠️ Solo administradores pueden acceder a esta sección');
-            window.location.href = './polizas.html';
-            return;
+        const tieneAcceso = tienePermiso('acceso_usuarios');
+
+        if (!tieneAcceso) {
+            alert('No tienes permiso para cceder a esta sección')
+            window.location.href = "../pages/polizas.html"
+            return
         }
-        
-        ;
         
         const { data, error } = await supabaseClient
             .from('usuarios')

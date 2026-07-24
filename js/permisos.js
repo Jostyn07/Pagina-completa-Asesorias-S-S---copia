@@ -48,6 +48,8 @@ async function cargarRolUsuario() {
         datosUsuario = usuarioDB;
         rolUsuario = usuarioDB.rol || 'operador';
 
+        await cargarPermisosEfectivos();
+
         return rolUsuario
         
     } catch (error) {
@@ -159,7 +161,7 @@ async function cargarPermisosEfectivos() {
     }
 
     const rol = datosUsuario.rol; // se crea un variable con el tipo de rol del usuario
-    const portalesUsuario = dastosUsuario.portales?.length ? datosUsuario.portales : []; // Se toma la información del usuario
+    const portalesUsuario = datosUsuario.portales?.length ? datosUsuario.portales : []; // Se toma la información del usuario
     const portalesConsulta = ['TODOS', ...portalesUsuario]; 
 
     const [{ data: filasRol }, { data: filasUsuario }] = await Promise.all([
@@ -180,4 +182,14 @@ async function cargarPermisosEfectivos() {
     (filasRol || []).filter(f => f.portal === 'TODOS')
         .forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor; });
 
+    (filasRol || []).filter(f => f.porta !== 'TODOS')
+        .forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor; });
+
+    (filasRol || []).forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor});
+}
+
+// Chequeo granular
+function tienePermiso(clave) {
+    if (esAdminGenearl()) return true;
+    return permisosEfectivos[clave] === true;
 }
