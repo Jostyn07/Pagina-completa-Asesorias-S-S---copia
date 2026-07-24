@@ -468,7 +468,7 @@ async function cargarPolizas() {
         rolUsuario = usuarioData?.rol || 'operador';
         const nombreOperador = usuarioData?.nombre;
         
-        const esAdmin = esAdministrador();
+        const esAdmin = tienePermiso('ver_todos_clientes');
         
         ;
         ;
@@ -704,7 +704,7 @@ function renderizarTabla() {
             <td data-label="Tipo de modificación">${cliente?.tipo_modificacion || '-'}</td>
             <td data-label="Agente (Mercado)">${poliza.nombre_agente_mercado || '-'}</td>
             <td data-label="Operador">
-                ${esAdministrador() ? `
+                ${tienePermiso('reasignar_operador') ? `
                     <div class="operador-editable" 
                         title="Click para cambiar operador"
                         onclick="abrirSelectorOperador(event, '${cliente?.id || ''}', '${cliente?.operador_nombre || ''}')"
@@ -1238,7 +1238,7 @@ function actualizarIndicadoresOrden() {
 async function exportarExcel() {
 
     try {
-       if (!esAdministrador() && !datosUsuario.es_supervisor) {
+       if (!tienePermiso('exportar_excel')) {
             mostrarNotificacion('Solo administradores pueden exportar', 'error');
             return;
         }
@@ -1583,7 +1583,7 @@ function actualizarIndicadoresRol() {
         let indicador = tarjeta.querySelector('.indicador-rol');
 
         // Si no es admin, adgregar indicador
-       if (!esAdministrador() && !datosUsuario.es_supervisor) {
+       if (!tienePermiso('ver_todos_clientes')) {
             if (!indicador) {
                 indicador = document.createElement('small');
                 indicador.className = 'indicador-rol';
