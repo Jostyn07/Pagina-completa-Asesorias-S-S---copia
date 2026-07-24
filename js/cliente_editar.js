@@ -2709,7 +2709,7 @@ async function guardarEstadoSeguimiento(polizaId, formData) {
             updated_at: new Date().toISOString(),
         };
             // 2) Estado en Mercado
-        if (esAdministrador()) {
+        if (tienePermiso('editar_estado_mercado')) {
             estadoData.fecha_revision_mercado = document.getElementById('fechaRevisionMercado')?.value || null;
             estadoData.estado_mercado = document.getElementById('estadoMercado')?.value || null;
             estadoData.nombre_agente_mercado = document.getElementById('nombreAgenteMercado')?.value || null;
@@ -3028,7 +3028,7 @@ async function guardarSeguimientoModal() {
 }
 
 async function editarSeguimiento(segId) {
-   if (!esAdministrador() && !datosUsuario.es_supervisor) {
+   if (!tienePermiso('editar_eliminar_seguimientos')) {
         mostrarNotificacion("No tienes permiso para editar segumientos", 'warning')
         return
     }
@@ -3262,14 +3262,14 @@ async function mostrarBotonArchivar() {
         await cargarRolUsuario();
     }
     
-    if (esAdministrador()) {
+    if (tienePermiso('archivar_cliente')) {
         btnArchivar.style.display = 'flex';
     }
 }
 
 // Confirmar archivado
 function confirmarArchivarCliente() {
-   if (!esAdministrador() && !datosUsuario.es_supervisor) {
+   if (!tienePermiso('archivar_cliente')) {
         alert('⚠️ No tienes permisos para archivar clientes');
         return;
     }
@@ -3297,7 +3297,7 @@ function cerrarModalArchivar() {
 
 // Ejecutar archivado
 async function ejecutarArchivarCliente() {
-   if (!esAdministrador() && !datosUsuario.es_supervisor) {
+   if (!tienePermiso(archivar_cliente)) {
         alert('⚠️ No tienes permisos');
         cerrarModalArchivar();
         return;

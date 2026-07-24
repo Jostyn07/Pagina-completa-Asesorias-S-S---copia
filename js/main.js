@@ -497,12 +497,12 @@ document.addEventListener('click', function(event) {
 async function inicializarMenuAdmin() {
     await cargarRolUsuario();
     const menuArchivados = document.getElementById('menuArchivados');
-    if (menuArchivados && esAdministrador()) {
+    if (menuArchivados && tienePermiso('acceso_clientes_archivados')) {
         menuArchivados.style.display = 'flex';
     }
 
     const menuMonitoreo = document.getElementById('menuMonitoreo');
-    if (menuMonitoreo && datosUsuario?.puede_ver_monitoreo === true) {
+    if (menuMonitoreo && datosUsuario?.puede_ver_monitoreo ) {
         menuMonitoreo.style.display = 'flex';
     }
 

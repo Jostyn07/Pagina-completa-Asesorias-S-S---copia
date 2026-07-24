@@ -59,7 +59,7 @@ async function cargarRolUsuario() {
 }
 
 function esAdministrador() {
-    return rolUsuario === 'admin';
+    return esAdminOMayor();
 }
 
 function esOperador() {
@@ -95,10 +95,7 @@ function obtenerRolUsuario() {
 }
 
 function puedeUsarIA() {
-    if (!datosUsuario) return false;
-    // Admin siempre tiene acceso
-    if (datosUsuario.rol === 'admin') return true;
-    return datosUsuario.puede_usar_ia === true;
+    return tienePermiso('usar_ia');
 }
 
 function obtenerNivelContextoIA() {
@@ -119,15 +116,11 @@ function obtenerNivelContextoIA() {
 }
 
 function puedeVerMovimientos() {
-    if (!datosUsuario) return false;
-    if (datosUsuario.rol == 'admin') return true
-    return datosUsuario.puede_ver_movimientos === true;
+    return tienePermiso('ver_movimientos');
 }
 
 function puedeEditarTablero() {
-    if (!datosUsuario) return false;
-    if (datosUsuario.rol === 'admin') return true;
-    return datosUsuario.puede_editar_tablero === 'true';
+    tienePermiso('editar_tablero');
 }
 
 function nivelRol(rol) {
@@ -182,7 +175,7 @@ async function cargarPermisosEfectivos() {
     (filasRol || []).filter(f => f.portal !== 'TODOS')
         .forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor; });
 
-    (filasRol || []).forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor});
+    (filasRol || []).forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor; });
 }
 
 // Chequeo granular
