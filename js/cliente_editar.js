@@ -347,7 +347,7 @@ async function aplicarPermisosEstadoMercado() {
         'tipoRegistro'
     ];
     
-    if (!esAdministrador()) {
+   if (!esAdministrador() && !datosUsuario.es_supervisor) {
         // Deshabilitar campos
         camposEstadoMercado.forEach(fieldId => {
             const field = document.getElementById(fieldId);
@@ -3022,13 +3022,13 @@ async function guardarSeguimientoModal() {
         console.error('Error al guardar seguimiento:', error);
         alert('Error al guardar el seguimiento: ' + error.message);
     } finally {
-        btn.guardar.disabled = false;
+        btnGuardar.disabled = false;
         btnGuardar.innerHTML = textoOriginal;
     }
 }
 
 async function editarSeguimiento(segId) {
-    if (!esAdministrador()) {
+   if (!esAdministrador() && !datosUsuario.es_supervisor) {
         mostrarNotificacion("No tienes permiso para editar segumientos", 'warning')
         return
     }
@@ -3061,7 +3061,7 @@ async function editarSeguimiento(segId) {
 }
 
 async function eliminarSeguimiento(segId) {
-    if (!esAdministrador()) {
+   if (!esAdministrador() && !datosUsuario.es_supervisor) {
         mostrarNotificacion("No tienes permiso para eliminar seguimiento", 'warning')
         return
     }
@@ -3269,7 +3269,7 @@ async function mostrarBotonArchivar() {
 
 // Confirmar archivado
 function confirmarArchivarCliente() {
-    if (!esAdministrador()) {
+   if (!esAdministrador() && !datosUsuario.es_supervisor) {
         alert('⚠️ No tienes permisos para archivar clientes');
         return;
     }
@@ -3297,7 +3297,7 @@ function cerrarModalArchivar() {
 
 // Ejecutar archivado
 async function ejecutarArchivarCliente() {
-    if (!esAdministrador()) {
+   if (!esAdministrador() && !datosUsuario.es_supervisor) {
         alert('⚠️ No tienes permisos');
         cerrarModalArchivar();
         return;
@@ -3855,7 +3855,7 @@ async function registrarNotaAgregada(clienteId, mensaje) {
                 seccion: 'Notas',
                 campo_modificado: 'Nueva Nota',
                 valor_anterior: null,
-                valor_nuevo: mensaje.substring(0, 100) + (mensaje.length > 100 ? '...' : ''),
+                valor_nuevo: mensaje.replace(/<[^>]+>/g, '').substring(0, 100) + (mensaje.replace(/<[^>]+>/g, '').length > 100 ? '...' : ''),
                 usuario_nombre: usuarioData?.nombre || user.email,
                 usuario_email: user.email
             }]);
@@ -4142,9 +4142,9 @@ function crearItemHistorial(grupo) {
             <div class="cambio-item">
                 <div class="cambio-campo">${cambio.campo_modificado}</div>
                 <div class="cambio-valores">
-                    ${cambio.valor_anterior ? `<span class="cambio-anterior">${escaparHTML(cambio.valor_anterior)}</span>` : ''}
+                    ${cambio.valor_anterior ? `<span class="cambio-anterior">${escaparHTML(limpiarTextoHistorial(cambio.valor_anterior))}</span>` : ''}
                     ${cambio.valor_anterior && cambio.valor_nuevo ? '<span class="cambio-flecha">→</span>' : ''}
-                    ${cambio.valor_nuevo ? `<span class="cambio-nuevo">${escaparHTML(cambio.valor_nuevo)}</span>` : ''}
+                    ${cambio.valor_nuevo ? `<span class="cambio-nuevo">${escaparHTML(limpiarTextoHistorial(cambio.valor_nuevo))}</span>` : ''}
                 </div>
             </div>
         `;
@@ -4227,6 +4227,11 @@ function escaparHTML(texto) {
     const div = document.createElement('div');
     div.textContent = texto;
     return div.innerHTML;
+}
+
+function limpiarTextoHistorial(texto) {
+    if (!texto) return texto;
+    return texto.replace(/<[^>]+>/g, '').trim();
 }
 
 /**

@@ -12,7 +12,7 @@ async function cargarClientesArchivados() {
         // Verificar que sea admin
         await cargarRolUsuario();
         
-        if (!esAdministrador()) {
+       if (!esAdministrador() && !datosUsuario.es_supervisor) {
             alert('⚠️ Solo administradores pueden acceder a esta sección');
             window.location.href = './polizas.html';
             return;

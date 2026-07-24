@@ -123,7 +123,7 @@ async function abrirModalCrear() {
     document.getElementById('puedeVerMonitoreo').checked = false;
     document.getElementById('puedeUsarIA').checked = false;
     document.getElementById('puedeVerMovimientos').checked = false;
-    document.getAnimations('puedeEditarTablero').checked = false
+    document.getElementById('puedeEditarTablero').checked = false
     await cargarSupervisores();
 }
 

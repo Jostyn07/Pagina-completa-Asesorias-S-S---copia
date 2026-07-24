@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // Verificar que sea admin o supervisor
-    if (!esAdministrador()) {
+   if (!esAdministrador() && !datosUsuario.es_supervisor) {
         alert('⚠️ No tienes permisos para acceder a esta página');
         window.location.href = './home.html';
         return;

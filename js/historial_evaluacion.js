@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 // VERIFICAR PERMISOS Y AJUSTAR UI
 // ============================================
 function verificarPermisosYAjustarUI() {
-    const esAdmin = datosUsuario.rol === 'admin' || datosUsuario.rol === 'supervisor';
+    const esAdmin = datosUsuario.rol === 'admin' || datosUsuario.es_supervisor === true;
     
     const headerTitle = document.getElementById('headerTitle');
     const headerSubtitle = document.getElementById('headerSubtitle');
@@ -103,7 +103,7 @@ async function cargarEvaluaciones() {
             .order('fecha_evaluacion', { ascending: false });
         
         // Si NO es admin, solo cargar evaluaciones propias
-        const esAdmin = datosUsuario.rol === 'admin' || datosUsuario.rol === 'supervisor';
+        const esAdmin = datosUsuario.rol === 'admin' || datosUsuario.es_supervisor === true;
         if (!esAdmin) {
             query = query.eq('operador_id', datosUsuario.id);
         }

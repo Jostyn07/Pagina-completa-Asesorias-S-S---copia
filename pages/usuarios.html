@@ -134,34 +134,99 @@
         </header>
 
         <!-- TABLA DE USUARIOS -->
-        <div class="usuarios-container">
-            <div class="search-bar">
-                <input type="text" id="searchUsuarios" placeholder="Buscar usuarios..." onkeyup="buscarUsuarios()">
-                <span class="material-symbols-rounded">search</span>
+        <div class="tabs-container">
+            <div class="tabs-nav" id="tabsNavUsuarios">
+                <button class="tab-btn active" data-tab="lista">
+                    <span class="material-symbols-rounded">group</span>
+                    Usuarios
+                </button>
+                <button class="tab-btn" data-tab="permisos">
+                    <span class="material-symbols-rounded">admin_panel_settings</span>
+                    permisos
+                </button>
             </div>
+        </div>
 
-            <table class="usuarios-table">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Rol</th>
-                        <th>Estado</th>
-                        <th>Supervisor</th>
-                        <th>Fecha Creación</th>
-                        <th>IA</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaUsuarios">
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px;">
-                            <span class="material-symbols-rounded" style="font-size: 48px; opacity: 0.3;">hourglass_empty</span>
-                            <p>Cargando usuarios...</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="tab-content active" id="tab-lista">
+            <div class="usuarios-container">
+                <div class="search-bar">
+                    <input type="text" id="searchUsuarios" placeholder="Buscar usuarios..." onkeyup="buscarUsuarios()">
+                    <span class="material-symbols-rounded">search</span>
+                </div>
+
+                <table class="usuarios-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Supervisor</th>
+                            <th>Fecha Creación</th>
+                            <th>IA</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaUsuarios">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px;">
+                                <span class="material-symbols-rounded" style="font-size: 48px; opacity: 0.3;">hourglass_empty</span>
+                                <p>Cargando usuarios...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-permisos">
+            <div class="usuarios-container">
+
+                <div class="permisos-subtabs">
+                    <button class="subtab-btn active" data-subtab="rol" onclick="cambiarSubtabPermisos('rol')">
+                        <span class="material-symbols-rounded">badge</span>
+                        Por rol
+                    </button>
+                    <button class="subtab-btn" data-subtab="usuario" onclick="cambiarSubtabPermisos('usuario')">
+                        <span class="material-symbols-rounded">person</span>
+                        Por usuario
+                    </button>
+                </div>
+
+                <div class="subtab-content active" id="subtab-rol">
+                    <div class="permisos-selectores">
+                        <div class="form-group">
+                            <label>Rol</label>
+                            <select id="selectRolPermisos" onchange="cargarMatrizRol()">
+                                <option value="admin_general">Admin General</option>
+                                <option value="admin">Admin</option>
+                                <option value="supervisor">Supervisor</option>
+                                <option value="operador">Operador</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Portal</label>
+                            <select id="selectPortalPermisos" onchange="cargarMatrizRol()">
+                                <option value="">Cargando Portales</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="matrizPermisosRol">
+                        <!-- Se llena dinamicamente -->
+                    </div>
+                    <div class="permisos-footer">
+                        <button class="btn-primary" id="btnGuardarPermisosRol" onclick="guardarPermisosRol()" disabled>
+                            <span class="material-symbols-rounded">save</span>
+                            Guardar cambios
+                        </button>
+                    </div>
+                </div>
+
+                <div class="subtab-content" id="subtab-usuario">
+                    <p style="padding: 20px; color: var(--text-secondary);">Proximamente.</p>
+                </div>
+
+            </div>
         </div>
     </div>
 
@@ -231,7 +296,7 @@
                         <div class="toggles-section">
                             <span class="toggles-section-label">Permisos y acceso</span>
 
-                            <label class="toggle-row toggle-supervisor" for="esSupervisor">
+                            <label class="toggle-row toggle-supervisor" id="esSupervisor">
                                 <div class="toggle-row-info">
                                     <span class="material-symbols-rounded">manage_accounts</span>
                                     <div class="toggle-row-text">
@@ -346,6 +411,7 @@
     <script src="../js/permisos.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/usuarios.js"></script>
+     <script src="../js/usuarios-permisos.js"></script> 
     <script src="../js/fab.js"></script>
     <script src="../js/banners.js"></script>
     <script src="../js/recordatorios.js"></script>

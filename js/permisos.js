@@ -3,6 +3,11 @@ let usuarioActual = null;
 let rolUsuario = 'operador';
 let datosUsuario = null;
 
+let permisosEfectivos = {};
+let catalogoPermisosCache = [];
+
+const JERARQUIA_ROLES = { admin_general: 4, admin: 3, supervisor: 2, operador: 1};
+
 // Cargar rol del usuario desde localStorage
 async function cargarRolUsuario() {
     try {
@@ -124,4 +129,55 @@ function puedeEditarTablero() {
     if (!datosUsuario) return false;
     if (datosUsuario.rol === 'admin') return true;
     return datosUsuario.puede_editar_tablero === 'true';
+}
+
+function nivelRol(rol) {
+    return JERARQUIA_ROLES[rol] || 0; // Evalua el nivel de acuerdo al rol que tenga el usuario
+}
+
+function esAdminGenearl() {
+    return datosUsuario?.rol === 'admin_general'; // Devuelve true o false de acuerdo a si el usuario es admin o no
+}
+
+function esAdminOMayor() {
+    return nivelRol(datosUsuario?.rol) >= JERARQUIA_ROLES.admin; // devuelve el nivel si el usuario es admin o admin_general
+}
+
+function esSupervisorOMayor() {
+    return nivelRol(datosUsuario?.rol) >= JERARQUIA_ROLES.supervisor // devuelve el nivel si el usuario es supervisor, admin o admin_general
+}
+
+async function cargarPermisosEfectivos() {
+    if (!datosUsuario) return;
+    
+    // En caso de que no haya un solo dato en catalogoPermisosCache, busca la información en la tabla de catalogo_permisos (clave y valor por defecto) y lo ingresa en catalofoPermisosCahe
+    if(catalogoPermisosCache.length === 0) {
+        const { data: catalogo } = await supabaseClient
+            .from('catalogo_permisos')
+            .select('clave, valor_por_defecto');
+        catalogoPermisosCache = catalogo || []
+    }
+
+    const rol = datosUsuario.rol; // se crea un variable con el tipo de rol del usuario
+    const portalesUsuario = dastosUsuario.portales?.length ? datosUsuario.portales : []; // Se toma la información del usuario
+    const portalesConsulta = ['TODOS', ...portalesUsuario]; 
+
+    const [{ data: filasRol }, { data: filasUsuario }] = await Promise.all([
+        supabaseClient
+            .from('permisos_rol')
+            .select('portal, permiso_clave, valor')
+            .eq('rol')
+            .in('portal', portalesConsulta),
+        supabaseClient
+            .from('permisos_usuario')
+            .select('permiso_clave, valor')
+            .eq('usuario_id', datosUsuario.id)
+    ]);
+
+    permisosEfectivos = {};
+    catalogoPermisosCache.forEach(p => { permisosEfectivos[p.clave] = p.valor_por_defecto; });
+
+    (filasRol || []).filter(f => f.portal === 'TODOS')
+        .forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor; });
+
 }

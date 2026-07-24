@@ -1238,7 +1238,7 @@ function actualizarIndicadoresOrden() {
 async function exportarExcel() {
 
     try {
-        if (!esAdministrador()) {
+       if (!esAdministrador() && !datosUsuario.es_supervisor) {
             mostrarNotificacion('Solo administradores pueden exportar', 'error');
             return;
         }
@@ -1583,7 +1583,7 @@ function actualizarIndicadoresRol() {
         let indicador = tarjeta.querySelector('.indicador-rol');
 
         // Si no es admin, adgregar indicador
-        if (!esAdministrador()) {
+       if (!esAdministrador() && !datosUsuario.es_supervisor) {
             if (!indicador) {
                 indicador = document.createElement('small');
                 indicador.className = 'indicador-rol';
