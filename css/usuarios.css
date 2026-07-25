@@ -754,3 +754,32 @@ body {
     display: flex;
     justify-content: flex-end;
 }
+
+.badge-personalizado {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #8b5cf6;
+    background: #ede9fe;
+    border-radius: 100px;
+}
+
+.permiso-row-acciones {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-quitar-override {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+.btn-quitar-override:hover {
+    color: #ef4444;
+}

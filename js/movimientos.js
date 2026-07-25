@@ -27,7 +27,7 @@ const TIPOS_MOV = {
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarRolUsuario();
     
-    const tieneAcceso = tienePermiso('ver_movimientos')
+    const tieneAcceso = tienePermiso('ver_movimientos');
 
     if (!tieneAcceso) {
         alert('No tienes permiso para ver esta página.');

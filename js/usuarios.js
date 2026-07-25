@@ -171,7 +171,7 @@ async function editarUsuario(id) {
 }
 
 function obtenerPortalesSeleccionados() {
-    return Array.from(document-query  )
+    return Array.from(document.querySelectorAll('chk-portal:checked')).map(cb => cb.value);
 }
 
 // Guardar usuario
@@ -184,9 +184,15 @@ async function guardarUsuario(event) {
     const password = document.getElementById('password').value;
     const rol = document.getElementById('rol').value;
     const activo = document.getElementById('activo').checked;
+    const portales = obtenerPortalesSeleccionados();
     
     if (!nombre || !email || !rol) {
         alert('⚠️ Por favor completa todos los campos obligatorios');
+        return;
+    }
+
+    if (portales.length === 0) {
+        alert('Selecciona al menos un portal para este usuario')
         return;
     }
     
@@ -199,6 +205,7 @@ async function guardarUsuario(event) {
                     nombre,
                     rol,
                     activo,
+                    portales,
                     es_supervisor: document.getElementById('esSupervisor').checked,
                     supervisor_id: (() => {
                         const val = document.getElementById('supervisorId').value;
@@ -249,6 +256,7 @@ async function guardarUsuario(event) {
                     nombre,
                     rol,
                     activo,
+                    portales,
                     es_supervisor: document.getElementById('esSupervisor').checked,
                     supervisor_id: rol === 'operador' ? (document.getElementById('supervisorId').value || null) : null,
                     puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
