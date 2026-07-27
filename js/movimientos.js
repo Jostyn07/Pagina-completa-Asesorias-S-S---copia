@@ -192,11 +192,8 @@ async function cargarMovimientos() {
                 .order('id', { ascending: false }); // orden estable entre páginas
 
             // Filtro por rol: operador solo ve los suyos
-            if (!esAdministrador()) {
-                if (datosUsuario?.es_supervisor && !tienePermiso('ver_todos_movimientos')) {
-                } else if (!datosUsuario?.es_supervisor) {
-                    query = query.eq('operador_nombre', datosUsuario?.nombre);
-                }
+            if (!esAdministrador() && !datosUsuario?.es_supervisor) {
+                query = query.eq('operador_nombre', datosUsuario?.nombre);
             }
             return query;
         };

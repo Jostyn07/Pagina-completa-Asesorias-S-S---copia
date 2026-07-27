@@ -119,10 +119,6 @@ async function abrirModalCrear() {
     document.getElementById('modalUsuario').classList.add('show');
     document.getElementById('grupoSupervisor').style.display = 'none';
     document.getElementById('esSupervisor').checked = false;
-    document.getElementById('puedeVerMonitoreo').checked = false;
-    document.getElementById('puedeUsarIA').checked = false;
-    document.getElementById('puedeVerMovimientos').checked = false;
-    document.getElementById('puedeEditarTablero').checked = false
     await cargarSupervisores();
 }
 
@@ -143,11 +139,7 @@ async function editarUsuario(id) {
     document.getElementById('email').value = usuario.email;
     document.getElementById('rol').value = usuario.rol;
     document.getElementById('activo').checked = usuario.activo;
-    document.getElementById('puedeVerMonitoreo').checked = usuario.puede_ver_monitoreo || false;
-    document.getElementById('puedeUsarIA').checked = usuario.puede_usar_ia || false;
     document.getElementById('esSupervisor').checked = usuario.es_supervisor || false;
-    document.getElementById('puedeVerMovimientos').checked = usuario.puede_ver_movimientos || false;
-    document.getElementById('puedeEditarTablero').checked = usuario.puede_editar_tablero || false;
 
     document.querySelectorAll('.chk-portal').forEach(cb => {
         cb.checked = (usuario.portales || []).includes(cb.value);
@@ -171,7 +163,7 @@ async function editarUsuario(id) {
 }
 
 function obtenerPortalesSeleccionados() {
-    return Array.from(document.querySelectorAll('chk-portal:checked')).map(cb => cb.value);
+    return Array.from(document.querySelectorAll('.chk-portal:checked')).map(cb => cb.value);
 }
 
 // Guardar usuario
@@ -209,13 +201,8 @@ async function guardarUsuario(event) {
                     es_supervisor: document.getElementById('esSupervisor').checked,
                     supervisor_id: (() => {
                         const val = document.getElementById('supervisorId').value;
-                        console.log('supervisor_id al guardar:', val);
                         return val || null;
                     })(),
-                    puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
-                    puede_usar_ia: document.getElementById('puedeUsarIA').checked,
-                    puede_ver_movimientos: document.getElementById('puedeVerMovimientos').checked,
-                    puede_editar_tablero: document.getElementById('puedeEditarTablero').checked,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', idEditando)

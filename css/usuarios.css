@@ -783,3 +783,39 @@ body {
 .btn-quitar-override:hover {
     color: #ef4444;
 }
+
+/* usuarios.css — agregar */
+.checkbox-list-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.checkbox-list-inline .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-color, #374151);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--background-page, #f8fafc);
+}
+
+.checkbox-list-inline .checkbox-item:has(.chk-portal:checked) {
+    border-color: #6366f1;
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.checkbox-list-inline .chk-portal {
+    width: 16px;
+    height: 16px;
+    accent-color: #6366f1;
+    cursor: pointer;
+}
