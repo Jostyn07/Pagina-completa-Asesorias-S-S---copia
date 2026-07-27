@@ -245,11 +245,7 @@ async function guardarUsuario(event) {
                     activo,
                     portales,
                     es_supervisor: document.getElementById('esSupervisor').checked,
-                    supervisor_id: rol === 'operador' ? (document.getElementById('supervisorId').value || null) : null,
-                    puede_ver_monitoreo: document.getElementById('puedeVerMonitoreo').checked,
-                    puede_usar_ia: document.getElementById('puedeUsarIA').checked,
-                    puede_ver_movimientos: document.getElementById('puedeVerMovimientos').checked,
-                    puede_editar_tablero: document.getElementById('puedeEditarTablero').checked,
+                    supervisor_id: rol === 'operador' ? (document.getElementById('supervisorId').value || null) : null
                 });
             
             if (dbError) throw dbError;
