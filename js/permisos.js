@@ -120,7 +120,7 @@ function puedeVerMovimientos() {
 }
 
 function puedeEditarTablero() {
-    tienePermiso('editar_tablero');
+    return tienePermiso('editar_tablero');
 }
 
 function nivelRol(rol) {

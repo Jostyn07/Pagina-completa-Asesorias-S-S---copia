@@ -202,7 +202,7 @@ async function guardarPermisosRol() {
             .eq('permiso_clave', ov.permiso_clave);
     }
 
-    alert('permisos guardados correctamente');
+    alert('Permisos guardados correctamente');
     await cargarMatrizRol();
 }
 
@@ -241,7 +241,7 @@ async function cargarMatrizUsuario() {
     (filasRol || []).forEach(f => { baseHeredada[f.permiso_clave] = f.valor; });
 
     // Overrides individuales ya guardados para este usuario
-    overridesUsuarioActual = Object.fromEntries((filasUusuario || []).map(f => [f.permiso_clave, f.valor]));
+    overridesUsuarioActual = Object.fromEntries((filasUsuario || []).map(f => [f.permiso_clave, f.valor]));
 
     // Valor efectivo mostrado: override si existe, si no la base heredada
     matrizUsuarioActual = {};
@@ -252,7 +252,8 @@ async function cargarMatrizUsuario() {
     });
 
     cambiosPendientesUsuario = {};
-    document.getElementById(`<p>Rol: <strong>${usuario.rol}</strong> Portal(es): <strong>${portalesUsuario.join(', ') || '-'}</strong></p>`)
+    document.getElementById('btnGuardarPermisosUsuario').disabled = true;
+    info.innerHTML = `<p>Rol: <strong>${usuario.rol}</strong> · Portal(es): <strong>${portalesUsuario.join(', ') || '—'}</strong></p>`;
 
     renderizarMatrizUsuario();
 }
@@ -285,7 +286,7 @@ function renderizarMatrizUsuario() {
     `).join('');
 }
 
-function marcarCambioPermiso() {
+function marcarCambioPermisoUsuario(clave, nuevoValor) {
     if (nuevoValor === matrizUsuarioActual[clave]) {
         if (nuevoValor === matrizUsuarioActual[clave]) {
             delete cambiosPendientesUsuario[clave];
@@ -313,21 +314,21 @@ async function guardarPermisosUsuario() {
 
     const { error } = await supabaseClient
         .from('permisos_usuario')
-        .upset(filas, { onConflict: 'usuario_id, permiso_clave' });
+        .upsert(filas, { onConflict: 'usuario_id, permiso_clave' });
 
     if (error) {
         alert('Error al guardar: ' + error.message);
         return;
     }
 
-    alert('Permisos inddividuales guardados correctamente');
+    alert('Permisos individuales guardados correctamente');
     await cargarMatrizUsuario();
 }
 
 async function quitarOverrideUsuario(clave) {
     const usuarioId = document.getElementById('selectUsuarioPermisos').value;
     if (!usuarioId) return;
-    if (!confirm('¿Quitar la personalización de este permiso? Volerá a heredar el valor del rol.')) return;
+    if (!confirm('¿Quitar la personalización de este permiso? Volverá a heredar el valor del rol.')) return;
 
     const { error } = await supabaseClient
         .from('permisos_usuario')

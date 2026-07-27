@@ -869,7 +869,7 @@ function irACumpleanos() {
     window.location.href='../pages/polizas.html'
 }
 
-// Dropown para documentos
+// Dropdown para documentos
 
 function toggleDropdownDocumentos(event) {
     event.stopPropagation();

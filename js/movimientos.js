@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!tieneAcceso) {
         alert('No tienes permiso para ver esta página.');
-        window.location.href = './index.html';
+        window.location.href = '../index.html';
         return;
     }
 
@@ -344,7 +344,7 @@ function limpiarFiltroMultiple(cual) {
     document.querySelectorAll(`#${panelId} input[type="checkbox"]`)
         .forEach(cb => cb.checked = false);
     actualizarTextoFiltro(cual);
-    acplicarFiltros();
+    aplicarFiltros();
 }
 
 function actualizarTextoFiltro(cual) {

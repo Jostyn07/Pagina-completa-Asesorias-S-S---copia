@@ -20,7 +20,7 @@ async function cargarUsuarios() {
         const tieneAcceso = tienePermiso('acceso_usuarios');
 
         if (!tieneAcceso) {
-            alert('No tienes permiso para cceder a esta sección')
+            alert('No tienes permiso para acceder a esta sección')
             window.location.href = "../pages/polizas.html"
             return
         }

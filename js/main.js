@@ -98,7 +98,7 @@ async function handleLogin(event) {
         // REDIRIGIR AL HOME
         // ==========================================
         setTimeout(() => {
-            window.location.href = './home.html';
+            window.location.href = '../pages/home.html';
         }, 500);
         
     } catch (error) {

@@ -46,11 +46,11 @@ async function verificarAcceso() {
 
         if (!tienePermiso('ver_monitoreo')) {
             alert('⚠️ No tienes acceso a esta sección');
-            window.location.href = './home.html';
+            window.location.href = '../pages/home.html';
         }
     } catch (error) {
         console.error('Error verificando acceso:', error);
-        window.location.href = './home.html';
+        window.location.href = '../pages/home.html';
     }
 }
 
