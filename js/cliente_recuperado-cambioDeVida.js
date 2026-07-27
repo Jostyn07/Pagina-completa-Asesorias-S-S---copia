@@ -1245,19 +1245,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 7. Info usuario en headers
     if (typeof cargarInfoUsuario === 'function') await cargarInfoUsuario();
 
-    // 8. Borrador automático a Google Sheets cada 30 segundos
-    iniciarGuardadoBorrador('recuperado', obtenerDatosFormulario);
-
-    // 9. Menú admin
+    // 8. Menú admin
     if (typeof inicializarMenuAdmin === 'function') await inicializarMenuAdmin();
 
-    // Iniciar guardado de borrador cada 30 segundos
-    iniciarGuardadoBorrador('recuperado', () => obtenerDatosFormulario());
-
-    // Detener cuando se envíe exitosamente
-    detenerGuardadoBorrador();
+    // 9. Borrador automático a Google Sheets cada 30 segundos
+    iniciarGuardadoBorrador(obtenerPaginaBorrador(), obtenerDatosFormulario);
 
 });
+
+function obtenerPaginaBorrador() {
+    const tipo = document.getElementById('tipoModificacion')?.value;
+    if (tipo === 'Cambio de vida') return 'cambio_de_vida';
+    if (tipo === 'Recuperada y cambio de vida') return 'recuperada_y_cambio_de_vida';
+    if (tipo === 'Cancelada') return 'cancelada';
+    return 'recuperado';
+}
 
 function mostrarFormularioPago(tipo) {
     // Ocultar ambos formularios
