@@ -64,6 +64,15 @@ async function cargarSesiones() {
             .eq('activo', true)
             .order('nombre');
 
+        if (datosUsuario?.rol !== 'admin_general') {
+            queryUsuarios = queryUsuarios.overlaps('portales', datosUsuario?.portales || []);
+        }
+
+        const { data: usuarios } = await queryUsuarios;
+
+        const { data: sesiones } = await supabaseClient
+            .from('actividad_sesiones')
+            .select('*')
         // Cargar sesiones activas
         const { data: sesiones } = await supabaseClient
             .from('actividad_sesiones')
