@@ -600,3 +600,21 @@
     color: white;
     border-color: #6366f1;
 }
+
+.mov-dropdown-search {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.mov-dropdown-search input {
+    width: 90%;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    outline: none;
+}
+
+.mov-dropdown-search input:focus {
+    border-color: #6366f1;
+}

@@ -154,6 +154,13 @@ async function cargarOperadoresDropdown() {
         }))
 }
 
+function filtrarListaOperadoresMov(query) {
+    const busqueda = query.toLowerCase();
+    document.querySelectorAll('#listaOperadores .mov-chk-item').forEach(item => {
+        item.style.display = item.textContent.toLowerCase().includes(busqueda) ? 'flex' : 'none';
+    });
+}
+
 async function fetchTodasLasFilas(construirQuery, tamanioPagina = 1000) {
     let desdeIdx = 0;
     let filas = [];

@@ -170,6 +170,9 @@
                         <span class="material-symbols-rounded">expand_more</span>
                     </button>
                     <div class="mov-dropdown-panel" id="panelFiltroOperador" style="display: none;">
+                        <div class="mov-dropdown-search">
+                            <input type="text" id="buscarOperadorMov" placeholder="Buscar operador..." oninput="filtrarListaOperadoresMov(this.value)">
+                        </div>
                         <div class="mov-dropdown-list" id="listaOperadores"></div>
                         <div class="mov-dropdown-actions">
                             <button onclick="limpiarFiltroMultiple('operador')">Limpiar</button>

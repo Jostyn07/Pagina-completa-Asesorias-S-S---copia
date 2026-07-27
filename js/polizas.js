@@ -454,25 +454,11 @@ function restaurarFiltrosDesdeStorage() {
 async function cargarPolizas() {
     try {
         mostrarIndicadorCarga(true);
-        ;
         
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        
-        const { data: usuarioData } = await supabaseClient
-            .from('usuarios')
-            .select('id, nombre, rol, email')
-            .ilike('email', user.email)
-            .single();
-        
-        const usuarioActual = usuarioData;
-        rolUsuario = usuarioData?.rol || 'operador';
-        const nombreOperador = usuarioData?.nombre;
-         
-        console.log(rolUsuario)
+        rolUsuario = datosUsuario?.rol || 'operador';
+        const nombreOperador = datosUsuario?.nombre;
+
         const esAdmin = tienePermiso('ver_todos_clientes');
-        
-        ;
-        ;
         
         let query = supabaseClient
             .from('polizas')
@@ -2259,6 +2245,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     cargarInfoUsuario();
 
     // Primero poblar checkboxes, luego cargar pólizas
+    await cargarRolUsuario();
     await cargarDatosOperador();
     await cargarPolizas();
 });
