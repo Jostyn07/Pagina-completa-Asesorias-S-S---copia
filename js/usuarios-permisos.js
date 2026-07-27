@@ -288,13 +288,11 @@ function renderizarMatrizUsuario() {
 
 function marcarCambioPermisoUsuario(clave, nuevoValor) {
     if (nuevoValor === matrizUsuarioActual[clave]) {
-        if (nuevoValor === matrizUsuarioActual[clave]) {
-            delete cambiosPendientesUsuario[clave];
-        } else {
-            cambiosPendientesUsuario[clave] = nuevoValor;
-        }
-        document.getElementById('btnGuardarPermisosUsuario').disabled = Object.keys(cambiosPendientesUsuario).length === 0
+        delete cambiosPendientesUsuario[clave];
+    } else {
+        cambiosPendientesUsuario[clave] = nuevoValor;
     }
+    document.getElementById('btnGuardarPermisosUsuario').disabled = Object.keys(cambiosPendientesUsuario).length === 0;
 }
 
 async function guardarPermisosUsuario() {
