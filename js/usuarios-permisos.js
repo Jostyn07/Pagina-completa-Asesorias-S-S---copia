@@ -39,10 +39,28 @@ async function cargarUsuariosParaSelector() {
         return;
     }
     usuariosParaSelector = data || [];
+    poblarSelectUsuarioPermisos(usuariosParaSelector);    
+}
 
+function poblarSelectUsuarioPermisos(lista) {
     const select = document.getElementById('selectUsuarioPermisos');
-    select.innerHTML = '<option value="">Selecciona un usuario...</option>' +
-        usuariosParaSelector.map(u => `<option value="${u.id}">${u.nombre} (${u.rol})</option>`).join('');
+    const valorActual = select.value;
+
+    select.innerHTML = '<option value="">Selecciona un usuario...</option>' + 
+        lista.map(u => `<option value ="${u.id}">${u.nombre} (${u.rol})</option>`).join('');
+    
+    if (lista.some(u => u.id === valorActual)) {
+        select.value = valorActual;
+    }
+}
+
+function filtrarSelectUsuarioPermisos() {
+    const query = document.getElementById('buscarUsuarioPermisos').value.toLowerCase().trim();
+    const filtrados = !query ? usuariosParaSelector : usuariosParaSelector.filter(u => 
+        u.nombre?.toLowerCase().includes(query) || 
+        u.email?.toLowerCase().includes(query)
+    );
+    poblarSelectUsuarioPermisos(filtrados);
 }
 
 const PORTALES_VALIDOS = ['TODOS', 'Evelyn Morillo', 'Dante SY', 'Isabel SY'];
