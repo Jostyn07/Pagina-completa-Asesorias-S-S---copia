@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     inicializarFormulario();
+    cargarOperadoresPorPortal(null, ['operadorNombre', 'ventaRealizadaPor'])
     inicializarTabs();
     calcularFechasAutomaticas();
     inicializarValidacionTiempoReal();
@@ -415,6 +416,11 @@ function validarInfoGeneral() {
         { id: 'aplica', nombre: 'Aplica' },
         { id: 'operadorNombre', nombre: 'Operador' },
     ];
+
+    if (!document.querySelector('input[name="portalCliente"]:checked')) {
+        alert('El campo "Portal" es requerido antes de continuar');
+        return false
+    }
     
     for (const campo of camposRequeridos) {
         const elemento = document.getElementById(campo.id);
@@ -1260,6 +1266,7 @@ async function crearCliente(formData) {
     const clienteData = {
         tipo_registro: formData.tipoRegistro,
         fecha_registro: formData.fechaRegistro,
+        portal: formData.portalCliente || null,
         operador_id: obtenerUsuarioId(),
         operador_email: obtenerUsuarioEmail(),
         nombres: formData.nombres,

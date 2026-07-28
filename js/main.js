@@ -234,8 +234,9 @@ function mostrarNombreUsuario() {
     }
 }
 
-verificarAutenticacion();
-mostrarNombreUsuario();
+if (typeof datosUsuario !== 'undefined') {
+    mostrarNombreUsuario();
+}
 
 // ============================================
 // SIDEBAR

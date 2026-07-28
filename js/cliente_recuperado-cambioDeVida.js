@@ -105,7 +105,7 @@ async function seleccionarCliente(clienteId) {
         };
 
         // Poblar formulario
-        poblarFormulario(cliente, polizaActiva);
+        await poblarFormulario(cliente, polizaActiva);
 
         // Cargar dependientes
         await cargarDependientes(clienteId);
@@ -139,7 +139,7 @@ async function seleccionarCliente(clienteId) {
 // POBLAR FORMULARIO
 // ============================================
 
-function poblarFormulario(cliente, poliza) {
+async function poblarFormulario(cliente, poliza) {
     const set = (id, val) => {
         const el = document.getElementById(id);
         if (el) el.value = val || '';
@@ -172,7 +172,13 @@ function poblarFormulario(cliente, poliza) {
     set('estado',           cliente.estado);
     set('codigoPostal',     cliente.codigo_postal);
     set('poBox',            cliente.po_box);
-    set('operadorNombre',   cliente.operador_nombre);
+    if (cliente.portal) {
+        const radioPortal = document.querySelector(`input[name="portalClienteDisplay"][value="${cliente.portal}"]`);
+        if (radioPortal) radioPortal.checked = true;
+    }
+
+    await cargarOperadoresPorPortal(cliente.portal, ['operadorNombre', 'ventaRealizadaPor']);
+    set('operadorNombre', cliente.operador_nombre);
     set('ventaRealizadaPor',cliente.venta_realizada_por);
 
     // ── PÓLIZA ──
@@ -993,7 +999,7 @@ async function cargarBorradorAutomatico() {
     datosOriginales       = borrador.datosOriginales;
 
     if (datosOriginales) {
-        poblarFormulario(datosOriginales.cliente, datosOriginales.poliza);
+        await poblarFormulario(datosOriginales.cliente, datosOriginales.poliza);
     }
 
     const estado = document.getElementById('busquedaEstado');
@@ -1229,6 +1235,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 2. Formulario → guardarYEnviar
     const form = document.getElementById('clienteForm');
     if (form) form.addEventListener('submit', guardarYEnviar);
+
+    cargarOperadoresPorPortal(null, ['operadorNombre', 'ventaRealizadaPor'])
 
     // 3. Tabs
     inicializarTabs();

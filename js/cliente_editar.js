@@ -433,7 +433,7 @@ async function cargarDatosCliente(id) {
         // En la sección donde cargas los datos de la póliza
 
         // Rellenar formulario
-        rellenarFormulario(clienteData, polizaData, dependientesData, notasData);
+        await rellenarFormulario(clienteData, polizaData, dependientesData, notasData);
         
         // Actualizar título
         const nombreCompleto = `${clienteData.nombres} ${clienteData.apellidos}`;
@@ -477,7 +477,7 @@ async function cargarDatosCliente(id) {
 // RELLENAR FORMULARIO
 // ============================================
 
-function rellenarFormulario(cliente, poliza, dependientes, notas) {
+async function rellenarFormulario(cliente, poliza, dependientes, notas) {
     
     // DATOS DEL CLIENTE
     if (cliente) {
@@ -500,19 +500,26 @@ function rellenarFormulario(cliente, poliza, dependientes, notas) {
         if (ssnInput && cliente.ssn) {
             ssnInput.value = formatearSSN(cliente.ssn);
         }
-       if (cliente.tiene_social) checkboxTieneSsn.checked = cliente.tiene_social === "Si"  
-       if (cliente.ingreso_anual) document.getElementById('ingresos').value = cliente.ingreso_anual || 0;
-       if (cliente.ocupacion) document.getElementById('ocupacion').value = cliente.ocupacion || '';
-       if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad || '';
-       if (cliente.aplica) document.getElementById('aplica').value = cliente.aplica || '';
-       if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion || '';
-       if (cliente.casa_apartamento) document.getElementById('casaApartamento').value = cliente.casa_apartamento || '';
-       if (cliente.condado) document.getElementById('condado').value = cliente.condado || '';
-       if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad || '';
-       if (cliente.estado) document.getElementById('estado').value = cliente.estado || '';
-       if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal || '';
-       if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre || '';
-       if (cliente.venta_realizada_por) document.getElementById('ventaRealizadaPor').value = cliente.venta_realizada_por || '';
+        if (cliente.tiene_social) checkboxTieneSsn.checked = cliente.tiene_social === "Si"  
+        if (cliente.ingreso_anual) document.getElementById('ingresos').value = cliente.ingreso_anual || 0;
+        if (cliente.ocupacion) document.getElementById('ocupacion').value = cliente.ocupacion || '';
+        if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad || '';
+        if (cliente.aplica) document.getElementById('aplica').value = cliente.aplica || '';
+        if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion || '';
+        if (cliente.casa_apartamento) document.getElementById('casaApartamento').value = cliente.casa_apartamento || '';
+        if (cliente.condado) document.getElementById('condado').value = cliente.condado || '';
+        if (cliente.ciudad) document.getElementById('ciudad').value = cliente.ciudad || '';
+        if (cliente.estado) document.getElementById('estado').value = cliente.estado || '';
+        if (cliente.codigo_postal) document.getElementById('codigoPostal').value = cliente.codigo_postal || '';
+        if (cliente.portal) {
+            const radioPortal = document.querySelector(`input[name="portalCliente"][value="${cliente.portal}"]`);
+            if (radioPortal) radioPortal.checked = true;
+        }
+
+        await cargarOperadoresPorPortal(cliente.portal, ['operadorNombre']);
+
+        if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre || '';
+        if (cliente.venta_realizada_por) document.getElementById('ventaRealizadaPor').value = cliente.venta_realizada_por || '';
 
     }
     
@@ -1395,6 +1402,7 @@ function validarInfoGeneral() {
         { id: 'telefono1', nombre: 'Teléfono' },
         { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
         { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'nacionalidad', nombre: 'Nacionalidad' },
         { id: 'direccion', nombre: 'Dirección' },
         { id: 'ciudad', nombre: 'Ciudad' },
         { id: 'estado', nombre: 'Estado' },
@@ -1402,8 +1410,14 @@ function validarInfoGeneral() {
         { id: 'compania', nombre: 'Compañía' },
         { id: 'plan', nombre: 'Plan' },
         { id: 'prima', nombre: 'Prima' },
-        { id: 'aplica', nombre: 'Tipo de registro'}
+        { id: 'aplica', nombre: 'Aplica' },
+        { id: 'operadorNombre', nombre: 'Operador' },
     ];
+
+    if (!document.querySelector('input[name="portalCliente"]:checked')) {
+        alert('El campo "Portal" es requerido antes de continuar');
+        return false
+    }
     
     for (const campo of camposRequeridos) {
         const elemento = document.getElementById(campo.id);
@@ -1610,7 +1624,8 @@ async function handleSubmit(event) {
         aplica: formData.aplica || '',
         casa_apartamento: formData.casaApartamento || '',
         condado: formData.condado || '',
-        po_box: formData.poBox || ''
+        po_box: formData.poBox || '',
+        portal: formData.portalCliente || undefined,
         };
 
         if (esAdministrador()) {
