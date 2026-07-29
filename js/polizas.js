@@ -3298,6 +3298,7 @@ function actualizarTextoEstadoCompania() {
         texto.style.color = '#6366f1';
     }
 }
+
 document.addEventListener('click', e => {
     const panel = document.getElementById('panelEstadoCompania');
     const trigger = document.getElementById('triggerEstadoCompania');

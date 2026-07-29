@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     inicializarFormulario();
-    await cargarOperadoresPorPortal(null, ['operadorNombre', 'ventaRealizadaPor'])
+    await cargarOperadoresPorPortal(cliente.portal, ['operadorNombre', 'ventaRealizadaPor'])
     inicializarTabs();
     calcularFechasAutomaticas();
     inicializarValidacionTiempoReal();
