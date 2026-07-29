@@ -516,7 +516,7 @@ async function rellenarFormulario(cliente, poliza, dependientes, notas) {
             if (radioPortal) radioPortal.checked = true;
         }
 
-        await cargarOperadoresPorPortal(cliente.portal, ['operadorNombre']);
+        await cargarOperadoresPorPortal(cliente.portal, ['operadorNombre', 'ventaRealizadaPor'])
 
         if (cliente.operador_nombre) document.getElementById('operadorNombre').value = cliente.operador_nombre || '';
         if (cliente.venta_realizada_por) document.getElementById('ventaRealizadaPor').value = cliente.venta_realizada_por || '';
@@ -1626,6 +1626,8 @@ async function handleSubmit(event) {
         condado: formData.condado || '',
         po_box: formData.poBox || '',
         portal: formData.portalCliente || undefined,
+        operado_nombre: formData.operadorNombre || undefined,
+        venta_realizada_por: formData.ventaRealizadaPor || undefined,
         };
 
         if (esAdministrador()) {

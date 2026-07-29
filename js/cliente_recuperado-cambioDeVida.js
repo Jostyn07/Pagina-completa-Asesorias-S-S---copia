@@ -1236,8 +1236,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const form = document.getElementById('clienteForm');
     if (form) form.addEventListener('submit', guardarYEnviar);
 
-    cargarOperadoresPorPortal(null, ['operadorNombre', 'ventaRealizadaPor'])
-
     // 3. Tabs
     inicializarTabs();
 
