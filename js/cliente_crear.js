@@ -1321,9 +1321,9 @@ async function crearCliente(formData) {
         plan: formData.plan,
         prima: parseFloat(formData.prima) || 0,
         credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
-        fecha_efectividad: formData.fechaEfectividad,
-        fecha_inicial_cobertura: formData.fechaInicialCobertura,
-        fecha_final_cobertura: formData.fechaFinalCobertura,
+        fecha_efectividad: limpiarFecha(formData.fechaEfectividad),
+        fecha_inicial_cobertura: limpiarFecha(formData.fechaInicialCobertura),
+        fecha_final_cobertura: limpiarFecha(formData.fechaFinalCobertura),
         member_id: formData.memberId || null,
         portal_npn: formData.portalNpn || null,
         clave_seguridad: formData.claveSeguridad || null,
@@ -1395,7 +1395,7 @@ async function crearCliente(formData) {
             try {
                 // 1. Subir archivo a Supabase Storage
                 const timestamp = Date.now();
-                const nombreArchivo = `${clienteId}/${timestamp}_${archivo.name}`;
+                const nombreArchivo = `${clienteId}/${timestamp}_${limpiarNombreArchivo(archivo.name)}`;
                 
                 const { data: uploadData, error: uploadError } = await supabaseClient.storage
                     .from('documentos') // Bucket de storage
@@ -1544,6 +1544,10 @@ async function crearCliente(formData) {
     alert(`✅ Cliente y póliza creados exitosamente\n\nCliente: ${cliente.nombres} ${cliente.apellidos}\nPóliza: ${poliza.numero_poliza}`);
     
     window.location.href = './polizas.html';
+}
+
+function limpiarFecha(valor) {
+    return (valor && valor.trim() !== '') ? valor : null;
 }
 
 // ============================================
@@ -1760,6 +1764,21 @@ function generarColorDesdeTexto(texto) {
     const index = Math.abs(hash) % colores.length;
     return colores[index];
 }
+
+function limpiarNombreArchivo(nombre) {
+    const partes = nombre.split('.');
+    const extension = partes.length > 1 ? partes.pop() : '';
+    const base = partes.join('.');
+
+    const baseLimpia = base
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita tildes: ó → o, á → a, etc.
+        .replace(/[^a-zA-Z0-9_-]+/g, '_')                   // espacios y símbolos → _
+        .replace(/_+/g, '_')                                 // colapsa __ seguidos
+        .replace(/^_|_$/g, '');                              // quita _ al inicio/final
+
+    return extension ? `${baseLimpia}.${extension.toLowerCase()}` : baseLimpia;
+}
+
 
 // ============================================
 // CANCELAR
