@@ -1609,7 +1609,7 @@ async function handleSubmit(event) {
         email: formData.email,
         telefono1: formData.telefono1 ? formData.telefono1.replace(/\D/g, '') : '',
         telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : '',
-        fecha_nacimiento: formData.fechaNacimiento,
+        fecha_nacimiento: limpiarFecha(formData.fechaNacimiento),
         estado_migratorio: formData.estadoMigratorio,
         direccion: formData.direccion,
         ciudad: formData.ciudad,
@@ -1626,7 +1626,7 @@ async function handleSubmit(event) {
         condado: formData.condado || '',
         po_box: formData.poBox || '',
         portal: formData.portalCliente || undefined,
-        operado_nombre: formData.operadorNombre || undefined,
+        operador_nombre: formData.operadorNombre || undefined,
         venta_realizada_por: formData.ventaRealizadaPor || undefined,
         };
 
@@ -1639,9 +1639,9 @@ async function handleSubmit(event) {
         plan: formData.plan,
         prima: formData.prima || '0',
         credito_fiscal: formData.creditoFiscal || '0',
-        fecha_efectividad: formData.displayFechaEfectividad || formData.fechaEfectividad,
-        fecha_inicial_cobertura: formData.displayFechaInicial || '',
-        fecha_final_cobertura: formData.displayFechaFinal || formData.fechaFinalCobertura || '',
+        fecha_efectividad: limpiarFecha(formData.displayFechaEfectividad || formData.fechaEfectividad),
+        fecha_inicial_cobertura: limpiarFecha(formData.displayFechaInicial) || '',
+        fecha_final_cobertura: limpiarFecha(formData.displayFechaFinal || formData.fechaFinalCobertura) || '',
         estado_compania: formData.estadoCompania || '',
         email_portal: formData.emailPortal || '',
         contrasena_portal: formData.contrasenaPortal || '',
@@ -1652,8 +1652,8 @@ async function handleSubmit(event) {
         portal_npn: formData.portalNpn || '',
         clave_seguridad: formData.claveSeguridad || '',
         enlace_poliza: formData.enlacePoliza || '',
-        pagado_hasta: formData.pagadoHasta || '',
-        fecha_confirmacion: formData.fechaConfirmacion || '',
+        pagado_hasta: limpiarFecha(formData.pagadoHasta) || '',
+        fecha_confirmacion: limpiarFecha(formData.fechaConfirmacion) || '',
         observacion_pagos: formData.observacionPago || '',
         };  
 
@@ -1661,9 +1661,9 @@ async function handleSubmit(event) {
             datosPolizaNuevos.estado_mercado = formData.estadoMercado || '';
             datosPolizaNuevos.estado_documentos = formData.estadoDocumentos || '';
             datosPolizaNuevos.nombre_agente_mercado = formData.nombreAgenteMercado || '';
-            datosPolizaNuevos.fecha_revision_mercado = formData.fechaRevisionMercado || '';
+            datosPolizaNuevos.fecha_revision_mercado = limpiarFecha(formData.fechaRevisionMercado) || '';
             datosPolizaNuevos.documentos_pendientes = formData.documentosPendientes || '';
-            datosPolizaNuevos.fecha_plazo_documentos = formData.fechaPlazoDocumento || '';
+            datosPolizaNuevos.fecha_plazo_documentos = limpiarFecha(formData.fechaPlazoDocumento) || '';
         }
 
         // Comparar con datos originales
@@ -5340,6 +5340,10 @@ async function descargarArchivo(url, nombreArchivo) {
         console.error('Error al descargar:', error);
         alert('No se pudo descargar el archivo');
     }
+}
+
+function limpiarFecha(valor) {
+    return (valor && valor.trim() !== '') ? valor : null;
 }
 
 // Exportar funciones para uso global

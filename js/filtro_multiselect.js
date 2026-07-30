@@ -16,18 +16,18 @@ function crearFiltroMultiSelect(config) {
     const idTexto = `panel${idBase}`;
     const idBuscadodr = `buscar${idBase}`;
 
-    const contenedor = document.getElementById(contenedroId);
-    if (!coontenedor) {
+    const contenedor = document.getElementById(contenedorId);
+    if (!contenedor) {
         console.error(`crearFiltroMultiSelect: no existe #${contenedorId}`);
         return null;
     }
 
-    // Normaliza opciondes a {value, label}
+    // Normaliza opciones a {value, label}
     function normalizar(lista) {
         return (lista || []).map(o => typeof o === 'string' ? { value: o, label: o } : o);
     }
 
-    let opcionesActuales = normalizar(opcioens);
+    let opcionesActuales = normalizar(opciones);
 
     // Construir el HTML
     function renderOpciones() {
@@ -132,7 +132,7 @@ function crearFiltroMultiSelect(config) {
     // Enganchar eventos fijos
     elTrigger.addEventListener('click', toggle);
     elPanel.querySelector('.btn-dropdown-clear').addEventListener('click', limpiar);
-    elPanel.querySelector(',btn-dropdown-close').addEventListener('click', cerrar);
+    elPanel.querySelector('.btn-dropdown-close').addEventListener('click', cerrar);
     if (conBuscador) {
         document.getElementById(idBuscador).addEventListener('keyup', filtrarOpcionesVisibles);
     }
@@ -146,3 +146,12 @@ function crearFiltroMultiSelect(config) {
 
     return { getSeleccionados, setSeleccionados, limpiar, recargarOpciones, cerrar};
 }
+
+const filtroEstadoMigratorio = crearFiltroMultiSelect({
+    contenedorId: 'filtroEstadoMigratorioGroup',
+    label: 'Estado Migratorio',
+    idBase: 'filtroEstadoMigratorio',
+    opciones: ['Ciudadano', 'Residente Permanente', 'Permiso de trabajo', 'Asilo politico', 'I-94', 'Otro'],
+    textoVacio: 'Seleccionar estados...',
+    onCambio: () => { guardarFiltrosEnStorage(); aplicarFiltros();}
+})
