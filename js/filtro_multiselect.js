@@ -69,4 +69,80 @@ function crearFiltroMultiSelect(config) {
         elPanel.classList.remove('active');
         elTrigger.classList.remove('active');
     }
+
+    function actualizarTexto() {
+        const checked = Array.from(elLista.querySelectorAll('input:checked'));
+        if (checked.length === 0) {
+            elTexto.textContent = textoVacio;
+            elTexto.style.color = '#94a3b8';
+        } else if (checked.length === 1) {
+            const opcion = opcionesActuales.find(o => o.value === checked[0].value);
+            elTexto.textContent = textoUno ? textoUno(checked[0].value) : (opcion ? opcion.label : checked[0].value);
+            elTexto.style.color = '#1e293b';
+        } else {
+            elTexto.textContent = `${checked.length} seleccionados`;
+            elTexto.style.color = '#6366f1';
+        }
+    }
+
+    function limpiar() {
+        elLista.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        actualizarTexto();
+        onCambio(getSeleccionados());
+    }
+
+    function filtrarOpcionesVisibles() {
+        if (!conBuscador) return;
+        const busqueda = document.getElementById(idBuscador).value.toLowerCase();
+        elLista.querySelectorAll('.checkbox-item').forEach(item => {
+            item.style.display = item.textContent.toLowerCase().includes(busqueda) ? 'flex' : 'none';
+        });
+    }
+
+    function getSeleccionados() {
+        return Array.from(elLista.querySelector('input:checked')).map(cb => cb.value);
+    }
+
+    function setSeleccionados(valores) {
+        elLista.querySelectorAll('input:[type:"checkbox"]').forEach(cb => {
+            cb.checked = valores.includes(cb.value);
+        });
+        actualizarTexto();
+    }
+
+    async function recargarOpciones() {
+        if (!fetchOpciones) return;
+        const nuevas = await fetchOpciones();
+        opcionesActuales = normalizar(nuevas);
+        const seleccionaPrevia = getSeleccionados();
+        elLista.innerHTML = recargarOpciones();
+        setSeleccionados(seleccionaPrevia.filter(v => opcionesActuales.some(o => o.value === v)));
+        engancharCheckboxes();
+    }
+
+    function engancharCheckboxes() {
+        elLista.querySelectorAll('input[type="checkbox"').forEach(cb => {
+            cb.addEventListener('change', () => {
+                actualizarTexto();
+                onCambio(getSeleccionados());
+            });
+        });
+    }
+
+    // Enganchar eventos fijos
+    elTrigger.addEventListener('click', toggle);
+    elPanel.querySelector('.btn-dropdown-clear').addEventListener('click', limpiar);
+    elPanel.querySelector(',btn-dropdown-close').addEventListener('click', cerrar);
+    if (conBuscador) {
+        document.getElementById(idBuscador).addEventListener('keyup', filtrarOpcionesVisibles);
+    }
+    document.addEventListener('click', (e) => {
+        if (!elPanel.contains(e.target) && !elTrigger.contains(e.target)) cerrar();
+    });
+
+    engancharCheckboxes();
+    actualizarTexto();
+    if (fetchOpciones) recargarOpciones();
+
+    return { getSeleccionados, setSeleccionados, limpiar, recargarOpciones, cerrar};
 }
