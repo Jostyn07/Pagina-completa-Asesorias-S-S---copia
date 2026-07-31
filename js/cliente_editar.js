@@ -535,7 +535,7 @@ async function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if(poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza || '';
        if(poliza.documentos_pendientes) document.getElementById('documentosPendientes').value = poliza.documentos_pendientes;
        if(poliza.agente35_estado) document.getElementById('agente35_estado').value = poliza.agente35_estado || '';
-       if(poliza.agente35_nota) document.getElementById('agente35_nota').value = poliza.agente35_nota || '';
+       if(poliza.agente35_nota) document.getElementById('agente35_notas').value = poliza.agente35_nota || '';
         // Fechas de la póliza
         const fechaEfectividadInput = document.getElementById('fechaEfectividad');
         if (fechaEfectividadInput && poliza.fecha_efectividad) {
@@ -2721,7 +2721,7 @@ async function guardarEstadoSeguimiento(polizaId, formData) {
             estado_compania: document.getElementById('estadoCompania')?.value || null,
             email_portal: document.getElementById('emailPortal')?.value || null,
             contrasena_portal: document.getElementById('contrasenaPortal')?.value || null,
-            observacion_compania: document.getElementById('observacion_compania')?.value || null,
+            observacion_compania: document.getElementById('observacionCompania')?.value || null,
             pagado_hasta: document.getElementById('pagadoHasta')?.value || null,
             fecha_confirmacion: document.getElementById('fechaConfirmacion')?.value || null,
             observacion_pagos: document.getElementById('observacionPago')?.value || null,
@@ -4724,6 +4724,13 @@ function mostrarCambiosPendientes(cambios) {
                             <span class="material-symbols-rounded" style="font-size: 18px;">bolt</span>
                             Aplicar ahora
                         </button>
+
+                        <button class="btn-secondary" onclick="borrarCambioProgramado('${cambio.id}', this)" 
+                            style="padding: 8px 16px; font-size: 14px; color: var(--danger-color, #e53e3e); border-color: var(--danger-color, #e53e3e)"
+                            type="button">
+                            <span class="material-symbols-rounded" style="font-size: 18px">delete</span>
+                            Borrar
+                        </button>
                     </div>
                 </div>
                 
@@ -4809,6 +4816,37 @@ async function aplicarCambioAhora(cambioId, boton) {
     } catch (error) {
         console.error('Error al aplicar cambio:', error);
         alert(`❌ Error al aplicar el cambio:\n\n${error.message}`);
+        boton.disabled = false;
+        boton.innerHTML = btnOriginal;
+    }
+}
+
+async function borrarCambioProgramado(cambioId, boton) {
+    if (!confirm('¿Eliminar este cambio programado? Esta accion no se puede desahacer.')) return;
+
+    const btnOriginal = boton.innerHTML;
+    boton.disabled = true;
+    boton.innerHTML = `
+        <span class="material-symbols-rounded" style="font-size: 18px;">refresh</span>
+        Borrando
+    `
+
+    try {
+        const { error } = await supabaseClient
+            .from('polizas_pendientes')
+            .delete()
+            .eq('id', cambioId)
+        
+        if (error) throw error;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const clienteId = urlParams.get('id');
+        if (clienteId) {
+            await verificarCambiosPendientes(clienteId);
+        }
+    } catch (error) {
+        console.error('Error al borrar cambio programado:', error);
+        alert(`Error al borrar el cambio: \n\n${error.message}`);
         boton.disabled = false;
         boton.innerHTML = btnOriginal;
     }
@@ -5241,7 +5279,7 @@ if (cambio.datos_anteriores && cambio.datos_nuevos) {
                                         </tr>
                                         <tr>
                                             <td style="padding: 4px 0; color: var(--text-muted);">Fecha Nacimiento</td>
-                                            <td style="padding: 4px 0;">${dep.fecha_nacimiento ? formatearFecha(dep.fecha_nacimiento) : '-'}</td>
+                                            <td style="padding: 4px 0;">${dep.fecha_nacimiento ? formatearFechaCorta(dep.fecha_nacimiento) : '-'}</td>
                                         </tr>
                                         <tr>
                                             <td style="padding: 4px 0; color: var(--text-muted);">Sexo</td>
