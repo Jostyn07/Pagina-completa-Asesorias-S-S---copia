@@ -1180,6 +1180,9 @@ function ordenarPor(columna) {
         } else if (columna === 'prima') {
             valorA = parseFloat(a.prima || 0); 
             valorB = parseFloat(b.prima || 0);
+        } else if (columna === 'portal') {
+            valorA = (a.cliente?.portal || '').toString().toLowerCase();
+            valorB = (b.cliente?.portal || '').toString().toLowerCase();
         } else {
             valorA = (a[columna] || '').toString().toLowerCase();
             valorB = (b[columna] || '').toString().toLowerCase();
