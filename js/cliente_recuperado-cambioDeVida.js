@@ -834,6 +834,7 @@ async function guardarYEnviar(e) {
         await enviarAGoogleSheets({
         // OPERADOR Y CONTROL
         registradoPor:          nombreOperador,
+        portal:                 datosOriginales?.cliente?.portal || '',
         tipoCambio:             tipoCambio,
         tipoVenta:              tipoCambio === 'recuperado' ? 'Recuperado' : 'Cambio de vida',
         tipoModificacion:       formData.tipo_modificacion,

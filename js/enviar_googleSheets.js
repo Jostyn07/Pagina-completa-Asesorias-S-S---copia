@@ -7,8 +7,11 @@ const GOOGLE_SHEETS_URL_OTROS_PORTALES = 'https://script.google.com/macros/s/AKf
 // ENVIAR A GOOGLE SHEETS
 // ============================================
 
-function obtenerUrlGoogleSheets('portal') {
-    
+function obtenerUrlGoogleSheets(portal) {
+    console.log('Portal recibido:', JSON.stringify(portal), 'Longitud:', portal?.length);
+    return portal === 'Evelyn Morillo'
+        ? GOOGLE_SHEETS_URL_EVELYN_MORILLO
+        : GOOGLE_SHEETS_URL_OTROS_PORTALES;
 }
 
 async function enviarAGoogleSheets(datosFormulario) {
@@ -78,7 +81,9 @@ async function enviarAGoogleSheets(datosFormulario) {
             dependientes:           datosFormulario.dependientes         || [],
         };
 
-        await fetch(GOOGLE_SHEETS_URL, {
+        const url = obtenerUrlGoogleSheets(datosFormulario.portal);
+
+        await fetch(url, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
@@ -141,7 +146,9 @@ async function enviarBorrador(pagina, obtenerDatos) {
             estadoFormulario:   calcularEstadoFormulario(datos)
         };
 
-        await fetch(GOOGLE_SHEETS_URL, {
+        const url = obtenerUrlGoogleSheets(datos.portalCliente);
+
+        await fetch(url, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },

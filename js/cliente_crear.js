@@ -1458,6 +1458,7 @@ async function crearCliente(formData) {
             // OPERADOR Y CONTROL
             nombreOperador:         formData.operadorNombre || '',
             registradoPor:          formData.operadorNombre || '',
+            portal:                 formData.portalCliente || '',
             fecha:                  formData.fechaRegistro || new Date().toISOString().split('T')[0],
             tipoVenta:              formData.tipoVenta || '',
             tipoRegistro:           formData.tipoRegistro || '',
