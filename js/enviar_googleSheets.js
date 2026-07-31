@@ -8,10 +8,13 @@ const GOOGLE_SHEETS_URL_OTROS_PORTALES = 'https://script.google.com/macros/s/AKf
 // ============================================
 
 function obtenerUrlGoogleSheets(portal) {
-    console.log('Portal recibido:', JSON.stringify(portal), 'Longitud:', portal?.length);
-    return portal === 'Evelyn Morillo'
-        ? GOOGLE_SHEETS_URL_EVELYN_MORILLO
-        : GOOGLE_SHEETS_URL_OTROS_PORTALES;
+    if (portal === 'Evelyn Morillo') {
+        return GOOGLE_SHEETS_URL_EVELYN_MORILLO;
+    }
+    if (['Dante SY', 'Isabel SY'].includes(portal)) {
+        return GOOGLE_SHEETS_URL_OTROS_PORTALES;
+    }
+    return null
 }
 
 async function enviarAGoogleSheets(datosFormulario) {
@@ -83,6 +86,11 @@ async function enviarAGoogleSheets(datosFormulario) {
 
         const url = obtenerUrlGoogleSheets(datosFormulario.portal);
 
+        if (!url) {
+            console.warn('Borrador no guradado: portal seleccionado todavía.')
+            return;
+        }
+
         await fetch(url, {
             method: 'POST',
             mode: 'no-cors',
@@ -147,6 +155,11 @@ async function enviarBorrador(pagina, obtenerDatos) {
         };
 
         const url = obtenerUrlGoogleSheets(datos.portalCliente);
+
+        if (!url) {
+            console.warn('Borrador no guradado: portal seleccionado todavía.')
+            return;
+        }
 
         await fetch(url, {
             method: 'POST',
