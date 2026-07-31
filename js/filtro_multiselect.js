@@ -12,9 +12,10 @@ function crearFiltroMultiSelect(config) {
     } = config;
 
     const idPanel = `panel${idBase}`;
-    const idTrigger = `panel${idBase}`;
-    const idTexto = `panel${idBase}`;
-    const idBuscadodr = `buscar${idBase}`;
+    const idTrigger = `trigger${idBase}`;
+    const idTexto = `texto${idBase}`;
+    const idBuscador = `buscar${idBase}`;
+    const idLista = `lista${idBase}`;
 
     const contenedor = document.getElementById(contenedorId);
     if (!contenedor) {
@@ -45,7 +46,7 @@ function crearFiltroMultiSelect(config) {
             </button>
             <div class="dropdown-panel" id="${idPanel}">
                 ${conBuscador ? `<div class="dropdown-search"><input type="text" id="${idBuscador}" placeholder="Buscar..."></div>` : ''}
-                <div class="checkbox-listl-scroll" id="Lista${idBase}">${renderOpciones()}</div>
+                <div class="checkbox-list-scroll" id="${idLista}">${renderOpciones()}</div>
                 <div class="dropdown-actions">
                     <button type="button" class="btn-dropdown-clear">Limpiar</button>
                     <button type="button" class="btn-dropdown-close">Cerrar</button>
@@ -57,7 +58,7 @@ function crearFiltroMultiSelect(config) {
     const elPanel = document.getElementById(idPanel);
     const elTrigger = document.getElementById(idTrigger);
     const elTexto = document.getElementById(idTexto);
-    const elLista = document.getElementById(`lista${idBase}`);
+    const elLista = document.getElementById(idLista);
 
     function toggle(event) {
         event.stopPropagation();
@@ -100,11 +101,11 @@ function crearFiltroMultiSelect(config) {
     }
 
     function getSeleccionados() {
-        return Array.from(elLista.querySelector('input:checked')).map(cb => cb.value);
+        return Array.from(elLista.querySelectorAll('input:checked')).map(cb => cb.value);
     }
 
     function setSeleccionados(valores) {
-        elLista.querySelectorAll('input:[type:"checkbox"]').forEach(cb => {
+        elLista.querySelectorAll('input[type="checkbox"]').forEach(cb => {
             cb.checked = valores.includes(cb.value);
         });
         actualizarTexto();
@@ -114,14 +115,14 @@ function crearFiltroMultiSelect(config) {
         if (!fetchOpciones) return;
         const nuevas = await fetchOpciones();
         opcionesActuales = normalizar(nuevas);
-        const seleccionaPrevia = getSeleccionados();
-        elLista.innerHTML = recargarOpciones();
-        setSeleccionados(seleccionaPrevia.filter(v => opcionesActuales.some(o => o.value === v)));
+        const seleccionPrevia = getSeleccionados();
+        elLista.innerHTML = renderOpciones();
+        setSeleccionados(seleccionPrevia.filter(v => opcionesActuales.some(o => o.value === v)));
         engancharCheckboxes();
     }
 
     function engancharCheckboxes() {
-        elLista.querySelectorAll('input[type="checkbox"').forEach(cb => {
+        elLista.querySelectorAll('input[type="checkbox"]').forEach(cb => {
             cb.addEventListener('change', () => {
                 actualizarTexto();
                 onCambio(getSeleccionados());
@@ -144,7 +145,7 @@ function crearFiltroMultiSelect(config) {
     actualizarTexto();
     if (fetchOpciones) recargarOpciones();
 
-    return { getSeleccionados, setSeleccionados, limpiar, recargarOpciones, cerrar};
+    return { getSeleccionados, setSeleccionados, limpiar, recargarOpciones, cerrar };
 }
 
 const filtroEstadoMigratorio = crearFiltroMultiSelect({
@@ -153,5 +154,5 @@ const filtroEstadoMigratorio = crearFiltroMultiSelect({
     idBase: 'filtroEstadoMigratorio',
     opciones: ['Ciudadano', 'Residente Permanente', 'Permiso de trabajo', 'Asilo politico', 'I-94', 'Otro'],
     textoVacio: 'Seleccionar estados...',
-    onCambio: () => { guardarFiltrosEnStorage(); aplicarFiltros();}
-})
+    onCambio: () => { guardarFiltrosEnStorage(); aplicarFiltros(); }
+});

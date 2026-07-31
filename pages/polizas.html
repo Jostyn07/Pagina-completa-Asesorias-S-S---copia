@@ -418,7 +418,7 @@
                                         </select>
                                     </div>
                                     <!-- Filtro por estado -->
-                                    <div class="filtro-group">
+                                    <div class="filtro-group" id="filtroEstadoGroup">
                                         <label for="filtroEstado">Filtrar por estado</label>
                                         <select name="filtroEstado" id="filtroEstado">
                                             <option value="">Selecciona...</option>
@@ -562,7 +562,7 @@
                                         </select>
                                     </div>
 
-                                    <div class="filtro-group">
+                                    <div class="filtro-group" id="filtroMesPagadoGroup">
                                         <label for="">Mes pagado</label>
                                         <select name="mesPagado" id="mesPagado">
                                             <option value="">Seleccionar...</option>
@@ -605,7 +605,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="filtro-group">
+                                    <div class="filtro-group" id="filtroTipoModificacionGroup">
                                         <label for="tipoModifiacion">Tipo de modifiación</label>
                                         <select name="tipoModificacion" id="tipoModificacion">
                                             <option value="">Todos</option>
@@ -644,13 +644,13 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="filtro-group">
+                                    <div class="filtro-group" id="filtroModificadoPorGroup">
                                         <label>Modificado por</label>
                                         <select id="filtroModificadoPor">
                                             <option value="">Todos</option>
                                         </select>
                                     </div>
-                                    <div class="filtro-group">
+                                    <div class="filtro-group" id="filtroDocumentosGroup">
                                         <label>Documentos</label>
                                         <select id="filtroDocumentos">
                                             <option value="">Todos</option>
@@ -683,7 +683,7 @@
                                         </select>
                                     </div>
 
-                                    <div class="filtro-group">
+                                    <div class="filtro-group" id="filtroAgenteMercadoGroup">
                                         <label for="agenteMercado">Agente (Mercado)</label>
                                         <select name="agenteMercado" id="agenteMercado">
                                             <option value="">Todos</option>
@@ -760,7 +760,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="filtro-group">
+                                    <div class="filtro-group" id="filtroEstadoAgente35Group">
                                         <label for="estadoAgente35">Estado agente 3.5</label>
                                         <select name="estadoAgente35" id="estadoAgente35">
                                             <option value="">Todos</option>
@@ -862,6 +862,7 @@
                                             <label>Fecha Revisión Compañía Hasta</label>
                                             <input type="date" id="filtroFechaRevisionCompaniaHasta">
                                         </div>
+                                        <div class="filtro-group" id="filtroPortalAvanzadoGroup"></div>
                                     </div>
 
                                     <!-- Filtrar por fecha de pago -->
@@ -973,7 +974,7 @@
                     <table class="content__info-client">
                         <thead class="thead">
                             <tr>
-                                <th class="sortable" data-column="numero_poliza">Póliza</th>
+                                <th class="sortable" data-column="portal">Portal</th>
                                 <th class="sortable" data-column="tipoRegistro">Tipo de registro</th>
                                 <th>Tipo de modificación</th>
                                 <th>Agente (Mercado)</th>
