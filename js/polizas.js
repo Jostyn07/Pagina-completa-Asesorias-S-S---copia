@@ -740,7 +740,7 @@ function renderizarTabla() {
             <td data-label="Fecha de revision en compañia">${formatoUS(poliza.fecha_revision_compania) || '-'}</td>
             <td data-label="Plan">${poliza.plan || '-'}</td>
             <td data-label="Prima">$${poliza.prima || '0.00'}</td>
-            <td data-label="Fecha de ultimo pago">${formatoUS(poliza.pagado_hasta) || '-'}</td>
+            <td data-label="Pagado hasta">${formatoUS(poliza.pagado_hasta) || '-'}</td>
             <td data-label="¿Tiene metodo de pago?">${metodos_pago?.[0]?.tiene_metodo_pago || '-'}</td>
             <td data-label="Agente">${poliza.agente_nombre || '-'}</td>
             <td data-label="Efectividad">${formatoUS(poliza.fecha_efectividad)}</td>
