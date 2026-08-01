@@ -511,6 +511,7 @@ async function cargarPolizas() {
                 modificado_por_email,
                 clave_seguridad,
                 member_id,
+                aplicantes,
                 cliente:clientes (
                     id,
                     nombres,
@@ -531,6 +532,7 @@ async function cargarPolizas() {
                     tiene_social,
                     archivado,
                     venta_realizada_por,
+                    portal,
                     metodos_pago (
                         tiene_metodo_pago,
                         tiene_pago_automatico,
@@ -722,6 +724,7 @@ function renderizarTabla() {
                     </a>
                 </div>
             </td>
+            <td data-label="Aplicantes">${poliza.aplicantes || '-'}</td>
             <td data-label="Teléfono">${cliente?.telefono1 || '-'}</td>
             <td data-label="Estado migratorio">${cliente?.estado_migratorio || '-'}</td>
             <td data-label="SSN">${cliente?.ssn || 'No'}</td>
