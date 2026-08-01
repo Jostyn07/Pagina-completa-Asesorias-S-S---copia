@@ -503,6 +503,7 @@ async function rellenarFormulario(cliente, poliza, dependientes, notas) {
         if (cliente.tiene_social) checkboxTieneSsn.checked = cliente.tiene_social === "Si"  
         if (cliente.ingreso_anual) document.getElementById('ingresos').value = cliente.ingreso_anual || 0;
         if (cliente.ocupacion) document.getElementById('ocupacion').value = cliente.ocupacion || '';
+        if (cliente.tipo_declaracion) document.getElementById('tipoDeclaracion').value = cliente.tipo_declaracion || '';
         if (cliente.nacionalidad) document.getElementById('nacionalidad').value = cliente.nacionalidad || '';
         if (cliente.aplica) document.getElementById('aplica').value = cliente.aplica || '';
         if (cliente.direccion) document.getElementById('direccion').value = cliente.direccion || '';
@@ -1405,6 +1406,7 @@ function validarInfoGeneral() {
         { id: 'telefono1', nombre: 'Teléfono' },
         { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
         { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'tipoDeclaracion', nombre: 'Tipo de declaración'},
         { id: 'nacionalidad', nombre: 'Nacionalidad' },
         { id: 'direccion', nombre: 'Dirección' },
         { id: 'ciudad', nombre: 'Ciudad' },
@@ -1620,6 +1622,7 @@ async function handleSubmit(event) {
         codigo_postal: formData.codigoPostal,
         genero: formData.genero,
         ocupacion: formData.ocupacion || '',
+        tipoDeclaracion: formData.tipoDeclaracion || '',
         nacionalidad: formData.nacionalidad || '',
         ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : '',
         ingreso_anual: formData.ingresos || '',
@@ -1733,6 +1736,7 @@ function validarFormularioCompleto() {
         { id: 'telefono1', nombre: 'Teléfono' },
         { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
         { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'tipoDeclaracion', nombre: 'Tipo de declación'},
         { id: 'nacionalidad', nombre: 'Nacionalidad' },
         { id: 'direccion', nombre: 'Dirección' },
         { id: 'condado', nombre: 'Condado' },
@@ -1811,6 +1815,7 @@ async function actualizarCliente(id, formData) {
         tiene_social: tieneSsn,
         ingreso_anual: parseFloat(formData.ingresos) || 0,
         ocupacion: formData.ocupacion || null,
+        tipo_declaracion: formData.tipoDeclaracion || null,
         nacionalidad: formData.nacionalidad || null, 
         aplica: formData.aplica,
         direccion: formData.direccion,
@@ -4832,12 +4837,24 @@ async function borrarCambioProgramado(cambioId, boton) {
     `
 
     try {
-        const { error } = await supabaseClient
+        const { data, error } = await supabaseClient
             .from('polizas_pendientes')
             .delete()
             .eq('id', cambioId)
+            .select()
         
         if (error) throw error;
+
+        if (!data || data.length === 0) {
+            throw new Error('No se eliminó ninguna fila. Probablemente falta permiso de DELETE (politica RLS) sobre polizas_pendiente para tu usuario/rol')
+        }
+
+        const eliminado = data[0];
+        await registrarCambio(eliminado.id, 'cambio_programado_eliminado', 'Cambios Programados', [{
+            campo: eliminado.tipo_cambio === 'recuperado' ? 'Recuperado' : 'Cambio de vida',
+            valorAnterior: `Programado para ${eliminado.fecha_efectividad}`,
+            valorNuevo: 'Eliminado'
+        }])
 
         const urlParams = new URLSearchParams(window.location.search);
         const clienteId = urlParams.get('id');
@@ -4990,6 +5007,7 @@ function mostrarModalDetallesCambio(cambio) {
         estado_migratorio: 'Estado Migratorio',
         ssn: 'SSN',
         nacionalidad: 'Nacionalidad',
+        tipoDeclaracion: 'Tipo de declaración',
         
         // INFORMACIÓN LABORAL
         ingreso_anual: 'Ingreso Anual',

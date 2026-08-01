@@ -404,8 +404,11 @@ function validarInfoGeneral() {
         { id: 'telefono1', nombre: 'Teléfono' },
         { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
         { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'tipoDeclaracion', nombre: "Tipo de declaración"},
         { id: 'nacionalidad', nombre: 'Nacionalidad' },
+        { id: 'aplica', nombre: '¿Aplica para el seguro?' },
         { id: 'direccion', nombre: 'Dirección' },
+        { id: 'condado', nombre: 'Condado'},
         { id: 'ciudad', nombre: 'Ciudad' },
         { id: 'estado', nombre: 'Estado' },
         { id: 'codigoPostal', nombre: 'Código postal' },
@@ -414,6 +417,7 @@ function validarInfoGeneral() {
         { id: 'prima', nombre: 'Prima' },
         { id: 'aplica', nombre: 'Aplica' },
         { id: 'operadorNombre', nombre: 'Operador' },
+        { id: 'ventaRealizadaPor', nombre: 'Venta realizada por:' },
     ];
 
     if (!document.querySelector('input[name="portalCliente"]:checked')) {
@@ -1212,6 +1216,7 @@ function validarFormularioCompleto() {
         { id: 'telefono1', nombre: 'Teléfono' },
         { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
         { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+        { id: 'tipoDeclaracion', nombre: 'Tipo de declaración'},
         { id: 'nacionalidad', nombre: 'Nacionalidad' },
         { id: 'aplica', nombre: '¿Aplica para el seguro?'},
         { id: 'direccion', nombre: 'Dirección' },
@@ -1222,7 +1227,8 @@ function validarFormularioCompleto() {
         { id: 'compania', nombre: 'Compañía' },
         { id: 'plan', nombre: 'Plan' },
         { id: 'prima', nombre: 'Prima' },
-        { id: 'operadorNombre', nombre: 'operador' },
+        { id: 'aplica', nombre: 'Aplica' },
+        { id: 'operadorNombre', nombre: 'Operador' },
         { id: 'ventaRealizadaPor', nombre: 'Venta realizada por:' },
     ];
     
@@ -1279,6 +1285,7 @@ async function crearCliente(formData) {
         ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
         ingreso_anual: parseFloat(formData.ingresos) || 0,
         ocupacion: formData.ocupacion || null,
+        tipo_declaracion: formData.tipoDeclaracion || null,
         nacionalidad: formData.nacionalidad || null,
         aplica: formData.aplica,
         direccion: formData.direccion,

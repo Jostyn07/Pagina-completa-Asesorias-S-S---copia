@@ -163,6 +163,7 @@ async function poblarFormulario(cliente, poliza) {
     setCheck('tieneSsn',    cliente.tiene_social);
     set('ingresos',         cliente.ingreso_anual);
     set('ocupacion',        cliente.ocupacion);
+    set('tipoDeclaracion',  cliente.tipo_declaracion);
     set('nacionalidad',     cliente.nacionalidad);
     set('aplica',           cliente.aplica);
     set('direccion',        cliente.direccion);
@@ -554,6 +555,7 @@ function detectarCamposModificados(datosNuevos) {
         ssn:                    'SSN',
         ingreso_anual:          'Ingreso Anual',
         ocupacion:              'Ocupación',
+        tipo_declaracion:       'Tipo de declaración',
         nacionalidad:           'Nacionalidad',
         direccion:              'Dirección',
         ciudad:                 'Ciudad',
@@ -606,6 +608,7 @@ function obtenerDatosFormulario() {
         ssn:                     get('ssn'),
         ingreso_anual:           getNum('ingresos'),
         ocupacion:               get('ocupacion'),
+        tipo_declaracion:        get('tipoDeclaracion'),
         nacionalidad:            get('nacionalidad'),
         aplica:                  get('aplica'),
         direccion:               get('direccion'),
@@ -873,6 +876,7 @@ async function guardarYEnviar(e) {
         // INFORMACIÓN LABORAL
         ingresos:               formData.ingreso_anual,
         ocupacion:              formData.ocupacion,
+        tipoDeclaracion:        formData.tipo_declaracion,
 
         // PÓLIZA
         aplicantes:             formData.aplicantes,
