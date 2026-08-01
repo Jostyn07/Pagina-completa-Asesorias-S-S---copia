@@ -242,6 +242,13 @@ function convertirFechaParaMostrar(fechaBD) {
     return `${mes}/${dia}/${anio}`;
 }
 
+function parsearFechaComoYM(fechaStr) {
+    if (!fechaStr) return null;
+    const [anio, mes] = String(fechaStr).split('-').map(Number);
+    if (!anio || !mes) return null;
+    return anio * 12 + (mes - 1); // mes - 1 para que quede 0-indexado, igual que getMonth()
+}
+
 // ============================================
 // INICIALIZAR AL CARGAR LA PÁGINA
 // ============================================

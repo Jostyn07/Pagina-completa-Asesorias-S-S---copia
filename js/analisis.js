@@ -54,6 +54,7 @@ async function cargarDatosAnalisis() {
                 operador_nombre,
                 compania,
                 prima,
+                fecha_efectividad,
                 clientes (
                     id,
                     nombres,
@@ -187,6 +188,49 @@ function aplicarFiltroOperador() {
 // SCORING — 8 FACTORES
 // ============================================
 
+const NOMBRES_MESES = [
+    'enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'
+]
+
+function estadoMesPagado(valor) {
+    const v = (valor || '').toLowerCase();
+    return v.includes('si') && !v.includes('no');
+}
+
+function contarMesesPagoPendiente(metodosPagoCliente, fechaEfectividad) {
+    if (!metodosPagoCliente) return 0;
+
+    const limiteYM = fechaEfectividad ? parsearFechaComoYM(fechaEfectividad) : null;
+
+    const hoy = new Date();
+    let cursorYM = hoy.getFullYear() * 12 + hoy.getMonth() + 1;
+
+    let consecutivos = 0;
+
+    for (let i = 0; i < 24; i++) {
+        if (limiteYM !== null && cursorYM < limiteYM) break;
+
+        const mesIdx = ((cursorYM % 12) + 12) % 12;
+        const campo = `pago_${NOMBRES_MESES[mesIdx]}`;
+        const valor = metodosPagoCliente[campo];
+
+        if (estadoMesPagado(valor)) break;
+
+        consecutivos++;
+        cursorYM--;
+    }
+
+    return consecutivos;
+}
+
+function puntajePorMesesPendientes(n) {
+    if (n <= 0) return 0;
+    if (n === 1) return 15;
+    if (n === 2) return 30;
+    if (n === 3) return 60;
+    return 70;
+}
+
 function calcularScoring(poliza) {
     if (scoringCache[poliza.id]) return scoringCache[poliza.id];
 
@@ -229,14 +273,18 @@ function calcularScoring(poliza) {
         : (poliza.clientes?.metodos_pago || {});
 
     const primaMensual = parseFloat(poliza?.prima || 0);
-    const campoPago    = obtenerCampoPagoMesActual();
-    const estadoPago   = (metodosPagoCliente[campoPago] || '').toLowerCase();
 
     if (primaMensual > 0) {
-        if (!estadoPago || estadoPago.includes('no') ||
-            estadoPago.includes('pendiente') || estadoPago.includes('atrasa')) {
-            score += 20;
-            factores.push('Pago del mes pendiente');
+    const mesesPendientes = contarMesesPagoPendiente(metodosPagoCliente, poliza.fecha_efectividad);
+    const puntajePago = puntajePorMesesPendientes(mesesPendientes)
+
+        if (puntajePago > 0) {
+            score += puntajePago;
+            factores.push(
+                mesesPendientes === 1
+                    ? 'Pago del mes próximo pendiente'
+                    : `${mesesPendientes} meses de pago pendientes`
+            )
         }
     }
 
