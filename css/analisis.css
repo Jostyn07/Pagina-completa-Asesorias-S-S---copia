@@ -460,6 +460,25 @@
     justify-content: flex-end;
 }
 
+.btn-limpiar-filtros-avanzados {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-secondary, #64748b);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-limpiar-filtros-avanzados:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
 /* ============================================
    TABLA DE SCORING
    ============================================ */

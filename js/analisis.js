@@ -17,7 +17,7 @@ let filtrosAvanzados = {
     contactoSinResuesta: false,
     imposibleContactar: false,
     sinContacto: [],
-    sinSeguimiento: false,
+    sinSeguimientos: false,
     senalAbandono: false
 };
 
@@ -57,7 +57,7 @@ function cumpleFiltrosAvanzados(poliza) {
         });
         if (!coincide) return false;
     }
-    if (filtrosAvanzados.sinSeguimiento && !m.sinSeguimiento) return false;
+    if (filtrosAvanzados.sinSeguimientos && !m.sinSeguimientos) return false;
     if (filtrosAvanzados.senalAbandono && !m.senalAbandono) return false;
 
     return true;
@@ -78,14 +78,14 @@ function toggleFiltroAvanzadoMulti(grupo, valor, btn) {
 function limpiarFiltrosAvanzados() {
     filtrosAvanzados = {
         pagosPendientes: [],
-        ddocsPorVencer: [],
+        docsPorVencer: [],
         contactoSinResuesta: false,
         imposibleContactar: false,
         sinContacto: [],
-        sinSeguimiento: false,
+        sinSeguimientos: false,
         senalAbandono: false
     };
-    document.querySelectorAll('.analisis-chip--filtro.activo')
+    document.querySelectorAll('.analisis-chip-filtro.active')
         .forEach(b => b.classList.remove('active'));
     renderizarTabla();
 }
@@ -377,13 +377,13 @@ function calcularScoring(poliza) {
     }
 
     // Factor 3: Imposible de contactar
-    let ImposibleContactar = false;
+    let imposibleContactar = false;
     let contactoSinResuesta = false;
 
     if (seguimientos.length >= 3) {
         const ultimos3 = seguimientos.slice(0, 3);
         if (ultimos3.every(s => s.seguimiento_efectivo === 'No')) {
-            ImposibleContactar = true;
+            imposibleContactar = true;
             score += 25;
             factores.push('Imposible contactar (3 intentos)');
         }
@@ -452,7 +452,7 @@ function calcularScoring(poliza) {
     const resultado = { score: finalScore, nivel, factores, iaResumen: null, iaAccion: null, metricas: {
         mesesPagoPendiente,
         docDiasParaVencer,
-        ImposibleContactar,
+        imposibleContactar,
         contactoSinResuesta,
         diasSinContacto,
         sinSeguimientos,
@@ -1259,4 +1259,10 @@ function escapeHtml(str) {
         .replace(/</g,'&lt;')
         .replace(/>/g,'&gt;')
         .replace(/"/g,'&quot;');
+}
+
+function toggleFiltroAvanzadoCheck(clave, btn) {
+    filtrosAvanzados[clave] = !filtrosAvanzados[clave];
+    btn.classList.toggle('active', filtrosAvanzados[clave]);
+    renderizarTabla();
 }
