@@ -5405,6 +5405,12 @@ function limpiarFecha(valor) {
     return (valor && valor.trim() !== '') ? valor : null;
 }
 
+function formatearFechaCorta(fecha) {
+    if (!fecha) return '—';
+    const d = new Date(fecha);
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
 // Exportar funciones para uso global
 window.inicializarSubPestanas = inicializarSubPestanas;
 window.cambiarSubPestana = cambiarSubPestana;

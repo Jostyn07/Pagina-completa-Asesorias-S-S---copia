@@ -397,6 +397,69 @@
 .analisis-filtro-btn.amarillo.active { border-color: #f59e0b; color: #f59e0b; background: #fffbeb; }
 .analisis-filtro-btn.verde.active  { border-color: #22c55e; color: #22c55e; background: #f0fdf4; }
 
+.analisis-filtros-avanzados {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0 28px 16px;
+    padding: 16px 18px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    background: var(--bg-card, #fff);
+}
+
+.analisis-filtros-avanzados.open {
+    display: flex;
+}
+
+.filtro-avanzado-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filtro-avanzado-titulo {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.filtro-avanzado-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.analisis-chip-filtro {
+    padding: 5px 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 20px;
+    background: var(--bg-secondary, #f8fafc);
+    color: var(--text-secondary, #64748b);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.analisis-chip-filtro:hover {
+    border-color: #6366f1;
+    color: #6366f1;
+}
+
+.analisis-chip-filtro.active {
+    border-color: #6366f1;
+    background: #6366f1;
+    color: #fff;
+}
+
+.filtro-avanzado-acciones {
+    display: flex;
+    justify-content: flex-end;
+}
+
 /* ============================================
    TABLA DE SCORING
    ============================================ */
@@ -1014,3 +1077,4 @@
         padding: 0 16px;
     }
 }
+

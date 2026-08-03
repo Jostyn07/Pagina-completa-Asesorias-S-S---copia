@@ -294,6 +294,57 @@
                         onclick="filtrarTabla('verde', this)">
                     <span class="dot"></span> Verde
                 </button>
+                <button class="analisis-filtro-btn" id=""btnFiltrosAvanzados onclick="toggleFiltrosPanel()">
+                    <span class="material-symbols-rounded">tune</span>
+                    Filtros avanzados
+                </button>
+            </div>
+        </div>
+
+        <div class="analisis-filtros-avanzados" id="analisisFiltrosAvanzados">
+            <div class="filtro-avanzado-grupo">
+                <span class="filtro-avanzado-titulo">Pagos pendientes</span>
+                <div class="filtro-avanzado-chips">
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoMulti('pagosPendientes','1',this)">1 mes</button>
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoMulti('pagosPendientes','2',this)">2 meses</button>
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoMulti('pagosPendientes','3',this)">3 meses</button>
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoMulti('pagosPendientes','4+',this)">4 meses o más</button>
+                </div>
+            </div>
+
+            <div class="filtro-avanzado-grupo">
+                <span class="filtro-avanzado-titulo">Documentos próximos a vencer</span>
+                <div class="filtro-avanzado-chips">
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoMulti('docsPorVencer','1',this)">1 día</button>
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoMulti('docsPorVencer','2-7',this)">2-7 días</button>
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoMulti('docsPorVencer','8-30',this)">8 - 30 días</button>
+                </div>
+            </div>
+
+            <div class="filtro-avanzado-grupo">
+                <span class="filtro-avanzado-titulo">Sin contacto (días desde último seguimiento)</span>
+                <div class="filtro-avanzado-chips">
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoMulti('sinContacto','<=29',this)">Menos de 30 días</button>
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoMulti('sinContacto','30-59',this)">30 - 59 días</button>
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoMulti('sinContacto','>=60',this)">Mas de 59 días</button>
+                </div>
+            </div>
+
+            <div class="filtro-avanzado-grupo">
+                <span class="filtro-avanzado-titulo">Estado de contacto</span>
+                <div class="filtro-avanzado-chips">
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoCheck('contactoSinRespuesta', this)">Contacto sin respuesta</button>
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoCheck('imposibleContactar', this)">Imposible contactar</button>
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoCheck('sinSeguimiento', this)">Sin seguimiento registrado</button>
+                    <button class="analisis-chip-filtro" onclick="toggleFiltroAvanzadoCheck('senalAbandono', this)">Señales de abandono en notas</button>
+                </div>
+            </div>
+
+            <div class="filtro-avanzado-acciones">
+                <button class="btn-limpiar-filtros-avanzados" onclick="limpiarFiltrosAvanzados()">
+                    <span class="material-symbols-rounded">filter_alt_off</span>
+                    Limpiar filtros
+                </button>
             </div>
         </div>
 

@@ -11,6 +11,91 @@ let scoringCache            = {};
 let esOperadorSimple        = false;
 let planesGenerados         = {};
 let filtroSSNOscarActivo = false;
+let filtrosAvanzados = {
+    pagosPendientes: [],
+    docsPorVencer: [],
+    contactoSinResuesta: false,
+    imposibleContactar: false,
+    sinContacto: [],
+    sinSeguimiento: false,
+    senalAbandono: false
+};
+
+function cumpleFiltrosAvanzados(poliza) {
+    const m = scoringCache[poliza.id]?.metricas;
+    if (!m) return true;
+
+    if (filtrosAvanzados.pagosPendientes.length > 0) {
+        const n = m.mesesPagoPendiente;
+        const coincide = filtrosAvanzados.pagosPendientes.some(v => v === '4+' ? n >= 4 : n === Number(v));
+        if (!coincide) return false;
+    }
+
+    if (filtrosAvanzados.docsPorVencer.length > 0) {
+        const d = m.docDiasParaVencer;
+        if (d === null) return false;
+        const coincide = filtrosAvanzados.docsPorVencer.some(v => {
+            if (v === '1') return d <= 1;
+            if (v === '2-7') return d >= 2 && d <= 7;
+            if (v === '8-30') return d >= 8 && d <= 30;
+            return false
+        });
+        if (!coincide) return false;
+    }
+
+    if (filtrosAvanzados.contactoSinResuesta && !m.contactoSinResuesta) return false;
+    if (filtrosAvanzados.imposibleContactar && !m.imposibleContactar) return false;
+
+    if (filtrosAvanzados.sinContacto.length > 0) {
+        const d = m.diasSinContacto;
+        if (d === null) return false;
+        const coincide = filtrosAvanzados.sinContacto.some(v => {
+            if (v === '<=29') return d <= 29;
+            if (v === '30-59') return d >=30 && d <= 59;
+            if (v === '>=60') return d >= 60;
+            return false; 
+        });
+        if (!coincide) return false;
+    }
+    if (filtrosAvanzados.sinSeguimiento && !m.sinSeguimiento) return false;
+    if (filtrosAvanzados.senalAbandono && !m.senalAbandono) return false;
+
+    return true;
+}
+
+function toggleFiltroAvanzadoMulti(grupo, valor, btn) {
+    const idx = filtrosAvanzados[grupo].indexOf(valor);
+    if (idx === -1) {
+        filtrosAvanzados[grupo].push(valor);
+        btn.classList.add('active');
+    } else {
+        filtrosAvanzados[grupo].splice(idx, 1);
+        btn.classList.remove('active');
+    }
+    renderizarTabla();
+}
+
+function limpiarFiltrosAvanzados() {
+    filtrosAvanzados = {
+        pagosPendientes: [],
+        ddocsPorVencer: [],
+        contactoSinResuesta: false,
+        imposibleContactar: false,
+        sinContacto: [],
+        sinSeguimiento: false,
+        senalAbandono: false
+    };
+    document.querySelectorAll('.analisis-chip--filtro.activo')
+        .forEach(b => b.classList.remove('active'));
+    renderizarTabla();
+}
+
+function toggleFiltrosPanel(){
+    const panel = document.getElementById('analisisFiltrosAvanzados');
+    const btn = document.getElementById('btnFiltrosAvanzados');
+    const abierto = panel.classList.toggle('open');
+    btn.classList.toggle('actvie', abierto);
+}
 
 // ============================================
 // INICIALIZACIÓN
@@ -244,10 +329,12 @@ function calcularScoring(poliza) {
     // Factor 1: Documentos pendientes / vencidos
     const docStatus = (poliza.estado_documentos || '').toLowerCase();
     const docPlazo  = poliza.fecha_plazo_documentos;
+    let docDiasParaVencer = null;
 
     if (docStatus.includes('incompleto') || docStatus.includes('pendiente')) {
         if (docPlazo) {
             const dias = Math.ceil((new Date(docPlazo) - new Date()) / 86400000);
+            docDiasParaVencer = dias
             if (dias < 0) {
                 score += 35;
                 factores.push('Documentos vencidos');
@@ -273,53 +360,63 @@ function calcularScoring(poliza) {
         : (poliza.clientes?.metodos_pago || {});
 
     const primaMensual = parseFloat(poliza?.prima || 0);
+    let mesesPagoPendiente = 0;
 
     if (primaMensual > 0) {
-    const mesesPendientes = contarMesesPagoPendiente(metodosPagoCliente, poliza.fecha_efectividad);
-    const puntajePago = puntajePorMesesPendientes(mesesPendientes)
+    mesesPagoPendiente = contarMesesPagoPendiente(metodosPagoCliente, poliza.fecha_efectividad);
+    const puntajePago = puntajePorMesesPendientes(mesesPagoPendiente)
 
         if (puntajePago > 0) {
             score += puntajePago;
             factores.push(
-                mesesPendientes === 1
+                mesesPagoPendiente === 1
                     ? 'Pago del mes próximo pendiente'
-                    : `${mesesPendientes} meses de pago pendientes`
+                    : `${mesesPagoPendiente} meses de pago pendientes`
             )
         }
     }
 
     // Factor 3: Imposible de contactar
+    let ImposibleContactar = false;
+    let contactoSinResuesta = false;
+
     if (seguimientos.length >= 3) {
         const ultimos3 = seguimientos.slice(0, 3);
         if (ultimos3.every(s => s.seguimiento_efectivo === 'No')) {
+            ImposibleContactar = true;
             score += 25;
             factores.push('Imposible contactar (3 intentos)');
         }
     } else if (seguimientos.length > 0 && seguimientos[0].seguimiento_efectivo === 'No') {
+        contactoSinResuesta = true;
         score += 10;
         factores.push('Último contacto sin respuesta');
     }
 
     // Factor 4: Días sin contacto
+    let diasSinContacto = null;
+    let sinSeguimientos = false;
     if (seguimientos.length > 0) {
-        const dias = Math.floor(
+        diasSinContacto = Math.floor(
             (new Date() - new Date(seguimientos[0].fecha_seguimiento)) / 86400000
         );
-        if (dias > 60) {
+        if (diasSinContacto > 60) {
             score += 30;
-            factores.push(`Sin contacto ${dias} días`);
-        } else if (dias > 30) {
+            factores.push(`Sin contacto ${diasSinContacto} días`);
+        } else if (diasSinContacto > 30) {
             score += 15;
-            factores.push(`Sin contacto ${dias} días`);
+            factores.push(`Sin contacto ${diasSinContacto} días`);
         }
     } else {
+        sinSeguimientos = true;
         score += 25;
         factores.push('Sin seguimientos registrados');
     }
 
     // Factor 5: Palabras clave en notas (riesgo básico, antes de IA)
     const notas = seguimientos.map(s => s.observacion || '').join(' ').toLowerCase();
-    if (/cancelar|cambiar|competencia|caro|costoso|otra agencia|no quiere|no puede pagar|quiere salir/.test(notas)) {
+    const senalAbandono = /cancelar|cambiar|competencia|caro|costoso|otra agencia|no quiere|no puede pagar|quiere salir/.test(notas)
+    if (senalAbandono) {
         score += 25;
         factores.push('Señales de abandono en notas');
     }
@@ -352,7 +449,15 @@ function calcularScoring(poliza) {
     if (finalScore >= 61)      nivel = 'rojo';
     else if (finalScore >= 26) nivel = 'amarillo';
 
-    const resultado = { score: finalScore, nivel, factores, iaResumen: null, iaAccion: null };
+    const resultado = { score: finalScore, nivel, factores, iaResumen: null, iaAccion: null, metricas: {
+        mesesPagoPendiente,
+        docDiasParaVencer,
+        ImposibleContactar,
+        contactoSinResuesta,
+        diasSinContacto,
+        sinSeguimientos,
+        senalAbandono
+    } };
     scoringCache[poliza.id] = resultado;
     return resultado;
 }
@@ -750,6 +855,8 @@ function renderizarTabla() {
     } else if (filtroNivelActivo !== 'todos') {
         lista = lista.filter(p => scoringCache[p.id]?.nivel === filtroNivelActivo);
     }
+
+    lista = lista.filter(cumpleFiltrosAvanzados)
 
     // Ordenar: rojos primero → mayor score primero
     const orden = { rojo: 0, amarillo: 1, verde: 2 };
