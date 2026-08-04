@@ -12,6 +12,7 @@ let polizaSeleccionada = null;
 let filtrosActivos= null;
 let hayFiltrosActivos = false;
 let filtroAnioActivado = false;
+let factoresPolizaCache = {}
 
 
 // ============================================
@@ -701,6 +702,7 @@ function renderizarTabla() {
         
         tr.innerHTML = `
             <td data-label="Portal">${cliente?.portal || '-'}</td>
+            <td data-label="Factores">${renderCeldaFactores(poliza.id)}</td>
             <td data-label="Tipo de registro">${cliente?.tipo_registro || '-'}</td>
             <td data-label="Tipo de modificación">${cliente?.tipo_modificacion || '-'}</td>
             <td data-label="Agente (Mercado)">${poliza.nombre_agente_mercado || '-'}</td>
@@ -832,6 +834,99 @@ function configurarModal() {
             cerrarModal();
         }
     });
+}
+
+function calcularFactoresTodasLasPolizas() {
+    todasLasPolizas.forEach(p => {
+        const info = calcularScoringCartera(p);
+        factoresPolizaCache[p.id] = {
+            ...info,
+            principal: obtenerFactorPrincipalCartera(info.factores, info.metricas.mesesPagoPendiente)
+        };
+    });
+    renderizarTabla()
+}
+
+function renderCeldaFactores(polizaId) {
+    const info = factoresPolizaCache[polizaId];
+
+    if (!info) {
+        return `<span style="color:#94a3b8; font-size: 0.78rem;">Calculando...</span>`
+    }
+    if (!info.principal) {
+        return `<span style="color:#94a3b8; font-size: 0.78rem;">Sin factores</span>`
+    }
+
+    const color = info.nivel === 'rojo' ? '#ef4444' : info.nivel === 'amarillo' ? '#f59e0b' : '#22c55e';
+    return `
+        <span onclick="event.stopPropagation(); abrirModalFactores('${polizaId}')"
+              style="display:inline-block; cursor:pointer; font-size:0.76rem; font-weight:600;
+                     padding:4px 10px; border-radius:14px; white-space:nowrap;
+                     background:${color}1a; color:${color}; border:1px solid ${color}55;">
+            ${escapeHtml(info.principal)}
+        </span>`;
+}
+
+function renderCeldaFactores(polizaId) {
+    const info = factoresPolizaCache[polizaId];
+
+    if (!info) {
+        return `<span style="color:#94a3b8; font-size:0.78rem;">Calculando…</span>`;
+    }
+    if (!info.principal) {
+        return `<span style="color:#94a3b8; font-size:0.78rem;">Sin factores</span>`;
+    }
+
+    const color = info.nivel === 'rojo' ? '#ef4444' : info.nivel === 'amarillo' ? '#f59e0b' : '#22c55e';
+
+    return `
+        <span onclick="event.stopPropagation(); abrirModalFactores('${polizaId}')"
+              style="display:inline-block; cursor:pointer; font-size:0.76rem; font-weight:600;
+                     padding:4px 10px; border-radius:14px; white-space:nowrap;
+                     background:${color}1a; color:${color}; border:1px solid ${color}55;">
+            ${escapeHtml(info.principal)}
+        </span>`;
+}
+
+function abrirModalFactores(polizaId) {
+    const info = factoresPolizaCache[polizaId];
+    if (!info) return;
+
+    const poliza  = todasLasPolizas.find(p => String(p.id) === String(polizaId));
+    const cliente = poliza?.cliente || {};
+    const nombre  = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim();
+    const color   = info.nivel === 'rojo' ? '#ef4444' : info.nivel === 'amarillo' ? '#f59e0b' : '#22c55e';
+
+    document.getElementById('modalFactoresContenido').innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+            <div>
+                <h2 style="margin:0 0 4px; font-size:1.15rem; color:#1e293b;">${escapeHtml(nombre || 'Cliente')}</h2>
+                <span style="font-size:0.8rem; color:#64748b;">${escapeHtml(poliza?.numero_poliza || '')}</span>
+            </div>
+            <button onclick="cerrarModalFactores()" style="background:none; border:none; cursor:pointer; color:#64748b; padding:4px;">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+        </div>
+        <div style="display:inline-flex; align-items:center; gap:8px; background:${color}1a; border:1px solid ${color}55; color:${color}; font-weight:700; font-size:0.85rem; padding:5px 14px; border-radius:20px; margin-bottom:16px;">
+            ${info.score} pts · ${info.nivel.charAt(0).toUpperCase() + info.nivel.slice(1)}
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            ${info.factores.length > 0 ? info.factores.map(f => `
+                <div style="display:flex; align-items:center; gap:8px; padding:9px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; font-size:0.85rem; color:#334155;">
+                    <span class="material-symbols-rounded" style="font-size:16px; color:#6366f1;">flag</span>
+                    ${escapeHtml(f)}
+                </div>
+            `).join('') : `<p style="color:#94a3b8; font-size:0.85rem; margin:0;">No se detectaron factores de riesgo.</p>`}
+        </div>
+    `;
+
+    document.getElementById('modalFactores').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalFactores() {
+    document.getElementById('modalFactores').style.display = 'none';
+    document.body.style.overflow = 'auto';
 }
 
 async function abrirDetalles(polizaId) {

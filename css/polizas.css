@@ -393,7 +393,7 @@ body {
 
 .thead tr {
     display: grid;
-    grid-template-columns: repeat(30, 200px); 
+    grid-template-columns: repeat(31, 200px); 
     padding: 15px;
     font-weight: 600;
     color: var(--color-text-primary);
@@ -409,7 +409,7 @@ body {
 
 tbody tr {
     display: grid;
-    grid-template-columns: repeat(30, 200px);
+    grid-template-columns: repeat(31, 200px);
     padding: 15px;
     border-bottom: 1px solid var(--color-border-hr);
     transition: background-color 0.2s ease;
@@ -513,7 +513,7 @@ tbody td {
     /* Opción 1: Mantener scroll horizontal en móvil */
     .thead tr,
     tbody tr {
-        grid-template-columns: repeat(18, 120px); /* Columnas más pequeñas en móvil */
+        grid-template-columns: repeat(31, 120px); /* Columnas más pequeñas en móvil */
     }
     
     /* Opción 2: Si prefieres cards en móvil, descomenta esto:

@@ -975,6 +975,7 @@
                         <thead class="thead">
                             <tr>
                                 <th class="sortable" data-column="portal">Portal</th>
+                                <th>Factores</th>
                                 <th class="sortable" data-column="tipoRegistro">Tipo de registro</th>
                                 <th>Tipo de modificación</th>
                                 <th>Agente (Mercado)</th>
@@ -1081,6 +1082,13 @@
         </div>
     </div>
 
+    <!-- Modal de factores de riesgo -->
+     <div id="modalFactores" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center;" onclick="if(event.target===this) cerrarModalFactores()">
+        <div id="modalFactoresContenido" style="background: white; border-radius: 16px; padding: 28px; max-width: 480px; width: 90%; max-height: 80vh; width: 90%; overflow: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2); ">
+            <!-- El contenido se carga dinamicamente -->
+        </div>
+     </div>
+
     <!-- SCRIPTS -->
     <!-- 1. CDN de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1094,6 +1102,8 @@
     <script src="../js/main.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+
+    <script src="../js/scoring_cartera.js"></script>
 
     <script src="../js/polizas.js"></script>
 
