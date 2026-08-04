@@ -13,7 +13,11 @@ function carteraContarMesesPagoPendiente(metodosPagoCliente, fechaEfectividad) {
     const limiteYM = fechaEfectividad ? parsearFechaComoYM(fechaEfectividad) : null;
 
     const hoy = new Date();
-    let cursorYM = hoy.getFullYear() * 12 + hoy.getMonth(); // el mes actual es el primero que se revisa
+    let cursorYM = hoy.getFullYear() * 12 + hoy.getMonth();
+
+    if (hoy.getDate() >= 15) {
+        cursorYM += 1
+    }
 
     let consecutivos = 0;
 
@@ -55,7 +59,7 @@ function calcularScoringCartera(poliza) {
     let score = 0;
     const factores = [];
 
-    const cliente      = poliza.clientes || {};
+    const cliente      = poliza.clientes || poliza.cliente || {};
     const seguimientos = (poliza.seguimientos || [])
         .sort((a, b) => new Date(b.fecha_seguimiento) - new Date(a.fecha_seguimiento));
 
