@@ -13,11 +13,11 @@ function carteraContarMesesPagoPendiente(metodosPagoCliente, fechaEfectividad) {
     const limiteYM = fechaEfectividad ? parsearFechaComoYM(fechaEfectividad) : null;
 
     const hoy = new Date();
-    let cursorYM = hoy.getFullYear() * 12 + hoy.getMonth() + 1;
+    let cursorYM = hoy.getFullYear() * 12 + hoy.getMonth(); // el mes actual es el primero que se revisa
 
     let consecutivos = 0;
 
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 12; i++) {
         if (limiteYM !== null && cursorYM < limiteYM) break;
 
         const mesIdx = ((cursorYM % 12) + 12) % 12;
@@ -52,8 +52,6 @@ function carteraCalcularEdad(fechaNacimiento) {
 }
 
 function calcularScoringCartera(poliza) {
-    if (scoringCache[poliza.id]) return scoringCache[poliza.id];
-
     let score = 0;
     const factores = [];
 
@@ -90,9 +88,9 @@ function calcularScoringCartera(poliza) {
     }
 
     // Factor 2: Pago del mes actual
-    const metodosPagoCliente = Array.isArray(poliza.clientes?.metodos_pago)
-        ? (poliza.clientes.metodos_pago[0] || {})
-        : (poliza.clientes?.metodos_pago || {});
+    const metodosPagoCliente = Array.isArray(cliente.metodos_pago)
+        ? (cliente.metodos_pago[0] || {})
+        : (cliente.metodos_pago || {});
 
     const primaMensual = parseFloat(poliza?.prima || 0);
     let mesesPagoPendiente = 0;
@@ -184,17 +182,20 @@ function calcularScoringCartera(poliza) {
     if (finalScore >= 61)      nivel = 'rojo';
     else if (finalScore >= 26) nivel = 'amarillo';
 
-    const resultado = { score: finalScore, nivel, factores, iaResumen: null, iaAccion: null, metricas: {
-        mesesPagoPendiente,
-        docDiasParaVencer,
-        imposibleContactar,
-        contactoSinResuesta,
-        diasSinContacto,
-        sinSeguimientos,
-        senalAbandono
-    } };
-    scoringCache[poliza.id] = resultado;
-    return resultado;
+    return {
+        score: finalScore,
+        nivel,
+        factores,
+        metricas: {
+            mesesPagoPendiente,
+            docDiasParaVencer,
+            imposibleContactar,
+            contactoSinResuesta,
+            diasSinContacto,
+            sinSeguimientos,
+            senalAbandono
+        }
+    };
 }
 
 // Obtener lo que se mostrara de primero
@@ -207,7 +208,7 @@ function obtenerFactorPrincipalCartera(factores, mesesPagoPendiente) {
     const fDoc = factores.find(f => f.includes('Documentos') || f.startsWith('Docs.'))
     if (fDoc) return fDoc;
 
-    const fSeg = factores.find(f => f.includes('seguimiento') || f.includes('ontcano'))
+    const fSeg = factores.find(f => f.includes('seguimiento') || f.includes('contact'))
     if(fSeg) return fSeg;
 
     return factores[0] || null;

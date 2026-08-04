@@ -281,7 +281,7 @@ function restaurarFiltrosDesdeStorage() {
         const termino = datos.busqueda.toLowerCase();
         resultado = resultado.filter(poliza => {
             if (poliza.cliente?.archivado === true) return false;
-            const cliente = poliza.cliente || {};
+            const cliente = poliza.cliente || poliza.clientes || {};
             const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.toLowerCase();
             const telefono = cliente.telefono1 || '';
             const numeroPoliza = poliza.numero_poliza || '';
@@ -527,6 +527,7 @@ async function cargarPolizas() {
                     codigo_postal,
                     estado_migratorio,
                     ssn,
+                    ocupacion,
                     tipo_registro,
                     tipo_modificacion,
                     operador_nombre,
@@ -606,6 +607,8 @@ async function cargarPolizas() {
         actualizarPaginacion();
         
         mostrarIndicadorCarga(false);
+
+        setTimeout(() => calcularFactoresTodasLasPolizas(), 50)
 
         const filtroOperadorHome = sessionStorage.getItem('filtro_operador');
         if (filtroOperadorHome) {
