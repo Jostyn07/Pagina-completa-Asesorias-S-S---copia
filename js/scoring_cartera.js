@@ -105,11 +105,16 @@ function calcularScoringCartera(poliza) {
 
         if (puntajePago > 0) {
             score += puntajePago;
-            factores.push(
-                mesesPagoPendiente === 1
+
+            let etiquetaPago;
+            if (mesesPagoPendiente === 1) {
+                etiquetaPago = new Date().getDate() > 15
                     ? 'Pago del mes próximo pendiente'
-                    : `${mesesPagoPendiente} meses de pago pendientes`
-            )
+                    : 'Pago del mes actual pendiente'
+            } else {
+                etiquetaPago = `${mesesPagoPendiente} meses de pago pendientes`
+            }
+            factores.push(etiquetaPago)
         }
     }
 
