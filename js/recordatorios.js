@@ -3,6 +3,7 @@ let recordatorioEditandoId = null;
 let notificacionesMostradas = new Set(); // evitar duplicados
 let intervaloVerificacion = null;
 const MINUTOS_GRACIA_VENCIDO = 5;
+let usuarioActualCache = null;
 
 function escapeHtml(valor) {
     return String(valor ?? '')
@@ -20,6 +21,23 @@ function escapeAttr(valor) {
 function fechaValida(valor) {
     const fecha = new Date(valor);
     return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+async function obtenerUsuarioActualRecordatorio() {
+    if (usuarioActualCache) return usuarioActualCache;
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return null;
+    const { data, error } = await supabaseClient
+        .from('usuarios')
+        .select('id, rol, es_supervisor, puede_ver_monitoreo, supervisor_id, nombre, portales')
+        .eq('id', user.id)
+        .single();
+    if (error) {
+        console.error('Error obteniendo usuario actual:', error);
+        return null
+    }
+    usuarioActualCache = data;
+    return usuarioActualCache;
 }
 
 function recordatorioEstaVencido(recordatorio, ahora = new Date()) {
@@ -43,7 +61,7 @@ async function sincronizarRecordatoriosVencidos(recordatorios) {
         .in('id', idsVencidos);
 
     if (error) {
-        console.error('âŒ Error actualizando recordatorios vencidos:', error);
+        console.error('âŒ Error buscando cliente:', error);
     }
 
     return (recordatorios || []).map(r =>
@@ -94,6 +112,10 @@ function inyectarDrawer() {
                 <div class="form-group-dr">
                     <label>Fecha y hora *</label>
                     <input type="datetime-local" id="drFecha">
+                </div>
+                <div class="form-group-dr">
+                    <label>¿Para quién es? *</label>
+                    <select id="drParaQuien"></select>
                 </div>
                 <div class="form-group-dr">
                     <label>Vincular cliente (opcional)</label>
@@ -165,16 +187,8 @@ async function cargarRecordatorios() {
             throw new Error('Supabase no esta inicializado');
         }
 
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) return;
-
-        const { data: usuarioActual, error: errorUsuario } = await supabaseClient
-            .from('usuarios')
-            .select('id, rol, es_supervisor, puede_ver_monitoreo, supervisor_id, nombre')
-            .eq('id', user.id)
-            .single();
-        if (errorUsuario) throw errorUsuario;
-        if (!usuarioActual) throw new Error('No se encontro el perfil del usuario actual');
+        const usuarioActual = await obtenerUsuarioActualRecordatorio();
+        if (!usuarioActual) throw new Error ('No se encontro el perfil del usuario');
 
         let query = supabaseClient
             .from('recordatorios')
@@ -295,19 +309,93 @@ function renderizarRecordatorios(estado) {
                             : '')
                     }
                 </div>
+                ${renderizarCasillasRespuesta(r)}
             </div>
         `;
     }).join('');
 }
 
+function renderizarCasillasRespuesta(r) {
+    const miId = usuarioActualCache?.id;
+    const esDestinatario = miId && miId === r.usuario_id;
+    const esRemitente = miId && miId === r.creado_por_id;
+
+    return `
+        <div class="dr-respuestas">
+            <div class="dr-respuesta-box">
+                <label>Respuesta de quien lo hace</label>
+                <textarea
+                    ${esDestinatario ? '' : 'disabled'}
+                    placeholder="${esDestinatario ? 'Escribe tu respuesta...' : 'Sin respuesta'}"
+                    onblur="guardarRespuesta('${escapeAttr(r.id)}', 'destinatario', this.value)"
+                >${escapeHtml(r.respuesta_destinatario || '')}</textarea>
+            </div>
+            <div class="dr-respuesta-box">
+                <label>Respuesta de quien lo mandó</label>
+                <textarea
+                    ${esRemitente ? '' : 'disabled'}
+                    placeholder="${esRemitente ? 'Escribe tu respuesta...' : 'Sin respuesta'}"
+                    onblur="guardarRespuesta('${escapeAttr(r.id)}', 'remitente', this.value)"
+                >${escapeHtml(r.respuesta_remitente || '')}</textarea>
+            </div>
+        </div>
+    `;
+}
+
+// Poblar usuarios
+async function cargarOpcionesParaQuien(seleccionarId = null) {
+    const select = document.getElementById('drParaQuien');
+    if (!select) return;
+
+    const usuarioActual = await obtenerUsuarioActualRecordatorio();
+    if (!usuarioActual) return;
+
+    let personas = [{ id: usuarioActual.id, nombre: `${usuarioActual.nombre} (yo)`}]
+
+    if (usuarioActual.rol === 'admin_general') {
+        const { data } = await supabaseClient
+            .from('usuarios')
+            .select('id, nombre')
+            .eq('activo', true)
+            .neq('id', usuarioActual.id)
+            .order('nombre');
+        personas = personas.concat(data || []);
+    } else if (usuarioActual.rol === 'admin') {
+        const misPortales = usuarioActual.portales || [];
+        const { data } = await supabaseClient
+            .from('usuarios')
+            .select('id, nombre, portales')
+            .eq('activo', true)
+            .order('nombre');
+        personas = personas.concat(
+            (data || []).filter(u => (u.portales || []).some(p => misPortales.includes(p)))
+        );
+    } else if (usuarioActual.es_supervisor) {
+        const { data } = await supabaseClient
+            .from('usuarios')
+            .select('id, nombre')
+            .eq('supervisor_id', usuarioActual.id)
+            .eq('activo', true)
+            .order('nombre');
+        personas = personas.concat(data || []);
+    }
+
+    select.innerHTML = personas.map(p => 
+        `<option value="${escapeAttr(p.id)}">${escapeHtml(p.nombre)}</option>` 
+    ).join('');
+    
+    select.value = seleccionarId || usuarioActual.id
+} 
+
 // ── Formulario ────────────────────────────────
-function mostrarFormRecordatorio() {
+async function mostrarFormRecordatorio() {
     recordatorioEditandoId = null;
     document.getElementById('drawerFormTitulo').textContent = 'Nuevo recordatorio';
     document.getElementById('drTitulo').value = '';
     document.getElementById('drDescripcion').value = '';
     document.getElementById('drFecha').value = '';
     limpiarClienteRecordatorio();
+    await cargarOpcionesParaQuien()
     document.getElementById('drawerForm').style.display = 'block';
     document.getElementById('drTitulo').focus();
 }
@@ -325,6 +413,7 @@ async function guardarRecordatorio() {
     const polizaId = document.getElementById('drPolizaId').value || null;
     const clienteNombre = document.getElementById('drNombreCliente').value || null;
     const numeroPoliza = document.getElementById('drNumeroPoliza').value || null;
+    const paraQuienId = document.getElementById('drParaQuien').value || null;
 
     if (!titulo || !fecha) {
         alert('⚠️ El título y la fecha son obligatorios');
@@ -338,8 +427,23 @@ async function guardarRecordatorio() {
     }
 
     try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) throw new Error('No hay una sesion activa');
+        
+        const usuarioActual = await obtenerUsuarioActualRecordatorio();
+        if (!usuarioActual) throw new Error('No hay una sesion activa');
+
+        const destinatarioId = paraQuienId || usuarioActual.id;
+
+        let portalDestinatario = null;
+        if (destinatarioId === usuarioActual.id) {
+            portalDestinatario = usuarioActual.portales?.[0] || null
+        } else {
+            const { data : destinatario } = await supabaseClient
+                .from('usuarios')
+                .select('portales')
+                .eq('id', destinatarioId)
+                .single();
+            portalDestinatario = destinatario?.portales?.[0] || null;
+        }
 
         const datos = {
             titulo,
@@ -349,11 +453,13 @@ async function guardarRecordatorio() {
             poliza_id: polizaId,
             cliente_nombre: clienteNombre,
             numero_poliza: numeroPoliza,
+            portal: portalDestinatario,
             updated_at: new Date().toISOString()
         };
 
         if (recordatorioEditandoId) {
-            datos.estado = recordatorioEstaVencido({ ...datos, estado: 'pendiente' }) ? 'vencido' : 'pendiente';
+            datos.usuario_id = destinatarioId;
+            datos.estado = recordatorioEstaVencido({ ...datos, estado: 'pendiente'}) ? 'vencido' : 'pendiente';
             const { error } = await supabaseClient
                 .from('recordatorios')
                 .update(datos)
@@ -362,41 +468,14 @@ async function guardarRecordatorio() {
         } else {
             const { error } = await supabaseClient
                 .from('recordatorios')
-                .insert({ ...datos, usuario_id: user.id, estado: 'pendiente' });
+                .insert({
+                    ...datos,
+                    usuario_id: destinatarioId,
+                    creado_por_id: usuarioActual.id,
+                    creado_por_nombre: usuarioActual.nombre,
+                    estado: 'pendiente'
+                });
             if (error) throw error;
-
-            // Si tiene cliente copiar al asesor asignado
-            if (clienteId) {
-                const { data: cliente } = await supabaseClient
-                    .from('clientes')
-                    .select('operador_id, operador_nombre')
-                    .eq('id', clienteId)
-                    .single();
-
-                let operadorId = cliente?.operador_id || null;
-
-                if (!operadorId && cliente?.operador_nombre) {
-                    const { data: op } = await supabaseClient
-                        .from('usuarios')
-                        .select('id')
-                        .eq('nombre', cliente.operador_nombre)
-                        .single();
-                    operadorId = op?.id || null;
-                }
-
-                // solo copiar si el asesor es diferente al creador
-                if (operadorId && operadorId !== user.id) {
-                    await supabaseClient
-                        .from('recordatorios')
-                        .insert({
-                            ...datos,
-                            usuario_id: operadorId,
-                            creado_por_id: user.id,
-                            creado_por_nombre: datosUsuario?.nombre || '',
-                            estado: 'pendiente'
-                        })
-                }
-            }
         }
 
         cancelarFormRecordatorio();
@@ -408,7 +487,7 @@ async function guardarRecordatorio() {
     }
 }
 
-function editarRecordatorio(id) {
+async function editarRecordatorio(id) {
     const r = recordatoriosList.find(x => x.id === id);
     if (!r) return;
 
@@ -416,6 +495,7 @@ function editarRecordatorio(id) {
     document.getElementById('drawerFormTitulo').textContent = 'Editar recordatorio';
     document.getElementById('drTitulo').value = r.titulo;
     document.getElementById('drDescripcion').value = r.descripcion || '';
+    await cargarOpcionesParaQuien(r.usuario_id);
 
     // Formatear fecha para datetime-local
     const fecha = fechaValida(r.fecha_recordatorio);
@@ -458,6 +538,35 @@ async function cambiarEstadoRecordatorio(id, nuevoEstado) {
         renderizarRecordatorios(estadoFiltroActual);
     } catch (error) {
         console.error('❌ Error:', error);
+    }
+}
+async function guardarRespuesta(id, tipo, valor) {
+    const campoTexto = tipo === 'destinatario' ? 'respuesta_destinatario' : 'respuesta_remitente';
+    const campoFecha = tipo === 'destinatario' ? 'respuesta_destinatario_fecha' : 'respuesta_remitente_fecha';
+
+    const r = recordatoriosList.find(x => x.id === id);
+    const valorAnterior = r ? (r[campoTexto] || '') : '';
+    if (valor === valorAnterior) return; // sin cambios, no gastamos una escritura
+
+    try {
+        const { error } = await supabaseClient
+            .from('recordatorios')
+            .update({
+                [campoTexto]: valor || null,
+                [campoFecha]: valor ? new Date().toISOString() : null,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id);
+
+        if (error) throw error;
+
+        if (r) {
+            r[campoTexto] = valor || null;
+            r[campoFecha] = valor ? new Date().toISOString() : null;
+        }
+    } catch (error) {
+        console.error('❌ Error guardando respuesta:', error);
+        alert('No se pudo guardar la respuesta: ' + error.message);
     }
 }
 

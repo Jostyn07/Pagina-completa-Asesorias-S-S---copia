@@ -425,7 +425,50 @@
 .dr-item-usuario {
     margin-left: auto;
     font-style: italic;
-    color: #cbd5e1;
+    color: #333;
+}
+
+.dr-respuestas {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.dr-respuesta-box {
+    flex: 1;
+    min-width: 0;
+}
+
+.dr-respuesta-box label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted, #94a3b8);
+    margin-bottom: 3px;
+}
+
+.dr-respuesta-box textarea {
+    width: 100%;
+    min-height: 44px;
+    resize: vertical;
+    font-size: 0.78rem;
+    font-family: inherit;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--background-color, #fff);
+    color: var(--text-color, #0f172a);
+}
+
+.dr-respuesta-box textarea:disabled {
+    background: #f8fafc;
+    color: var(--text-muted, #94a3b8);
+    cursor: not-allowed;
+}
+
+.dr-respuesta-box textarea:focus {
+    outline: none;
+    border-color: #6366f1;
 }
 
 .dr-empty {
