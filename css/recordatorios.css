@@ -471,6 +471,18 @@
     border-color: #6366f1;
 }
 
+#drParaQuien {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 7px;
+    font-size: 0.875rem;
+    color: var(--text-color, #1e293b);
+    background: var(--background-color, #fff);
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+    outline: none;
+}
+
 .dr-empty {
     display: flex;
     flex-direction: column;
