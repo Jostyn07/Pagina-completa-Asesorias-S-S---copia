@@ -61,7 +61,7 @@ async function sincronizarRecordatoriosVencidos(recordatorios) {
         .in('id', idsVencidos);
 
     if (error) {
-        console.error('âŒ Error buscando cliente:', error);
+        console.error('Error buscando cliente:', error);
     }
 
     return (recordatorios || []).map(r =>
@@ -93,6 +93,7 @@ function inyectarDrawer() {
                     <h2>Recordatorios</h2>
                     <span class="badge-contador" id="badgeDrawer">0</span>
                 </div>
+                <button onclick="solicitarPermisoNotificaciones()">Activar notificaciones</button>                
                 <button class="drawer-close" onclick="cerrarDrawerRecordatorios()">
                     <span class="material-symbols-rounded">close</span>
                 </button>
