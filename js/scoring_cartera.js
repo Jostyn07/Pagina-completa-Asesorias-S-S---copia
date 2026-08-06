@@ -167,7 +167,7 @@ function calcularScoringCartera(poliza) {
     if (cliente.fecha_nacimiento) {
         const edad = carteraCalcularEdad(cliente.fecha_nacimiento);
         if (edad >= 64.5) {
-            score += 30;
+            score += 15;
             factores.push('Próximo a Medicare (≥64.5 años)');
         }
     }
