@@ -1295,6 +1295,7 @@ async function crearCliente(formData) {
         estado: formData.estado,
         codigo_postal: formData.codigoPostal,
         operador_nombre: formData.operadorNombre || null,
+        nombre_agente_compania: formData.nombreAgenteCompania || null,
         venta_realizada_por: formData.ventaRealizadaPor || null,
         agente_nombre: formData.agenteNombre || null,
     };
@@ -1336,6 +1337,7 @@ async function crearCliente(formData) {
         clave_seguridad: formData.claveSeguridad || null,
         enlace_poliza: formData.enlacePoliza || null,
         operador_nombre: formData.operadorNombre || null,
+        nombre_agente_compania: formData.nombreAgenteCompania || null,
         agente_nombre: formData.agenteNombre || null,
         estado_compania: 'pendiente',
         estado_mercado: 'pendiente',

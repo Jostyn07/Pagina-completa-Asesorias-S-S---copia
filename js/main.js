@@ -699,7 +699,13 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     }
 });
 
-// ============================================
-// LOG DE DESARROLLO
-// ============================================
+// Bloqueo de multi-click
+function bloquearBoton(boton, textoCargando = 'Procesando') {
+    if (!boton || boton.disabled ) return null;
+    const textoOriginal = boton.innerHTML;
+    boton.disabled = true;
+    boton.innerHTML = `<span class="material-symbols-rounded">hourglass_empty</span>`
+    return textoOriginal;
+}
 
+// Restarurar 
