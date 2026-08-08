@@ -111,7 +111,7 @@ async function handleLogin(event) {
     }
 }
 
-function validarEmail(email) {
+function validarFormatoEmailLogin(email) {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
 }
@@ -704,8 +704,120 @@ function bloquearBoton(boton, textoCargando = 'Procesando') {
     if (!boton || boton.disabled ) return null;
     const textoOriginal = boton.innerHTML;
     boton.disabled = true;
-    boton.innerHTML = `<span class="material-symbols-rounded">hourglass_empty</span>`
+    boton.innerHTML = `<span class="material-symbols-rounded">hourglass_empty</span> ${textoCargando}`
     return textoOriginal;
 }
 
-// Restarurar 
+// Restarurar boton
+
+function desbloquearBoton(boton, textoOriginal) {
+    if (!boton) return;
+    boton.disabled = false;
+    if (textoOriginal !== null && textoOriginal !== undefined) {
+        boton.innerHTML = textoOriginal;
+    }
+}
+
+function mostrarErrorCampo(input, mensaje) {
+    input.classList.add('campo-invalido');
+    input.classList.remove('campo-valido');
+
+    let errorDiv = input.parentElement.querySelector('.campo-error');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.className = 'campo-error';
+        input.parentElement.appendChild(errorDiv);
+    }
+    errorDiv.textContent = mensaje;
+    errorDiv.style.display = 'block';
+}
+
+function marcarCampoValido(input) {
+    input.classList.add('campo-valido');
+    input.classList.remove('campo-invalido');
+    ocultarErrorCampo(input);
+}
+
+function limpiarEstadoCampo(input) {
+    input.classList.remove('campo-invalido', 'campo-valido');
+    ocultarErrorCampo(input);
+}
+
+function ocultarErrorCampo(input) {
+    const errorDiv = input.parentElement.querySelector('.campo-error');
+    if (errorDiv) errorDiv.style.display = 'none';
+}
+
+function validarCampoRequerido(input, nombreCampo) {
+    const valor = input.value ? input.value.trim() : '';
+
+    if(!valor) {
+        mostrarErrorCampo(input, `${nombreCampo} es obligatorio`);
+    } else {
+        if (!input.classList.contains('campo-invalido')) {
+            marcarCampoValido(input);
+        }
+    }
+}
+
+function restringirFormatoDecimalComa(event) {
+    const input = event.target;
+    const tecla = event.key;
+
+    const teclasControl = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    if (teclasControl.includes(tecla) || event.ctrlKey || event.metaKey) {
+        return
+    }
+
+    if (tecla === '.') {
+        event.preventDefault();
+        mostrarErrorCampo(input, 'Solo se acepta la coma (,) como separador decimal. El punto no está permitido.');
+        return;
+    }
+
+    if (!/^[0-9,]$/.test(tecla)) {
+        event.preventDefault();
+        return
+    }
+
+    const valorActual = input.value;
+    const posicionComa = valorActual.indexOf(',');
+    const yaTieneComa = posicionComa != -1;
+
+    if (tecla === ',' && yaTieneComa) {
+        event.preventDefault();
+        mostrarErrorCampo(input, 'Ya hay una coma decimal, no se permite otra.')
+        return;
+    }
+
+    if (yaTieneComa && /[0-9]/.test(tecla)) {
+        const cursor = input.selectionStart;
+        const decimalesActuales = valorActual.length - posicionComa - 1;
+        if (cursor > posicionComa & decimalesActuales >= 2) {
+            event.preventDefault();
+            mostrarErrorCampo(input, 'Solo se aceptan dos decmiales despues de la coma');
+            return;
+        }
+    }
+
+    ocultarErrorCampo(input);
+    input.classList.remove('campo-invalido');
+}
+
+function validarFormatoDecimalComaPegado(input) {
+    const regexValido = /^\d*(,\d{0,2})?$/;
+
+    if (regexValido.test(input.value)) {
+        ocultarErrorCampo(input);
+        input.classList.remove('campo-invalido');
+        return;
+    }
+
+    let limpio = input.value.replace(/[^0-9,]/g, '');
+    const partes = limpio.split(',');
+    if (partes.length > 1) {
+        limpio = partes[0] + ',' + partes.slice(1).join('').slice(0, 2);
+    }
+    input.value = limpio;
+    mostrarErrorCampo(input, 'Formato corregido. Usa solo números y coma decimal, máx. 2 decimales (ej: 1500,50)');
+}

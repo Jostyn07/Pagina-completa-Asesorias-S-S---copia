@@ -590,7 +590,10 @@ function detectarCamposModificados(datosNuevos) {
 
 function obtenerDatosFormulario() {
     const get    = (id) => document.getElementById(id)?.value?.trim() || '';
-    const getNum = (id) => parseFloat(document.getElementById(id)?.value) || 0;
+    const getNum = (id) => {
+    const valor = document.getElementById(id)?.value || '0';
+    return parseFloat(valor.replace(',', '.')) || 0;
+};
     const getFecha = (id) => document.getElementById(id)?.value || '';
 
     return {
@@ -792,6 +795,14 @@ async function guardarYEnviar(e) {
         return;
     }
 
+    if (!validarFormularioCompleto()) {
+        return;
+    }
+
+    const btnSubmit = document.querySelector('.btn-submit');
+    if (btnSubmit && btnSubmit.disabled) return;
+    const textoOriginal = btnSubmit ? bloquearBoton(btnSubmit, 'Guardando...') : null;
+
     try {
         mostrarNotificacion('Guardando...', 'info');
 
@@ -934,7 +945,42 @@ async function guardarYEnviar(e) {
     } catch (error) {
         console.error('Error al guardar:', error);
         mostrarNotificacion('Error: ' + error.message, 'error');
+        if (btnSubmit) desbloquearBoton(btnSubmit, textoOriginal);
     }
+}
+
+function validarFormularioCompleto() {
+    const faltantes = [];
+
+    for (const campo of CAMPOS_REQUERIDOS) {
+        const elemento = document.getElementById(campo.id);
+        if (!elemento || !elemento.value || elemento.value.trim() === '') {
+            faltantes.push(campo);
+            if (elemento) mostrarErrorCampo(elemento, `${campo.nombre} es obligatorio`);
+        }
+    }
+
+    if (faltantes.length > 0) {
+        const nombres = faltantes.map(f => `${f.nombre}`).join('\n');
+        mostrarNotificacion(`Faltan los siguientes campos requeridos: \n\n${nombres}`, 'warning');
+        const primerCampo = document.getElementById(faltantes[0].id);
+        if (primerCampo) {
+            primerCampo.focus();
+            primerCampo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return false;
+    }
+
+    const camposConError = document.querySelectorAll('.campo-invalido');
+    if (camposConError.length > 0) {
+        const primerError = camposConError[0];
+        primerError.focus();
+        primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        mostrarNotificacion('Hay campos con errores de formato. Corrígelos antes de continuar (revisa los campos marcados en rojo).', 'warning');
+        return false;
+    }
+
+    return true;
 }
 
 // ============================================
@@ -1190,18 +1236,67 @@ function siguientePestana() {
 // VALIDACIÓN EN TIEMPO REAL
 // ============================================
 
+const CAMPOS_REQUERIDOS = [
+    { id: 'tipoRegistro', nombre: 'Tipo de registro' },
+    { id: 'nombres', nombre: 'Nombres' },
+    { id: 'apellidos', nombre: 'Apellidos' },
+    { id: 'genero', nombre: 'Género' },
+    { id: 'email', nombre: 'Correo electrónico' },
+    { id: 'telefono1', nombre: 'Teléfono' },
+    { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
+    { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+    { id: 'tipoDeclaracion', nombre: 'Tipo de declaración' },
+    { id: 'nacionalidad', nombre: 'Nacionalidad' },
+    { id: 'direccion', nombre: 'Dirección' },
+    { id: 'condado', nombre: 'Condado' },
+    { id: 'ciudad', nombre: 'Ciudad' },
+    { id: 'estado', nombre: 'Estado' },
+    { id: 'codigoPostal', nombre: 'Código postal' },
+    { id: 'compania', nombre: 'Compañía' },
+    { id: 'plan', nombre: 'Plan' },
+    { id: 'prima', nombre: 'Prima' },
+    { id: 'operadorNombre', nombre: 'Operador' },
+];
+
 function inicializarValidacionTiempoReal() {
     const tel1 = document.getElementById('telefono1');
     const tel2 = document.getElementById('telefono2');
     const ssn  = document.getElementById('ssn');
     const email = document.getElementById('email');
     const cp   = document.getElementById('codigoPostal');
+    const prima = document.getElementById('prima');
+    const creditoFiscal = document.getElementById('creditoFiscal');
 
-    if (tel1) tel1.addEventListener('input', function() { this.value = formatearTelefono(this.value); });
-    if (tel2) tel2.addEventListener('input', function() { this.value = formatearTelefono(this.value); });
-    if (ssn)  ssn.addEventListener('input',  function() { this.value = formatearSSN(this.value); });
+    if (tel1) {
+        tel1.addEventListener('input', function() { this.value = formatearTelefono(this.value); });
+        tel1.addEventListener('blur', function() { validarTelefono(this); });
+    }
+    if (tel2) {
+        tel2.addEventListener('input', function() { this.value = formatearTelefono(this.value); });
+        tel2.addEventListener('blur', function() { validarTelefono(this); });
+    }
+    if (ssn) {
+        ssn.addEventListener('input', function() { this.value = formatearSSN(this.value); });
+        ssn.addEventListener('blur', function() { validarSSN(this); });
+    }
     if (email) email.addEventListener('blur', function() { validarEmail(this); });
-    if (cp)   cp.addEventListener('input',   function() { validarCodigoPostal(this); });
+    if (cp)   cp.addEventListener('input', function() { validarCodigoPostal(this); });
+
+    // Prima y crédito fiscal: solo coma decimal, máximo 2 decimales
+    [prima, creditoFiscal].forEach(input => {
+        if (input) {
+            input.addEventListener('keydown', restringirFormatoDecimalComa);
+            input.addEventListener('input', function() { validarFormatoDecimalComaPegado(this); });
+        }
+    });
+
+    // Campos obligatorios: validación visual al salir de cada uno
+    CAMPOS_REQUERIDOS.forEach(campo => {
+        const elemento = document.getElementById(campo.id);
+        if (elemento) {
+            elemento.addEventListener('blur', function() { validarCampoRequerido(this, campo.nombre); });
+        }
+    });
 }
 
 // ============================================
@@ -1643,5 +1738,55 @@ async function cargarDocumentos(clienteId) {
 
     } catch (error) {
         console.error('❌ Error al cargar documentos:', error);
+    }
+}
+
+function validarCodigoPostal(input) {
+    const cp = input.value.replace(/\D/g, '');
+    input.value = cp.slice(0, 5);
+
+    if (!cp) { limpiarEstadoCampo(input); return; }
+
+    if (cp.length !== 5) {
+        mostrarErrorCampo(input, `Código postal incompleto: tiene ${cp.length} de 5 dígitos`);
+    } else {
+        marcarCampoValido(input);
+    }
+}
+
+function validarEmail(input) {
+    const email = input.value.trim();
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email) { limpiarEstadoCampo(input); return; }
+
+    if (!regex.test(email)) {
+        mostrarErrorCampo(input, 'Correo electrónico inválido (ej: nombre@dominio.com)');
+    } else {
+        marcarCampoValido(input);
+    }
+}
+
+function validarTelefono(input) {
+    const tel = input.value.replace(/\D/g, '');
+
+    if (!tel) { limpiarEstadoCampo(input); return; }
+
+    if (tel.length !== 10) {
+        mostrarErrorCampo(input, `Teléfono incompleto: tiene ${tel.length} de 10 dígitos`);
+    } else {
+        marcarCampoValido(input);
+    }
+}
+
+function validarSSN(input) {
+    const ssn = input.value.replace(/\D/g, '');
+
+    if (!ssn) { limpiarEstadoCampo(input); return; }
+
+    if (ssn.length !== 9) {
+        mostrarErrorCampo(input, `SSN incompleto: tiene ${ssn.length} de 9 dígitos`);
+    } else {
+        marcarCampoValido(input);
     }
 }

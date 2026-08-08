@@ -520,6 +520,30 @@ function calcularYMostrarFechas() {
 // VALIDACIÓN EN TIEMPO REAL
 // ============================================
 
+const CAMPOS_REQUERIDOS = [
+    { id: 'tipoRegistro', nombre: 'Tipo de registro'},
+    { id: 'nombres', nombre: 'Nombres' },
+    { id: 'apellidos', nombre: 'Apellidos' },
+    { id: 'genero', nombre: 'Género' },
+    { id: 'email', nombre: 'Correo electrónico' },
+    { id: 'telefono1', nombre: 'Teléfono' },
+    { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
+    { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
+    { id: 'tipoDeclaracion', nombre: 'Tipo de declaración'},
+    { id: 'nacionalidad', nombre: 'Nacionalidad' },
+    { id: 'aplica', nombre: '¿Aplica para el seguro?'},
+    { id: 'direccion', nombre: 'Dirección' },
+    { id: 'condado', nombre: 'Condado'},
+    { id: 'ciudad', nombre: 'Ciudad' },
+    { id: 'estado', nombre: 'Estado' },
+    { id: 'codigoPostal', nombre: 'Código postal' },
+    { id: 'compania', nombre: 'Compañía' },
+    { id: 'plan', nombre: 'Plan' },
+    { id: 'prima', nombre: 'Prima' },
+    { id: 'operadorNombre', nombre: 'Operador' },
+    { id: 'ventaRealizadaPor', nombre: 'Venta realizada por:' },
+];
+
 function inicializarValidacionTiempoReal() {
     // Email
     const emailInput = document.getElementById('email');
@@ -577,11 +601,29 @@ function inicializarValidacionTiempoReal() {
     const prima = document.getElementById('prima');
     const creditoFiscal = document.getElementById('creditoFiscal');
     const ingresos = document.getElementById('ingresos');
-    
-    [prima, creditoFiscal, ingresos].forEach(input => {
+
+    [ingresos].forEach(input => {
         if (input) {
             input.addEventListener('blur', function() {
                 formatearMonto(this);
+            });
+        }
+    });
+
+    [prima, creditoFiscal].forEach(input => {
+        if (input) {
+            input.addEventListener('keydown', restringirFormatoDecimalComa);
+            input.addEventListener('input', function() {
+                validarFormatoDecimalComaPegado(this);
+            });
+        }
+    });
+
+    CAMPOS_REQUERIDOS.forEach(campo => {
+        const elemento = document.getElementById(campo.id);
+        if (elemento) {
+            elemento.addEventListener('blur', function() {
+                validarCampoRequerido(this, campo.nombre)
             });
         }
     });
@@ -1179,7 +1221,8 @@ function rellenarFormularioDesdeObj(datos) {
 async function handleSubmit(event) {
     event.preventDefault();
     
-    ;
+    const btnSubmit = document.querySelector('.btn-submit')
+    if (btnSubmit.disabled) return;
     
     if (!validarFormularioCompleto()) {
         alert('Por favor, completa todos los campos requeridos correctamente.');
@@ -1189,10 +1232,7 @@ async function handleSubmit(event) {
     const confirmacion = confirm('¿Guardar este nuevo cliente y póliza?');
     if (!confirmacion) return;
     
-    const btnSubmit = document.querySelector('.btn-submit');
-    const textoOriginal = btnSubmit.innerHTML;
-    btnSubmit.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span> Guardando...';
-    btnSubmit.disabled = true;
+    const textoOriginal = bloquearBoton(btnSubmit, 'Guardado...');
     
     try {
         const formData = obtenerDatosFormulario();
@@ -1200,49 +1240,23 @@ async function handleSubmit(event) {
     } catch (error) {
         console.error('❌ Error:', error);
         alert(`Error al guardar: ${error.message}`);
-        
-        btnSubmit.innerHTML = textoOriginal;
-        btnSubmit.disabled = false;
+        desbloquearBoton(btnSubmit, textoOriginal)
     }
 }
 
 function validarFormularioCompleto() {
-    const camposRequeridos = [
-        { id: 'tipoRegistro', nombre: 'Tipo de registro'},
-        { id: 'nombres', nombre: 'Nombres' },
-        { id: 'apellidos', nombre: 'Apellidos' },
-        { id: 'genero', nombre: 'Género' },
-        { id: 'email', nombre: 'Correo electrónico' },
-        { id: 'telefono1', nombre: 'Teléfono' },
-        { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
-        { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
-        { id: 'tipoDeclaracion', nombre: 'Tipo de declaración'},
-        { id: 'nacionalidad', nombre: 'Nacionalidad' },
-        { id: 'aplica', nombre: '¿Aplica para el seguro?'},
-        { id: 'direccion', nombre: 'Dirección' },
-        { id: 'condado', nombre: 'Condado'},
-        { id: 'ciudad', nombre: 'Ciudad' },
-        { id: 'estado', nombre: 'Estado' },
-        { id: 'codigoPostal', nombre: 'Código postal' },
-        { id: 'compania', nombre: 'Compañía' },
-        { id: 'plan', nombre: 'Plan' },
-        { id: 'prima', nombre: 'Prima' },
-        { id: 'aplica', nombre: 'Aplica' },
-        { id: 'operadorNombre', nombre: 'Operador' },
-        { id: 'ventaRealizadaPor', nombre: 'Venta realizada por:' },
-    ];
+   
+    const faltantes = [];
     
-    const faltantes = []
-    
-    for (const campo of camposRequeridos) {
+    for (const campo of CAMPOS_REQUERIDOS) {
         const elemento = document.getElementById(campo.id);
         if (!elemento || !elemento.value || elemento.value.trim() === '') {
             faltantes.push(campo)
+            if (elemento) mostrarErrorCampo(elemento, `${campo.nombre} es obligatorio`)
         }
     }
 
     if (faltantes.length > 0) {
-        // cambiar a la ventana de visat general
         cambiarTab('info-general');
 
         setTimeout(() => {
@@ -1257,7 +1271,14 @@ function validarFormularioCompleto() {
         mostrarNotificacion(`Faltan los siguientes campos requeridos: \n\n${nombres}`);
         return false
     }
-    
+    const camposConError = document.querySelectorAll('.campo-invalido');
+    if (camposConError.length > 0) {
+        const primerError = camposConError[0];
+        primerError.focus();
+        primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        mostrarNotificacion('Hay campos con errores de formato. Corrígelos antes de continuar (revisa los campos marcados en rojo).');
+        return false
+    }   
     return true;
 } 
 
@@ -1326,8 +1347,8 @@ async function crearCliente(formData) {
         numero_poliza: numeroPoliza,
         compania: formData.compania,
         plan: formData.plan,
-        prima: parseFloat(formData.prima) || 0,
-        credito_fiscal: parseFloat(formData.creditoFiscal) || 0,
+        prima: parseFloat((formData.prima || '0').replace(',', '.')) || 0,
+        credito_fiscal: parseFloat((formData.creditoFiscal || '0').replace(',', '.')) || 0,
         fecha_efectividad: limpiarFecha(formData.fechaEfectividad),
         fecha_inicial_cobertura: limpiarFecha(formData.fechaInicialCobertura),
         fecha_final_cobertura: limpiarFecha(formData.fechaFinalCobertura),
@@ -1894,35 +1915,47 @@ function formatearMonto(input) {
 function validarEmail(input) {
     const email = input.value;
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (email && !regex.test(email)) {
-        input.setCustomValidity('Email inválido');
-        input.reportValidity();
+   
+    if(!email) { limpiarEstadoCampo(input); return; }
+    if (!regex.test(email)) {
+        mostrarErrorCampo(input, 'Correo electronico invalido (ej: nombre@dominio.com)');
     } else {
-        input.setCustomValidity('');
+        marcarCampoValido(input);
     }
 }
 
 function validarTelefono(input) {
     const tel = input.value.replace(/\D/g, '');
-    if (tel && tel.length !== 10) {
-        input.setCustomValidity('Teléfono debe tener 10 dígitos');
-        input.reportValidity();
+
+    if (!tel) { limpiarEstadoCampo(input); return; }
+
+    if (tel.length !== 10) {
+        mostrarErrorCampo(input, `Teléfono incompleto: tiene ${tel.length} de 10 dígitos`);
     } else {
-        input.setCustomValidity('');
+        marcarCampoValido(input)
     }
 }
 
 function validarSSN(input) {
-    const ssn = input.value.replace(/\D/g, '');
-    if (ssn && ssn.length !== 9) {
-        input.setCustomValidity('SSN debe tener 9 dígitos');
-        input.reportValidity();
+    const ssn = input.value.replace(/\D/g, '')
+    if (!ssn) { limpiarEstadoCampo(input); return; }
+    
+    if (ssn.length !== 9) {
+        mostrarErrorCampo(input, `SSN incompleto: tiene ${ssn.length} de 9 digitos`)
     } else {
-        input.setCustomValidity('');
+        marcarCampoValido(input);
     }
 }
 
 function validarCodigoPostal(input) {
     const cp = input.value.replace(/\D/g, '');
-    if (cp && cp.length !== 5) input.value = cp.slice(0, 5);
+    input.value = cp.slice(0, 5);
+
+    if (!cp) { limpiarEstadoCampo(input); return; }
+
+    if (cp.length !== 5) {
+        mostrarErrorCampo(input, `Codigo postal incompleto: tiene ${cp.length} de 5 dígitos`)
+    } else {
+        marcarCampoValido(input)
+    }
 }

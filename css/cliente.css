@@ -5202,3 +5202,27 @@ input[readonly] {
 .checkbox-list-inline .chk-portal-cliente:disabled {
     cursor: default;
 }
+
+input.campo-invalido, 
+select.campo-invalido {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+}
+
+input.campo-valido,
+select.campo-valido {
+    border-color: #10b981 !important;
+    background-color: #f0fdf4 !important;
+}
+
+.campo-error {
+    display: none;
+    color: #ef4444;
+    font-size: 0.85rem;
+    margin: 5px;
+    font-weight: 500;
+}
+
+.campo-error::before {
+    content: "⚠️ ";
+}
