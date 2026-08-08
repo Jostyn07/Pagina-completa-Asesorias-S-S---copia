@@ -29,7 +29,7 @@ async function handleLogin(event) {
         return;
     }
     
-    if (!validarEmail(email)) {
+    if (!validarFormatoEmailLogin(email)) {
         alert('Por favor, ingresa un correo electrónico válido');
         return;
     }
