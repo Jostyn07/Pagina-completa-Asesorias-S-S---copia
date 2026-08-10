@@ -438,8 +438,11 @@ async function cargarDatosCliente(id) {
             if (elemento) limpiarEstadoCampo(elemento);
         });
 
+
+
         // Actualizar título
         const nombreCompleto = `${clienteData.nombres} ${clienteData.apellidos}`;
+        document.getElementById('pageTitle').textContent = `✏️ Editando: ${nombreCompleto}`;
         
         // Restaurar botón
         if (btnSubmit) {
