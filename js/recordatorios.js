@@ -196,7 +196,7 @@ async function cargarRecordatorios() {
             .select('*, usuario:usuarios!usuario_id(nombre, portales), creador:usuarios!creado_por_id(portales)')
             .order('fecha_recordatorio', { ascending: true });
 
-        const requiereFiltroPortal = usuario.rol !== 'admin_general' &&
+        const requiereFiltroPortal = usuarioActual.rol !== 'admin_general' &&
             (usuarioActual.rol === 'admin' || usuarioActual.es_supervisor);
 
         // Filtrar según permisos
