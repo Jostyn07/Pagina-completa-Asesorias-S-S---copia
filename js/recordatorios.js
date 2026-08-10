@@ -305,8 +305,12 @@ function renderizarRecordatorios(estado) {
                     ` : ''}
                     ${r.creado_por_id && r.creado_por_id !== r.usuario_id
                         ? `<span class="dr-item-creado-por">
-                            <span class="material-symbols-rounded" style="font-size:0.85rem">supervisor_account</span>
+                            <span class="material-symbols-rounded" style="font-size:0.85rem">north_east</span>
                             De: ${escapeHtml(r.creado_por_nombre || 'Supervisor')}
+                        </span>
+                        <span class="dr-item-usuario">
+                            <span class="material-symbols-rounded" style="font-size:0.85rem">south_west</span>
+                            Para: ${escapeHtml(r.usuario?.nombre || 'Sin asignar')}
                         </span>`
                         : (r.usuario?.nombre
                             ? `<span class="dr-item-usuario">${escapeHtml(r.usuario.nombre)}</span>`
