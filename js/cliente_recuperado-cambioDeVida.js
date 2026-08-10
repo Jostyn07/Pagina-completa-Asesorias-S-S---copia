@@ -107,10 +107,10 @@ async function seleccionarCliente(clienteId) {
         // Poblar formulario
         await poblarFormulario(cliente, polizaActiva);
 
-        // CAMPOS_REQUERIDOS.forEach(campo => {
-        //     const elemento = document.getElementById(campo.id);
-        //     if (elemento) limpiarEstadoCampo(elemento);
-        // });
+        CAMPOS_REQUERIDOS.forEach(campo => {
+            const elemento = document.getElementById(campo.id);
+            if (elemento) limpiarEstadoCampo(elemento);
+        });
 
         // Cargar dependientes
         await cargarDependientes(clienteId);
@@ -1057,10 +1057,10 @@ async function cargarBorradorAutomatico() {
     if (datosOriginales) {
         await poblarFormulario(datosOriginales.cliente, datosOriginales.poliza);
 
-        // CAMPOS_REQUERIDOS.forEach(campo => {
-        //     const elemento = document.getElementById(campo.id);
-        //     if (elemento) limpiarEstadoCampo(elemento);
-        // });
+        CAMPOS_REQUERIDOS.forEach(campo => {
+            const elemento = document.getElementById(campo.id);
+            if (elemento) limpiarEstadoCampo(elemento);
+        });
     }
 
     const estado = document.getElementById('busquedaEstado');
