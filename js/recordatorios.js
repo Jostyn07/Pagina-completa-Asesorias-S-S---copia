@@ -219,8 +219,21 @@ async function cargarRecordatorios() {
         const { data, error } = await query;
         if (error) throw error;
 
+        let resultado2 = data || [];
+
+        if (requiereFiltroPortal) {
+            const misPortales = usuarioActual.portales || [];
+            resultado2 = resultado2.filter (r => {
+                const portalesDestinatario = r.usuario?.portales || [];
+                const portalesCreador = r.creador?.portales || [];
+                const compartePortalDestinatario = portalesDestinatario.some(p => misPortales.includes(p));
+                const compartePortalCreador = portalesCreador.some(p => misPortales.includes(p));
+                return compartePortalDestinatario && compartePortalCreador;
+            })
+        }
+
         // Actualizar estados vencidos
-        recordatoriosList = await sincronizarRecordatoriosVencidos(data || []);
+        recordatoriosList = await sincronizarRecordatoriosVencidos(resultado2);
 
         actualizarContadorBadge();
         renderizarRecordatorios(estadoFiltroActual);
