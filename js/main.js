@@ -739,16 +739,21 @@ function ocultarErrorCampo(input) {
     if (errorDiv) errorDiv.style.display = 'none';
 }
 
+const CAMPOS_CON_VALIDACION_PROPIA = ['email', 'telefono1', 'telefono2', 'ssn', 'codigoPostal', 'prima', 'creditoFiscal'];
+
 function validarCampoRequerido(input, nombreCampo) {
     const valor = input.value ? input.value.trim() : '';
 
     if(!valor) {
         mostrarErrorCampo(input, `${nombreCampo} es obligatorio`);
-    } else {
-        if (!input.classList.contains('campo-invalido')) {
-            marcarCampoValido(input);
-        }
+        return;
     }
+
+    if (CAMPOS_CON_VALIDACION_PROPIA.includes(input.id)) {
+        return;
+    }
+
+    marcarCampoValido(input);
 }
 
 function restringirFormatoDecimalComa(event) {

@@ -603,6 +603,10 @@ function inicializarValidacionTiempoReal() {
             elemento.addEventListener('blur', function() {
                 validarCampoRequerido(this, campo.nombre)
             });
+
+            elemento.addEventListener('input', function() {
+                validarCampoRequerido(this, campo.nombre);
+            });
         }
     });
 }

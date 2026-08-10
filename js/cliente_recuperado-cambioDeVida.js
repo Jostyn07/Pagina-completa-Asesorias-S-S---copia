@@ -1303,7 +1303,12 @@ function inicializarValidacionTiempoReal() {
     CAMPOS_REQUERIDOS.forEach(campo => {
         const elemento = document.getElementById(campo.id);
         if (elemento) {
-            elemento.addEventListener('blur', function() { validarCampoRequerido(this, campo.nombre); });
+            elemento.addEventListener('blur', function() 
+                { validarCampoRequerido(this, campo.nombre); });
+
+            elemento.addEventListener('input', function() {
+                validarCampoRequerido(this, campo.nombre);
+            });
         }
     });
 }

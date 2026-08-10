@@ -443,7 +443,7 @@ async function cargarDatosCliente(id) {
         // Actualizar título
         const nombreCompleto = `${clienteData.nombres} ${clienteData.apellidos}`;
         document.getElementById('pageTitle').textContent = `✏️ Editando: ${nombreCompleto}`;
-        
+
         // Restaurar botón
         if (btnSubmit) {
             btnSubmit.innerHTML = textoOriginal;
@@ -1524,7 +1524,12 @@ function inicializarValidacionTiempoReal() {
     CAMPOS_REQUERIDOS.forEach(campo => {
         const elemento = document.getElementById(campo.id);
         if (elemento) {
-            elemento.addEventListener('blur', function() { validarCampoRequerido(this, campo.nombre); });
+            elemento.addEventListener('blur', function() 
+                { validarCampoRequerido(this, campo.nombre); });
+                
+            elemento.addEventListener('input', function() {
+                validarCampoRequerido(this, campo.nombre);
+            });
         }
     });
 }
