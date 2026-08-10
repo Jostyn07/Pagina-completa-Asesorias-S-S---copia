@@ -251,7 +251,7 @@ function agregarDependienteExistente(dep) {
     tarjeta.innerHTML = `
         <input type="hidden" name="dep_nombres_${dependientesCount}" value="${dep.nombres || dep.nombre || ''}">
         <input type="hidden" name="dep_apellidos_${dependientesCount}" value="${dep.apellidos || ''}">
-        <input type="hidden" name="dep_fecha_nacimiento_${dependientesCount}" value="${dep.fecha_nacimiento || ''}">
+        <input type="hidden" name="dep_fecha_nacimiento_${dependientesCount}" value="${formatoUS(dep.fecha_nacimiento) || ''}">
         <input type="hidden" name="dep_sexo_${dependientesCount}" value="${dep.sexo || ''}">
         <input type="hidden" name="dep_ssn_${dependientesCount}" value="${dep.ssn || ''}">
         <input type="hidden" name="dep_estado_migratorio_${dependientesCount}" value="${dep.estado_migratorio || ''}">

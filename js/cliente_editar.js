@@ -602,7 +602,7 @@ function agregarDependienteExistente(dep) {
     const dependiente = {
         nombres: dep.nombres,
         apellidos: dep.apellidos,
-        fecha_nacimiento: dep.fecha_nacimiento,
+        fecha_nacimiento: formatoUS(dep.fecha_nacimiento),
         sexo: sexoFormateado,
         ssn: dep.ssn || '',
         estado_migratorio: dep.estado_migratorio || '',
@@ -1927,7 +1927,7 @@ async function actualizarDependientes(clienteId, formData) {
         const depData = {
             nombres: nombres,
             apellidos: formData[`dep_apellidos_${i}`] || '',
-            fecha_nacimiento: formData[`dep_fecha_nacimiento_${i}`] || null,
+            fecha_nacimiento: convertirFechaParaBD(formData[`dep_fecha_nacimiento_${i}`]) || null,
             sexo: formData[`dep_sexo_${i}`] || null,
             ssn: formData[`dep_ssn_${i}`] ? formData[`dep_ssn_${i}`].replace(/\D/g, '') : null,
             estado_migratorio: formData[`dep_estado_migratorio_${i}`] || null,

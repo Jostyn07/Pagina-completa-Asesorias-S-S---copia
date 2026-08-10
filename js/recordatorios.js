@@ -193,8 +193,11 @@ async function cargarRecordatorios() {
 
         let query = supabaseClient
             .from('recordatorios')
-            .select('*, usuario:usuarios!usuario_id(nombre)')
+            .select('*, usuario:usuarios!usuario_id(nombre, portales), creador:usuarios!creado_por_id(portales)')
             .order('fecha_recordatorio', { ascending: true });
+
+        const requiereFiltroPortal = usuario.rol !== 'admin_general' &&
+            (usuarioActual.rol === 'admin' || usuarioActual.es_supervisor);
 
         // Filtrar según permisos
         if (!usuarioActual.puede_ver_monitoreo) {
