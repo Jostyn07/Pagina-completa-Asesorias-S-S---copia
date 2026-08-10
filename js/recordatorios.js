@@ -379,6 +379,17 @@ async function cargarOpcionesParaQuien(seleccionarId = null) {
             .eq('activo', true)
             .order('nombre');
         personas = personas.concat(data || []);
+    } else {
+        const misPortales = usuarioActual.portales || [];
+        const { data } = await supabaseClient
+            .from('usuarios')
+            .select('id, nombre, portales')
+            .eq('activo', true)
+            .neq('id', usuarioActual.id)
+            .order('nombre');
+        personas = personas.concat(
+            (data || []).filter(u => (u.portales || []).some(p => misPortales.includes(p)))
+        );
     }
 
     select.innerHTML = personas.map(p => 
@@ -600,11 +611,23 @@ async function buscarClienteRecordatorio(texto) {
 
     timeoutBusqueda = setTimeout(async () => {
         const termino = textoBusqueda.replace(/[%,]/g, '').trim();
-        const { data, error } = await supabaseClient
+        const usuarioActual = await obtenerUsuarioActualRecordatorio();
+
+        let consulta = supabaseClient
             .from('clientes')
             .select('id, nombres, apellidos, telefono1, polizas(id, numero_poliza)')
             .or(`nombres.ilike.%${termino}%,apellidos.ilike.%${termino}%,telefono1.ilike.%${termino}%`)
             .limit(8);
+
+        const esOperadorNormal = usuarioActual &&
+            usuarioActual.rol !== 'admin_genral' &&
+            usuarioActual.rol !== 'admin' &&
+            !usuarioActual.es_supervisor;
+
+        if (esOperadorNormal) {
+            consulta = consulta.eq('operador_id', usuarioActual.id);
+        }
+        const { data, error } = await consulta
         if (error) {
             console.error('âŒ Error buscando cliente:', error);
             sugerencias.innerHTML = '<div class="dr-sug-item dr-sug-empty">Error buscando clientes</div>';

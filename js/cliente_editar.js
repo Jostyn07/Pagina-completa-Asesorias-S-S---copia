@@ -430,10 +430,16 @@ async function cargarDatosCliente(id) {
 
         // Rellenar formulario
         await rellenarFormulario(clienteData, polizaData, dependientesData, notasData);
-        
+
+        // Limpiar cualquier error visual que se haya pintado ANTES de que llegaran
+        // los datos reales (puede pasar si el usuario tocó un campo mientras cargaba).
+        CAMPOS_REQUERIDOS.forEach(campo => {
+            const elemento = document.getElementById(campo.id);
+            if (elemento) limpiarEstadoCampo(elemento);
+        });
+
         // Actualizar título
         const nombreCompleto = `${clienteData.nombres} ${clienteData.apellidos}`;
-        document.getElementById('pageTitle').textContent = `✏️ Editando: ${nombreCompleto}`;
         
         // Restaurar botón
         if (btnSubmit) {
@@ -1393,41 +1399,29 @@ function validarPestanaActual(tab) {
 }
 
 function validarInfoGeneral() {
-    const camposRequeridos = [
-        { id: 'tipoRegistro', nombre: 'Tipo de registro'},
-        { id: 'nombres', nombre: 'Nombres' },
-        { id: 'apellidos', nombre: 'Apellidos' },
-        { id: 'genero', nombre: 'Género' },
-        { id: 'email', nombre: 'Correo electrónico' },
-        { id: 'telefono1', nombre: 'Teléfono' },
-        { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
-        { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
-        { id: 'nacionalidad', nombre: 'Nacionalidad' },
-        { id: 'direccion', nombre: 'Dirección' },
-        { id: 'ciudad', nombre: 'Ciudad' },
-        { id: 'estado', nombre: 'Estado' },
-        { id: 'codigoPostal', nombre: 'Código postal' },
-        { id: 'compania', nombre: 'Compañía' },
-        { id: 'plan', nombre: 'Plan' },
-        { id: 'prima', nombre: 'Prima' },
-        { id: 'aplica', nombre: 'Aplica' },
-        { id: 'operadorNombre', nombre: 'Operador' },
-    ];
+    let hayError = false;
 
-    if (!document.querySelector('input[name="portalCliente"]:checked')) {
-        alert('El campo "Portal" es requerido antes de continuar');
-        return false
-    }
-    
-    for (const campo of camposRequeridos) {
+    for (const campo of CAMPOS_REQUERIDOS) {
         const elemento = document.getElementById(campo.id);
-        if (!elemento || !elemento.value || elemento.value.trim() === '') {
-            alert(`El campo "${campo.nombre}" es requerido antes de continuar`);
-            elemento?.focus();
-            return false;
+        if (!elemento) continue; // el campo no vive en esta pestaña, se ignora aquí
+
+        if (!elemento.value || elemento.value.trim() === '') {
+            mostrarErrorCampo(elemento, `${campo.nombre} es obligatorio`);
+            hayError = true;
         }
     }
-    
+
+    const radioPortal = document.querySelector('input[name="portalCliente"]:checked, input[name="portalClienteDisplay"]:checked');
+    if (!radioPortal) {
+        mostrarNotificacion('El campo "Portal" es requerido antes de continuar', 'warning');
+        hayError = true;
+    }
+
+    if (hayError) {
+        mostrarNotificacion('Completa los campos marcados en rojo antes de continuar', 'warning');
+        return false;
+    }
+
     return true;
 }
 
