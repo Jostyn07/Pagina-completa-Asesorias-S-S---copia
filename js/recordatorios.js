@@ -212,8 +212,7 @@ async function cargarRecordatorios() {
                 idsOperadores.push(usuarioActual.id);
                 query = query.in('usuario_id', idsOperadores);
             } else {
-                // Solo los propios
-                query = query.eq('usuario_id', usuarioActual.id);
+                query = query.or(`usuario_id.eq.${usuarioActual.id},creado_por_id.eq.${usuarioActual.id}`);
             }
         }
 
