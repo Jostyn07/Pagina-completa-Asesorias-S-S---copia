@@ -1,12 +1,3 @@
-// ============================================
-// SISTEMA DE AUTENTICACIÓN COMPLETO CON SUPABASE
-// Reemplaza las líneas 1-70 en main.js
-// ============================================
-
-// ============================================
-// LOGIN CON SUPABASE
-// ============================================
-
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {

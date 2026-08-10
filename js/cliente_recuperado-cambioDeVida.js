@@ -1245,7 +1245,6 @@ const CAMPOS_REQUERIDOS = [
     { id: 'telefono1', nombre: 'Teléfono' },
     { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
     { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
-    { id: 'tipoDeclaracion', nombre: 'Tipo de declaración' },
     { id: 'nacionalidad', nombre: 'Nacionalidad' },
     { id: 'direccion', nombre: 'Dirección' },
     { id: 'condado', nombre: 'Condado' },

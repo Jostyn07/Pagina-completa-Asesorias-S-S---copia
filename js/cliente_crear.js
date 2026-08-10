@@ -1,9 +1,4 @@
 // ============================================
-// CLIENTE_CREAR.JS - VERSIÓN CORREGIDA
-// Todas las correcciones aplicadas
-// ============================================
-
-// ============================================
 // VARIABLES GLOBALES
 // ============================================
 let notasCount = 0;
@@ -404,7 +399,6 @@ function validarInfoGeneral() {
         { id: 'telefono1', nombre: 'Teléfono' },
         { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
         { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
-        { id: 'tipoDeclaracion', nombre: "Tipo de declaración"},
         { id: 'nacionalidad', nombre: 'Nacionalidad' },
         { id: 'aplica', nombre: '¿Aplica para el seguro?' },
         { id: 'direccion', nombre: 'Dirección' },
@@ -529,7 +523,6 @@ const CAMPOS_REQUERIDOS = [
     { id: 'telefono1', nombre: 'Teléfono' },
     { id: 'fechaNacimiento', nombre: 'Fecha de nacimiento' },
     { id: 'estadoMigratorio', nombre: 'Estado migratorio' },
-    { id: 'tipoDeclaracion', nombre: 'Tipo de declaración'},
     { id: 'nacionalidad', nombre: 'Nacionalidad' },
     { id: 'aplica', nombre: '¿Aplica para el seguro?'},
     { id: 'direccion', nombre: 'Dirección' },
