@@ -183,3 +183,9 @@ function tienePermiso(clave) {
     if (esAdminGenearl()) return true;
     return permisosEfectivos[clave] === true;
 }
+
+const EMAIL_AUTORIZADO_PERMISOS = 'jostynaragon@asesoriasth.com';
+
+function esUsuarioAutorizadoPermisos() {
+    return usuarioActual?.email === EMAIL_AUTORIZADO_PERMISOS
+}

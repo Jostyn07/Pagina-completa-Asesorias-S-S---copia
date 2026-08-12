@@ -91,14 +91,17 @@ function renderizarTabla() {
                 }
             </td>
             <td>
+                ${esUsuarioAutorizadoPermisos() ? `
                 <button class="btn-edit" onclick="editarUsuario('${usuario.id}')">
                     <span class="material-symbols-rounded">edit</span>
                     Editar
                 </button>
+                ` : ''}
+                ${esUsuarioAutorizadoPermisos() ? `
                 <button class="btn-delete" onclick="eliminarUsuario('${usuario.id}', '${usuario.nombre}')">
                     <span class="material-symbols-rounded">delete</span>
                     Eliminar
-                </button>
+                </button>` : ''}
             </td>
         `;
         
@@ -338,10 +341,12 @@ function buscarUsuarios() {
                 }
             </td>
             <td>
+                ${esUsuarioAutorizadoPermisos() ? `
                 <button class="btn-edit" onclick="editarUsuario('${usuario.id}')">
                     <span class="material-symbols-rounded">edit</span>
                     Editar
                 </button>
+                ` : ''}
                 <button class="btn-delete" onclick="eliminarUsuario('${usuario.id}', '${usuario.nombre}')">
                     <span class="material-symbols-rounded">delete</span>
                     Eliminar

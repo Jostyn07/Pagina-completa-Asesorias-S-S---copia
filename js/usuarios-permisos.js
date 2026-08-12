@@ -8,12 +8,34 @@ let matrizUsuarioActual = {};
 let overridesUsuarioActual = {};
 let cambiosPendientesUsuario = {};
 
+async function verificarAccesoPermisos() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const botonTab = document.querySelector('[data-tab="permisos"]');
+
+    if (!user || user.email !== EMAIL_AUTORIZADO_PERMISOS) {
+        if (botonTab) botonTab.style.display = 'none';
+        const contenedor = document.getElementById('tab-permisos');
+        if (contenedor) {
+            contenedor.innerHTML = `
+                <div style="text-align:center;padding:60px 20px;color:var(--color-text-placeholder)">
+                    <span class="material-symbols-rounded" style="font-size:48px;opacity:0.3">lock</span>
+                    <p>No tienes permiso para acceder a esta sección</p>
+                </div>`;
+        }
+        return false;
+    }
+    return true;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    const autorizado = await verificarAccesoPermisos();
+    if(!autorizado) return;
+
     await cargarCatalogoPermisos();
     await cargarPortalesDisponibles();
     await cargarMatrizRol();
     await cargarUsuariosParaSelector();
-});
+})
 
 async function cargarCatalogoPermisos() {
     const { data, error } = await supabaseClient
