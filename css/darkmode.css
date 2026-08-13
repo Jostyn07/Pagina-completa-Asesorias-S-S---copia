@@ -704,5 +704,9 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 }
 
 [data-theme="dark"] .campana-item {
-    border-color: #2e2e3e
+    background: #22222e;
+}
+
+[data-theme="dark"] .campana-item.no-leida {
+    background: #1a1a24;
 }

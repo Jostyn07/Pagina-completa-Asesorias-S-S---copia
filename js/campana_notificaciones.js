@@ -147,6 +147,7 @@ function iniciarNotyfCampana() {
 
 function mostrarToastNotificacion(notificacion) {
     if (!notyfCampana) return;
+    reproducirSonidoNotificacion();
 
     const mensaje = notificacion.cuerpo
         ? `${notificacion.titulo} - ${notificacion.cuerpo}`
@@ -160,6 +161,46 @@ function mostrarToastNotificacion(notificacion) {
     toast.on('click', () => {
         clickNotificacion(notificacion.id);
     });
+}
+
+let audioContextCampana = null;
+
+function reproducirSonidoNotificacion() {
+    try {
+        if (!audioContextCampana) {
+            audioContextCampana = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        if (audioContextCampana.state === 'suspended') {
+            audioContextCampana.resume();
+        }
+
+        const ahora = audioContextCampana.currentTime;
+
+        [
+            { freq: 880, inicio: 0, duracion: 0.15 },
+            { freq: 1108, inicio: 0.12, duracion: 0.25},
+        ]. forEach(nota => {
+            const oscilador = audioContextCampana.createOscillator();
+            const ganancia = audioContextCampana.createGain();
+
+            oscilador.type = 'sine';
+            oscilador.frequency.setValueAtTime(nota.freq, ahora + nota.inicio);
+
+
+            ganancia.gain.setValueAtTime(0, ahora + nota.inicio);
+            ganancia.gain.linearRampToValueAtTime(0.25, ahora + nota.inicio + 0.02);
+            ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + nota.inicio + nota.duracion);
+
+            oscilador.connect(ganancia);
+            ganancia.connect(audioContextCampana.destination);
+
+            oscilador.start(ahora + nota.inicio);
+            oscilador.stop(ahora + nota.inicio + nota.duracion);
+        });
+    } catch (e) {
+        console.error('No se pudo reproducir el sonido de notificación:', e)
+    }
 }
 
 function suscribirCampanaRealtime() {
