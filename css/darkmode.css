@@ -691,3 +691,18 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
     background: var(--dk-warning);
     color: #1e293b;
 }
+
+[data-theme="dark"] .campana-btn {
+    background: #1a1a24;
+    color: #e2e4e9;
+    border-color: #2e2e3e;
+}
+
+[data-theme="dark"] .campana-panel {
+    background: #1a1a24;
+    border-color: #2e2e3e;
+}
+
+[data-theme="dark"] .campana-item {
+    border-color: #2e2e3e
+}

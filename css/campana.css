@@ -1,0 +1,109 @@
+.campana-container {
+    position: fixed;
+    top: 75px;
+    right: 40px;
+    z-index: 9998;
+}
+
+.campana-btn {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-card, #fff);
+    color: var(--text-primary, #1e293b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s, transform 0.2s;
+}
+
+.campana-btn:hover {
+    transform: translateY(-1px);
+}
+
+.campana-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.campana-badge.hidden {
+    display: none;
+}
+
+.campana-panel {
+    position: absolute;
+    top: 56px;
+    right: 0;
+    width: 340px;
+    max-height: 420px;
+    overflow-y: auto;
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    display: none;
+    flex-direction: column;
+}
+
+.campana-panel.open {
+    display: flex;
+}
+
+.campana-panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+}
+
+.campana-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.campana-item:hover {
+    background: rgba(99, 102, 241, 0.06);
+}
+
+.campana-item.no-leida {
+    background: rgba(99, 102, 241, 0.04);
+}
+
+.campana-item-titulo {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary, #1e293b);
+    margin-bottom: 2px;
+}
+
+.campana-item-fecha {
+    font-size: 11px;
+    color: var(--text-secondary, #94a3b8);
+    margin-top: 4px;
+}
+
+.campana-vacio {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 13px;
+}
+

@@ -58,15 +58,13 @@ async function suscribirsePush(registration) {
 
         const json = subscription.toJSON();
 
-        const { error } = await supabaseClient
-            .from('push_subscriptions')
-            .upsert({
-                usuario_id: user.id,
-                endpoint: json.endpoint,
-                p256dh: json.keys.p256dh,
-                auth_key: json.keys.auth,
-                user_agent: navigator.userAgent
-            } , { onConflict: 'endpoint'});
+        const { error } = await supabaseClient.rpc('reclamar_ppush_subscription', {
+            p_endpoint: json.endpoint,
+            p_p256dh: json.keys.p256dh,
+            p_auth_key: json.keys.auth,
+            p_user_agent: navigator.userAgent
+        });
+            
         
         if (error) console.error('Error guardando suscripcion push: ', error)
     } catch (error) {
