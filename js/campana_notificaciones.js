@@ -3,7 +3,7 @@ let notificacionesCampana = [];
 let camapanaUsuarioId = null;
 
 function formatearFechaRelativa(fechaIso) {
-    const fecha = newDate(fechaIso);
+    const fecha = new Date(fechaIso);
     const ahora = new Date();
     const diffMs = ahora - fecha;
     const diffMin = Math.floor(diffMs / 60000);
@@ -70,7 +70,7 @@ async function cargarNotificacionesCampana() {
         return
     }
 
-    notificaionesCampana = data || [];
+    notificacionesCampana = data || [];
     renderizarCampana();
     actualizarBadgeCampana();
 }
@@ -136,7 +136,7 @@ function iniciarNotyfCampana() {
                 type: 'campana',
                 background: '6366f1',
                 icon: {
-                    clasName: 'material-symbols-rounded',
+                    className: 'material-symbols-rounded',
                     tagName: 'span',
                     text: 'notifications'
                 }
@@ -229,6 +229,5 @@ function irNotificacion(url) {
 
 document.addEventListener('DOMContentLoaded', () => {
     iniciarNotyfCampana();
-    inicializarDatosCampana();
     iniciarCampana();
 })
