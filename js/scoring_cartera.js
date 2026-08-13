@@ -179,13 +179,6 @@ function calcularScoringCartera(poliza) {
         factores.push('Estatus migratorio temporal');
     }
 
-    // Factor 8: Ingresos inestables
-    const ocupacion = (cliente.ocupacion || '').toLowerCase();
-    if (/independiente|1099|temporal|desempleado|freelance/.test(ocupacion)) {
-        score += 10;
-        factores.push('Ingresos inestables');
-    }
-
     const finalScore = Math.min(100, score);
     let nivel = 'verde';
     if (finalScore >= 61)      nivel = 'rojo';
