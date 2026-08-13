@@ -134,7 +134,7 @@ function iniciarNotyfCampana() {
         types: [
             {
                 type: 'campana',
-                background: '6366f1',
+                background: '#6366f1',
                 icon: {
                     className: 'material-symbols-rounded',
                     tagName: 'span',
