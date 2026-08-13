@@ -165,6 +165,14 @@ function mostrarToastNotificacion(notificacion) {
 function suscribirCampanaRealtime() {
     if (!campanaUsuarioId) return;
 
+    const canalExistente = supabaseClient
+        .getChannels()
+        .find(c => c.topic === 'realtime:notificaciones-app-realtime');
+
+    if (canalExistente) {
+        supabaseClient.removeChannel(canalExistente);
+    }
+
     supabaseClient
         .channel('notificaciones-app-realtime')
         .on('postgres_changes', {
@@ -174,12 +182,12 @@ function suscribirCampanaRealtime() {
             filter: `usuario_id=eq.${campanaUsuarioId}`
         }, (payload) => {
             const nueva = payload.new;
-            notificaionesCampana.unshift(nueva);
+            notificacionesCampana.unshift(nueva);
             renderizarCampana();
             actualizarBadgeCampana();
             mostrarToastNotificacion(nueva);
         })
-        .subscribe()
+        .subscribe();
 }
 
 async function clickNotificacion(id) {
