@@ -225,8 +225,13 @@ async function cargarRecordatorios() {
             const misPortales = usuarioActual.portales || [];
             resultado2 = resultado2.filter (r => {
                 const portalesDestinatario = r.usuario?.portales || [];
-                const portalesCreador = r.creador?.portales || [];
                 const compartePortalDestinatario = portalesDestinatario.some(p => misPortales.includes(p));
+
+                if (!r.creado_por_id || r.creado_por_id === r.usuario_id) {
+                    return compartePortalDestinatario;
+                }
+                
+                const portalesCreador = r.creador?.portales || [];
                 const compartePortalCreador = portalesCreador.some(p => misPortales.includes(p));
                 return compartePortalDestinatario && compartePortalCreador;
             })
