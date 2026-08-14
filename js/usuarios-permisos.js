@@ -85,7 +85,7 @@ function filtrarSelectUsuarioPermisos() {
     poblarSelectUsuarioPermisos(filtrados);
 }
 
-const PORTALES_VALIDOS = ['TODOS', 'Evelyn Morillo', 'Dante SY', 'Isabel SY'];
+const PORTALES_VALIDOS = ['TODOS', 'Evelyn Morillo', 'Dante SY', 'Isabel SY', 'Alfred Nieves'];
 
 async function cargarPortalesDisponibles() {
     const select = document.getElementById('selectPortalPermisos');
