@@ -334,7 +334,7 @@ function restaurarFiltrosDesdeStorage() {
             if (filtrosActivos.estadoMigratorio?.length > 0 && !filtrosActivos.estadoMigratorio.includes(cliente.estado_migratorio)) return false;
             if (filtrosActivos.tieneSsn && cliente.tiene_social !== filtrosActivos.tieneSsn) return false;
             if (filtrosActivos.tieneMetodoPago && cliente.tiene_metodo_pago !== filtrosActivos.tieneMetodoPago) return false;
-            if (filtrosActivos.tienePagoAutomatico && cliente.metodos_pago?.[0]?.tiene_pago_automatico !== filtrosActivos.tienePagoAutomatico) return false;
+            if (filtrosActivos.tienePagoAutomatico && obtenerMetodoPrincipal(cliente)?.tiene_pago_automatico !== filtrosActivos.tienePagoAutomatico) return false;
             if (filtrosActivos.filtroAgenteMercado?.length > 0) {
                 const esNull = filtrosActivos.filtroAgenteMercado.includes('__null__');
                 const estaVacio = !poliza.nombre_agente_mercado || poliza.nombre_agente_mercado === '';
@@ -389,12 +389,9 @@ function restaurarFiltrosDesdeStorage() {
             }
 
             if (filtrosActivos.mesPagado?.length > 0) {
-                const metodo = poliza.cliente?.metodos_pago?.[0];
-                if (!metodo) return false;
-                const cumple = filtrosActivos.mesPagado.some(mes => {
-                    const campoPago = `pago_${mes}`;
-                    return metodo[campoPago] === true || metodo[campoPago] === 'Si';
-                });
+                const mesesPagados = obtenerMesesPagadosAnioActual(poliza.cliente);
+                if (!mesesPagados) return false;
+                const cumple = filtrosActivos.mesPagado.some(mes => mesesPagados[mes] === 'Si');
                 if (!cumple) return false;
             }
 
@@ -440,23 +437,20 @@ function restaurarFiltrosDesdeStorage() {
             const cliente = poliza.cliente || {};
             const metodosPago = cliente.metodos_pago;
             
+            const metodoPrincipal = obtenerMetodoPrincipal(cliente);
+
             if (filtrosActivos.metodoPago === 'con_metodo') {
-                // Tiene método confirmado: tiene registro Y tiene_metodo_pago = 'Si'
-                if (!metodosPago || metodosPago.length === 0 || metodosPago[0]?.tiene_metodo_pago !== 'Si') {
+                if (!metodoPrincipal || metodoPrincipal.tiene_metodo_pago !== 'Si') {
                     return false;
                 }
             }
-            
             if (filtrosActivos.metodoPago === 'sin_metodo') {
-                // Sin método: NO tiene ningún registro en metodos_pago
                 if (metodosPago && metodosPago.length > 0) {
                     return false;
                 }
             }
-            
             if (filtrosActivos.metodoPago === 'no_confirmado') {
-                // Tiene registro pero marcado como 'No'
-                if (!metodosPago || metodosPago.length === 0 || metodosPago[0]?.tiene_metodo_pago !== 'No') {
+                if (!metodoPrincipal || metodoPrincipal.tiene_metodo_pago !== 'No') {
                     return false;
                 }
             }
@@ -538,6 +532,7 @@ async function cargarPolizas() {
                     metodos_pago (
                         tiene_metodo_pago,
                         tiene_pago_automatico,
+                        activo,
                         pago_enero,
                         pago_febrero,
                         pago_marzo,
@@ -550,6 +545,21 @@ async function cargarPolizas() {
                         pago_octubre,
                         pago_noviembre,
                         pago_diciembre
+                    ),
+                    pagos_mensuales_cliente (
+                        anio,
+                        enero,
+                        febrero,
+                        marzo,
+                        abril,
+                        mayo,
+                        junio,
+                        julio,
+                        agosto,
+                        septiembre,
+                        octubre,
+                        noviembre,
+                        diciembre
                     )
                 ),
                 seguimientos (
@@ -749,7 +759,7 @@ function renderizarTabla() {
             <td data-label="Plan">${poliza.plan || '-'}</td>
             <td data-label="Prima">$${poliza.prima || '0.00'}</td>
             <td data-label="Pagado hasta">${formatoUS(poliza.pagado_hasta) || '-'}</td>
-            <td data-label="¿Tiene metodo de pago?">${metodos_pago?.[0]?.tiene_metodo_pago || '-'}</td>
+            <td data-label="¿Tiene metodo de pago?">${obtenerMetodoPrincipal(poliza.cliente)?.tiene_metodo_pago || '-'}</td>
             <td data-label="Agente">${poliza.agente_nombre || '-'}</td>
             <td data-label="Efectividad">${formatoUS(poliza.fecha_efectividad)}</td>
             <td data-label="Creación">${formatoUS(poliza.created_at)}</td>
@@ -1091,26 +1101,26 @@ async function abrirDetalles(polizaId) {
                 <div class="detalle-seccion">
                     <!-- Meses Pagados -->
                     ${(() => {
-                        const metodo = poliza.cliente?.metodos_pago?.[0];
-                        if (!metodo) return '';
+                        const mesesPagados = obtenerMesesPagadosAnioActual(poliza.cliente);
+                        if (!mesesPagados) return '';
 
                         const meses = [
-                            { key: 'pago_enero',      abr: 'Ene' },
-                            { key: 'pago_febrero',    abr: 'Feb' },
-                            { key: 'pago_marzo',      abr: 'Mar' },
-                            { key: 'pago_abril',      abr: 'Abr' },
-                            { key: 'pago_mayo',       abr: 'May' },
-                            { key: 'pago_junio',      abr: 'Jun' },
-                            { key: 'pago_julio',      abr: 'Jul' },
-                            { key: 'pago_agosto',     abr: 'Ago' },
-                            { key: 'pago_septiembre', abr: 'Sep' },
-                            { key: 'pago_octubre',    abr: 'Oct' },
-                            { key: 'pago_noviembre',  abr: 'Nov' },
-                            { key: 'pago_diciembre',  abr: 'Dic' },
+                            { key: 'enero',      abr: 'Ene' },
+                            { key: 'febrero',    abr: 'Feb' },
+                            { key: 'marzo',      abr: 'Mar' },
+                            { key: 'abril',      abr: 'Abr' },
+                            { key: 'mayo',       abr: 'May' },
+                            { key: 'junio',      abr: 'Jun' },
+                            { key: 'julio',      abr: 'Jul' },
+                            { key: 'agosto',     abr: 'Ago' },
+                            { key: 'septiembre', abr: 'Sep' },
+                            { key: 'octubre',    abr: 'Oct' },
+                            { key: 'noviembre',  abr: 'Nov' },
+                            { key: 'diciembre',  abr: 'Dic' },
                         ];
 
                         const badges = meses.map(({ key, abr }) => {
-                            const pagado = metodo[key] === true || metodo[key] === 'Si';
+                            const pagado = mesesPagados[key] === 'Si';
                             return `
                                 <span style="
                                     display: inline-flex;
@@ -1130,7 +1140,7 @@ async function abrirDetalles(polizaId) {
 
                         return `
                             <div class="detalle-seccion">
-                                <h3><span class="material-symbols-rounded">payments</span> Meses Pagados</h3>
+                                <h3><span class="material-symbols-rounded">payments</span> Meses Pagados (${mesesPagados.anio})</h3>
                                 <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0;">
                                     ${badges}
                                 </div>
@@ -2788,10 +2798,11 @@ function aplicarFiltrosAvanzados() {
         // Filtro por método de pago
         if (filtrosActivos.tieneMetodoPago) {
             const metodosPago = cliente.metodos_pago;
-            
+            const metodoPrincipal = obtenerMetodoPrincipal(cliente);
+
             if (filtrosActivos.tieneMetodoPago === 'Si') {
                 // Tiene método confirmado: debe tener registro Y tiene_metodo_pago = 'Si'
-                if (!metodosPago || metodosPago.length === 0 || metodosPago[0]?.tiene_metodo_pago !== 'Si') {
+                if (!metodoPrincipal || metodoPrincipal.tiene_metodo_pago !== 'Si') {
                     return false;
                 }
             }
@@ -2799,7 +2810,7 @@ function aplicarFiltrosAvanzados() {
             if (filtrosActivos.tieneMetodoPago === 'No') {
                 // NO tiene método: sin registro O registro con 'No'
                 const tieneRegistro = metodosPago && metodosPago.length > 0;
-                const esNo = tieneRegistro && metodosPago[0]?.tiene_metodo_pago === 'No';
+                const esNo = tieneRegistro && metodoPrincipal?.tiene_metodo_pago === 'No';
                 const sinRegistro = !tieneRegistro;
                 
                 // Si NO cumple ninguna de las dos condiciones, descarta
@@ -2810,7 +2821,7 @@ function aplicarFiltrosAvanzados() {
         }
 
         if (filtrosActivos.tienePagoAutomatico) {
-            const valorCliente = poliza.cliente?.metodos_pago?.[0]?.tiene_pago_automatico || 'No';
+            const valorCliente = obtenerMetodoPrincipal(poliza.cliente)?.tiene_pago_automatico || 'No';
             if (valorCliente !== filtrosActivos.tienePagoAutomatico) return false;
         }
 
@@ -2891,12 +2902,9 @@ function aplicarFiltrosAvanzados() {
 
         // Filtro por mes pagado
         if (filtrosActivos.mesPagado?.length > 0) {
-            const metodo = poliza.cliente?.metodos_pago?.[0];
-            if (!metodo) return false;
-            const cumple = filtrosActivos.mesPagado.some(mes => {
-                const campoPago = `pago_${mes}`;
-                return metodo[campoPago] === true || metodo[campoPago] === 'Si';
-            });
+            const mesesPagados = obtenerMesesPagadosAnioActual(poliza.cliente);
+            if (!mesesPagados) return false;
+            const cumple = filtrosActivos.mesPagado.some(mes => mesesPagados[mes] === 'Si');
             if (!cumple) return false;
         }
 
@@ -3450,3 +3458,17 @@ window.abrirSelectorOperador  = abrirSelectorOperador;
 window.cerrarSelectorOperador = cerrarSelectorOperador;
 window.seleccionarOperador    = seleccionarOperador;
 window.filtrarOpcionesSelectorOperador = filtrarOpcionesSelectorOperador;
+
+// Helpers
+function obtenerMetodoPrincipal(cliente) {
+    const metodos = cliente?.metodos_pago;
+    if (!metodos || metodos.length === 0) return null;
+    return metodos.find(m => m.activo === true) || metodos[0];
+}
+
+function obtenerMesesPagadosAnioActual(cliente) {
+    const anioActual = new Date().getFullYear();
+    const registros = cliente?.pagos_mensuales_cliente;
+    if (!registros || registros.length === 0) return null;
+    return registros.find(r => r.anio === anioActual) || null;
+}

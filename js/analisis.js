@@ -150,19 +150,20 @@ async function cargarDatosAnalisis() {
                     telefono1,
                     archivado,
                     ssn,
-                    metodos_pago (
-                        pago_enero,
-                        pago_febrero,
-                        pago_marzo,
-                        pago_abril,
-                        pago_mayo,
-                        pago_junio,
-                        pago_julio,
-                        pago_agosto,
-                        pago_septiembre,
-                        pago_octubre,
-                        pago_noviembre,
-                        pago_diciembre
+                    pagos_mensuales_cliente (
+                        anio,
+                        enero,
+                        febrero,
+                        marzo,
+                        abril,
+                        mayo,
+                        junio,
+                        julio,
+                        agosto,
+                        septiembre,
+                        octubre,
+                        noviembre,
+                        diciembre
                     )
                 ),
                 seguimientos (

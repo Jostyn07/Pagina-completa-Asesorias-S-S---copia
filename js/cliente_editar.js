@@ -9,6 +9,8 @@ let imagenesNotaSeleccionadas = [];
 let autosaveTimer = null;
 let quillNota = null
 let dependientesCount = 0;
+let metodosPagoLista = [];          // Lista en memoria de TODOS los métodos de pago del cliente (banco/tarjeta)
+let metodosPagoIdsOriginales = [];
 const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 
 // ============================================
@@ -391,6 +393,8 @@ async function cargarDatosCliente(id) {
         if (!clienteData) throw new Error('Cliente no encontrado');
 
         await cargarMetodoPago(clienteId);
+        inicializarSelectorAnioMesesPagados();
+        await cargarMesesPagados(clienteId, new Date().getFullYear());
 
         
         // Cargar póliza
@@ -499,6 +503,7 @@ async function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if (cliente.telefono2) document.getElementById('telefono2').value = cliente.telefono2 || '';
        if (cliente.fecha_nacimiento) document.getElementById('fechaNacimiento').value = formatoUS(cliente.fecha_nacimiento);
        if (cliente.estado_migratorio) document.getElementById('estadoMigratorio').value = cliente.estado_migratorio || '';
+       precargarCondicionesMedicas(cliente.condiciones_medicas);
        if (poliza.agente_nombre) document.getElementById('agenteNombre').value = poliza.agente_nombre || '';
         
         const ssnInput = document.getElementById('ssn');
@@ -1559,18 +1564,244 @@ function limpiarMetodoPago() {
     document.querySelectorAll('[name="metodoPago"]').forEach(radio => {
         radio.checked = false;
     });
-    
+
     // Ocultar formularios
     const formBanco = document.getElementById('formBanco');
     const formTarjeta = document.getElementById('formTarjeta');
-    
+
     if (formBanco) formBanco.style.display = 'none';
     if (formTarjeta) formTarjeta.style.display = 'none';
-    
+
     // Limpiar campos
     document.querySelectorAll('#formBanco input, #formTarjeta input, #formTarjeta select').forEach(input => {
         input.value = '';
     });
+
+    const usarMismaDireccion = document.getElementById('usarMismaDireccion');
+    if (usarMismaDireccion) usarMismaDireccion.checked = true;
+
+    // Salir del modo edición si estaba activo
+    document.getElementById('metodoPagoEditandoId').value = '';
+    document.getElementById('textoBtnAgregarMetodo').textContent = 'Agregar método';
+}
+
+
+function generarIdTemporalMetodoPago() {
+    return 'tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function enmascararNumero(numero) {
+    if (!numero) return '';
+    const limpio = String(numero).replace(/\D/g, '');
+    if (limpio.length <= 4) return limpio;
+    return `•••• ${limpio.slice(-4)}`;
+}
+
+// Lee lo que hay en el formulario de banco/tarjeta (el de "staging", el de arriba)
+function leerFormularioMetodoPagoStaging() {
+    const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
+    if (!tipoSeleccionado) {
+        alert('Selecciona un tipo de método de pago (banco o tarjeta).');
+        return null;
+    }
+
+    const tipo = tipoSeleccionado.value;
+    const metodo = {
+        tipo: tipo,
+        usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
+        activo: metodosPagoLista.length === 0 // el primero que se agrega queda como principal automáticamente
+    };
+
+    if (tipo === 'banco') {
+        metodo.nombre_banco = document.getElementById('nombreBanco')?.value?.trim() || null;
+        metodo.numero_cuenta = document.getElementById('numeroCuenta')?.value?.trim() || null;
+        metodo.routing_number = document.getElementById('routingNumber')?.value?.trim() || null;
+        metodo.nombre_cuenta = document.getElementById('nombreCuenta')?.value?.trim() || null;
+
+        if (!metodo.numero_cuenta) {
+            alert('Ingresa el número de cuenta antes de agregar.');
+            return null;
+        }
+    } else {
+        metodo.numero_tarjeta = document.getElementById('numeroTarjeta')?.value?.trim() || null;
+        metodo.nombre_tarjeta = document.getElementById('nombreTarjeta')?.value?.trim() || null;
+        metodo.fecha_expiracion = document.getElementById('fechaExpiracion')?.value?.trim() || null;
+        metodo.cvv = document.getElementById('cvv')?.value?.trim() || null;
+        metodo.tipo_tarjeta = document.getElementById('tipoTarjeta')?.value || null;
+
+        if (!metodo.numero_tarjeta) {
+            alert('Ingresa el número de tarjeta antes de agregar.');
+            return null;
+        }
+    }
+
+    return metodo;
+}
+
+// Botón "Agregar método" (o "Guardar cambios" si estamos editando uno existente)
+function agregarMetodoPagoALista() {
+    const datos = leerFormularioMetodoPagoStaging();
+    if (!datos) return;
+
+    const idEnEdicion = document.getElementById('metodoPagoEditandoId').value;
+
+    if (idEnEdicion) {
+        // Estábamos editando un método que ya estaba en la lista: lo reemplazamos
+        // conservando su idTemp / esNuevo / activo originales.
+        const index = metodosPagoLista.findIndex(m => m.idTemp === idEnEdicion);
+        if (index !== -1) {
+            datos.idTemp = metodosPagoLista[index].idTemp;
+            datos.esNuevo = metodosPagoLista[index].esNuevo;
+            datos.activo = metodosPagoLista[index].activo;
+            metodosPagoLista[index] = datos;
+        }
+    } else {
+        // Método nuevo
+        datos.idTemp = generarIdTemporalMetodoPago();
+        datos.esNuevo = true;
+        metodosPagoLista.push(datos);
+    }
+
+    renderizarListaMetodosPago();
+    limpiarMetodoPago();
+}
+
+// Carga un método de la lista de vuelta al formulario para editarlo
+function editarMetodoPagoLista(idTemp) {
+    const metodo = metodosPagoLista.find(m => m.idTemp === idTemp);
+    if (!metodo) return;
+
+    const radio = document.querySelector(`[name="metodoPago"][value="${metodo.tipo}"]`);
+    if (radio) {
+        radio.checked = true;
+        mostrarFormularioPago(metodo.tipo);
+    }
+
+    if (metodo.tipo === 'banco') {
+        document.getElementById('nombreBanco').value = metodo.nombre_banco || '';
+        document.getElementById('numeroCuenta').value = metodo.numero_cuenta || '';
+        document.getElementById('routingNumber').value = metodo.routing_number || '';
+        document.getElementById('nombreCuenta').value = metodo.nombre_cuenta || '';
+    } else {
+        document.getElementById('numeroTarjeta').value = metodo.numero_tarjeta || '';
+        document.getElementById('nombreTarjeta').value = metodo.nombre_tarjeta || '';
+        document.getElementById('fechaExpiracion').value = metodo.fecha_expiracion || '';
+        document.getElementById('cvv').value = metodo.cvv || '';
+        document.getElementById('tipoTarjeta').value = metodo.tipo_tarjeta || '';
+    }
+
+    const usarMismaDireccion = document.getElementById('usarMismaDireccion');
+    if (usarMismaDireccion) usarMismaDireccion.checked = metodo.usar_misma_direccion !== false;
+
+    document.getElementById('metodoPagoEditandoId').value = idTemp;
+    document.getElementById('textoBtnAgregarMetodo').textContent = 'Guardar cambios';
+
+    document.getElementById('formBanco')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function eliminarMetodoPagoLista(idTemp) {
+    if (!confirm('¿Eliminar este método de pago de la lista?')) return;
+
+    const eraPrincipal = metodosPagoLista.find(m => m.idTemp === idTemp)?.activo;
+    metodosPagoLista = metodosPagoLista.filter(m => m.idTemp !== idTemp);
+
+    // Si el eliminado era el principal y quedan otros, el primero que quede pasa a ser principal
+    if (eraPrincipal && metodosPagoLista.length > 0) {
+        metodosPagoLista[0].activo = true;
+    }
+
+    renderizarListaMetodosPago();
+}
+
+function marcarMetodoPagoPrincipal(idTemp) {
+    metodosPagoLista.forEach(m => {
+        m.activo = (m.idTemp === idTemp);
+    });
+    renderizarListaMetodosPago();
+}
+
+function renderizarListaMetodosPago() {
+    const container = document.getElementById('listaMetodosPagoContainer');
+    if (!container) return;
+
+    if (metodosPagoLista.length === 0) {
+        container.innerHTML = '<p class="empty-state" id="metodosPagoEmptyState">Aún no se ha agregado ningún método de pago.</p>';
+        return;
+    }
+
+    container.innerHTML = metodosPagoLista.map(m => {
+        const esBanco = m.tipo === 'banco';
+        const icono = esBanco ? 'account_balance' : 'credit_card';
+        const titulo = esBanco
+            ? (m.nombre_banco || 'Cuenta de banco')
+            : (m.tipo_tarjeta ? m.tipo_tarjeta.toUpperCase() : 'Tarjeta');
+        const numeroMostrar = esBanco ? enmascararNumero(m.numero_cuenta) : enmascararNumero(m.numero_tarjeta);
+
+        return `
+            <div class="metodo-pago-card ${m.activo ? 'principal' : ''}">
+                <div class="metodo-pago-card-header">
+                    <div class="metodo-pago-card-info">
+                        <span class="material-symbols-rounded">${icono}</span>
+                        <div class="metodo-pago-card-nombre">
+                            <h4>${titulo} ${m.activo ? '<span class="badge badge-nuevo">Principal</span>' : ''}</h4>
+                            <small>${numeroMostrar}</small>
+                        </div>
+                    </div>
+                    <div class="metodo-pago-card-acciones">
+                        ${!m.activo ? `<button type="button" class="btn-icon" onclick="marcarMetodoPagoPrincipal('${m.idTemp}')" title="Marcar como principal">
+                            <span class="material-symbols-rounded">star</span>
+                        </button>` : ''}
+                        <button type="button" class="btn-icon" onclick="verMetodoPagoLista('${m.idTemp}')" title="Ver detalle">
+                            <span class="material-symbols-rounded">visibility</span>
+                        </button>
+                        <button type="button" class="btn-icon" onclick="editarMetodoPagoLista('${m.idTemp}')" title="Editar">
+                            <span class="material-symbols-rounded">edit</span>
+                        </button>
+                        <button type="button" class="btn-icon delete" onclick="eliminarMetodoPagoLista('${m.idTemp}')" title="Eliminar">
+                            <span class="material-symbols-rounded">delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function verMetodoPagoLista(idTemp) {
+    const metodo = metodosPagoLista.find(m => m.idTemp === idTemp);
+    if (!metodo) return;
+
+    const contenido = document.getElementById('verMetodoPagoContenido');
+    if (!contenido) return;
+
+    const fila = (label, valor) => `
+        <div class="detalle-fila">
+            <span class="detalle-label">${label}</span>
+            <span class="detalle-valor">${valor || '-'}</span>
+        </div>`;
+
+    let html = fila('Tipo', metodo.tipo === 'banco' ? 'Cuenta de banco' : 'Tarjeta');
+    html += fila('Principal', metodo.activo ? 'Sí' : 'No');
+
+    if (metodo.tipo === 'banco') {
+        html += fila('Nombre del banco', metodo.nombre_banco);
+        html += fila('Número de cuenta', metodo.numero_cuenta);
+        html += fila('Routing number', metodo.routing_number);
+        html += fila('Nombre en la cuenta', metodo.nombre_cuenta);
+    } else {
+        html += fila('Número de tarjeta', metodo.numero_tarjeta);
+        html += fila('Nombre en la tarjeta', metodo.nombre_tarjeta);
+        html += fila('Fecha de expiración', metodo.fecha_expiracion);
+        html += fila('CVV', metodo.cvv);
+        html += fila('Tipo de tarjeta', metodo.tipo_tarjeta ? metodo.tipo_tarjeta.toUpperCase() : '');
+    }
+
+    contenido.innerHTML = html;
+    document.getElementById('modalVerMetodoPago').classList.add('active');
+}
+
+function cerrarModalVerMetodoPago() {
+    document.getElementById('modalVerMetodoPago').classList.remove('active');
 }
 
 // ============================================
@@ -1632,6 +1863,8 @@ async function handleSubmit(event) {
         // 4. Guardar documentos NUEVOS
         await guardarDocumentosNuevos(clienteId);
 
+        await guardarMesesPagados(clienteId);
+
         // 5. Guardar metodo de pago
         await guardarMetodoPago(clienteId);
 
@@ -1643,6 +1876,7 @@ async function handleSubmit(event) {
         telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : '',
         fecha_nacimiento: limpiarFecha(formData.fechaNacimiento),
         estado_migratorio: formData.estadoMigratorio,
+        condiciones_medicas: obtenerCondicionesMedicasFinal(),
         direccion: formData.direccion,
         ciudad: formData.ciudad,
         estado: formData.estado,
@@ -1821,6 +2055,7 @@ async function actualizarCliente(id, formData) {
         telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : null,
         fecha_nacimiento: formData.fechaNacimiento,
         estado_migratorio: formData.estadoMigratorio,
+        condiciones_medicas: obtenerCondicionesMedicasFinal(),
         ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
         tiene_social: tieneSsn,
         ingreso_anual: parseFloat(formData.ingresos) || 0,
@@ -1985,172 +2220,202 @@ async function actualizarDependientes(clienteId, formData) {
     
 }
 
+// Meses pagados
+
+const MESES_KEYS = ['enero','febrero','marzo','abril','mayo','junio', 'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function inicializarSelectorAnioMesesPagados() {
+    const select = document.getElementById('anioMesesPagados');
+    if (!select) return;
+
+    const anioActual = new Date().getFullYear();
+    select.innerHTML = '';
+    for (let a = anioActual; a >= anioActual - 2; a--) {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.textContent = a;
+        select.appendChild(opt);
+    }
+    select.value = anioActual;
+}
+
+function cambiarAnioMesesPagados() {
+    const anio = parseInt(document.getElementById('anioMesesPagados')?.value, 10);
+    if (!anio || !clienteId) return;
+    cargarMesesPagados(clienteId, anio);
+}
+
+async function cargarMesesPagados(clienteId, anio) {
+    try {
+        const { data: registro, error } = await supabaseClient
+            .from('pagos_mensuales_cliente')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .eq('anio', anio)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        // Si no hay registro para ese año, limpiamos todo a "No" (año nuevo, sin datos)
+        MESES_KEYS.forEach(mes => {
+            const checkbox = document.getElementById(`pago${mes.charAt(0).toUpperCase() + mes.slice(1)}`);
+            if (checkbox) checkbox.checked = registro ? registro[mes] === 'Si' : false;
+        });
+
+        const estadoPago = document.getElementById('estadoPago');
+        const fechaPago = document.getElementById('fechaPago');
+        if (estadoPago) estadoPago.value = registro?.estado_pago || '';
+        if (fechaPago) fechaPago.value = registro?.fecha_pago ? formatoUS(registro.fecha_pago) : '';
+
+        // Refleja el estado en los botones visuales (Ene, Feb, ...)
+        sincronizarBadgesMeses();
+
+    } catch (error) {
+        console.error('❌ Error al cargar meses pagados:', error);
+    }
+}
+
+async function guardarMesesPagados(clienteId) {
+    try {
+        const anio = parseInt(document.getElementById('anioMesesPagados')?.value, 10) || new Date().getFullYear();
+
+        const payload = {
+            cliente_id: clienteId,
+            anio: anio,
+            estado_pago: document.getElementById('estadoPago')?.value || null,
+            fecha_pago: document.getElementById('fechaPago')?.value || null,
+            actualizado_por_nombre: usuarioActual?.nombre || null,
+            actualizado_por_email: usuarioActual?.email || null,
+            updated_at: new Date().toISOString()
+        };
+
+        MESES_KEYS.forEach(mes => {
+            const checkbox = document.getElementById(`pago${mes.charAt(0).toUpperCase() + mes.slice(1)}`);
+            payload[mes] = checkbox?.checked ? 'Si' : 'No';
+        });
+
+        const { error } = await supabaseClient
+            .from('pagos_mensuales_cliente')
+            .upsert(payload, { onConflict: 'cliente_id,anio' });
+
+        if (error) throw error;
+        return true;
+
+    } catch (error) {
+        console.error('❌ Error al guardar meses pagados:', error);
+        return false;
+    }
+}
+
+
 // CARGAR MÉTODO DE PAGO EXISTENTE
 async function cargarMetodoPago(clienteId) {
     try {
-        
         const { data: metodos, error } = await supabaseClient
             .from('metodos_pago')
             .select('*')
             .eq('cliente_id', clienteId)
-            .eq('activo', true)
-            .single();
-        
-        if (error) {
-            if (error.code === 'PGRST116') {
-                // No hay método de pago registrado
-                return;
-            }
-            throw error;
-        }
-        
-        if (!metodos) {
-            return;
-        }
-        
-        // Marcar el tipo de método de pago
-        const radioTipo = document.querySelector(`[name="metodoPago"][value="${metodos.tipo}"]`);
-        if (radioTipo) {
-            radioTipo.checked = true;
-            mostrarFormularioPago(metodos.tipo);
-        }
-        
-        // Llenar campos según el tipo
-        if (metodos.tipo === 'banco') {
-            // Datos bancarios
-            document.getElementById('nombreBanco').value = metodos.nombre_banco || '';
-            document.getElementById('numeroCuenta').value = metodos.numero_cuenta || '';
-            document.getElementById('routingNumber').value = metodos.routing_number || '';
-            document.getElementById('nombreCuenta').value = metodos.nombre_cuenta || '';
-            
-        } else if (metodos.tipo === 'tarjeta') {
-            // Datos de tarjeta
-            document.getElementById('numeroTarjeta').value = metodos.numero_tarjeta || '';
-            document.getElementById('nombreTarjeta').value = metodos.nombre_tarjeta || '';
-            document.getElementById('fechaExpiracion').value = metodos.fecha_expiracion || '';
-            document.getElementById('cvv').value = metodos.cvv || '';
-            
-            const tipoTarjeta = document.getElementById('tipoTarjeta');
-            if (tipoTarjeta && metodos.tipo_tarjeta) {
-                tipoTarjeta.value = metodos.tipo_tarjeta;
-            }
-        }
-        
-        // Checkbox de usar misma dirección
-        const usarMismaDireccion = document.getElementById('usarMismaDireccion');
-        if (usarMismaDireccion) {
-            usarMismaDireccion.checked = metodos.usar_misma_direccion !== false;
-        }
+            .order('activo', { ascending: false })   // el principal primero
+            .order('created_at', { ascending: true });
 
-        // Checkbox tiene metodo de pago
+        if (error) throw error;
+
+        metodosPagoLista = (metodos || []).map(m => ({
+            idTemp: m.id,
+            esNuevo: false,
+            tipo: m.tipo,
+            activo: m.activo === true,
+            usar_misma_direccion: m.usar_misma_direccion !== false,
+            tiene_metodo_pago: m.tiene_metodo_pago,
+            tiene_pago_automatico: m.tiene_pago_automatico,
+            nombre_banco: m.nombre_banco,
+            numero_cuenta: m.numero_cuenta,
+            routing_number: m.routing_number,
+            nombre_cuenta: m.nombre_cuenta,
+            numero_tarjeta: m.numero_tarjeta,
+            nombre_tarjeta: m.nombre_tarjeta,
+            fecha_expiracion: m.fecha_expiracion,
+            cvv: m.cvv,
+            tipo_tarjeta: m.tipo_tarjeta
+        }));
+
+        // ids reales que ya existían en BD, para poder detectar eliminaciones al momento de guardar
+        metodosPagoIdsOriginales = metodosPagoLista.map(m => m.idTemp);
+
+        // Los checkboxes globales reflejan el método marcado como Principal (o el primero si ninguno lo está)
+        const principal = metodosPagoLista.find(m => m.activo) || metodosPagoLista[0];
         const tieneMetodoPago = document.getElementById('tieneMetodoPago');
-        if(metodos.tiene_metodo_pago == "Si") {
-            tieneMetodoPago.checked = metodos.tiene_metodo_pago === "Si";
-        }
-
         const tienePagoAutomatico = document.getElementById('tienePagoAutomatico');
-        if(metodos.tiene_pago_automatico == "Si") {
-            tienePagoAutomatico.checked = metodos.tiene_pago_automatico === "Si";
-        }
+        if (tieneMetodoPago) tieneMetodoPago.checked = principal?.tiene_metodo_pago === 'Si';
+        if (tienePagoAutomatico) tienePagoAutomatico.checked = principal?.tiene_pago_automatico === 'Si';
 
-        // Checkboxes de meses pagados
-        const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                       'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-        
-        meses.forEach(mes => {
-            const checkbox = document.getElementById(`pago${mes.charAt(0).toUpperCase() + mes.slice(1)}`);
-            if (checkbox) {
-                checkbox.checked = metodos[`pago_${mes}`] === "Si";
-            }
-        });
-        
-        // Fecha de pago
-        if (metodos.fecha_pago) {
-            document.getElementById('fechaPago').value = formatoUS(metodos.fecha_pago);
-        }
-
-        // Estado del pago
-        if (metodos.estado_pago) {
-            document.getElementById('estadoPago').value = metodos.estado_pago;
-        }
+        renderizarListaMetodosPago();
 
     } catch (error) {
-        console.error('❌ Error al cargar método de pago:', error);
+        console.error('❌ Error al cargar métodos de pago:', error);
     }
 }
 
 // GUARDAR O ACTUALIZAR MÉTODO DE PAGO
-// GUARDAR O ACTUALIZAR MÉTODO DE PAGO
 async function guardarMetodoPago(clienteId) {
     try {
-        const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
-        const tipo = tipoSeleccionado ? tipoSeleccionado.value : null
+        const tieneMetodoPago = document.getElementById('tieneMetodoPago')?.checked ? 'Si' : 'No';
+        const tienePagoAutomatico = document.getElementById('tienePagoAutomatico')?.checked ? 'Si' : 'No';
 
-        let metodoPagoData = {
-            cliente_id: clienteId,
-            tipo: tipo,
-            usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
-            activo: true,
-            tiene_metodo_pago: document.getElementById('tieneMetodoPago')?.checked ? "Si" : "No",
-            tiene_pago_automatico: document.getElementById('tienePagoAutomatico')?.checked ? "Si" : "No",
-            fecha_pago: document.getElementById('fechaPago')?.value || null,
-            estado_pago: document.getElementById('estadoPago')?.value || null,
-            pago_enero: document.getElementById('pagoEnero').checked ? "Si" : "No",
-            pago_febrero: document.getElementById('pagoFebrero').checked ? "Si" : "No",
-            pago_marzo: document.getElementById('pagoMarzo').checked ? "Si" : "No",
-            pago_abril: document.getElementById('pagoAbril').checked ? "Si" : "No",
-            pago_mayo: document.getElementById('pagoMayo').checked ? "Si" : "No",
-            pago_junio: document.getElementById('pagoJunio').checked ? "Si" : "No",
-            pago_julio: document.getElementById('pagoJulio').checked ? "Si" : "No",
-            pago_agosto: document.getElementById('pagoAgosto').checked ? "Si" : "No",
-            pago_septiembre: document.getElementById('pagoSeptiembre').checked ? "Si" : "No",
-            pago_octubre: document.getElementById('pagoOctubre').checked ? "Si" : "No",
-            pago_noviembre: document.getElementById('pagoNoviembre').checked ? "Si" : "No",
-            pago_diciembre: document.getElementById('pagoDiciembre').checked ? "Si" : "No"
-        };
+        // 1. Detectar los que estaban en BD pero ya no están en la lista actual -> borrarlos
+        const idsActuales = metodosPagoLista.filter(m => !m.esNuevo).map(m => m.idTemp);
+        const idsAEliminar = metodosPagoIdsOriginales.filter(id => !idsActuales.includes(id));
 
-        if (tipo === 'banco') {
-            metodoPagoData.nombre_banco = document.getElementById('nombreBanco')?.value || null;
-            metodoPagoData.numero_cuenta = document.getElementById('numeroCuenta')?.value || null;
-            metodoPagoData.routing_number = document.getElementById('routingNumber')?.value || null;
-            metodoPagoData.nombre_cuenta = document.getElementById('nombreCuenta')?.value || null;
-        } else if (tipo === 'tarjeta') {
-            metodoPagoData.numero_tarjeta = document.getElementById('numeroTarjeta')?.value || null;
-            metodoPagoData.nombre_tarjeta = document.getElementById('nombreTarjeta')?.value || null;
-            metodoPagoData.fecha_expiracion = document.getElementById('fechaExpiracion')?.value || null;
-            metodoPagoData.cvv = document.getElementById('cvv')?.value || null;
-            metodoPagoData.tipo_tarjeta = document.getElementById('tipoTarjeta')?.value || null;
+        if (idsAEliminar.length > 0) {
+            const { error: deleteError } = await supabaseClient
+                .from('metodos_pago')
+                .delete()
+                .in('id', idsAEliminar);
+            if (deleteError) throw deleteError;
         }
 
-        const { data: metodoExistente, error: searchError } = await supabaseClient
-            .from('metodos_pago')
-            .select('id')
-            .eq('cliente_id', clienteId)
-            .eq('activo', true)
-            .maybeSingle();
+        // 2. Insertar los nuevos y actualizar los existentes
+        for (const metodo of metodosPagoLista) {
+            const payload = {
+                cliente_id: clienteId,
+                tipo: metodo.tipo,
+                activo: metodo.activo === true,
+                usar_misma_direccion: metodo.usar_misma_direccion !== false,
+                // tiene_metodo_pago / tiene_pago_automatico solo se guardan "Si" en el método Principal
+                tiene_metodo_pago: metodo.activo ? tieneMetodoPago : 'No',
+                tiene_pago_automatico: metodo.activo ? tienePagoAutomatico : 'No'
+            };
 
-        if (searchError && searchError.code !== 'PGRST116') {
-            throw searchError;
-        }
+            if (metodo.tipo === 'banco') {
+                payload.nombre_banco = metodo.nombre_banco || null;
+                payload.numero_cuenta = metodo.numero_cuenta || null;
+                payload.routing_number = metodo.routing_number || null;
+                payload.nombre_cuenta = metodo.nombre_cuenta || null;
+            } else {
+                payload.numero_tarjeta = metodo.numero_tarjeta || null;
+                payload.nombre_tarjeta = metodo.nombre_tarjeta || null;
+                payload.fecha_expiracion = metodo.fecha_expiracion || null;
+                payload.cvv = metodo.cvv || null;
+                payload.tipo_tarjeta = metodo.tipo_tarjeta || null;
+            }
 
-        if (metodoExistente) {
-            const { error: updateError } = await supabaseClient
-                .from('metodos_pago')
-                .update(metodoPagoData)
-                .eq('id', metodoExistente.id);
-
-            if (updateError) throw updateError;
-        } else {
-            const { error: insertError } = await supabaseClient
-                .from('metodos_pago')
-                .insert([metodoPagoData]);
-
-            if (insertError) throw insertError;
+            if (metodo.esNuevo) {
+                const { error: insertError } = await supabaseClient
+                    .from('metodos_pago')
+                    .insert([payload]);
+                if (insertError) throw insertError;
+            } else {
+                const { error: updateError } = await supabaseClient
+                    .from('metodos_pago')
+                    .update(payload)
+                    .eq('id', metodo.idTemp);
+                if (updateError) throw updateError;
+            }
         }
 
         return true;
     } catch (error) {
-        console.error('Error al guardar método de pago:', error);
+        console.error('Error al guardar métodos de pago:', error);
         return false;
     }
 }
@@ -5433,6 +5698,80 @@ function formatearFechaCorta(fecha) {
     if (!fecha) return '—';
     const d = new Date(fecha);
     return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+const OPCIONES_CONDICIONES_MEDICAS = [
+    'Diabetes',
+    'Presión alta (Hipertensión)',
+    'Colesterol alto',
+    'Problemas de tiroides',
+    'Asma',
+    'Artritis',
+    'Enfermedad cardíaca',
+    'Enfermedad renal',
+    'Obesidad',
+    'Cáncer',
+    'Depresión / Ansiedad',
+    'EPOC',
+    'Apnea del sueño',
+    'Problemas de espalda o articulaciones',
+    'Embarazo',
+    'Ninguna',
+    'Otra'
+];
+
+const filtroCondicionesMedicas = crearFiltroMultiSelect({
+    contenedorId: 'condicionesMedicasGroup',
+    label: '',
+    idBase: 'CondicionesMedicas',
+    opciones: OPCIONES_CONDICIONES_MEDICAS,
+    conBuscador: true,
+    textoVacio: 'Seleccionar condiciones...',
+    onCambio: manejarCambioCondicionesMedicas
+});
+
+function manejarCambioCondicionesMedicas(seleccionados) {
+    const wrapOtra = document.getElementById('otraCondicionWrap');
+
+    if (seleccionados.includes('Otra')) {
+        wrapOtra.classList.add('visible');
+    } else {
+        wrapOtra.classList.remove('visible');
+        document.getElementById('otraCondicionTexto').value = '';
+    }
+
+    if (seleccionados.includes('Ninguna') && seleccionados.length > 1) {
+        const soloNinguna = seleccionados[seleccionados.length - 1] === 'Ninguna'
+            ? ['Ninguna']
+            : seleccionados.filter(v => v !== 'Ninguna');
+        filtroCondicionesMedicas.setSeleccionados(soloNinguna);
+        manejarCambioCondicionesMedicas(soloNinguna);
+    }
+}
+
+function obtenerCondicionesMedicasFinal() {
+    const seleccionados = filtroCondicionesMedicas.getSeleccionados();
+
+    return seleccionados.map(valor => {
+        if (valor === 'Otra') {
+            const texto = document.getElementById('otraCondicionTexto').value.trim();
+            return texto ? `Otra: ${texto}` : null;
+        }
+        return valor;
+    }).filter(Boolean);
+}
+
+function precargarCondicionesMedicas(condicionesGuardadas) {
+    const lista = condicionesGuardadas || [];
+
+    const valoresBase = lista.map(c => c.startsWith('Otra: ') ? 'Otra' : c);
+    filtroCondicionesMedicas.setSeleccionados(valoresBase);
+
+    const otraGuardada = lista.find(c => c.startsWith('Otra: '));
+    if (otraGuardada) {
+        document.getElementById('otraCondicionTexto').value = otraGuardada.replace('Otra: ', '');
+        document.getElementById('otraCondicionWrap').classList.add('visible');
+    }
 }
 
 // Exportar funciones para uso global

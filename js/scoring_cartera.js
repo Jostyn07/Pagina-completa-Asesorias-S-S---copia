@@ -7,13 +7,14 @@ function carteraEstadoMesPagado(valor) {
     return v.includes('si') && !v.includes('no');
 }
 
-function carteraContarMesesPagoPendiente(metodosPagoCliente, fechaEfectividad) {
-    if (!metodosPagoCliente) return 0;
+function carteraContarMesesPagoPendiente(mesesPagados, fechaEfectividad) {
+    if (!mesesPagados) return 0;
 
     const limiteYM = fechaEfectividad ? parsearFechaComoYM(fechaEfectividad) : null;
 
     const hoy = new Date();
-    let cursorYM = hoy.getFullYear() * 12 + hoy.getMonth();
+    const anioActual = hoy.getFullYear();
+    let cursorYM = anioActual * 12 + hoy.getMonth();
 
     if (hoy.getDate() >= 15) {
         cursorYM += 1
@@ -22,11 +23,17 @@ function carteraContarMesesPagoPendiente(metodosPagoCliente, fechaEfectividad) {
     let consecutivos = 0;
 
     for (let i = 0; i < 12; i++) {
+        // No cruzamos hacia un año anterior: cada año es un cliente_id distinto
+        // (se recrea en la renovación/Open Enrollment), así que no hay datos reales
+        // de meses de "el año pasado" para este cliente.
+        const anioDelCursor = Math.floor(cursorYM / 12);
+        if (anioDelCursor < anioActual) break;
+
         if (limiteYM !== null && cursorYM < limiteYM) break;
 
         const mesIdx = ((cursorYM % 12) + 12) % 12;
-        const campo = `pago_${CARTERA_NOMBRES_MESES[mesIdx]}`;
-        const valor = metodosPagoCliente[campo];
+        const campo = CARTERA_NOMBRES_MESES[mesIdx];
+        const valor = mesesPagados[campo];
 
         if (carteraEstadoMesPagado(valor)) break;
 
@@ -53,6 +60,13 @@ function carteraCalcularEdad(fechaNacimiento) {
     return mes < 0 || (mes === 0 && hoy.getDate() < nac.getDate())
         ? años - 1 + (12 + mes) / 12
         : años + mes / 12;
+}
+
+function obtenerMesesPagadosAnioActualCartera(cliente) {
+    const anioActual = new Date().getFullYear();
+    const registros = cliente?.pagos_mensuales_cliente;
+    if (!registros || registros.length === 0) return null;
+    return registros.find(r => r.anio === anioActual) || null;
 }
 
 function calcularScoringCartera(poliza) {
@@ -92,15 +106,13 @@ function calcularScoringCartera(poliza) {
     }
 
     // Factor 2: Pago del mes actual
-    const metodosPagoCliente = Array.isArray(cliente.metodos_pago)
-        ? (cliente.metodos_pago[0] || {})
-        : (cliente.metodos_pago || {});
+    const mesesPagados = obtenerMesesPagadosAnioActualCartera(cliente);
 
     const primaMensual = parseFloat(poliza?.prima || 0);
     let mesesPagoPendiente = 0;
 
     if (primaMensual > 0) {
-    mesesPagoPendiente = carteraContarMesesPagoPendiente(metodosPagoCliente, poliza.fecha_efectividad);
+    mesesPagoPendiente = carteraContarMesesPagoPendiente(mesesPagados, poliza.fecha_efectividad);
     const puntajePago = carteraPuntajePorMesesPendientes(mesesPagoPendiente)
 
         if (puntajePago > 0) {

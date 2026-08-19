@@ -8,6 +8,8 @@ let datosOriginales = null;
 let quillNota = null;
 let autosaveTimer = null;
 let dependientesCount = 0;
+let metodosPagoLista = [];          // Lista en memoria de TODOS los métodos de pago del cliente (banco/tarjeta)
+let metodosPagoIdsOriginales = [];
 let documentosCount = 0;
 let imagenesNotaSeleccionadas = [];
 const AUTOSAVE_INTERVAL = 30000; // 30 segundos
@@ -119,9 +121,7 @@ async function seleccionarCliente(clienteId) {
         await cargarNotas(clienteId);
 
         // Cargar método de pago
-        if (cliente.metodos_pago && cliente.metodos_pago.length > 0) {
-            cargarMetodoPago(cliente.metodos_pago[0]);
-        }
+        cargarMetodoPago(cliente.metodos_pago);
 
         // Calcular fechas automáticas
         calcularFechasAutomaticas(polizaActiva);
@@ -453,29 +453,30 @@ function editarDependiente(count) {
 // CARGAR MÉTODO DE PAGO
 // ============================================
 
-function cargarMetodoPago(metodo) {
-    if (!metodo) return;
+function cargarMetodoPago(metodosExistentes) {
+    if (!metodosExistentes || metodosExistentes.length === 0) return;
 
-    const radioTipo = document.querySelector(`[name="metodoPago"][value="${metodo.tipo}"]`);
-    if (radioTipo) {
-        radioTipo.checked = true;
-        mostrarFormularioPago(metodo.tipo);
+    metodosPagoLista = metodosExistentes.map(m => ({
+        idTemp: generarIdTemporalMetodoPago(),
+        tipo: m.tipo,
+        activo: m.activo === true,
+        nombre_banco: m.nombre_banco,
+        numero_cuenta: m.numero_cuenta,
+        routing_number: m.routing_number,
+        nombre_cuenta: m.nombre_cuenta,
+        numero_tarjeta: m.numero_tarjeta,
+        nombre_tarjeta: m.nombre_tarjeta,
+        fecha_expiracion: m.fecha_expiracion,
+        cvv: m.cvv,
+        tipo_tarjeta: m.tipo_tarjeta
+    }));
+
+    // Si ninguno venía marcado como activo en BD, el primero queda como principal
+    if (!metodosPagoLista.some(m => m.activo)) {
+        metodosPagoLista[0].activo = true;
     }
 
-    if (metodo.tipo === 'banco') {
-        const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-        set('nombreBanco',   metodo.nombre_banco);
-        set('numeroCuenta',  metodo.numero_cuenta);
-        set('routingNumber', metodo.routing_number);
-        set('nombreCuenta',  metodo.nombre_cuenta);
-    } else if (metodo.tipo === 'tarjeta') {
-        const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-        set('numeroTarjeta',   metodo.numero_tarjeta);
-        set('nombreTarjeta',   metodo.nombre_tarjeta);
-        set('fechaExpiracion', metodo.fecha_expiracion);
-        set('cvv',             metodo.cvv);
-        set('tipoTarjeta',     metodo.tipo_tarjeta);
-    }
+    renderizarListaMetodosPago();
 }
 
 // ============================================
@@ -698,37 +699,28 @@ function obtenerTipoCambio() {
 // ============================================
 
 async function obtenerMetodoPago() {
-    const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
-    if (!tipoSeleccionado) return null;
-
-    const tipo = tipoSeleccionado.value;
-    const get = (id) => document.getElementById(id)?.value?.trim() || '';
-
-    let metodoPagoData = {
-        tipo: tipo,
-        cliente_id: clienteIdSeleccionado,
-    };
-
-    if (tipo === 'banco') {
-        metodoPagoData = {
-            ...metodoPagoData,
-            nombre_banco:   get('nombreBanco'),
-            numero_cuenta:  get('numeroCuenta'),
-            routing_number: get('routingNumber'),
-            nombre_cuenta:  get('nombreCuenta'),
+    return metodosPagoLista.map(m => {
+        const metodo = {
+            tipo: m.tipo,
+            activo: m.activo === true,
+            cliente_id: clienteIdSeleccionado
         };
-    } else if (tipo === 'tarjeta') {
-        metodoPagoData = {
-            ...metodoPagoData,
-            numero_tarjeta:   get('numeroTarjeta'),
-            nombre_tarjeta:   get('nombreTarjeta'),
-            fecha_expiracion: get('fechaExpiracion'),
-            cvv:              get('cvv'),
-            tipo_tarjeta:     get('tipoTarjeta'),
-        };
-    }
 
-    return metodoPagoData;
+        if (m.tipo === 'banco') {
+            metodo.nombre_banco = m.nombre_banco || '';
+            metodo.numero_cuenta = m.numero_cuenta || '';
+            metodo.routing_number = m.routing_number || '';
+            metodo.nombre_cuenta = m.nombre_cuenta || '';
+        } else {
+            metodo.numero_tarjeta = m.numero_tarjeta || '';
+            metodo.nombre_tarjeta = m.nombre_tarjeta || '';
+            metodo.fecha_expiracion = m.fecha_expiracion || '';
+            metodo.cvv = m.cvv || '';
+            metodo.tipo_tarjeta = m.tipo_tarjeta || '';
+        }
+
+        return metodo;
+    });
 }
 
 // ============================================
@@ -1402,18 +1394,231 @@ function limpiarMetodoPago() {
     document.querySelectorAll('[name="metodoPago"]').forEach(radio => {
         radio.checked = false;
     });
-    
+
     // Ocultar formularios
     const formBanco = document.getElementById('formBanco');
     const formTarjeta = document.getElementById('formTarjeta');
-    
+
     if (formBanco) formBanco.style.display = 'none';
     if (formTarjeta) formTarjeta.style.display = 'none';
-    
+
     // Limpiar campos
     document.querySelectorAll('#formBanco input, #formTarjeta input, #formTarjeta select').forEach(input => {
         input.value = '';
     });
+
+    // Salir del modo edición si estaba activo
+    const editandoId = document.getElementById('metodoPagoEditandoId');
+    if (editandoId) editandoId.value = '';
+    const textoBtn = document.getElementById('textoBtnAgregarMetodo');
+    if (textoBtn) textoBtn.textContent = 'Agregar método';
+}
+
+function generarIdTemporalMetodoPago() {
+    return 'tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function enmascararNumero(numero) {
+    if (!numero) return '';
+    const limpio = String(numero).replace(/\D/g, '');
+    if (limpio.length <= 4) return limpio;
+    return `•••• ${limpio.slice(-4)}`;
+}
+
+function leerFormularioMetodoPagoStaging() {
+    const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
+    if (!tipoSeleccionado) {
+        mostrarNotificacion('Selecciona un tipo de método de pago (banco o tarjeta).', 'warning');
+        return null;
+    }
+
+    const tipo = tipoSeleccionado.value;
+    const get = (id) => document.getElementById(id)?.value?.trim() || '';
+
+    const metodo = {
+        tipo: tipo,
+        activo: metodosPagoLista.length === 0 // el primero que se agrega queda como principal automáticamente
+    };
+
+    if (tipo === 'banco') {
+        metodo.nombre_banco = get('nombreBanco') || null;
+        metodo.numero_cuenta = get('numeroCuenta') || null;
+        metodo.routing_number = get('routingNumber') || null;
+        metodo.nombre_cuenta = get('nombreCuenta') || null;
+
+        if (!metodo.numero_cuenta) {
+            mostrarNotificacion('Ingresa el número de cuenta antes de agregar.', 'warning');
+            return null;
+        }
+    } else {
+        metodo.numero_tarjeta = get('numeroTarjeta') || null;
+        metodo.nombre_tarjeta = get('nombreTarjeta') || null;
+        metodo.fecha_expiracion = get('fechaExpiracion') || null;
+        metodo.cvv = get('cvv') || null;
+        metodo.tipo_tarjeta = get('tipoTarjeta') || null;
+
+        if (!metodo.numero_tarjeta) {
+            mostrarNotificacion('Ingresa el número de tarjeta antes de agregar.', 'warning');
+            return null;
+        }
+    }
+
+    return metodo;
+}
+
+function agregarMetodoPagoALista() {
+    const datos = leerFormularioMetodoPagoStaging();
+    if (!datos) return;
+
+    const idEnEdicion = document.getElementById('metodoPagoEditandoId').value;
+
+    if (idEnEdicion) {
+        const index = metodosPagoLista.findIndex(m => m.idTemp === idEnEdicion);
+        if (index !== -1) {
+            datos.idTemp = metodosPagoLista[index].idTemp;
+            datos.activo = metodosPagoLista[index].activo;
+            metodosPagoLista[index] = datos;
+        }
+    } else {
+        datos.idTemp = generarIdTemporalMetodoPago();
+        metodosPagoLista.push(datos);
+    }
+
+    renderizarListaMetodosPago();
+    limpiarMetodoPago();
+}
+
+function editarMetodoPagoLista(idTemp) {
+    const metodo = metodosPagoLista.find(m => m.idTemp === idTemp);
+    if (!metodo) return;
+
+    const radio = document.querySelector(`[name="metodoPago"][value="${metodo.tipo}"]`);
+    if (radio) {
+        radio.checked = true;
+        mostrarFormularioPago(metodo.tipo);
+    }
+
+    if (metodo.tipo === 'banco') {
+        document.getElementById('nombreBanco').value = metodo.nombre_banco || '';
+        document.getElementById('numeroCuenta').value = metodo.numero_cuenta || '';
+        document.getElementById('routingNumber').value = metodo.routing_number || '';
+        document.getElementById('nombreCuenta').value = metodo.nombre_cuenta || '';
+    } else {
+        document.getElementById('numeroTarjeta').value = metodo.numero_tarjeta || '';
+        document.getElementById('nombreTarjeta').value = metodo.nombre_tarjeta || '';
+        document.getElementById('fechaExpiracion').value = metodo.fecha_expiracion || '';
+        document.getElementById('cvv').value = metodo.cvv || '';
+        document.getElementById('tipoTarjeta').value = metodo.tipo_tarjeta || '';
+    }
+
+    document.getElementById('metodoPagoEditandoId').value = idTemp;
+    document.getElementById('textoBtnAgregarMetodo').textContent = 'Guardar cambios';
+
+    document.getElementById('formBanco')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function eliminarMetodoPagoLista(idTemp) {
+    if (!confirm('¿Eliminar este método de pago de la lista?')) return;
+
+    const eraPrincipal = metodosPagoLista.find(m => m.idTemp === idTemp)?.activo;
+    metodosPagoLista = metodosPagoLista.filter(m => m.idTemp !== idTemp);
+
+    if (eraPrincipal && metodosPagoLista.length > 0) {
+        metodosPagoLista[0].activo = true;
+    }
+
+    renderizarListaMetodosPago();
+}
+
+function marcarMetodoPagoPrincipal(idTemp) {
+    metodosPagoLista.forEach(m => {
+        m.activo = (m.idTemp === idTemp);
+    });
+    renderizarListaMetodosPago();
+}
+
+function renderizarListaMetodosPago() {
+    const container = document.getElementById('listaMetodosPagoContainer');
+    if (!container) return;
+
+    if (metodosPagoLista.length === 0) {
+        container.innerHTML = '<p class="empty-state" id="metodosPagoEmptyState">Aún no se ha agregado ningún método de pago.</p>';
+        return;
+    }
+
+    container.innerHTML = metodosPagoLista.map(m => {
+        const esBanco = m.tipo === 'banco';
+        const icono = esBanco ? 'account_balance' : 'credit_card';
+        const titulo = esBanco
+            ? (m.nombre_banco || 'Cuenta de banco')
+            : (m.tipo_tarjeta ? m.tipo_tarjeta.toUpperCase() : 'Tarjeta');
+        const numeroMostrar = esBanco ? enmascararNumero(m.numero_cuenta) : enmascararNumero(m.numero_tarjeta);
+
+        return `
+            <div class="metodo-pago-card ${m.activo ? 'principal' : ''}">
+                <div class="metodo-pago-card-header">
+                    <div class="metodo-pago-card-info">
+                        <span class="material-symbols-rounded">${icono}</span>
+                        <div class="metodo-pago-card-nombre">
+                            <h4>${titulo} ${m.activo ? '<span class="badge badge-nuevo">Principal</span>' : ''}</h4>
+                            <small>${numeroMostrar}</small>
+                        </div>
+                    </div>
+                    <div class="metodo-pago-card-acciones">
+                        ${!m.activo ? `<button type="button" class="btn-icon" onclick="marcarMetodoPagoPrincipal('${m.idTemp}')" title="Marcar como principal">
+                            <span class="material-symbols-rounded">star</span>
+                        </button>` : ''}
+                        <button type="button" class="btn-icon" onclick="verMetodoPagoLista('${m.idTemp}')" title="Ver detalle">
+                            <span class="material-symbols-rounded">visibility</span>
+                        </button>
+                        <button type="button" class="btn-icon" onclick="editarMetodoPagoLista('${m.idTemp}')" title="Editar">
+                            <span class="material-symbols-rounded">edit</span>
+                        </button>
+                        <button type="button" class="btn-icon delete" onclick="eliminarMetodoPagoLista('${m.idTemp}')" title="Eliminar">
+                            <span class="material-symbols-rounded">delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function verMetodoPagoLista(idTemp) {
+    const metodo = metodosPagoLista.find(m => m.idTemp === idTemp);
+    if (!metodo) return;
+
+    const contenido = document.getElementById('verMetodoPagoContenido');
+    if (!contenido) return;
+
+    const fila = (label, valor) => `
+        <div class="detalle-fila">
+            <span class="detalle-label">${label}</span>
+            <span class="detalle-valor">${valor || '-'}</span>
+        </div>`;
+
+    let html = fila('Tipo', metodo.tipo === 'banco' ? 'Cuenta de banco' : 'Tarjeta');
+    html += fila('Principal', metodo.activo ? 'Sí' : 'No');
+
+    if (metodo.tipo === 'banco') {
+        html += fila('Nombre del banco', metodo.nombre_banco);
+        html += fila('Número de cuenta', metodo.numero_cuenta);
+        html += fila('Routing number', metodo.routing_number);
+        html += fila('Nombre en la cuenta', metodo.nombre_cuenta);
+    } else {
+        html += fila('Número de tarjeta', metodo.numero_tarjeta);
+        html += fila('Nombre en la tarjeta', metodo.nombre_tarjeta);
+        html += fila('Fecha de expiración', metodo.fecha_expiracion);
+        html += fila('CVV', metodo.cvv);
+        html += fila('Tipo de tarjeta', metodo.tipo_tarjeta ? metodo.tipo_tarjeta.toUpperCase() : '');
+    }
+
+    contenido.innerHTML = html;
+    document.getElementById('modalVerMetodoPago').classList.add('active');
+}
+
+function cerrarModalVerMetodoPago() {
+    document.getElementById('modalVerMetodoPago').classList.remove('active');
 }
 // =================================
 // Accesibilidad

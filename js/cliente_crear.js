@@ -8,6 +8,7 @@ const AUTOSAVE_INTERVAL = 30000; // 30 segundos
 let quillNota = null;
 let documentosCount = 0;
 let dependientesCount = 0;
+let metodosPagoLista = [];          // Lista en memoria de TODOS los métodos de pago del cliente (banco/tarjeta)
 
 
 // ============================================
@@ -632,66 +633,268 @@ function mostrarFormularioPago(tipo) {
 }
 
 function limpiarMetodoPago() {
-    // Desmarcar radio buttons
     document.querySelectorAll('[name="metodoPago"]').forEach(radio => {
         radio.checked = false;
     });
-    
-    // Ocultar formularios
+
     const formBanco = document.getElementById('formBanco');
     const formTarjeta = document.getElementById('formTarjeta');
-    
     if (formBanco) formBanco.style.display = 'none';
     if (formTarjeta) formTarjeta.style.display = 'none';
-    
-    // Limpiar campos
+
     document.querySelectorAll('#formBanco input, #formTarjeta input, #formTarjeta select').forEach(input => {
         input.value = '';
     });
+
+    document.getElementById('metodoPagoEditandoId').value = '';
+    document.getElementById('textoBtnAgregarMetodo').textContent = 'Agregar método';
 }
 
-async function guardarMetodoPago(clienteId) {    
-    try {
-        const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
-        
-        if (!tipoSeleccionado) {
-            return;
-        }
-        
-        const tipo = tipoSeleccionado.value;        
-        let metodoPagoData = {
-            cliente_id: clienteId,
-            tipo: tipo,
-            usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
-            activo: true
-        };
-        
-        if (tipo === 'banco') {
-            metodoPagoData.nombre_banco = document.getElementById('nombreBanco')?.value || null;
-            metodoPagoData.numero_cuenta = document.getElementById('numeroCuenta')?.value || null;
-            metodoPagoData.routing_number = document.getElementById('routingNumber')?.value || null;
-            metodoPagoData.nombre_cuenta = document.getElementById('nombreCuenta')?.value || null;
-        } else if (tipo === 'tarjeta') {
-            metodoPagoData.numero_tarjeta = document.getElementById('numeroTarjeta')?.value || null;
-            metodoPagoData.nombre_tarjeta = document.getElementById('nombreTarjeta')?.value || null;
-            metodoPagoData.fecha_expiracion = document.getElementById('fechaExpiracion')?.value || null;
-            metodoPagoData.cvv = document.getElementById('cvv')?.value || null;
-            metodoPagoData.tipo_tarjeta = document.getElementById('tipoTarjeta')?.value || null;
-        }
-                
-        const { data, error } = await supabaseClient
-            .from('metodos_pago')
-            .insert([metodoPagoData])
-            .select();
-        
-        
-        if (error) {
-            throw error;
-        }
-        
-        
-    } catch (error) {
+function generarIdTemporalMetodoPago() {
+    return 'tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
 
+function enmascararNumero(numero) {
+    if (!numero) return '';
+    const limpio = String(numero).replace(/\D/g, '');
+    if (limpio.length <= 4) return limpio;
+    return `•••• ${limpio.slice(-4)}`;
+}
+
+function leerFormularioMetodoPagoStaging() {
+    const tipoSeleccionado = document.querySelector('[name="metodoPago"]:checked');
+    if (!tipoSeleccionado) {
+        alert('Selecciona un tipo de método de pago (banco o tarjeta).');
+        return null;
+    }
+
+    const tipo = tipoSeleccionado.value;
+    const metodo = {
+        tipo: tipo,
+        usar_misma_direccion: document.getElementById('usarMismaDireccion')?.checked !== false,
+        activo: metodosPagoLista.length === 0
+    };
+
+    if (tipo === 'banco') {
+        metodo.nombre_banco = document.getElementById('nombreBanco')?.value?.trim() || null;
+        metodo.numero_cuenta = document.getElementById('numeroCuenta')?.value?.trim() || null;
+        metodo.routing_number = document.getElementById('routingNumber')?.value?.trim() || null;
+        metodo.nombre_cuenta = document.getElementById('nombreCuenta')?.value?.trim() || null;
+
+        if (!metodo.numero_cuenta) {
+            alert('Ingresa el número de cuenta antes de agregar.');
+            return null;
+        }
+    } else {
+        metodo.numero_tarjeta = document.getElementById('numeroTarjeta')?.value?.trim() || null;
+        metodo.nombre_tarjeta = document.getElementById('nombreTarjeta')?.value?.trim() || null;
+        metodo.fecha_expiracion = document.getElementById('fechaExpiracion')?.value?.trim() || null;
+        metodo.cvv = document.getElementById('cvv')?.value?.trim() || null;
+        metodo.tipo_tarjeta = document.getElementById('tipoTarjeta')?.value || null;
+
+        if (!metodo.numero_tarjeta) {
+            alert('Ingresa el número de tarjeta antes de agregar.');
+            return null;
+        }
+    }
+
+    return metodo;
+}
+
+function agregarMetodoPagoALista() {
+    const datos = leerFormularioMetodoPagoStaging();
+    if (!datos) return;
+
+    const idEnEdicion = document.getElementById('metodoPagoEditandoId').value;
+
+    if (idEnEdicion) {
+        const index = metodosPagoLista.findIndex(m => m.idTemp === idEnEdicion);
+        if (index !== -1) {
+            datos.idTemp = metodosPagoLista[index].idTemp;
+            datos.activo = metodosPagoLista[index].activo;
+            metodosPagoLista[index] = datos;
+        }
+    } else {
+        datos.idTemp = generarIdTemporalMetodoPago();
+        metodosPagoLista.push(datos);
+    }
+
+    renderizarListaMetodosPago();
+    limpiarMetodoPago();
+}
+
+function editarMetodoPagoLista(idTemp) {
+    const metodo = metodosPagoLista.find(m => m.idTemp === idTemp);
+    if (!metodo) return;
+
+    const radio = document.querySelector(`[name="metodoPago"][value="${metodo.tipo}"]`);
+    if (radio) {
+        radio.checked = true;
+        mostrarFormularioPago(metodo.tipo);
+    }
+
+    if (metodo.tipo === 'banco') {
+        document.getElementById('nombreBanco').value = metodo.nombre_banco || '';
+        document.getElementById('numeroCuenta').value = metodo.numero_cuenta || '';
+        document.getElementById('routingNumber').value = metodo.routing_number || '';
+        document.getElementById('nombreCuenta').value = metodo.nombre_cuenta || '';
+    } else {
+        document.getElementById('numeroTarjeta').value = metodo.numero_tarjeta || '';
+        document.getElementById('nombreTarjeta').value = metodo.nombre_tarjeta || '';
+        document.getElementById('fechaExpiracion').value = metodo.fecha_expiracion || '';
+        document.getElementById('cvv').value = metodo.cvv || '';
+        document.getElementById('tipoTarjeta').value = metodo.tipo_tarjeta || '';
+    }
+
+    const usarMismaDireccion = document.getElementById('usarMismaDireccion');
+    if (usarMismaDireccion) usarMismaDireccion.checked = metodo.usar_misma_direccion !== false;
+
+    document.getElementById('metodoPagoEditandoId').value = idTemp;
+    document.getElementById('textoBtnAgregarMetodo').textContent = 'Guardar cambios';
+
+    document.getElementById('formBanco')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function eliminarMetodoPagoLista(idTemp) {
+    if (!confirm('¿Eliminar este método de pago de la lista?')) return;
+
+    const eraPrincipal = metodosPagoLista.find(m => m.idTemp === idTemp)?.activo;
+    metodosPagoLista = metodosPagoLista.filter(m => m.idTemp !== idTemp);
+
+    if (eraPrincipal && metodosPagoLista.length > 0) {
+        metodosPagoLista[0].activo = true;
+    }
+
+    renderizarListaMetodosPago();
+}
+
+function marcarMetodoPagoPrincipal(idTemp) {
+    metodosPagoLista.forEach(m => {
+        m.activo = (m.idTemp === idTemp);
+    });
+    renderizarListaMetodosPago();
+}
+
+function renderizarListaMetodosPago() {
+    const container = document.getElementById('listaMetodosPagoContainer');
+    if (!container) return;
+
+    if (metodosPagoLista.length === 0) {
+        container.innerHTML = '<p class="empty-state" id="metodosPagoEmptyState">Aún no se ha agregado ningún método de pago.</p>';
+        return;
+    }
+
+    container.innerHTML = metodosPagoLista.map(m => {
+        const esBanco = m.tipo === 'banco';
+        const icono = esBanco ? 'account_balance' : 'credit_card';
+        const titulo = esBanco
+            ? (m.nombre_banco || 'Cuenta de banco')
+            : (m.tipo_tarjeta ? m.tipo_tarjeta.toUpperCase() : 'Tarjeta');
+        const numeroMostrar = esBanco ? enmascararNumero(m.numero_cuenta) : enmascararNumero(m.numero_tarjeta);
+
+        return `
+            <div class="metodo-pago-card ${m.activo ? 'principal' : ''}">
+                <div class="metodo-pago-card-header">
+                    <div class="metodo-pago-card-info">
+                        <span class="material-symbols-rounded">${icono}</span>
+                        <div class="metodo-pago-card-nombre">
+                            <h4>${titulo} ${m.activo ? '<span class="badge badge-nuevo">Principal</span>' : ''}</h4>
+                            <small>${numeroMostrar}</small>
+                        </div>
+                    </div>
+                    <div class="metodo-pago-card-acciones">
+                        ${!m.activo ? `<button type="button" class="btn-icon" onclick="marcarMetodoPagoPrincipal('${m.idTemp}')" title="Marcar como principal">
+                            <span class="material-symbols-rounded">star</span>
+                        </button>` : ''}
+                        <button type="button" class="btn-icon" onclick="verMetodoPagoLista('${m.idTemp}')" title="Ver detalle">
+                            <span class="material-symbols-rounded">visibility</span>
+                        </button>
+                        <button type="button" class="btn-icon" onclick="editarMetodoPagoLista('${m.idTemp}')" title="Editar">
+                            <span class="material-symbols-rounded">edit</span>
+                        </button>
+                        <button type="button" class="btn-icon delete" onclick="eliminarMetodoPagoLista('${m.idTemp}')" title="Eliminar">
+                            <span class="material-symbols-rounded">delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function verMetodoPagoLista(idTemp) {
+    const metodo = metodosPagoLista.find(m => m.idTemp === idTemp);
+    if (!metodo) return;
+
+    const contenido = document.getElementById('verMetodoPagoContenido');
+    if (!contenido) return;
+
+    const fila = (label, valor) => `
+        <div class="detalle-fila">
+            <span class="detalle-label">${label}</span>
+            <span class="detalle-valor">${valor || '-'}</span>
+        </div>`;
+
+    let html = fila('Tipo', metodo.tipo === 'banco' ? 'Cuenta de banco' : 'Tarjeta');
+    html += fila('Principal', metodo.activo ? 'Sí' : 'No');
+
+    if (metodo.tipo === 'banco') {
+        html += fila('Nombre del banco', metodo.nombre_banco);
+        html += fila('Número de cuenta', metodo.numero_cuenta);
+        html += fila('Routing number', metodo.routing_number);
+        html += fila('Nombre en la cuenta', metodo.nombre_cuenta);
+    } else {
+        html += fila('Número de tarjeta', metodo.numero_tarjeta);
+        html += fila('Nombre en la tarjeta', metodo.nombre_tarjeta);
+        html += fila('Fecha de expiración', metodo.fecha_expiracion);
+        html += fila('CVV', metodo.cvv);
+        html += fila('Tipo de tarjeta', metodo.tipo_tarjeta ? metodo.tipo_tarjeta.toUpperCase() : '');
+    }
+
+    contenido.innerHTML = html;
+    document.getElementById('modalVerMetodoPago').classList.add('active');
+}
+
+function cerrarModalVerMetodoPago() {
+    document.getElementById('modalVerMetodoPago').classList.remove('active');
+}
+
+async function guardarMetodoPago(clienteId) {
+    if (metodosPagoLista.length === 0) return;
+
+    try {
+        const registros = metodosPagoLista.map(m => {
+            const payload = {
+                cliente_id: clienteId,
+                tipo: m.tipo,
+                activo: m.activo === true,
+                usar_misma_direccion: m.usar_misma_direccion !== false
+            };
+
+            if (m.tipo === 'banco') {
+                payload.nombre_banco = m.nombre_banco || null;
+                payload.numero_cuenta = m.numero_cuenta || null;
+                payload.routing_number = m.routing_number || null;
+                payload.nombre_cuenta = m.nombre_cuenta || null;
+            } else {
+                payload.numero_tarjeta = m.numero_tarjeta || null;
+                payload.nombre_tarjeta = m.nombre_tarjeta || null;
+                payload.fecha_expiracion = m.fecha_expiracion || null;
+                payload.cvv = m.cvv || null;
+                payload.tipo_tarjeta = m.tipo_tarjeta || null;
+            }
+
+            return payload;
+        });
+
+        const { error } = await supabaseClient
+            .from('metodos_pago')
+            .insert(registros);
+
+        if (error) throw error;
+
+    } catch (error) {
+        console.error('Error al guardar métodos de pago:', error);
     }
 }
 
@@ -1285,6 +1488,7 @@ async function crearCliente(formData) {
         telefono2: formData.telefono2 ? formData.telefono2.replace(/\D/g, '') : null,
         fecha_nacimiento: formData.fechaNacimiento,
         estado_migratorio: formData.estadoMigratorio,
+        condiciones_medicas: obtenerCondicionesMedicasFinal(),
         ssn: formData.ssn ? formData.ssn.replace(/\D/g, '') : null,
         ingreso_anual: parseFloat(formData.ingresos) || 0,
         ocupacion: formData.ocupacion || null,
@@ -1940,4 +2144,65 @@ function validarCodigoPostal(input) {
     } else {
         marcarCampoValido(input)
     }
+}
+
+const OPCIONES_CONDICIONES_MEDICAS = [
+    'Diabetes',
+    'Presión alta (Hipertensión)',
+    'Colesterio alto',
+    'Problemas de tiroides',
+    'Asma',
+    'Artritis',
+    'Enfermedad cardiaca',
+    'Enfermedad rena',
+    'Obesidad',
+    'Cáncer',
+    'Depresión / Ansiedad',
+    'EPOC',
+    'Apnea del sueño',
+    'Problemas de espalda o articulaciónes',
+    'Embarazo',
+    'Ninguna',
+    'Otra'
+]
+
+const filtroCondicionesMedicas = crearFiltroMultiSelect({
+    contenedorId: 'condicionesMedicasGroup',
+    label: '',
+    idBase: 'CondicionesMedicas',
+    opciones: OPCIONES_CONDICIONES_MEDICAS,
+    conBuscador: true,
+    textoVacio: 'Seleccionar condiciones...',
+    onCambio: manejarCambioCondicionesMedicas
+});
+
+function manejarCambioCondicionesMedicas(seleccionados) {
+    const wrapOtra = document.getElementById('otraCondicionWrap');
+
+    if (seleccionados.includes('Otra')) {
+        wrapOtra.classList.add('visible');
+    } else {
+        wrapOtra.classList.remove('visible');
+        document.getElementById('otraCondicionTexto').value = '';
+    }
+
+    if (seleccionados.includes('Ninguna') && seleccionados.length > 1) {
+        const soloNinguna = seleccionados[seleccionados.length - 1] === 'Ninguna'
+            ? ['Ninguna']
+            : seleccionados.filter(v => v !== 'Ninguna');
+        filtroCondicionesMedicas.setSeleccionados(soloNinguna);
+        manejarCambioCondicionesMedicas(soloNinguna);
+    }
+}
+
+function obtenerCondicionesMedicasFinal() {
+    const seleccionados = filtroCondicionesMedicas.getSeleccionados();
+
+    return seleccionados.map(valor => {
+        if (valor === 'otra') {
+            const texto = document.getElementById('otraCondicionTexto').value.trim();
+            return texto ? `Otra: ${texto}` : null
+        }
+        return valor;
+    }).filter(Boolean);
 }

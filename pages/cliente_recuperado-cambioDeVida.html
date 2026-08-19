@@ -300,6 +300,16 @@
                         </div>
 
                         <div class="form-row">
+                            <div class="form-group" style="flex: 1 1 100%;">
+                                <label>Condiciones médicas</label>
+                                <div id="condicionesMedicasGroup"></div>
+                                <div class="campo-otra-condicion" id="otraCondicionWrap">
+                                    <input type="text" id="otraCondicionTexto" placeholder="Especifica la condición...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
                             <div class="form-group">
                                 <label>Aplicantes <span class="required">*</span></label>
                                 <input type="number" id="aplicantes" name="aplicantes" placeholder="1" min="1" max="99" value="1" required>
@@ -803,6 +813,21 @@
                                 </div>
                             </div>
                         </div>
+
+                    <input type="hidden" id="metodoPagoEditandoId" value="">
+                    <div class="form-row mt-3">
+                        <button type="button" class="btn-secondary" onclick="agregarMetodoPagoALista()">
+                            <span class="material-symbols-rounded">add_circle</span>
+                            <span id="textoBtnAgregarMetodo">Agregar método</span>
+                        </button>
+                    </div>
+                    <div class="form-row mt-3">
+                        <h3 style="width:100%;">Métodos agregados</h3>
+                    </div>
+                    <div id="listaMetodosPagoContainer" class="metodos-pago-lista">
+                        <p class="empty-state" id="metodosPagoEmptyState">Aún no se ha agregado ningún método de pago.</p>
+                    </div>
+
                     </div>
                 </div>
             </div>
@@ -1065,6 +1090,21 @@
         </div>
     </div>
 
+    <div id="modalVerMetodoPago" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalVerMetodoPago()"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Detalle del método de pago</h3>
+                <button type="button" class="btn-close-modal" onclick="cerrarModalVerMetodoPago()">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="verMetodoPagoContenido" class="metodo-pago-detalle"></div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
@@ -1080,6 +1120,7 @@
     <script src="../js/actividad.js"></script>
     <script src="../js/formatear_input_fechas.js"></script>
     <script src="../js/operadores_dinamico.js"></script>
+    <script src="../js/filtro_multiselect.js"></script>
     <script src="../js/cliente_recuperado-cambioDeVida.js"></script>
     <script src="../js/autocompletado_direccion.js"></script>
     <script src="../js/ia_contexto.js"></script>
