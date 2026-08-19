@@ -1,0 +1,71 @@
+.cal-container {
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cal-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.cal-estado-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.cal-estado-header .material-symbols-rounded {
+    font-size: 2rem;
+}
+
+.cal-estado-ok { border-left: 4px solid #00a76f; }
+.cal-estado-ok .material-symbols-rounded { color: #00a76f; }
+
+.cal-estado-pendiente { border-left: 4px solid #e5b44e; }
+.cal-estado-pendiente .material-symbols-rounded { color: #e5b44e; }
+
+.cal-estado-error { border-left: 4px solid #f07070; }
+.cal-estado-error .material-symbols-rounded { color: #f07070; }
+
+.cal-pasos {
+    padding-left: 20px;
+    line-height: 1.7;
+}
+
+.cal-email-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f3f4f6;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-top: 6px;
+    font-size: 0.85rem;
+}
+
+.cal-email-box code {
+    flex: 1;
+    word-break: break-all;
+}
+
+.cal-email-box button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6366f1;
+}
+
+.cal-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.cal-btn-abrir {
+    align-self: flex-start;
+}

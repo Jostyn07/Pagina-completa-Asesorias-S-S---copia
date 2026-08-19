@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario -  Asesorias S&S</title>
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="../css/cliente.css">
+    <link rel="stylesheet" href="../css/calendario.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" />
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar-unified" id="sidebar">
+            <div class="sidebar-header">
+                <a href="./home.html" class="sidebar-logo-link">
+                    <img src="../images/Logo.png" alt="S&S Asesorías" class="sidebar-logo-img">
+                </a>
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+                    <span class="material-symbols-rounded">chevron_left</span>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="./home.html" class="menu-item">
+                    <span class="material-symbols-rounded">home</span>
+                    <span>Inicio</span>
+                </a>
+                <a href="./polizas.html" class="menu-item">
+                    <span class="material-symbols-rounded">description</span>
+                    <span>Pólizas</span>
+                </a>
+                <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
+                    <span class="material-symbols-rounded">task_alt</span>
+                    <span>Recordatorios</span>
+                    <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
+                </a>
+                <a href="./calendario.html.html" class="menu-item active" id="menuCalendario">
+                    <span class="material-symbols-rounded">calendar_month</span>
+                    <span>Google Calendar</span>
+                </a>
+                <a href="./tablero.html" class="menu-item" target="_blank">
+                    <span class="material-symbols-rounded">grid_view</span>
+                    <span>Tablero</span>
+                </a>
+                <!-- resto de los ítems del sidebar, igual que en las demás páginas -->
+            </nav>
+        </aside>
+
+         <main class="main-content">
+            <header class="page-header">
+                <h1>
+                    <span class="material-symbols-rounded">calendar_month</span>
+                    Google Calendar
+                </h1>
+                <p class="page-subtitle">Conecta tu calendario para ver tus recordatorios directamente en Google Calendar.</p>
+            </header>
+
+            <div class="cal-container">
+
+                <!-- Estado de conexión -->
+                <div class="cal-card" id="calEstadoCard">
+                    <div class="cal-estado-header">
+                        <span class="material-symbols-rounded" id="calEstadoIcono">sync_problem</span>
+                        <div>
+                            <h3 id="calEstadoTitulo">Cargando estado...</h3>
+                            <p id="calEstadoDescripcion"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instrucciones -->
+                <div class="cal-card">
+                    <h3>Cómo conectar tu calendario</h3>
+                    <ol class="cal-pasos">
+                        <li>
+                            Abre <a href="https://calendar.google.com" target="_blank">Google Calendar</a> y entra a la configuración de tu calendario principal (ícono de engranaje → "Configuración").
+                        </li>
+                        <li>
+                            En el menú lateral, selecciona tu calendario (Donde dice tu nombre) y busca la sección <strong>"Se compartió con"</strong>.
+                        </li>
+                        <li>
+                            Dale en <strong>"Agregar personas y grupos"</strong> y Agrega este correo, dale permiso de <strong>"Realizar cambios (Ver eventos privados como disponible/ocupado)"</strong>:
+                            <div class="cal-email-box">
+                                <code id="calEmailBot">n8n-calendar-agent@test-clinic-450917.iam.gserviceaccount.com</code>
+                                <button onclick="copiarEmailBot()" title="Copiar">
+                                    <span class="material-symbols-rounded">content_copy</span>
+                                </button>
+                            </div>
+                        </li>
+                        <li>Confirma abajo el correo de tu cuenta de Google (el mismo que usaste para compartir) y haz clic en "Guardar y verificar".</li>
+                    </ol>
+                </div>
+
+                <!-- Formulario -->
+                <div class="cal-card">
+                    <h3>Tu cuenta de Google</h3>
+                    <div class="cal-form-row">
+                        <label for="calCorreoGoogle">Correo de tu Google Calendar</label>
+                        <input type="email" id="calCorreoGoogle" placeholder="tucorreo@gmail.com">
+                    </div>
+                    <button class="btn-primary" id="btnGuardarCalendario" onclick="guardarYVerificarCalendario()">
+                        <span class="material-symbols-rounded">link</span>
+                        Guardar y verificar
+                    </button>
+                </div>
+
+                <a href="https://calendar.google.com" target="_blank" class="btn-secundario cal-btn-abrir">
+                    <span class="material-symbols-rounded">open_in_new</span>
+                    Abrir mi Google Calendar
+                </a>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase_config.js"></script>
+    <script src="../js/permisos.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/fab.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script src="../js/campana_notificaciones.js"></script>
+    <script src="../js/banners.js"></script>
+    <script src="../js/recordatorios.js"></script>
+    <script src="../js/calendario.js"></script>
+</body>
+</html>
