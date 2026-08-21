@@ -501,8 +501,16 @@ async function guardarRecordatorio() {
                 .update(datos)
                 .eq('id', recordatorioEditandoId);
             if (error) throw error;
+
+            const recordatorioActual = recordatoriosList.find(r => r.id === recordatorioEditandoId);
+            sincronizarGoogleCalendar('actualizar', {
+                recordatorio_id: recordatorioEditandoId,
+                usuario_id: destinatarioId,
+                google_event_id: recordatorioActual?.google_event_id || null,
+                titulo, descripcion, fecha_recordatorio: fechaRecordatorio.toISOString()
+            });
         } else {
-            const { error } = await supabaseClient
+            const { data: nuevo, error } = await supabaseClient
                 .from('recordatorios')
                 .insert({
                     ...datos,
@@ -510,8 +518,16 @@ async function guardarRecordatorio() {
                     creado_por_id: usuarioActual.id,
                     creado_por_nombre: usuarioActual.nombre,
                     estado: 'pendiente'
-                });
+                })
+                .select()
+                .single();
             if (error) throw error;
+
+            sincronizarGoogleCalendar('crear', {
+                recordatorio_id: nuevo.id,
+                usuario_id: destinatarioId,
+                titulo, descripcion, fecha_recordatorio: fechaRecordatorio.toISOString()
+            });
         }
 
         cancelarFormRecordatorio();
@@ -609,11 +625,20 @@ async function guardarRespuesta(id, tipo, valor) {
 async function eliminarRecordatorio(id) {
     if (!confirm('¿Eliminar este recordatorio?')) return;
     try {
+        const r = recordatoriosList.find(x => x.id === id);
+
         const { error } = await supabaseClient
             .from('recordatorios')
             .delete()
             .eq('id', id);
         if (error) throw error;
+
+        if (r) {
+            sincronizarGoogleCalendar('eliminar', {
+                usuario_id: r.usuario_id,
+                google_event_id: r.google_event_id || null
+            });
+        }
         await cargarRecordatorios();
     } catch (error) {
         console.error('❌ Error:', error);
@@ -775,4 +800,21 @@ function mostrarToastRecordatorio(recordatorio, minutos, tipo) {
     `;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 10000);
+}
+
+async function sincronizarGoogleCalendar (accion, datos) {
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        await fetch(`${SUPABASE_URL}/functions/v1/google-calendar-sync`, {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+
+            body: JSON.stringify({ accion, ...datos })
+        });
+    } catch (error) {
+        console.error('Error sincronizando con Google Calendar:', error);
+    }
 }

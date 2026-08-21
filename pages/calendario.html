@@ -4,10 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario -  Asesorias S&S</title>
+    <script>
+        const t = localStorage.getItem('ss_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+    </script>
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/cliente.css">
+    <link rel="stylesheet" href="../css/recordatorios.css">
     <link rel="stylesheet" href="../css/calendario.css">
+    <link rel="stylesheet" href="../css/darkmode.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <link rel="stylesheet" href="../css/fab.css">
+    <link rel="stylesheet" href="../css/campana.css">
+    <link rel="stylesheet" href="../css/banner.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" />
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+
 </head>
 <body>
     <div class="container">
@@ -21,30 +33,96 @@
                 </button>
             </div>
 
+            <div class="sidebar-search">
+                <div class="search-box">
+                    <span class="material-symbols-rounded">search</span>
+                    <input type="text" placeholder="Buscar...">
+                </div>
+            </div>
+
             <nav class="sidebar-nav">
                 <a href="./home.html" class="menu-item">
                     <span class="material-symbols-rounded">home</span>
                     <span>Inicio</span>
                 </a>
+
                 <a href="./polizas.html" class="menu-item">
                     <span class="material-symbols-rounded">description</span>
                     <span>Pólizas</span>
                 </a>
+
                 <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
                     <span class="material-symbols-rounded">task_alt</span>
                     <span>Recordatorios</span>
                     <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
                 </a>
-                <a href="./calendario.html.html" class="menu-item active" id="menuCalendario">
+
+                <a href="./calendario.html" class="menu-item active" id="menuCalendario">
                     <span class="material-symbols-rounded">calendar_month</span>
                     <span>Google Calendar</span>
                 </a>
+
                 <a href="./tablero.html" class="menu-item" target="_blank">
                     <span class="material-symbols-rounded">grid_view</span>
                     <span>Tablero</span>
                 </a>
-                <!-- resto de los ítems del sidebar, igual que en las demás páginas -->
+
+                <a href="./analisis.html" class="menu-item" id="menuAnalisis">
+                    <span class="material-symbols-rounded">analytics</span>
+                    <span>Análisis</span>
+                </a>
+
+                <a href="#" class="menu-item">
+                    <span class="material-symbols-rounded">folder</span>
+                    <span>Gestiones</span>
+                </a>
+
+                <a href="./solicitud-revision.html" class="menu-item">
+                    <span class="material-symbols-rounded">rate_review</span>
+                    <span>Solicitud de revisión</span>
+                </a>
+
+                <a href="./para-revisar.html" class="menu-item">
+                    <span class="material-symbols-rounded">fact_check</span>
+                    <span>Para revisar</span>
+                </a>
+
+                <a href="./control_calidad.html" class="menu-item">
+                    <span class="material-symbols-rounded">verified</span>
+                    <span>Control de calidad</span>
+                </a>
+
+                <a href="./historial_evaluacion.html" class="menu-item">
+                    <span class="material-symbols-rounded">history</span>
+                    <span>Mis Evaluaciones</span>
+                </a>
+
+                <a href="./clientes_archivados.html" class="menu-item" id="menuArchivados">
+                    <span class="material-symbols-rounded">inventory_2</span>
+                    <span>Archivados</span>
+                </a>
+
+                <a href="./monitoreo.html" class="menu-item" id="menuMonitoreo" style="display:none">
+                    <span class="material-symbols-rounded">monitor_heart</span>
+                    <span>Monitoreo</span>
+                </a>
+
+                <a href="./movimientos.html" class="menu-item" id="menuMovimientos" style="display:none">
+                    <span class="material-symbols-rounded">swap_horiz</span>
+                    <span>Movimientos</span>
+                </a>
+
+                <a href="./usuarios.html" class="menu-item">
+                    <span class="material-symbols-rounded">group</span>
+                    <span>Usuarios</span>
+                </a>
             </nav>
+
+            <div class="sidebar-footer">
+                <button id="btnDarkMode" class="theme-toggle" onclick="toggleDarkMode()" title="Cambiar tema">
+                    <span class="material-symbols-rounded">dark_mode</span>
+                </button>
+            </div>
         </aside>
 
          <main class="main-content">
@@ -69,27 +147,50 @@
                     </div>
                 </div>
 
+                <div class="cal-card cal-card-full">
+                    <div class="cal-card-header-row">
+                        <h3>Próximos eventos</h3>
+                        <button class="cal-btn-toggle-instrucciones" id="btnToggleInstrucciones" style="display:none;" onclick="toggleInstrucciones()">
+                            <span class="material-symbols-rounded">help_outline</span>
+                            Ver instrucciones de conexión
+                        </button>
+                    </div>
+                    <div class="cal-selector-usuario" id="calSelectorUsuario" style="display:none;">
+                        <label for="calUsuarioSeleccionado">Ver calendario de:</label>
+                        <select id="calUsuarioSeleccionado" onchange="cambiarUsuarioCalendario()"></select>
+                    </div>
+                    <div id="calGrid"></div>
+                </div>
+
                 <!-- Instrucciones -->
-                <div class="cal-card">
-                    <h3>Cómo conectar tu calendario</h3>
-                    <ol class="cal-pasos">
-                        <li>
-                            Abre <a href="https://calendar.google.com" target="_blank">Google Calendar</a> y entra a la configuración de tu calendario principal (ícono de engranaje → "Configuración").
-                        </li>
-                        <li>
-                            En el menú lateral, selecciona tu calendario (Donde dice tu nombre) y busca la sección <strong>"Se compartió con"</strong>.
-                        </li>
-                        <li>
-                            Dale en <strong>"Agregar personas y grupos"</strong> y Agrega este correo, dale permiso de <strong>"Realizar cambios (Ver eventos privados como disponible/ocupado)"</strong>:
-                            <div class="cal-email-box">
-                                <code id="calEmailBot">n8n-calendar-agent@test-clinic-450917.iam.gserviceaccount.com</code>
-                                <button onclick="copiarEmailBot()" title="Copiar">
-                                    <span class="material-symbols-rounded">content_copy</span>
-                                </button>
-                            </div>
-                        </li>
-                        <li>Confirma abajo el correo de tu cuenta de Google (el mismo que usaste para compartir) y haz clic en "Guardar y verificar".</li>
-                    </ol>
+                <div class="cal-panel-angosto">
+                    <div class="cal-card" id="calInstruccionesCard">
+                        <h3>Cómo conectar tu calendario</h3>
+                        <ol class="cal-pasos">
+                            <li>
+                                Abre <a href="https://calendar.google.com" target="_blank">Google Calendar</a> y entra a la configuración de tu calendario principal (ícono de engranaje → "Configuración").
+                            </li>
+                            <li>
+                                En el menú lateral, selecciona tu calendario (Donde dice tu nombre) y busca la sección <strong>"Se compartió con"</strong>.
+                            </li>
+                            <li>
+                                Agrega ambos correos con permiso de <strong>"Realizar cambios (Ver eventos privados como disponible/ocupado)"</strong>:
+                                <div class="cal-email-box">
+                                    <code id="calEmailN8n">n8n-calendar-agent@test-clinic-450917.iam.gserviceaccount.com</code>
+                                    <button onclick="copiarEmailBot('calEmailN8n')" title="Copiar">
+                                        <span class="material-symbols-rounded">content_copy</span>
+                                    </button>
+                                </div>
+                                <div class="cal-email-box">
+                                    <code id="calEmailPropio">asesoriasth-calendar-sync@landing-page-465315.iam.gserviceaccount.com</code>
+                                    <button onclick="copiarEmailBot('calEmailPropio')" title="Copiar">
+                                        <span class="material-symbols-rounded">content_copy</span>
+                                    </button>
+                                </div>
+                            </li>
+                            <li>Confirma abajo el correo de tu cuenta de Google (el mismo que usaste para compartir) y haz clic en "Guardar y verificar".</li>
+                        </ol>
+                    </div>
                 </div>
 
                 <!-- Formulario -->
@@ -97,7 +198,7 @@
                     <h3>Tu cuenta de Google</h3>
                     <div class="cal-form-row">
                         <label for="calCorreoGoogle">Correo de tu Google Calendar</label>
-                        <input type="email" id="calCorreoGoogle" placeholder="tucorreo@gmail.com">
+                        <input type="email" id="calCorreoGoogle" class="cal-correo-google" placeholder="tucorreo@gmail.com">
                     </div>
                     <button class="btn-primary" id="btnGuardarCalendario" onclick="guardarYVerificarCalendario()">
                         <span class="material-symbols-rounded">link</span>
@@ -121,8 +222,10 @@
     <script src="../js/fab.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script src="../js/campana_notificaciones.js"></script>
+    <script src="../js/notificaciones_calidad.js"></script>
     <script src="../js/banners.js"></script>
     <script src="../js/recordatorios.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <script src="../js/calendario.js"></script>
 </body>
 </html>

@@ -710,3 +710,32 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 [data-theme="dark"] .campana-item.no-leida {
     background: #1a1a24;
 }
+
+[data-theme="dark"] #calGrid {
+    --fc-border-color: var(--dk-border);
+    --fc-button-bg-color: var(--dk-surface-2);
+    --fc-button-border-color: var(--dk-surface-2);
+    --fc-button-hover-bg-color: var(--dk-surface-3);
+    --fc-button-hover-border-color: var(--dk-surface-3);
+    --fc-button-active-bg-color: var(--dk-accent);
+    --fc-button-active-border-color: var(--dk-accent);
+    --fc-today-bg-color: var(--dk-accent-bg);
+    --fc-event-bg-color: var(--dk-accent);
+    --fc-event-border-color: var(--dk-accent);
+    --fc-page-bg-color: var(--dk-surface-1);
+    --fc-neutral-bg-color: var(--dk-surface-2);
+}
+
+[data-theme="dark"] #calGrid .fc-toolbar-title,
+[data-theme="dark"] #calGrid .fc-daygrid-day-number {
+    color: var(--dk-text-primary);
+}
+
+[data-theme="dark"] #calGrid .fc-col-header-cell {
+    background: var(--dk-surface-2);
+    color: var(--dk-text-secondary);
+}
+
+[data-theme="dark"] #calGrid .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
+    color: var(--dk-text-tertiary);
+}
