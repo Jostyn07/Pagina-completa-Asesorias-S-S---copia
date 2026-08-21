@@ -1,6 +1,20 @@
 /* ============================================
    ANALISIS — Layout principal
    ============================================ */
+:root {
+    --color-text-primary: #1e293b;
+    --color-text-placeholder: #64748b;
+    --color-bg-primary: #f8fafc;
+    --color-bg-secondary: #ede9fe;
+    --color-bg-sidebar: #fff;
+    --color-border-hr: #e2e8f0;
+    --color-hover-primary: #6366f1;
+    --color-hover-secondary: #e2e2fb;
+    --color-shadow: rgba(0,0,0, 0.05);
+    --btn-verde: #00a76f;
+    --btn-azul: #0066cc;
+}
+
 
 .analisis-page {
     margin-left: 270px;
@@ -1097,3 +1111,14 @@
     }
 }
 
+a {
+    color: var(--color-hover-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    font-weight: 500;
+}
+
+a:hover {
+    color: var(--btn-azul);
+    text-decoration: underline;
+}

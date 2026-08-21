@@ -830,7 +830,7 @@ function renderizarClasificacion(tab) {
     `;
 }
 
-// Calcular cumpleaños de la semana}
+// Calcular cumpleaños de la semana
 function calcularCumpleanosEnSemana() {
     const hoy = new Date(); // devuelve la fecha completa
     const mes = hoy.getMonth() + 1;
@@ -839,8 +839,6 @@ function calcularCumpleanosEnSemana() {
     return todasLasPolizas.filter(p => {
         const fn = p.cliente?.fecha_nacimiento;
         if (!fn) return false;
-
-        // ← Parsear sin timezone para evitar desfase
         const [anio, mesNac, diaNac] = fn.split('T')[0].split('-');
         return parseInt(mesNac) === mes && parseInt(diaNac) === dia;
     });

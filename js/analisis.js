@@ -723,7 +723,11 @@ function renderizarTabla() {
         return `
             <tr>
                 <td>
-                    <div style="font-weight:600">${escapeHtml(nombre)}</div>
+                    <div style="font-weight:600">
+                        <a href="./cliente_editar.html?id=${cl.id || ''}" onclick="event.stopPropagation()">
+                        ${escapeHtml(nombre)}
+                    </a>
+                    </div>
                     <div style="font-size:0.72rem;color:var(--text-secondary,#64748b)">
                         ${escapeHtml(p.compania || '')}
                     </div>
