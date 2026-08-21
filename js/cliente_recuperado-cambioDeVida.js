@@ -1257,6 +1257,7 @@ const CAMPOS_REQUERIDOS = [
     { id: 'plan', nombre: 'Plan' },
     { id: 'prima', nombre: 'Prima' },
     { id: 'operadorNombre', nombre: 'Operador' },
+    { id: 'enlacePoliza', nombre: 'Enlace de la Póliza'}
 ];
 
 function inicializarValidacionTiempoReal() {
