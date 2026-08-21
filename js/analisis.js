@@ -724,7 +724,7 @@ function renderizarTabla() {
             <tr>
                 <td>
                     <div style="font-weight:600">
-                        <a href="./cliente_editar.html?id=${cl.id || ''}" onclick="event.stopPropagation()">
+                        <a href="./cliente_editar.html?id=${cl.id || ''}" onclick="event.stopPropagation()" target="_blank">
                         ${escapeHtml(nombre)}
                     </a>
                     </div>
