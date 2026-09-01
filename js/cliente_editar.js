@@ -3075,8 +3075,10 @@ async function registrarParaRevisar(clienteId, polizaId, formData, estadoData) {
                 npn2: estadoData.agente_externo_mercado2 || null,
                 recuperado: null,
                 revision_realizada_por: datosUsuario?.nombre || usuarioActual?.email || 'Desconocido',
+                observacion_cambio_estado: estadoData.observacion_mercado || null
             }]);
         if (error) throw error;
+
     } catch (error) {
         console.error('Error al registrar en Para revisar:', error);
     }

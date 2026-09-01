@@ -265,6 +265,12 @@ function buildFila(r) {
             <td data-label="Recuperado" class="celda-recuperado">${btnRecuperado}${avisoPendiente}</td>
             <td data-label="Fecha Recuperación" class="celda-fecha">${fechaRecup}</td>
             <td data-label="Revisión por" class="celda-revision-por">${r.revision_realizada_por || '—'}</td>
+            <td data-label="Observación de cambio de estado" class="celda-observacion">
+                ${r.observacion_cambio_estado 
+                    ? `<span class="obs-preview">${r.observacion_cambio_estado.substring(0, 60)}${r.observacion_cambio_estado.length > 60 ? '...' : ''}</span>`
+                    : '<em class="text-muted">-</em>' 
+                || '—'}      
+            </td>
         </tr>`;
 }
 
