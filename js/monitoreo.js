@@ -57,22 +57,20 @@ async function verificarAcceso() {
 // ── Cargar sesiones ───────────────────────────
 async function cargarSesiones() {
     try {
-        // Cargar todos los usuarios activos
-        const { data: usuarios } = await supabaseClient
+        // Construir la consulta de usuarios activos (sin ejecutar todavía)
+        let queryUsuarios = supabaseClient
             .from('usuarios')
             .select('id, nombre, rol')
             .eq('activo', true)
             .order('nombre');
 
+        // Si no es admin_general, filtrar solo usuarios de sus mismos portales
         if (datosUsuario?.rol !== 'admin_general') {
             queryUsuarios = queryUsuarios.overlaps('portales', datosUsuario?.portales || []);
         }
 
         const { data: usuarios } = await queryUsuarios;
 
-        const { data: sesiones } = await supabaseClient
-            .from('actividad_sesiones')
-            .select('*')
         // Cargar sesiones activas
         const { data: sesiones } = await supabaseClient
             .from('actividad_sesiones')
