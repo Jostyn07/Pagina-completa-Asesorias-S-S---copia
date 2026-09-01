@@ -7,6 +7,8 @@ let filtroTipoActivo = null;       // 'robadas' | 'canceladas' | 'dobles' | 'no-
 let mostrarRecuperados = false;    // Por defecto oculta los "Sí"
 let filtrosAvanzados = {};
 let esAdmin = false;
+let paginaActualRev = 1;
+let registrosPorPaginaRev = 10;
 
 // ============================================
 // INICIALIZACIÓN
@@ -16,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     esAdmin = esAdministrador();
     await cargarRegistros();
     configurarBuscador();
+    configurarPaginacionRev();
 
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (user) {
@@ -151,6 +154,7 @@ function aplicarFiltros() {
         resultado = resultado.filter(r => r.fecha_recuperacion && new Date(r.fecha_recuperacion) <= new Date(f.fechaRecupHasta));
     }
 
+    paginaActualRev = 1;
     registrosFiltrados = resultado;
     renderTabla();
     actualizarContadorResultados();
@@ -171,10 +175,16 @@ function renderTabla() {
                     No hay registros que mostrar
                 </td>
             </tr>`;
+            actualizarPaginacionRev();
         return;
     }
 
-    tbody.innerHTML = registrosFiltrados.map(r => buildFila(r)).join('');
+    const inicio = (paginaActualRev - 1) * registrosPorPaginaRev;
+    const fin = inicio + registrosPorPaginaRev;
+    const pagina = registrosFiltrados.slice(inicio, fin);
+
+    tbody.innerHTML = pagina.map(r => buildFila(r)).join('');
+    actualizarPaginacionRev();
 }
 
 function buildFila(r) {
@@ -194,6 +204,9 @@ function buildFila(r) {
             ${r.recuperado === 'Si' ? '✅ Sí' : r.recuperado === 'No' ? '❌ No' : '— Pendiente'}
         </button>`;
 
+    const avisoPendiente = r.sr_pendiente
+        ? `<span class="badge-sr-pendiente" title="Se enviará a Solicitud de Revisión si no cambia en 5 minutos">⏳ Pendiente de envío</span>`
+        : '';   
     const fechaIngreso   = formatearFecha(r.fecha_ingreso);
     const fechaRecup     = r.fecha_recuperacion ? formatearFechaCorta(r.fecha_recuperacion) : '<span class="text-muted">—</span>';
 
@@ -249,7 +262,7 @@ function buildFila(r) {
                     ${obsDisplay}
                 </span>
             </td>
-            <td data-label="Recuperado" class="celda-recuperado">${btnRecuperado}</td>
+            <td data-label="Recuperado" class="celda-recuperado">${btnRecuperado}${avisoPendiente}</td>
             <td data-label="Fecha Recuperación" class="celda-fecha">${fechaRecup}</td>
             <td data-label="Revisión por" class="celda-revision-por">${r.revision_realizada_por || '—'}</td>
         </tr>`;
@@ -575,4 +588,45 @@ function getBadgeMercado(estado) {
     };
     const [cls, icon, label] = mapa[estado] || ['badge-mercado', 'info', estado || '—'];
     return `<span class="${cls}"><span class="material-symbols-rounded">${icon}</span>${label}</span>`;
+}
+
+function configurarPaginacionRev() {
+    const selector = document.getElementById('revPorPagina');
+    if (selector) {
+        selector.addEventListener('change', function () {
+            registrosPorPaginaRev = parseInt(this.value, 10);
+            paginaActualRev = 1;
+            renderTabla();
+        });
+    }
+}
+
+function actualizarPaginacionRev() {
+    const total = registrosFiltrados.length
+    const totalPaginas = Math.ceil(total / registrosPorPaginaRev);
+    const inicio = total === 0 ? 0 : (paginaActualRev - 1) * registrosPorPaginaRev + 1;
+    const fin = Math.min(paginaActualRev * registrosPorPaginaRev, total);
+
+    const info = document.getElementById('infoPaginacionRev');
+    if (info) info.textContent = `Mostrando ${inicio}-${fin} de ${total}`;
+
+    const btnAnterior = document.getElementById('btnPaginaAnteriorRev');
+    const btnSiguiente = document.getElementById('btnPaginaSiguienteRev');
+    if (btnAnterior) btnAnterior.disabled = paginaActualRev === 1;
+    if (btnSiguiente) btnSiguiente.disabled = paginaActualRev === totalPaginas || total === 0;
+}
+
+function btnPaginaAnteriorRev() {
+    if (paginaActualRev > 1) {
+        paginaActualRev--;
+        renderTabla();
+    }
+}
+
+function btnPaginaSiguienteRev() {
+    const totalPaginas = Math.ceil(registrosFiltrados.length / registrosPorPaginaRev);
+    if (paginaActualRev < totalPaginas) {
+        paginaActualRev++;
+        renderTabla();
+    }
 }

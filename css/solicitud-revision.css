@@ -11,7 +11,7 @@
 
 .tabla-sr {
     width: 100%;
-    min-width: 1100px;
+    min-width: 1570px;
     border-collapse: collapse;
 }
 
@@ -412,9 +412,116 @@
     border-color: #3a3a5e;
 }
 
-/* ============================================
-   SECCIÓN FILTROS (hereda modal-rev-* de para-revisar.css)
-   ============================================ */
+.tabla-sr.thead tr,
+.tabla-sr .thead tr,
+.tabla-sr tbody tr {
+    grid-template-columns:
+        150px  /* Fecha Solicitud */
+        170px  /* Nombre */
+        130px  /* Teléfono */
+        130px  /* Compañía */
+        150px  /* Estado Mercado */
+        130px  /* Actualizado */
+        200px  /* Nota de actualización */
+        150px  /* Fecha actualización */
+        200px  /* Observación */
+        160px; /* Acción */
+}
+
+.controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: var(--color-bg-primary, #fff);
+    border-radius: 12px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.pagination-controls { display: flex; align-items: center; gap: 15px; }
+.pagination-controls select {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border-hr, #e5e7eb);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.pagination-controls button {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    background: var(--color-bg-primary, #fff);
+    border: 1px solid var(--color-border-hr, #e5e7eb);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.pagination-controls button:hover:not(:disabled) { background: #f8fafc; border-color: #6366f1; }
+.pagination-controls button:disabled { opacity: 0.5; cursor: not-allowed; }
+#infoPaginacionRev, #infoPaginacionSR { color: #64748b; font-size: 0.9rem; }
+@media (max-width: 768px) {
+    .controls-row { flex-direction: column; align-items: stretch; }
+    .pagination-controls { flex-direction: column; align-items: stretch; }
+    .pagination-controls button { width: 100%; }
+}
+
+.sr-autocomplete-wrapper { position: relative; }
+.sr-autocomplete-lista {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: var(--color-bg-primary, #fff);
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    margin-top: 4px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 20;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.sr-autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--color-border-hr, #f1f5f9);
+}
+.sr-autocomplete-item:last-child { border-bottom: none; }
+.sr-autocomplete-item:hover { background: rgba(99,102,241,0.08); }
+.sr-autocomplete-item small { display: block; color: var(--color-text-placeholder); }
+.sr-cliente-vinculado {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.75rem; color: #047857; margin-top: 4px;
+}
+[data-theme="dark"] .sr-autocomplete-lista { background: #1e1e2e; border-color: #3a3a5e; }
+
+/* --- Columna Acción / Estado Mercado --- */
+.celda-accion-sr { text-align: center; }
+.btn-ir-poliza {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--color-hover-primary);
+    color: #fff !important;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.btn-ir-poliza:hover { filter: brightness(0.9); }
+.badge-origen-auto, .badge-origen-manual {
+    display: inline-block;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+.badge-origen-auto   { background: #dbeafe; color: #1e40af; }
+.badge-origen-manual { background: #f3f4f6; color: #374151; }
+[data-theme="dark"] .badge-origen-auto   { background: #1e3a5f; color: #93c5fd; }
+[data-theme="dark"] .badge-origen-manual { background: #374151; color: #9ca3af; }
 
 /* ============================================
    DARK MODE

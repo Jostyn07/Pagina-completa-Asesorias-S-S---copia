@@ -169,6 +169,20 @@
                 <span>Cargando registros...</span>
             </div>
 
+            <div class="controls-row">
+                <div class="pagination-controls">
+                    <label for="srPorPaginaSelect">
+                        <select name="srPorPaginaSelect" id="srPorPaginaSelect">
+                            <option value="10 selected">10 por página</option>
+                            <option value="25">25 por página</option>
+                            <option value="50">50 por página</option>
+                            <option value="100">100 por página</option>
+                            <option value="300">300 por página</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
             <!-- Tabla -->
             <div id="tablaSRWrapper">
                 <table class="content__info-client tabla-sr">
@@ -178,20 +192,35 @@
                             <th>Nombre</th>
                             <th>Teléfono</th>
                             <th>Compañía</th>
+                            <th>Estado Mercado</th>
                             <th>Actualizado</th>
                             <th>Nota de actualización</th>
                             <th>Fecha actualización</th>
                             <th>Observación</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-sr-body">
                         <tr>
-                            <td colspan="8" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">
+                            <td colspan="10" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">
                                 Cargando...
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div class="controls-row">
+                <div class="pagination-controls">
+                    <button id="btnPaginaAnteriorSR" onclick="paginaAnteriorSR()">
+                        <span class="material-symbols-rounded">chevron_left</span>
+                        Anterior
+                    </button>
+                    <button id="btnPaginaSiguienteSR" onclick="paginaSiguienteSR()">
+                        Siguiente
+                        <span class="material-symbols-rounded">chevron_right</span>
+                    </button>
+                </div>
             </div>
 
         </main>
@@ -220,20 +249,34 @@
                         <span class="material-symbols-rounded">link</span>
                         Vinculado a cliente existente
                     </span>
+                    <div class="sr-autocomplete-lista" id="srAutocompleteLista" style="display:none;"></div>
                 </div>
-                <div class="sr-form-group sr-autocomplete-wrapper">
-                    <label>Télefono</label>
-                    <input type="text" id="srTelefono" placeholder="Numero de telefono..." autocomplete="off" oninput="buscarClientesSR(this.value)">
+                <div class="sr-form-group">
+                    <label>Teléfono</label>
+                    <input type="text" id="srTelefono" placeholder="Número de teléfono...">
                 </div>
-                <div class="sr-form-group sr-autocomplete-wrapper">
-                    <label>Compañia</label>
-                    <input type="text" id="srCompania" placeholder="nombre de la compañia">
+                <div class="sr-form-group">
+                    <label>Compañía</label>
+                    <input type="text" id="srCompania" placeholder="Nombre de la compañía">
                 </div>
-                <div class="sr-form-group sr-autocomplete-wrapper">
+                <div class="sr-form-group">
+                    <label>Estado Mercado</label>
+                    <select id="srEstadoMercado">
+                        <option value="">— Sin clasificar —</option>
+                        <option value="Robado">Robado</option>
+                        <option value="Cancelado a P.C">Cancelado a P.C</option>
+                        <option value="Doble poliza">Doble Póliza</option>
+                        <option value="Triple poliza">Triple Póliza</option>
+                        <option value="No registra">No Registra</option>
+                    </select>
+                </div>
+                <div class="sr-form-group">
                     <label>Actualizado</label>
-                    <option value="">Pendiente</option>
-                    <option value="Si">Sí</option>
-                    <option value="No">No</option>
+                    <select id="srActualizado">
+                        <option value="">Pendiente</option>
+                        <option value="Si">Sí</option>
+                        <option value="No">No</option>
+                    </select>
                 </div>
             </div>
 

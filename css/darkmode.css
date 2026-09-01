@@ -739,3 +739,13 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 [data-theme="dark"] #calGrid .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
     color: var(--dk-text-tertiary);
 }
+/* Para revisar */
+
+[data-theme="dark"] .modal-rev,
+[data-theme="dark"] .modal-texto-content {
+    background: #1e1e2e;
+}
+[data-theme="dark"] .modal-rev-group input,
+[data-theme="dark"] #modalTextoArea { background: #2a2a3e; border-color: #3a3a5e; color: #e2e8f0; }
+
+[data-theme="dark"] .badge-recuperado { background: #064e3b; color: #6ee7b7;}

@@ -119,7 +119,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         await cargarNotas(clienteId);
         await verificarCambiosPendientes(clienteId);
         
-        
+        const abrirSeccion = urlParams.get('abrir');
+        if (abrirSeccion === 'estado-mercado') {
+            cambiarTab('estado');
+            cambiarSubPestana('estado-mercado');
+            setTimeout(() => {
+                document.getElementById('estadoMercado')?.scrollIntoView({ behavior: 'smooth', block: 'center'});
+            }, 200)
+        } 
     } catch (error) {
         console.error('❌ Error al cargar datos:', error);
     }

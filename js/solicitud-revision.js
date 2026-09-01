@@ -6,6 +6,9 @@ let srFiltrados = [];
 let filtrosSR = {};
 let modalTextoSRId = null;
 let modalTextoSRCampo = null;
+let paginaActualSR = 1;
+let srPorPagina = 10;
+let srClienteSeleccionado = null;
 
 // ============================================
 // INICIALIZACIÓN
@@ -14,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await cargarRolUsuario();
     await cargarRegistrosSR();
     configurarBuscadorSR();
+    configurarPaginacionSR();
     suscribirRealTimeSR();
 
     const { data: { user } } = await supabaseClient.auth.getUser();
@@ -59,19 +63,24 @@ function renderTablaSR() {
     if (srFiltrados.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">
+                <td colspan="10" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">
                     <span class="material-symbols-rounded" style="font-size:2.5rem;display:block;margin-bottom:8px">search_off</span>
                     No hay registros que mostrar
                 </td>
             </tr>`;
+        actualizarPaginacionSR();
         return;
     }
 
-    tbody.innerHTML = srFiltrados.map(r => buildFilaSR(r)).join('');
+    const inicio = (paginaActualSR - 1) * srPorPagina;
+    const fin = inicio + srPorPagina;
+    const pagina = srFiltrados.slice(inicio, fin);
+
+    tbody.innerHTML = pagina.map(r => buildFilaSR(r)).join('');
+    actualizarPaginacionSR();
 }
 
 function buildFilaSR(r) {
-    // Badge Actualizado
     const claseAct = r.actualizado === 'Si'
         ? 'fila-sr-actualizado-si'
         : r.actualizado === 'No'
@@ -86,12 +95,10 @@ function buildFilaSR(r) {
             ${r.actualizado === 'Si' ? '✅ Sí' : r.actualizado === 'No' ? '❌ No' : '— Pendiente'}
         </button>`;
 
-    // Nota de actualización — editable para todos
     const notaActDisplay = r.nota_actualizacion
         ? `<span class="nota-preview">${r.nota_actualizacion.substring(0, 60)}${r.nota_actualizacion.length > 60 ? '…' : ''}</span>`
         : '<em class="text-muted">Sin nota</em>';
 
-    // Observación — editable para todos
     const obsDisplay = r.observacion
         ? `<span class="obs-preview">${r.observacion.substring(0, 60)}${r.observacion.length > 60 ? '…' : ''}</span>`
         : '<em class="text-muted">Agregar...</em>';
@@ -99,12 +106,25 @@ function buildFilaSR(r) {
     const fechaSolicitud   = formatearFechaSR(r.fecha_solicitud);
     const fechaActualizacion = r.fecha_actualizacion ? formatearFechaSR(r.fecha_actualizacion) : '<em class="text-muted">—</em>';
 
+    const badgeMercadoSR = r.estado_mercado ? getBadgeMercadoSR(r.estado_mercado) : '<span class="text-muted">—</span>';
+
+    const badgeOrigen = r.origen === 'automatico'
+        ? '<span class="badge-origen-auto" title="Generada automáticamente por el sistema">🤖 Auto</span>'
+        : '<span class="badge-origen-manual" title="Agregada manualmente">✋ Manual</span>';
+
+    const accion = r.cliente_id
+        ? `<a class="btn-ir-poliza" href="./cliente_editar.html?id=${r.cliente_id}&abrir=estado-mercado" target="_blank">
+               <span class="material-symbols-rounded" style="font-size:14px">open_in_new</span> Ir a la póliza
+           </a>`
+        : '<span class="text-muted">—</span>';
+
     return `
         <tr class="fila-sr ${claseAct}" data-id="${r.id}">
-            <td data-label="Fecha Solicitud" class="celda-fecha">${fechaSolicitud}</td>
+            <td data-label="Fecha Solicitud" class="celda-fecha">${fechaSolicitud}${badgeOrigen}</td>
             <td data-label="Nombre">${r.nombre || '—'}</td>
             <td data-label="Teléfono">${formatearTelefonoSR(r.telefono)}</td>
             <td data-label="Compañía">${r.compania || '—'}</td>
+            <td data-label="Estado Mercado">${badgeMercadoSR}</td>
             <td data-label="Actualizado" class="celda-actualizado">${btnActualizado}</td>
             <td data-label="Nota actualización" class="celda-nota-act">
                 <span class="celda-editable"
@@ -123,7 +143,21 @@ function buildFilaSR(r) {
                     ${obsDisplay}
                 </span>
             </td>
+            <td data-label="Acción" class="celda-accion-sr">${accion}</td>
         </tr>`;
+}
+
+function getBadgeMercadoSR(estado) {
+    const mapa = {
+        'Robado':         ['badge-mercado badge-robado',    'gpp_bad',    'Robado'],
+        'Cancelado a P.C':['badge-mercado badge-cancelado', 'cancel',     'Cancelado'],
+        'Doble poliza':   ['badge-mercado badge-doble',     'file_copy',  'Doble Póliza'],
+        'Triple poliza':  ['badge-mercado badge-triple',    'library_books','Triple Póliza'],
+        'No registra':    ['badge-mercado badge-noregistra','help_outline','No Registra'],
+        'Recuperado':     ['badge-mercado badge-recuperado','check_circle','Recuperado']
+    };
+    const [cls, icon, label] = mapa[estado] || ['badge-mercado', 'info', estado || '—'];
+    return `<span class="${cls}"><span class="material-symbols-rounded">${icon}</span>${label}</span>`;
 }
 
 // ============================================
@@ -187,12 +221,15 @@ async function recargarRegistroSR(id) {
 // MODAL AGREGAR MANUALMENTE
 // ============================================
 function abrirModalAgregar() {
-    // Limpiar campos
     ['srNombre','srTelefono','srCompania','srNotaActualizacion','srObservacion'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
     document.getElementById('srActualizado').value = '';
+    document.getElementById('srEstadoMercado').value = '';
+    srClienteSeleccionado = null;
+    document.getElementById('srClienteVinculado').style.display = 'none';
+    document.getElementById('srAutocompleteLista').style.display = 'none';
     document.getElementById('modalAgregarSR').classList.add('show');
     document.getElementById('srNombre').focus();
 }
@@ -218,9 +255,13 @@ async function guardarNuevoSR() {
             nombre,
             telefono:           document.getElementById('srTelefono').value.trim() || null,
             compania:           document.getElementById('srCompania').value.trim() || null,
+            estado_mercado:     document.getElementById('srEstadoMercado').value || null,
             actualizado:        document.getElementById('srActualizado').value || null,
             nota_actualizacion: document.getElementById('srNotaActualizacion').value.trim() || null,
             observacion:        document.getElementById('srObservacion').value.trim() || null,
+            cliente_id:         srClienteSeleccionado?.id || null,
+            poliza_id:          srClienteSeleccionado?.poliza_id || null,
+            origen:             'manual',
         };
 
         const { data, error } = await supabaseClient
@@ -244,6 +285,67 @@ async function guardarNuevoSR() {
     }
 }
 
+// Autocompletar información del cliente
+let debounceBuscarClienteSR;
+
+function buscarClientesSR(valor) {
+    clearTimeout(debounceBuscarClienteSR);
+    const lista = document.getElementById('srAutocompleteLista');
+    const vinculado = document.getElementById('srClienteVinculado');
+
+    srClienteSeleccionado = null;
+    if (vinculado) vinculado.style.display = 'none';
+
+    if (!valor || valor.trim().length < 3) {
+        if (lista) lista.style.display = 'none';
+        return
+    }
+
+    debounceBuscarClienteSR = setTimeout(async () => {
+        try {
+            const resultados = await buscarClientes(valor.trim());
+            renderAutocompleteSR(resultados || []);
+        } catch (error) {
+            console.error('Error buscando clientes:', error);
+        }
+    }, 300);
+}
+
+function renderAutocompleteSR(clientes) {
+    const lista = document.getElementById('srAutocompleteLista');
+    if(!lista) return;
+
+    if (clientes.length === 0) {
+        lista.style.display = 'none';
+        return;
+    }
+
+    lista.innerHTML = clientes.slice(0, 8).map(c => {
+        const poliza = (c.polizas && c.polizas[0]) || null;
+        return `
+            <div class="sr-autocomplete-item"
+                 onclick='seleccionarClienteSR(${JSON.stringify(c.id)}, ${JSON.stringify(poliza?.id || null)}, ${JSON.stringify(c.nombres + " " + c.apellidos)}, ${JSON.stringify(c.telefono1 || "")}, ${JSON.stringify(poliza?.compania || "")})'>
+                ${c.nombres} ${c.apellidos}
+                <small>${c.telefono1 || 'Sin teléfono'} ${poliza?.compania ? '· ' + poliza.compania : ''}</small>
+            </div>
+        `;
+    }).join('');
+    lista.style.display = 'block';
+}
+
+function seleccionarClienteSR(clienteId, polizaId, nombre, telefono, compania) {
+    srClienteSeleccionado = { id: clienteId, poliza_id: polizaId};
+
+    document.getElementById('srNombre').value = nombre;
+    if (telefono) document.getElementById('srTelefono').value = telefono;
+    if (compania) document.getElementById('srCompania').value = compania;
+
+    const lista = document.getElementById('srAutocompleteLista');
+    if (lista) lista.style.display = 'none';
+
+    const vinculado = document.getElementById('srClienteVinculado');
+    if (vinculado) vinculado.style.display = 'inline-flex';
+}
 // ============================================
 // MODAL EDICIÓN TEXTO LARGO
 // ============================================
@@ -374,6 +476,7 @@ function aplicarFiltrosSR() {
     if (f.actDesde)       resultado = resultado.filter(r => r.fecha_actualizacion && new Date(r.fecha_actualizacion) >= new Date(f.actDesde));
     if (f.actHasta)       resultado = resultado.filter(r => r.fecha_actualizacion && new Date(r.fecha_actualizacion) <= new Date(f.actHasta + 'T23:59:59'));
 
+    paginaActualSR = 1;
     srFiltrados = resultado;
     renderTablaSR();
     actualizarContadorSR();
@@ -492,4 +595,45 @@ function formatearTelefonoSR(tel) {
     const d = tel.replace(/\D/g, '');
     if (d.length === 10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
     return tel;
+}
+
+function configurarPaginacionSR() {
+    const selector = document.getElementById('srPorPaginaSelect');
+    if (selector) {
+        selector.addEventListener('change', function() {
+            srPorPagina = parseInt(this.value, 10);
+            paginaActualSR = 1;
+            renderTablaSR();
+        });
+    }
+}
+
+function actualizarPaginacionSR() {
+    const total = srFiltrados.length;
+    const totalPaginas = Math.ceil(total / srPorPagina);
+    const inicio = total === 0 ? 0 : (paginaActualSR - 1) * srPorPagina + 1;
+    const fin = Math.min(paginaActualSR * srPorPagina, total);
+
+    const info = document.getElementById('infoPaginacionSR');
+    if (info) info.textContent = `Mostrando ${inicio}-${fin} de ${total}`;
+
+    const btnAnterior = document.getElementById('btnPaginaAnteriorSR');
+    const btnSiguiente = document.getElementById('btnPaginaSiguienteSR');
+    if (btnAnterior) btnAnterior.disabled = paginaActualSR === 1;
+    if (btnSiguiente) btnSiguiente.disabled = paginaActualSR === totalPaginas || total === 0;
+}
+
+function paginaAnteriorSR() {
+    if (paginaActualSR > 1) {
+        paginaActualSR--;
+        renderTablaSR();
+    }
+}
+
+function paginaSiguienteSR() {
+    const totalPaginas = Math.ceil(srFiltrados.length / srPorPagina);
+    if (paginaActualSR < totalPaginas) {
+        paginaActualSR++;
+        renderTablaSR();
+    }
 }

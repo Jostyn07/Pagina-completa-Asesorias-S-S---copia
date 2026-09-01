@@ -10,8 +10,8 @@
         document.documentElement.setAttribute('data-theme', t);
     </script>
     <link rel="stylesheet" href="../css/sidebar.css">
-    <link rel="stylesheet" href="../css/polizas.css">
     <link rel="stylesheet" href="../css/darkmode.css">
+    <link rel="stylesheet" href="../css/polizas.css">
     <link rel="stylesheet" href="../css/recordatorios.css">
     <link rel="stylesheet" href="../css/ia.css">
     <link rel="stylesheet" href="../css/fab.css">
@@ -204,6 +204,22 @@
                     <span>Cargando registros...</span>
                 </div>
 
+                <div class="controls-row">
+                    <div class="pagination-controls">
+                        <label>
+                            Mostrar:
+                            <select name="revPorPagina" id="revPorPagina">
+                                <option value="10" selected>10 por página</option>
+                                <option value="25">25 por página</option>
+                                <option value="50">50 por página</option>
+                                <option value="100">100 por página</option>
+                                <option value="300">300 por página</option>
+                            </select>
+                        </label>
+                        <span id="infoPaginacionRev">Mostrando 0-0 de 0</span>
+                    </div>
+                </div>
+
                 <!-- Tabla -->
                 <div id="tablaRevisarWrapper">
                     <table class="content__info-client tabla-revisar">
@@ -226,12 +242,25 @@
                         </thead>
                         <tbody id="tabla-revisar-body">
                             <tr>
-                                <td colspan="13" style="text-align:center; padding:40px; color: var(--color-text-placeholder)">
+                                <td colspan="10" style="text-align:center; padding:40px; color: var(--color-text-placeholder)">
                                     Cargando...
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <div class="controls-row">
+                    <div class="pagination-controls">
+                        <button id="btnPaginaAnteriorRev" onclick="btnPaginaAnteriorRev()">
+                            <span class="material-symbols-rounded">chevron_left</span>
+                            Anterior
+                        </button>
+                        <button id="btnPaginaSiguienteRev" onclick="btnPaginaSiguienteRev()">
+                            Siguiente
+                            <span class="material-symbols-rounded">chevron_right</span>
+                        </button>
+                    </div>
                 </div>
 
             </main>
