@@ -144,12 +144,9 @@ function renderizarSesiones() {
     const grid = document.getElementById('monGrid');
     if (!grid) return;
 
-    // Ordenar: activos primero, luego inactivos, luego desconectados
-    const orden = { activo: 0, inactivo: 1, desconectado: 2 };
-    const ordenadas = [...sesionesActuales].sort(
-        (a, b) => (orden[a.estado] ?? 3) - (orden[b.estado] ?? 3)
+    const ordenadas = [...sesionesActuales].sort((a, b) =>
+        (a.usuario_nombre || '').localeCompare(b.usuario_nombre || '', 'es', { sensitivity: 'base' })
     );
-
     // Actualizar stats
     const activos       = ordenadas.filter(s => s.estado === 'activo').length;
     const inactivos     = ordenadas.filter(s => s.estado === 'inactivo').length;
