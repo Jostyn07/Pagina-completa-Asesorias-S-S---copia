@@ -169,7 +169,7 @@ function calcularScoringCartera(poliza) {
 
     // Factor 5: Palabras clave en notas (riesgo básico, antes de IA)
     const notas = seguimientos.map(s => s.observacion || '').join(' ').toLowerCase();
-    const senalAbandono = /cancelar|cambiar|competencia|caro|costoso|otra agencia|no quiere|no puede pagar|quiere salir/.test(notas)
+    const senalAbandono = null
     if (senalAbandono) {
         score += 25;
         factores.push('Señales de abandono en notas');
