@@ -281,7 +281,7 @@ const filtroEstadoAgente35 = crearFiltroMultiSelect({
     contenedorId: 'filtroEstadoAgente35Group',
     label: 'Estado agente 3.5',
     idBase: 'filtroEstadoAgente35',
-    opciones: ['Procesado', 'Pendiente', 'New aplication', 'Policy change', 'Cambio necesario'],
+    opciones: ['Procesado', 'Pendiente', 'New application', 'Policy change', 'Cambio necesario'],
     textoVacio: 'Todos',
     onCambio: () => { guardarFiltrosEnStorage(); aplicarFiltros(); }
 });
