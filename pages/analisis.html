@@ -168,7 +168,7 @@
             </div>
         </div>
 
-        <!-- GRÁFICAS — Vista todos los operadores -->
+        <!-- GRÁFICAS — Vista operador específico -->
         <div class="analisis-graficas-carousel" id="seccionGraficasTodos">
             <div class="carousel-nav">
                 <button class="carousel-btn" onclick="carruselAnterior('todos')" id="carruselPrev-todos">
@@ -234,41 +234,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- GRÁFICAS — Vista operador específico -->
-        <div class="analisis-graficas-carousel" id="seccionGraficasOperador" style="display:none">
-            <div class="carousel-nav" style="display:none" id="carruselNav-operador">
-                <button class="carousel-btn" onclick="carruselAnterior('operador')" id="carruselPrev-operador">
-                    <span class="material-symbols-rounded">chevron_left</span>
-                </button>
-                <span class="carousel-indicador" id="carruselIndicador-operador">Página 1 de 1</span>
-                <button class="carousel-btn" onclick="carruselSiguiente('operador')" id="carruselNext-operador">
-                    <span class="material-symbols-rounded">chevron_right</span>
-                </button>
-            </div>
-
-            <div class="carousel-pages" id="carruselPages-operador">
-                <div class="analisis-graficas carousel-page active">
-                    <div class="analisis-grafica-card">
-                        <h3><span class="material-symbols-rounded">business</span>Estado en Compañía</h3>
-                        <div class="grafica-wrap"><canvas id="graficaCompaniaOp"></canvas></div>
-                    </div>
-                    <div class="analisis-grafica-card">
-                        <h3><span class="material-symbols-rounded">store</span>Estado en Mercado</h3>
-                        <div class="grafica-wrap"><canvas id="graficaMercadoOp"></canvas></div>
-                    </div>
-                    <div class="analisis-grafica-card">
-                        <h3><span class="material-symbols-rounded">shield</span>Distribución de Riesgo</h3>
-                        <div class="grafica-wrap"><canvas id="graficaRiesgoOp"></canvas></div>
-                    </div>
-                    <div class="analisis-grafica-card">
-                        <h3><span class="material-symbols-rounded">folder_open</span>Documentos por Urgencia</h3>
-                        <div class="grafica-wrap"><canvas id="graficaDocsOp"></canvas></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- BARRA DE PROGRESO IA -->
         <div class="analisis-ia-progreso" id="iaProgreso" style="display: none;">
             <div class="ia-progreso-header">

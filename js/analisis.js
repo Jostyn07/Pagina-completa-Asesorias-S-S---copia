@@ -265,17 +265,15 @@ function cambiarOperador() {
 function aplicarFiltroOperador() {
     if (operadorSeleccionado === 'todos') {
         polizasFiltradas = [...todasLasPolizasAnalisis];
-        document.getElementById('seccionGraficasTodos').style.display    = 'flex';
-        document.getElementById('seccionGraficasOperador').style.display = 'none';
-        inicializarCarrusel('todos');
     } else {
         polizasFiltradas = todasLasPolizasAnalisis.filter(
             p => p.operador_nombre === operadorSeleccionado
         );
-        document.getElementById('seccionGraficasTodos').style.display    = 'none';
-        document.getElementById('seccionGraficasOperador').style.display = 'flex';
-        inicializarCarrusel('operador');
     }
+
+    // Ya no hay dos secciones — siempre la misma, con la data ya filtrada arriba
+    document.getElementById('seccionGraficasTodos').style.display = 'flex';
+    inicializarCarrusel('todos');
 
     renderizarResumen();
     renderizarGraficas();
@@ -341,9 +339,7 @@ function destruirGrafica(id) {
 }
 
 function renderizarGraficas() {
-    operadorSeleccionado === 'todos'
-        ? renderizarGraficasTodos()
-        : renderizarGraficasOperador();
+    renderizarGraficasTodos();
 }
 
 function renderizarGraficasTodos() {
@@ -460,7 +456,7 @@ function renderizarGraficasTodos() {
                 responsive: true, maintainAspectRatio: false,
                 scales: {
                     x: { stacked: true, ticks: { font: { size: 10 } } },
-                    y: { stacked: true, ticks: { stepSize: 1 } }
+                    y: { stacked: true, ticks: { precision: 0 } }
                 },
                 plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } }
             }
@@ -489,7 +485,7 @@ function renderizarGraficasTodos() {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { ticks: { stepSize: 1 } },
+                    x: { ticks: { precision: 0 } },
                     y: { ticks: { font: { size: 10 } } }
                 }
             }
@@ -554,32 +550,35 @@ function opcionesBarraMensual() {
     return {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { ticks: { stepSize: 1 } }, x: {ticks: { font: { size: 10 } } } }
+        scales: { y: { ticks: { precision: 0 } }, x: { ticks: { font: { size: 10 } } } }
     };
 }
 
 function renderizarGraficasMercadoMensual() {
+    const datosFiltrados = operadorSeleccionado === 'todos'
+        ? todaLaRevisionMercado
+        : todaLaRevisionMercado.filter(r =>
+            (r.operador_nombre || '').trim().toLowerCase() === operadorSeleccionado.trim().toLowerCase()
+        );
+
     const config = [
-        { id: 'graficaRecuperadosMes', campo: 'fecha_recuperacion', color: '#22c55e', filtro: r => r.recuperado === 'Si'},
-        { id: 'graficaCanceladosMes', campo: 'fecha_ingreso', color: '#ef4444', filtro: r => r.estado_mercado === 'Cancelado a P.C'},
-        { id: 'graficaRobadosMes', campo: 'fecha_ingreso', color: '#f97316', filtro: r => r.estado_mercado === 'Robado'},
-        { id: 'graficaDoblesMes', campo: 'fecha_ingreso', color: '#8b5cf6', filtro: r => r.estado_mercado === 'Doble poliza'},
-        { id: 'graficaTriplesMes', campo: 'fecha_ingreso', color: '#f59e0b', filtro: r => r.estado_mercado === 'Triple poliza'},
+        { id: 'graficaRecuperadosMes', campo: 'fecha_recuperacion', color: '#22c55e', filtro: r => r.recuperado === 'Si' },
+        { id: 'graficaCanceladosMes',  campo: 'fecha_ingreso',      color: '#ef4444', filtro: r => r.estado_mercado === 'Cancelado a P.C' },
+        { id: 'graficaRobadosMes',     campo: 'fecha_ingreso',      color: '#f97316', filtro: r => r.estado_mercado === 'Robado' },
+        { id: 'graficaDoblesMes',      campo: 'fecha_ingreso',      color: '#8b5cf6', filtro: r => r.estado_mercado === 'Doble poliza' },
+        { id: 'graficaTriplesMes',     campo: 'fecha_ingreso',      color: '#f59e0b', filtro: r => r.estado_mercado === 'Triple poliza' },
     ];
 
     config.forEach(c => {
         const canvas = document.getElementById(c.id);
         if (!canvas) return;
 
-        const { labels, data } = contarPorMes(todaLaRevisionMercado, c.campo, c.filtro);
+        const { labels, data } = contarPorMes(datosFiltrados, c.campo, c.filtro);
 
         destruirGrafica(c.id);
         graficasInstancias[c.id] = new Chart(canvas.getContext('2d'), {
             type: 'bar',
-            data: {
-                labels,
-                datasets: [{ data, backgroundColor: c.color, borderRadius: 4 }]
-            },
+            data: { labels, datasets: [{ data, backgroundColor: c.color, borderRadius: 4 }] },
             options: opcionesBarraMensual()
         });
     });
@@ -611,7 +610,7 @@ function actualizarCarrusel(grupo) {
     const prev = document.getElementById(`carruselPrev-${grupo}`);
     const next = document.getElementById(`carruselNext-${grupo}`);
     if (prev) prev.disabled = idx === 0;
-    if (next) next.disabled = idx = paginas.length - 1;
+    if (next) next.disabled = idx === paginas.length - 1;
 }
 
 function carruselAnterior(grupo) {
@@ -743,7 +742,7 @@ function renderizarGraficasOperador() {
             options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
             }
         }
     );
