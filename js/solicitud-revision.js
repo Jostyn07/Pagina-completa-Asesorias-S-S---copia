@@ -534,9 +534,10 @@ function mostrarCargaSR(visible) {
 function mostrarMensajeVacioSR(msg) {
     const tbody = document.getElementById('tabla-sr-body');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">${msg}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">${msg}</td></tr>`;
     }
 }
+
 
 // REALTIME
 let canalRealtimeSR = null;

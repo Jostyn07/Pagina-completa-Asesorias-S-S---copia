@@ -749,3 +749,5 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 [data-theme="dark"] #modalTextoArea { background: #2a2a3e; border-color: #3a3a5e; color: #e2e8f0; }
 
 [data-theme="dark"] .badge-recuperado { background: #064e3b; color: #6ee7b7;}
+
+[data-theme="dark"] .badge-recuperado { background: #064e3b; color: #6ee7b7; }

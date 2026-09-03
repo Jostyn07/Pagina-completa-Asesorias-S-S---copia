@@ -216,6 +216,10 @@
                                 <option value="300">300 por página</option>
                             </select>
                         </label>
+                        <button class="btn-toggle-rec" onclick="exportarExcelRevisar()">
+                            <span class="material-symbols-rounded">download</span>
+                            Descargar Excel
+                        </button>
                         <span id="infoPaginacionRev">Mostrando 0-0 de 0</span>
                     </div>
                 </div>
@@ -357,6 +361,7 @@
     </div>
 
     <!-- Scripts -->
+     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase_config.js"></script>
     <script src="../js/permisos.js"></script>

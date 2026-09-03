@@ -20,6 +20,7 @@ let filtrosAvanzados = {
     sinSeguimientos: false,
     senalAbandono: false
 };
+let todaLaRevisionMercado = [];
 
 function cumpleFiltrosAvanzados(poliza) {
     const m = scoringCache[poliza.id]?.metricas;
@@ -187,6 +188,16 @@ async function cargarDatosAnalisis() {
             p.operador_nombre !== 'Jostyn Aragon' && p.estado_mercado !== "Cancelado a P.C"
         );
 
+        const { data: revisionData, error: revisionError } = await supabaseClient
+            .from('revision_mercado')
+            .select('estado_mercado, recuperado, fecha_ingreso, fecha_recuperacion');
+
+        if (revisionError) {
+            console.error('Error cargando revision_mercado:', revisionError);
+        } else {
+            todaLaRevisionMercado = revisionData || [];
+        }
+
         // Pre-calcular scoring para todos
         scoringCache = {};
         todasLasPolizasAnalisis.forEach(p => calcularScoring(p));
@@ -254,14 +265,16 @@ function cambiarOperador() {
 function aplicarFiltroOperador() {
     if (operadorSeleccionado === 'todos') {
         polizasFiltradas = [...todasLasPolizasAnalisis];
-        document.getElementById('seccionGraficasTodos').style.display    = 'grid';
+        document.getElementById('seccionGraficasTodos').style.display    = 'flex';
         document.getElementById('seccionGraficasOperador').style.display = 'none';
+        inicializarCarrusel('todos');
     } else {
         polizasFiltradas = todasLasPolizasAnalisis.filter(
             p => p.operador_nombre === operadorSeleccionado
         );
         document.getElementById('seccionGraficasTodos').style.display    = 'none';
-        document.getElementById('seccionGraficasOperador').style.display = 'grid';
+        document.getElementById('seccionGraficasOperador').style.display = 'flex';
+        inicializarCarrusel('operador');
     }
 
     renderizarResumen();
@@ -505,6 +518,116 @@ function renderizarGraficasTodos() {
             }
         }
     );
+
+    renderizarGraficasMercadoMensual();
+}
+
+function ultimosNMeses(n) {
+    const meses = [];
+    const hoy = new Date();
+    for (let i = n - 1; i >= 0; i--) {
+        const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+        meses.push({
+            key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+            label: d.toLocaleDateString('es-CO', { month: 'short', year: '2-digit' })
+        });
+    }
+    return meses;
+}
+
+function contarPorMes(registros, campoFecha, filtroFn) {
+    const meses = ultimosNMeses(6);
+    const conteo = {};
+    meses.forEach(m => conteo[m.key] = 0);
+
+    registros.forEach(r => {
+        if (!filtroFn(r) || !r[campoFecha]) return;
+        const d = new Date(r[campoFecha]);
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`;
+        if (key in conteo) conteo[key]++;
+    });
+
+    return { labels: meses.map(m => m.label), data: meses.map(m => conteo[m.key]) };
+}
+
+function opcionesBarraMensual() {
+    return {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { ticks: { stepSize: 1 } }, x: {ticks: { font: { size: 10 } } } }
+    };
+}
+
+function renderizarGraficasMercadoMensual() {
+    const config = [
+        { id: 'graficaRecuperadosMes', campo: 'fecha_recuperacion', color: '#22c55e', filtro: r => r.recuperado === 'Si'},
+        { id: 'graficaCanceladosMes', campo: 'fecha_ingreso', color: '#ef4444', filtro: r => r.estado_mercado === 'Cancelado a P.C'},
+        { id: 'graficaRobadosMes', campo: 'fecha_ingreso', color: '#f97316', filtro: r => r.estado_mercado === 'Robado'},
+        { id: 'graficaDoblesMes', campo: 'fecha_ingreso', color: '#8b5cf6', filtro: r => r.estado_mercado === 'Doble poliza'},
+        { id: 'graficaTriplesMes', campo: 'fecha_ingreso', color: '#f59e0b', filtro: r => r.estado_mercado === 'Triple poliza'},
+    ];
+
+    config.forEach(c => {
+        const canvas = document.getElementById(c.id);
+        if (!canvas) return;
+
+        const { labels, data } = contarPorMes(todaLaRevisionMercado, c.campo, c.filtro);
+
+        destruirGrafica(c.id);
+        graficasInstancias[c.id] = new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{ data, backgroundColor: c.color, borderRadius: 4 }]
+            },
+            options: opcionesBarraMensual()
+        });
+    });
+}
+
+const estadoCarrusel = {};
+
+function inicializarCarrusel(grupo) {
+    const contenedor = document.getElementById(`carruselPages-${grupo}`);
+    if(!contenedor) return;
+    const totalPaginas = contenedor.querySelectorAll('.carousel-page').length;
+    
+    estadoCarrusel[grupo] = 0;
+
+    const nav = document.getElementById(`carruselNav-${grupo}`);
+    if (nav) nav.style.display = totalPaginas > 1 ? 'flex' : 'none';
+
+    actualizarCarrusel(grupo)
+}
+
+function actualizarCarrusel(grupo) {
+    const contenedor = document.getElementById(`carruselPages-${grupo}`);
+    if (!contenedor) return;
+    const paginas = contenedor.querySelectorAll('.carousel-page');
+    const idx = estadoCarrusel[grupo] || 0;
+
+    paginas.forEach((p, i) => p.classList.toggle('active', i === idx));
+
+    const prev = document.getElementById(`carruselPrev-${grupo}`);
+    const next = document.getElementById(`carruselNext-${grupo}`);
+    if (prev) prev.disabled = idx === 0;
+    if (next) next.disabled = idx = paginas.length - 1;
+}
+
+function carruselAnterior(grupo) {
+    if (estadoCarrusel[grupo] > 0) {
+        estadoCarrusel[grupo]--;
+        actualizarCarrusel(grupo);
+    }
+}
+
+function carruselSiguiente(grupo) {
+    const contenedor = document.getElementById(`carruselPages-${grupo}`);
+    const totalPaginas = contenedor.querySelectorAll('.carousel-page').length;
+    if (estadoCarrusel[grupo] < totalPaginas - 1) {
+        estadoCarrusel[grupo]++;
+        actualizarCarrusel(grupo);
+    }
 }
 
 function toggleFiltroSSNOscar() {

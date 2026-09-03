@@ -169,98 +169,102 @@
         </div>
 
         <!-- GRÁFICAS — Vista todos los operadores -->
-        <div class="analisis-graficas" id="seccionGraficasTodos">
-            <div class="analisis-grafica-card">
-                <h3>
-                    <span class="material-symbols-rounded">business</span>
-                    Estado en Compañía
-                </h3>
-                <div class="grafica-wrap">
-                    <canvas id="graficaCompania"></canvas>
-                </div>
-            </div>
-            <div class="analisis-grafica-card">
-                <h3>
-                    <span class="material-symbols-rounded">store</span>
-                    Estado en Mercado
-                </h3>
-                <div class="grafica-wrap">
-                    <canvas id="graficaMercado"></canvas>
-                </div>
-            </div>
-            <div class="analisis-grafica-card">
-                <h3>
-                    <span class="material-symbols-rounded">people</span>
-                    Clientes por Operador
-                </h3>
-                <div class="grafica-wrap c-operador">
-                    <canvas id="graficaOperadores"></canvas>
-                </div>
-            </div>
-            <div class="analisis-grafica-card">
-                <h3>
-                    <span class="material-symbols-rounded">bar_chart</span>
-                    Riesgo por Operador
-                </h3>
-                <div class="grafica-wrap">
-                    <canvas id="graficaRiesgoOperador"></canvas>
-                </div>
-            </div>
-            <div class="analisis-grafica-card">
-                <h3>
-                    <span class="material-symbols-rounded">crisis_alert</span>
-                    Factores de Riesgo Frecuentes
-                </h3>
-                <div class="grafica-wrap">
-                    <canvas id="graficaFactores"></canvas>
-                </div>
+        <div class="analisis-graficas-carousel" id="seccionGraficasTodos">
+            <div class="carousel-nav">
+                <button class="carousel-btn" onclick="carruselAnterior('todos')" id="carruselPrev-todos">
+                    <span class="material-symbols-rounded">chevron_left</span>
+                </button>
+                <span class="carousel-indicador" id="carruselIndicador-todos">Página 1 de 2</span>
+                <button class="carousel-btn" onclick="carruselSiguiente('todos')" id="carruselNext-todos">
+                    <span class="material-symbols-rounded">chevron_right</span>
+                </button>
             </div>
 
-            <div class="analisis-grafica-card">
-                <h3><span class="material-symbols-rounded">id_card</span>Pendiente SSN Oscar</h3>
-                <div class="grafica-wrap">
-                    <canvas id="graficaPendienteSSn"></canvas>
+            <div class="carousel-pages" id="carruselPages-todos">
+                <!-- Página 1 -->
+                <div class="analisis-graficas carousel-page active">
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">business</span>Estado en Compañía</h3>
+                        <div class="grafica-wrap"><canvas id="graficaCompania"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">store</span>Estado en Mercado</h3>
+                        <div class="grafica-wrap"><canvas id="graficaMercado"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">people</span>Clientes por Operador</h3>
+                        <div class="grafica-wrap c-operador"><canvas id="graficaOperadores"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">bar_chart</span>Riesgo por Operador</h3>
+                        <div class="grafica-wrap"><canvas id="graficaRiesgoOperador"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">crisis_alert</span>Factores de Riesgo Frecuentes</h3>
+                        <div class="grafica-wrap"><canvas id="graficaFactores"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">id_card</span>Pendiente SSN Oscar</h3>
+                        <div class="grafica-wrap"><canvas id="graficaPendienteSSn"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Página 2 -->
+                <div class="analisis-graficas carousel-page">
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">task_alt</span>Recuperados por Mes</h3>
+                        <div class="grafica-wrap"><canvas id="graficaRecuperadosMes"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">cancel</span>Cancelados por Mes</h3>
+                        <div class="grafica-wrap"><canvas id="graficaCanceladosMes"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">gpp_bad</span>Robados por Mes</h3>
+                        <div class="grafica-wrap"><canvas id="graficaRobadosMes"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">file_copy</span>Doble Póliza por Mes</h3>
+                        <div class="grafica-wrap"><canvas id="graficaDoblesMes"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">library_books</span>Triple Póliza por Mes</h3>
+                        <div class="grafica-wrap"><canvas id="graficaTriplesMes"></canvas></div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- GRÁFICAS — Vista operador específico -->
-        <div class="analisis-graficas" id="seccionGraficasOperador"
-             style="display:none">
-            <div class="analisis-grafica-card">
-                <h3>
-                    <span class="material-symbols-rounded">business</span>
-                    Estado en Compañía
-                </h3>
-                <div class="grafica-wrap">
-                    <canvas id="graficaCompaniaOp"></canvas>
-                </div>
+        <div class="analisis-graficas-carousel" id="seccionGraficasOperador" style="display:none">
+            <div class="carousel-nav" style="display:none" id="carruselNav-operador">
+                <button class="carousel-btn" onclick="carruselAnterior('operador')" id="carruselPrev-operador">
+                    <span class="material-symbols-rounded">chevron_left</span>
+                </button>
+                <span class="carousel-indicador" id="carruselIndicador-operador">Página 1 de 1</span>
+                <button class="carousel-btn" onclick="carruselSiguiente('operador')" id="carruselNext-operador">
+                    <span class="material-symbols-rounded">chevron_right</span>
+                </button>
             </div>
-            <div class="analisis-grafica-card">
-                <h3>
-                    <span class="material-symbols-rounded">store</span>
-                    Estado en Mercado
-                </h3>
-                <div class="grafica-wrap">
-                    <canvas id="graficaMercadoOp"></canvas>
-                </div>
-            </div>
-            <div class="analisis-grafica-card">
-                <h3>
-                    <span class="material-symbols-rounded">shield</span>
-                    Distribución de Riesgo
-                </h3>
-                <div class="grafica-wrap">
-                    <canvas id="graficaRiesgoOp"></canvas>
-                </div>
-            </div>
-            <div class="analisis-grafica-card">
-                <h3>
-                    <span class="material-symbols-rounded">folder_open</span>
-                    Documentos por Urgencia
-                </h3>
-                <div class="grafica-wrap">
-                    <canvas id="graficaDocsOp"></canvas>
+
+            <div class="carousel-pages" id="carruselPages-operador">
+                <div class="analisis-graficas carousel-page active">
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">business</span>Estado en Compañía</h3>
+                        <div class="grafica-wrap"><canvas id="graficaCompaniaOp"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">store</span>Estado en Mercado</h3>
+                        <div class="grafica-wrap"><canvas id="graficaMercadoOp"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">shield</span>Distribución de Riesgo</h3>
+                        <div class="grafica-wrap"><canvas id="graficaRiesgoOp"></canvas></div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">folder_open</span>Documentos por Urgencia</h3>
+                        <div class="grafica-wrap"><canvas id="graficaDocsOp"></canvas></div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1122,3 +1122,51 @@ a:hover {
     color: var(--btn-azul);
     text-decoration: underline;
 }
+
+.analisis-graficas-carousel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 28px;
+}
+
+.carousel-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+
+.carousel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-card, #fff);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.carousel-btn:hover:not(:disabled) { background: #6366f1; border-color: #6366f1; }
+.carousel-btn:hover:not(:disabled) .material-symbols-rounded { color: #fff; }
+.carousel-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.carousel-btn .material-symbols-rounded { font-size: 18px; color: var(--text-primary, #1e293b); }
+
+.corousel-indicador {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-placeholder, #64748b);
+    min-width: 90px;
+    text-align: center;
+}
+
+.corousel-page {
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.corousel-page.active { display: grid;}

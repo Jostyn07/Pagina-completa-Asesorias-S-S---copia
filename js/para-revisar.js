@@ -65,8 +65,10 @@ function actualizarContadores() {
     const canceladas = activos.filter(r => r.estado_mercado === 'Cancelado a P.C').length;
     const dobles     = activos.filter(r => r.estado_mercado === 'Doble poliza').length;
     const triples    = activos.filter(r => r.estado_mercado === 'Triple poliza').length;
-    const noRegistran= activos.filter(r => r.estado_mercado === 'No registra').length;
-
+    const noRegistran = activos.filter(r => r.estado_mercado === 'No registra').length;
+    const recuperados = todosLosRegistros.filter(r => r.recuperado === 'Si').length;
+    
+    document.getElementById('polizas-recuperados').textContent = recuperados;  
     document.getElementById('polizas-robadas').textContent      = robadas;
     document.getElementById('polizas-canceladas-revision').textContent = canceladas;
     document.getElementById('polizas-dobles').textContent       = dobles;
@@ -78,6 +80,7 @@ function actualizarContadores() {
 // FILTRO POR TIPO (click en tarjetas)
 // ============================================
 function filtrarPorTipo(tipo) {
+    const idx = {robadas: 0, canceladas: 1, dobles: 2, triple: 3, 'no-registran': 4, recuperados: 5 };
     // Si ya está activo ese tipo, desactivar (toggle)
     if (filtroTipoActivo === tipo) {
         filtroTipoActivo = null;
@@ -100,15 +103,16 @@ function aplicarFiltros() {
 
     // Filtro por tipo (tarjetas)
     if (filtroTipoActivo) {
+    if (filtroTipoActivo === 'recuperados') {
+        resultado = resultado.filter(r => r.recuperado === 'Si');
+    } else {
         const mapaTipo = {
-            robadas: 'Robado',
-            canceladas: 'Cancelado a P.C',
-            dobles: 'Doble poliza',
-            triples: 'Triple poliza',
-            'no-registran': 'No registra',
+            robadas: 'Robado', canceladas: 'Cancelado a P.C',
+            dobles: 'Doble poliza', triples: 'Triple poliza', 'no-registran': 'No registra',
         };
         resultado = resultado.filter(r => r.estado_mercado === mapaTipo[filtroTipoActivo]);
     }
+}
 
     // Buscador rápido
     const termino = (document.getElementById('searchInputRevisar')?.value || '').toLowerCase().trim();
@@ -635,4 +639,42 @@ function btnPaginaSiguienteRev() {
         paginaActualRev++;
         renderTabla();
     }
+}
+
+function exportarExcelRevisar() {
+    if (registrosFiltrados.length === 0) {
+        alert('No hay registros para exportar.');
+        return;
+    }
+
+    const filas = registrosFiltrados.map(r => ({
+        'Fecha Ingreso': r.fecha_ingreso ? new Date(r.fecha_ingreso).toLocaleDateString('es-CO') : '',
+        'Operador': r.operador_nombre || '',
+        'Cliente': r.nombre_cliente || '',
+        'Teléfono': r.telefono || '',
+        'Compañia': r.compania || '',
+        'Estado Mercado': r.estado_mercado || '',
+        'NPN 1': r.npn1 || '',
+        'NPN 2': r.npn2 || '',
+        'Notas': limitarTextoExcel(r.notas) || '',
+        'Observación Operador': limitarTextoExcel(r.observacion_operador) || '',
+        'Recuperado': r.recuperado || 'Pendiente',
+        'Fecha Recuperación / Cancelación': r.fecha_recuperacion ? new Date(r.fecha_recuperacion).toLocaleDateString('es-CO') : '',
+        'Revisión realizada por': r.revision_realizada_por || '',
+        'Observación de cambio de estado': limitarTextoExcel(r.observacion_cambio_estado) || ''
+    }));
+    
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(filas);
+    XLSX.utils.book_append_sheet(wb, ws, 'Para Revisar');
+
+    const fecha = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `para_revisar_${fecha}.xlsx`)
+}
+
+function limitarTextoExcel(valor) {
+    if (valor === null || valor === undefined) return '';
+    const texto = String(valor);
+    const LIMITE = 32000;
+    return texto.length > LIMITE ? texto.substring(0, LIMITE) + ' […texto truncado]' : texto;
 }
