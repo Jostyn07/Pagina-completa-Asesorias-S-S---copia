@@ -563,7 +563,8 @@ function renderizarGraficasMercadoMensual() {
 
     const config = [
         { id: 'graficaRecuperadosMes', campo: 'fecha_recuperacion', color: '#22c55e', filtro: r => r.recuperado === 'Si' },
-        { id: 'graficaCanceladosMes',  campo: 'fecha_ingreso',      color: '#ef4444', filtro: r => r.estado_mercado === 'Cancelado a P.C' },
+        { id: 'graficaCanceladosMesPc',  campo: 'fecha_ingreso',      color: '#ff4444', filtro: r => r.estado_mercado === 'Cancelado a P.C' },
+        { id: 'graficaCanceladosMes',  campo: 'fecha_ingreso',      color: '#ef4444', filtro: r => r.estado_mercado === 'Cancelados' },
         { id: 'graficaRobadosMes',     campo: 'fecha_ingreso',      color: '#f97316', filtro: r => r.estado_mercado === 'Robado' },
         { id: 'graficaDoblesMes',      campo: 'fecha_ingreso',      color: '#8b5cf6', filtro: r => r.estado_mercado === 'Doble poliza' },
         { id: 'graficaTriplesMes',     campo: 'fecha_ingreso',      color: '#f59e0b', filtro: r => r.estado_mercado === 'Triple poliza' },

@@ -65,7 +65,6 @@ function actualizarContadores() {
     const canceladas = activos.filter(r => r.estado_mercado === 'Cancelado a P.C').length;
     const dobles     = activos.filter(r => r.estado_mercado === 'Doble poliza').length;
     const triples    = activos.filter(r => r.estado_mercado === 'Triple poliza').length;
-    const noRegistran = activos.filter(r => r.estado_mercado === 'No registra').length;
     const recuperados = todosLosRegistros.filter(r => r.recuperado === 'Si').length;
     
     document.getElementById('polizas-recuperados').textContent = recuperados;  
@@ -73,7 +72,6 @@ function actualizarContadores() {
     document.getElementById('polizas-canceladas-revision').textContent = canceladas;
     document.getElementById('polizas-dobles').textContent       = dobles;
     document.getElementById('polizas-triples').textContent      = triples;
-    document.getElementById('polizas-no-registran').textContent = noRegistran;
 }
 
 // ============================================
@@ -88,7 +86,7 @@ function filtrarPorTipo(tipo) {
     } else {
         filtroTipoActivo = tipo;
         document.querySelectorAll('.inf__cuadro').forEach(c => c.classList.remove('inf__cuadro--activo'));
-        const idx = { robadas: 0, canceladas: 1, dobles: 2, triples: 3, 'no-registran': 4 };
+        const idx = { robadas: 0, canceladas: 1, dobles: 2, triples: 3, 'no-registran': 4, recuperados: 5 };
         const cuadros = document.querySelectorAll('.inf__cuadro');
         if (cuadros[idx[tipo]]) cuadros[idx[tipo]].classList.add('inf__cuadro--activo');
     }
