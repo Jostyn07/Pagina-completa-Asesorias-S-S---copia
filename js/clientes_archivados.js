@@ -3,12 +3,11 @@
 // ============================================
 
 let clientesArchivados = [];
+let clientesArchivadosFiltrados = [];
 
 // Cargar clientes archivados
 async function cargarClientesArchivados() {
-    try {
-        ;
-        
+    try {        
         // Verificar que sea admin
         await cargarRolUsuario();
         
@@ -17,19 +16,27 @@ async function cargarClientesArchivados() {
             window.location.href = './polizas.html';
             return;
         }
-        
-        const { data, error } = await supabaseClient
+
+        let query = supabaseClient
             .from('clientes')
             .select('*')
             .eq('archivado', true)
-            .order('archivado_fecha', { ascending: false });
-        
+            .order('archivado_fecha', { ascending: false })
+
+        if (datosUsuario?.rol !== 'admin_general') {
+            query = query.in('portal', datosUsuario?.portales || []);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
-        
+                
         clientesArchivados = data || [];
+        renderizarTablaArchivados();
+
+        const btnExportar = document.getElementById('btnExportarArchivados');
+        if (btnExportar) btnExportar.style.display = 'flex';
         ;
         
-        renderizarTablaArchivados();
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -39,6 +46,8 @@ async function cargarClientesArchivados() {
 
 // Renderizar tabla
 function renderizarTablaArchivados(lista = clientesArchivados) {
+    clientesArchivadosFiltrados = lista;
+
     const contenedor = document.getElementById('tablaArchivados');
     const contador = document.getElementById('contadorArchivados');
 
@@ -146,6 +155,31 @@ function buscarArchivados() {
         c.email?.toLowerCase().includes(busqueda)
     );
     renderizarTablaArchivados(filtrados);
+}
+
+// Exportar excel
+function exportarExcelArchivados() {
+    if (clientesArchivadosFiltrados.length === 0) {
+        alert('No hay clientes para exportar.');
+        return;
+    }
+
+    const filas = clientesArchivadosFiltrados.map(c => ({
+        'Nombre': `${c.nombres || ''} ${c.apellidos || ''}`.trim(),
+        'Télefono': c.telefono1 || '',
+        'Email': c.email || '',
+        'Portal': c.portal || '',
+        'Archivado por': c.archivado_por || '',
+        'Fecha de archivo': c.archivado_fecha ? new Date(c.archivado_fecha).toLocaleDateString('es-CO') : '',
+        'Motivo': c.motivo_archivo || '',
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(filas);
+    XLSX.utils.book_append_sheet(wb, ws, 'Clientes Archivados');
+
+    const fecha = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `clientes_archivados_${fecha}.xlsx`);
 }
 
 // Cargar al iniciar

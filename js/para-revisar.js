@@ -297,10 +297,12 @@ async function ciclarRecuperado(id, valorActual) {
             updateData.sr_pendiente = true;
             updateData.sr_pendiente_desde = new Date().toISOString();
             updateData.sr_pendiente_valor = siguiente;
+            updateData.recuperado_por = datosUsuario?.nombre || 'Desconocido';
         } else {
             updateData.sr_pendiente = false;
             updateData.sr_pendiente_desde = null;
             updateData.sr_pendiente_valor = null;
+            updateData.recuperado_por = null;
         }
 
         const { error } = await supabaseClient

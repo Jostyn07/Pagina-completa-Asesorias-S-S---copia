@@ -122,6 +122,7 @@ function buildFilaSR(r) {
         <tr class="fila-sr ${claseAct}" data-id="${r.id}">
             <td data-label="Fecha Solicitud" class="celda-fecha">${fechaSolicitud}${badgeOrigen}</td>
             <td data-label="Nombre">${r.nombre || '—'}</td>
+            <td data-label="Operador">${r.operador_nombre || '<em class="text-muted">—</em>'}</td>
             <td data-label="Teléfono">${formatearTelefonoSR(r.telefono)}</td>
             <td data-label="Compañía">${r.compania || '—'}</td>
             <td data-label="Estado Mercado">${badgeMercadoSR}</td>
@@ -262,6 +263,7 @@ async function guardarNuevoSR() {
             cliente_id:         srClienteSeleccionado?.id || null,
             poliza_id:          srClienteSeleccionado?.poliza_id || null,
             origen:             'manual',
+            operador_nombre:    datosUsuario.nombre || 'Desconocido',
         };
 
         const { data, error } = await supabaseClient
