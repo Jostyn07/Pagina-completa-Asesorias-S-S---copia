@@ -198,12 +198,13 @@
                             <th>Nota de actualización</th>
                             <th>Fecha actualización</th>
                             <th>Observación</th>
+                            <th>Revisión realizada por</th>
                             <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-sr-body">
                         <tr>
-                            <td colspan="11" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">
+                            <td colspan="12" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">
                                 Cargando...
                             </td>
                         </tr>
@@ -254,7 +255,7 @@
                 </div>
                 <div class="sr-form-group">
                     <label>Teléfono</label>
-                    <input type="text" id="srTelefono" placeholder="Número de teléfono...">
+                    <input type="text" id="srTelefono" placeholder="Número de teléfono..." autocomplete="off" oninput="buscarClientesSR(this.value)">
                 </div>
                 <div class="sr-form-group">
                     <label>Compañía</label>
@@ -262,7 +263,7 @@
                 </div>
                 <div class="sr-form-group">
                     <label>Estado Mercado</label>
-                    <select id="srEstadoMercado">
+                    <select id="srEstadoMercado" disabled>
                         <option value="">— Sin clasificar —</option>
                         <option value="Robado">Robado</option>
                         <option value="Cancelado a P.C">Cancelado a P.C</option>
@@ -272,23 +273,15 @@
                     </select>
                 </div>
                 <div class="sr-form-group">
-                    <label>Actualizado</label>
-                    <select id="srActualizado">
-                        <option value="">Pendiente</option>
-                        <option value="Si">Sí</option>
-                        <option value="No">No</option>
+                    <label>Revisor asignado <small>(opcional — si no eliges, le llega a todo el equipo)</small></label>
+                    <select id="srRevisorAsignado">
+                        <option value="">— Sin asignar (va al equipo del portal) —</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="sr-form-group sr-form-group--full">
-                <label>Nota de actualización</label>
-                <textarea id="srNotaActualizacion" placeholder="Nota sobre la actualización..."></textarea>
-            </div>
-
-            <div class="sr-form-group sr-form-group--full">
-                <label>Observación</label>
-                <textarea id="srObservacion" placeholder="Observación de la solicitud de revisión..."></textarea>
+                <div class="sr-form-group" style="grid-column: 1 / -1;">
+                    <label>Observación <small>(solo se puede definir aquí, no se podrá editar después)</small></label>
+                    <textarea id="srObservacion" rows="3" placeholder="Observación de la solicitud de revisión..."></textarea>
+                </div>
             </div>
 
         </div>

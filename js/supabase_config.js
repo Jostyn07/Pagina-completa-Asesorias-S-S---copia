@@ -449,7 +449,7 @@ async function buscarClientes(termino) {
                 *,
                 polizas (*)
             `)
-            .or(`nombres.ilike.%${termino}%,apellidos.ilike.%${termino}%,email.ilike.%${termino}%`)
+            .or(`nombres.ilike.%${termino}%,apellidos.ilike.%${termino}%,email.ilike.%${termino}%,telefono1.ilike.%${termino}`)
             .order('created_at', { ascending: false })
             .limit(20);
 

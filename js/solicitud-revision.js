@@ -63,7 +63,7 @@ function renderTablaSR() {
     if (srFiltrados.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="10" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">
+                <td colspan="12" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">
                     <span class="material-symbols-rounded" style="font-size:2.5rem;display:block;margin-bottom:8px">search_off</span>
                     No hay registros que mostrar
                 </td>
@@ -87,13 +87,18 @@ function buildFilaSR(r) {
             ? 'fila-sr-actualizado-no'
             : '';
 
-    const btnActualizado = `
-        <button class="btn-actualizado btn-act-${(r.actualizado || 'null').toLowerCase()}"
-                data-id="${r.id}"
-                onclick="ciclarActualizadoDesdeBtn(this)"
-                title="Click para cambiar estado">
-            ${r.actualizado === 'Si' ? '✅ Sí' : r.actualizado === 'No' ? '❌ No' : '— Pendiente'}
-        </button>`;
+    const puedeEditar = esRevisorMercado();
+
+    const btnActualizado = puedeEditar
+        ? `<button class="btn-actualizado btn-act-${(r.actualizado || 'null').toLowerCase()}"
+                   data-id="${r.id}"
+                   onclick="ciclarActualizadoDesdeBtn(this)"
+                   title="Click para cambiar estado">
+               ${r.actualizado === 'Si' ? '✅ Sí' : r.actualizado === 'No' ? '❌ No' : '— Pendiente'}
+           </button>`
+        : `<span class="btn-actualizado btn-act-${(r.actualizado || 'null').toLowerCase()}" title="Solo el equipo de mercado puede modificar esto">
+               ${r.actualizado === 'Si' ? '✅ Sí' : r.actualizado === 'No' ? '❌ No' : '— Pendiente'}
+           </span>`;
 
     const notaActDisplay = r.nota_actualizacion
         ? `<span class="nota-preview">${r.nota_actualizacion.substring(0, 60)}${r.nota_actualizacion.length > 60 ? '…' : ''}</span>`
@@ -101,12 +106,15 @@ function buildFilaSR(r) {
 
     const obsDisplay = r.observacion
         ? `<span class="obs-preview">${r.observacion.substring(0, 60)}${r.observacion.length > 60 ? '…' : ''}</span>`
-        : '<em class="text-muted">Agregar...</em>';
+        : '<em class="text-muted">—</em>';
 
-    const fechaSolicitud   = formatearFechaSR(r.fecha_solicitud);
+    const fechaSolicitud = formatearFechaSR(r.fecha_solicitud);
     const fechaActualizacion = r.fecha_actualizacion ? formatearFechaSR(r.fecha_actualizacion) : '<em class="text-muted">—</em>';
-
     const badgeMercadoSR = r.estado_mercado ? getBadgeMercadoSR(r.estado_mercado) : '<span class="text-muted">—</span>';
+
+    const celdaEstadoMercado = puedeEditar
+        ? `<span class="celda-editable" onclick="abrirModalEstadoMercadoSR('${r.id}')" title="Click para editar Estado Mercado">${badgeMercadoSR}</span>`
+        : badgeMercadoSR;
 
     const badgeOrigen = r.origen === 'automatico'
         ? '<span class="badge-origen-auto" title="Generada automáticamente por el sistema">🤖 Auto</span>'
@@ -125,25 +133,18 @@ function buildFilaSR(r) {
             <td data-label="Operador">${r.operador_nombre || '<em class="text-muted">—</em>'}</td>
             <td data-label="Teléfono">${formatearTelefonoSR(r.telefono)}</td>
             <td data-label="Compañía">${r.compania || '—'}</td>
-            <td data-label="Estado Mercado">${badgeMercadoSR}</td>
+            <td data-label="Estado Mercado">${celdaEstadoMercado}</td>
             <td data-label="Actualizado" class="celda-actualizado">${btnActualizado}</td>
             <td data-label="Nota actualización" class="celda-nota-act">
-                <span class="celda-editable"
-                      data-id="${r.id}"
-                      onclick="abrirModalTextoSRDesdeEl(this, 'nota_actualizacion')"
-                      title="Click para editar nota">
-                    ${notaActDisplay}
-                </span>
+                ${puedeEditar
+                    ? `<span class="celda-editable" data-id="${r.id}" onclick="abrirModalTextoSRDesdeEl(this, 'nota_actualizacion')" title="Click para editar nota">${notaActDisplay}</span>`
+                    : `<span title="Solo el equipo de mercado puede editar esto">${notaActDisplay}</span>`}
             </td>
             <td data-label="Fecha actualización" class="celda-fecha">${fechaActualizacion}</td>
             <td data-label="Observación" class="celda-obs-sr">
-                <span class="celda-editable"
-                      data-id="${r.id}"
-                      onclick="abrirModalTextoSRDesdeEl(this, 'observacion')"
-                      title="Click para editar observación">
-                    ${obsDisplay}
-                </span>
+                <span title="La observación solo se define al crear la solicitud">${obsDisplay}</span>
             </td>
+            <td data-label="Revisión realizada por">${r.revision_realizada_por || '<em class="text-muted">—</em>'}</td>
             <td data-label="Acción" class="celda-accion-sr">${accion}</td>
         </tr>`;
 }
@@ -164,11 +165,49 @@ function getBadgeMercadoSR(estado) {
 // ============================================
 // CICLO BOTÓN "ACTUALIZADO"
 // ============================================
-function ciclarActualizadoDesdeBtn(btn) {
+async function ciclarActualizadoDesdeBtn(btn) {
+    if (!esRevisorMercado()) {
+        alert('Solo el equipo de mercado puede modificar este campo.');
+        return;
+    }
+
     const id = btn.dataset.id;
-    const reg = todosLosSR.find(r => r.id === id);
-    const valorActual = reg ? reg.actualizado : null;
-    ciclarActualizado(id, valorActual);
+    const registro = todosLosSR.find(r => r.id === id);
+    if (!registro) return;
+
+    const secuencia = { 'null': 'Si', 'Si': 'No', 'No': null };
+    const actual = registro.actualizado || 'null';
+    const siguiente = secuencia[actual];
+
+    const updateData = {
+        actualizado: siguiente,
+        revision_realizada_por: datosUsuario?.nombre || 'Desconocido',
+        fecha_actualizacion: new Date().toISOString(),
+    };
+
+    if (siguiente === 'Si') {
+        updateData.notif_creador_pendiente = true;
+        updateData.notif_creador_pendiente_desde = new Date().toISOString();
+    } else {
+        updateData.notif_creador_pendiente = false;
+        updateData.notif_creador_pendiente_desde = null;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from('solicitud_revision')
+            .update(updateData)
+            .eq('id', id);
+
+        if (error) throw error;
+
+        Object.assign(registro, updateData);
+        renderTablaSR();
+
+    } catch (error) {
+        console.error('❌ Error actualizando:', error);
+        alert('Error al actualizar.');
+    }
 }
 
 async function ciclarActualizado(id, valorActual) {
@@ -218,25 +257,29 @@ async function recargarRegistroSR(id) {
     }
 }
 
+function esRevisorMercado() {
+    const autorizados = ['erica de oro', 'jose martinez', 'tony foresta', 'lean barrios', 'juan ospino'];
+    const nombre = (datosUsuario?.nombre || '').trim().toLowerCase();
+    return autorizados.includes(nombre);
+}
+
 // ============================================
 // MODAL AGREGAR MANUALMENTE
 // ============================================
-function abrirModalAgregar() {
-    ['srNombre','srTelefono','srCompania','srNotaActualizacion','srObservacion'].forEach(id => {
+async function abrirModalAgregar() {
+    ['srNombre', 'srTelefono', 'srCompania', 'srObservacion'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
-    document.getElementById('srActualizado').value = '';
     document.getElementById('srEstadoMercado').value = '';
     srClienteSeleccionado = null;
     document.getElementById('srClienteVinculado').style.display = 'none';
     document.getElementById('srAutocompleteLista').style.display = 'none';
+
+    await poblarSelectRevisorAsignado();
+
     document.getElementById('modalAgregarSR').classList.add('show');
     document.getElementById('srNombre').focus();
-}
-
-function cerrarModalAgregar() {
-    document.getElementById('modalAgregarSR').classList.remove('show');
 }
 
 async function guardarNuevoSR() {
@@ -252,18 +295,21 @@ async function guardarNuevoSR() {
     btn.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span> Guardando...';
 
     try {
+        const revisorSeleccionado = document.getElementById('srRevisorAsignado')?.value || null;
+
         const nuevo = {
             nombre,
-            telefono:           document.getElementById('srTelefono').value.trim() || null,
-            compania:           document.getElementById('srCompania').value.trim() || null,
-            estado_mercado:     document.getElementById('srEstadoMercado').value || null,
-            actualizado:        document.getElementById('srActualizado').value || null,
-            nota_actualizacion: document.getElementById('srNotaActualizacion').value.trim() || null,
-            observacion:        document.getElementById('srObservacion').value.trim() || null,
-            cliente_id:         srClienteSeleccionado?.id || null,
-            poliza_id:          srClienteSeleccionado?.poliza_id || null,
-            origen:             'manual',
-            operador_nombre:    datosUsuario.nombre || 'Desconocido',
+            telefono:            document.getElementById('srTelefono').value.trim() || null,
+            compania:            document.getElementById('srCompania').value.trim() || null,
+            estado_mercado:      document.getElementById('srEstadoMercado').value || null,
+            actualizado:         null,
+            nota_actualizacion:  null,
+            observacion:         document.getElementById('srObservacion').value.trim() || null,
+            cliente_id:          srClienteSeleccionado?.id || null,
+            poliza_id:           srClienteSeleccionado?.poliza_id || null,
+            origen:              'manual',
+            operador_nombre:     datosUsuario?.nombre || 'Desconocido',
+            revisor_asignado_id: revisorSeleccionado || null,
         };
 
         const { data, error } = await supabaseClient
@@ -285,6 +331,10 @@ async function guardarNuevoSR() {
         btn.disabled = false;
         btn.innerHTML = '<span class="material-symbols-rounded">save</span> Guardar';
     }
+}
+
+function cerrarModalAgregar() {
+    document.getElementById('modalAgregarSR').classList.remove('show');
 }
 
 // Autocompletar información del cliente
@@ -326,21 +376,23 @@ function renderAutocompleteSR(clientes) {
         const poliza = (c.polizas && c.polizas[0]) || null;
         return `
             <div class="sr-autocomplete-item"
-                 onclick='seleccionarClienteSR(${JSON.stringify(c.id)}, ${JSON.stringify(poliza?.id || null)}, ${JSON.stringify(c.nombres + " " + c.apellidos)}, ${JSON.stringify(c.telefono1 || "")}, ${JSON.stringify(poliza?.compania || "")})'>
+                 onclick='seleccionarClienteSR(${JSON.stringify(c.id)}, ${JSON.stringify(poliza?.id || null)}, ${JSON.stringify(c.nombres + " " + c.apellidos)}, ${JSON.stringify(c.telefono1 || "")}, ${JSON.stringify(poliza?.compania || "")}, ${JSON.stringify(poliza?.estado_mercado || "")})'>
                 ${c.nombres} ${c.apellidos}
                 <small>${c.telefono1 || 'Sin teléfono'} ${poliza?.compania ? '· ' + poliza.compania : ''}</small>
-            </div>
-        `;
+            </div>`;
     }).join('');
     lista.style.display = 'block';
 }
 
-function seleccionarClienteSR(clienteId, polizaId, nombre, telefono, compania) {
-    srClienteSeleccionado = { id: clienteId, poliza_id: polizaId};
+function seleccionarClienteSR(clienteId, polizaId, nombre, telefono, compania, estadoMercado) {
+    srClienteSeleccionado = { id: clienteId, poliza_id: polizaId };
 
     document.getElementById('srNombre').value = nombre;
     if (telefono) document.getElementById('srTelefono').value = telefono;
     if (compania) document.getElementById('srCompania').value = compania;
+
+    const selectEstado = document.getElementById('srEstadoMercado');
+    if (selectEstado) selectEstado.value = estadoMercado || '';
 
     const lista = document.getElementById('srAutocompleteLista');
     if (lista) lista.style.display = 'none';
@@ -536,7 +588,7 @@ function mostrarCargaSR(visible) {
 function mostrarMensajeVacioSR(msg) {
     const tbody = document.getElementById('tabla-sr-body');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">${msg}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--color-text-placeholder)">${msg}</td></tr>`;
     }
 }
 
@@ -638,5 +690,38 @@ function paginaSiguienteSR() {
     if (paginaActualSR < totalPaginas) {
         paginaActualSR++;
         renderTablaSR();
+    }
+}
+
+// Asignar quien reviso la poliza
+async function poblarSelectRevisorAsignado() {
+    const select = document.getElementById('srRevisorAsignado');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">— Sin asignar (va al equipo del portal) —</option>';
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('permisos_usuario')
+            .select('usuario_id, usuarios!usuario_id(id, nombre, portales, activo)')
+            .eq('permiso_clave', 'notificar_solicitud_revision')
+            .eq('valor', true)
+            .eq('usuarios.activo', true);
+
+        if (error) throw error;
+
+        const misPortales = datosUsuario?.portales || [];
+        const candidatos = (data || [])
+            .map(d => d.usuarios)
+            .filter(u => u.portales?.some(p => misPortales.includes(p)));
+
+        candidatos.forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.id;
+            opt.textContent = u.nombre;
+            select.appendChild(opt);
+        });
+    } catch (error) {
+        console.error('Error cargando revisores:', error);
     }
 }
