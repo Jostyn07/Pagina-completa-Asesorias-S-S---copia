@@ -496,7 +496,6 @@
     display: inline-flex; align-items: center; gap: 4px;
     font-size: 0.75rem; color: #047857; margin-top: 4px;
 }
-[data-theme="dark"] .sr-autocomplete-lista { background: #1e1e2e; border-color: #3a3a5e; }
 
 /* --- Columna Acción / Estado Mercado --- */
 .celda-accion-sr { text-align: center; }
@@ -522,21 +521,31 @@
 }
 .badge-origen-auto   { background: #dbeafe; color: #1e40af; }
 .badge-origen-manual { background: #f3f4f6; color: #374151; }
-[data-theme="dark"] .badge-origen-auto   { background: #1e3a5f; color: #93c5fd; }
-[data-theme="dark"] .badge-origen-manual { background: #374151; color: #9ca3af; }
 
-/* ============================================
-   DARK MODE
-   ============================================ */
-[data-theme="dark"] .sr-modal,
-[data-theme="dark"] .sr-modal-header,
-[data-theme="dark"] .sr-modal-footer {
-    background: #1e1e2e;
+.celda-texto-expandible {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
-[data-theme="dark"] .sr-form-group input,
-[data-theme="dark"] .sr-form-group select,
-[data-theme="dark"] .sr-form-group textarea {
-    background: #2a2a3e;
-    border-color: #3a3a5e;
-    color: #e2e8f0;
+
+.texto-completo {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.btn-mostrar-mas {
+    background: none;
+    border: none;
+    color: #6366f1;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+    width: fit-content;
+}
+
+.btn-mostrar-mas:hover {
+    text-decoration: underline;
 }

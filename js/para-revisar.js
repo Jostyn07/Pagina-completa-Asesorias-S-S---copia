@@ -43,6 +43,7 @@ async function cargarRegistros() {
         if (error) throw error;
 
         todosLosRegistros = data || [];
+        inicializarFiltrosMultiselectRev(); 
         aplicarFiltros();
         actualizarContadores();
 
@@ -99,20 +100,23 @@ function filtrarPorTipo(tipo) {
 function aplicarFiltros() {
     let resultado = [...todosLosRegistros];
 
-    // Filtro por tipo (tarjetas)
-    if (filtroTipoActivo) {
-    if (filtroTipoActivo === 'recuperados') {
-        resultado = resultado.filter(r => r.recuperado === 'Si');
-    } else {
-        const mapaTipo = {
-            robadas: 'Robado', canceladas: 'Cancelado a P.C',
-            dobles: 'Doble poliza', triples: 'Triple poliza', 'no-registran': 'No registra',
-        };
-        resultado = resultado.filter(r => r.estado_mercado === mapaTipo[filtroTipoActivo]);
+    // 👇 EL FIX: esto nunca se aplicaba, por eso el botón no hacía nada
+    if (!mostrarRecuperados) {
+        resultado = resultado.filter(r => r.recuperado !== 'Si');
     }
-}
 
-    // Buscador rápido
+    if (filtroTipoActivo) {
+        if (filtroTipoActivo === 'recuperados') {
+            resultado = resultado.filter(r => r.recuperado === 'Si');
+        } else {
+            const mapaTipo = {
+                robadas: 'Robado', canceladas: 'Cancelado a P.C',
+                dobles: 'Doble poliza', triples: 'Triple poliza', 'no-registran': 'No registra',
+            };
+            resultado = resultado.filter(r => r.estado_mercado === mapaTipo[filtroTipoActivo]);
+        }
+    }
+
     const termino = (document.getElementById('searchInputRevisar')?.value || '').toLowerCase().trim();
     if (termino) {
         resultado = resultado.filter(r =>
@@ -122,11 +126,10 @@ function aplicarFiltros() {
         );
     }
 
-    // Filtros avanzados
     const f = filtrosAvanzados;
 
-    if (f.operador) {
-        resultado = resultado.filter(r => (r.operador_nombre || '').toLowerCase().includes(f.operador.toLowerCase()));
+    if (f.operador && f.operador.length > 0) {
+        resultado = resultado.filter(r => f.operador.includes(r.operador_nombre));
     }
     if (f.nombre) {
         resultado = resultado.filter(r => (r.nombre_cliente || '').toLowerCase().includes(f.nombre.toLowerCase()));
@@ -134,14 +137,17 @@ function aplicarFiltros() {
     if (f.telefono) {
         resultado = resultado.filter(r => (r.telefono || '').includes(f.telefono));
     }
-    if (f.revisionPor) {
-        resultado = resultado.filter(r => (r.revision_realizada_por || '').toLowerCase().includes(f.revisionPor.toLowerCase()));
+    if (f.revisionPor && f.revisionPor.length > 0) {
+        resultado = resultado.filter(r => f.revisionPor.includes(r.revision_realizada_por));
     }
-    if (f.npn1) {
-        resultado = resultado.filter(r => (r.npn1 || '').toLowerCase().includes(f.npn1.toLowerCase()));
+    if (f.npn1 && f.npn1.length > 0) {
+        resultado = resultado.filter(r => f.npn1.includes(r.npn1));
     }
-    if (f.npn2) {
-        resultado = resultado.filter(r => (r.npn2 || '').toLowerCase().includes(f.npn2.toLowerCase()));
+    if (f.npn2 && f.npn2.length > 0) {
+        resultado = resultado.filter(r => f.npn2.includes(r.npn2));
+    }
+    if (f.recuperada) {
+        resultado = resultado.filter(r => r.recuperado === f.recuperada);
     }
     if (f.fechaIngresoDesde) {
         resultado = resultado.filter(r => r.fecha_ingreso && new Date(r.fecha_ingreso) >= new Date(f.fechaIngresoDesde));
@@ -212,22 +218,17 @@ function buildFila(r) {
     const fechaIngreso   = formatearFecha(r.fecha_ingreso);
     const fechaRecup     = r.fecha_recuperacion ? formatearFechaCorta(r.fecha_recuperacion) : '<span class="text-muted">—</span>';
 
-    // NPN1 y NPN2: editable solo para admin
-    const npn1 = esAdmin
-        ? `<span class="celda-editable" onclick="iniciarEdicion(this, '${r.id}', 'npn1')">${r.npn1 || '<em class="text-muted">—</em>'}</span>`
-        : (r.npn1 || '<span class="text-muted">—</span>');
+    // NPN1 y NPN2: ya no se editan desde la tabla (solo lectura)
+    const npn1 = r.npn1 || '<span class="text-muted">—</span>';
+    const npn2 = r.npn2 || '<span class="text-muted">—</span>';
 
-    const npn2 = esAdmin
-        ? `<span class="celda-editable" onclick="iniciarEdicion(this, '${r.id}', 'npn2')">${r.npn2 || '<em class="text-muted">—</em>'}</span>`
-        : (r.npn2 || '<span class="text-muted">—</span>');
-
-    // Notas: editable para todos
+    // Notas: ya no se editan desde la tabla (solo lectura)
     const notaTexto = r.notas ? stripHtml(r.notas) : '';
     const notaDisplay = notaTexto
         ? `<span class="nota-preview">${notaTexto.substring(0, 60)}${notaTexto.length > 60 ? '…' : ''}</span>`
         : '<em class="text-muted">Sin nota</em>';
 
-    // Observación: editable para todos
+    // Observación: editable para todos (esto no cambia)
     const obsDisplay = r.observacion_operador
         ? `<span class="obs-preview">${r.observacion_operador.substring(0, 60)}${r.observacion_operador.length > 60 ? '…' : ''}</span>`
         : '<em class="text-muted">Agregar...</em>';
@@ -248,14 +249,7 @@ function buildFila(r) {
             <td data-label="Estado Mercado">${badgeMercado}</td>
             <td data-label="NPN 1" class="celda-npn">${npn1}</td>
             <td data-label="NPN 2" class="celda-npn">${npn2}</td>
-            <td data-label="Notas" class="celda-notas">
-                <span class="celda-editable celda-notas-inner"
-                    data-id="${r.id}"
-                    onclick="abrirModalTextoDesdeEl(this, 'notas')"
-                    title="Click para editar nota">
-                    ${notaDisplay}
-                </span>
-            </td>
+            <td data-label="Notas" class="celda-notas">${notaDisplay}</td>
             <td data-label="Observación" class="celda-observacion">
                 <span class="celda-editable celda-obs-inner"
                     data-id="${r.id}"
@@ -266,12 +260,12 @@ function buildFila(r) {
             </td>
             <td data-label="Recuperado" class="celda-recuperado">${btnRecuperado}${avisoPendiente}</td>
             <td data-label="Fecha Recuperación" class="celda-fecha">${fechaRecup}</td>
+            <td data-label="Recuperado por / Cancelado por">${r.recuperado_por || '<span class="text-muted">—</span>'}</td>
             <td data-label="Revisión por" class="celda-revision-por">${r.revision_realizada_por || '—'}</td>
             <td data-label="Observación de cambio de estado" class="celda-observacion">
-                ${r.observacion_cambio_estado 
-                    ? `<span class="obs-preview">${r.observacion_cambio_estado.substring(0, 60)}${r.observacion_cambio_estado.length > 60 ? '...' : ''}</span>`
-                    : '<em class="text-muted">-</em>' 
-                || '—'}      
+                ${r.observacion_cambio_estado
+                    ? `<span class="obs-preview">${r.observacion_cambio_estado.substring(0, 60)}${r.observacion_cambio_estado.length > 60 ? '…' : ''}</span>`
+                    : '<em class="text-muted">—</em>'}
             </td>
         </tr>`;
 }
@@ -450,17 +444,19 @@ async function guardarCampoSimple(id, campo, valor) {
 // ============================================
 function abrirModalFiltros() {
     document.getElementById('modalFiltrosOverlay').classList.add('show');
-    // Pre-cargar valores actuales
-    document.getElementById('filtroRevOperador').value    = filtrosAvanzados.operador || '';
-    document.getElementById('filtroRevNombre').value      = filtrosAvanzados.nombre || '';
-    document.getElementById('filtroRevTelefono').value    = filtrosAvanzados.telefono || '';
-    document.getElementById('filtroRevNpn1').value        = filtrosAvanzados.npn1 || '';
-    document.getElementById('filtroRevNpn2').value        = filtrosAvanzados.npn2 || '';
-    document.getElementById('filtroRevRevisionPor').value = filtrosAvanzados.revisionPor || '';
-    document.getElementById('filtroRevIngresoDesde').value= filtrosAvanzados.fechaIngresoDesde || '';
-    document.getElementById('filtroRevIngresoHasta').value= filtrosAvanzados.fechaIngresoHasta || '';
-    document.getElementById('filtroRevRecupDesde').value  = filtrosAvanzados.fechaRecupDesde || '';
-    document.getElementById('filtroRevRecupHasta').value  = filtrosAvanzados.fechaRecupHasta || '';
+
+    document.getElementById('filtroRevNombre').value       = filtrosAvanzados.nombre || '';
+    document.getElementById('filtroRevTelefono').value     = filtrosAvanzados.telefono || '';
+    document.getElementById('filtroRevRecuperada').value   = filtrosAvanzados.recuperada || '';
+    document.getElementById('filtroRevIngresoDesde').value = filtrosAvanzados.fechaIngresoDesde || '';
+    document.getElementById('filtroRevIngresoHasta').value = filtrosAvanzados.fechaIngresoHasta || '';
+    document.getElementById('filtroRevRecupDesde').value   = filtrosAvanzados.fechaRecupDesde || '';
+    document.getElementById('filtroRevRecupHasta').value   = filtrosAvanzados.fechaRecupHasta || '';
+
+    filtroRevOperador.setSeleccionados(filtrosAvanzados.operador || []);
+    filtroRevNpn1.setSeleccionados(filtrosAvanzados.npn1 || []);
+    filtroRevNpn2.setSeleccionados(filtrosAvanzados.npn2 || []);
+    filtroRevRevisionPor.setSeleccionados(filtrosAvanzados.revisionPor || []);
 }
 
 function cerrarModalFiltros() {
@@ -469,16 +465,17 @@ function cerrarModalFiltros() {
 
 function aplicarFiltrosAvanzados() {
     filtrosAvanzados = {
-        operador:         document.getElementById('filtroRevOperador').value.trim(),
-        nombre:           document.getElementById('filtroRevNombre').value.trim(),
-        telefono:         document.getElementById('filtroRevTelefono').value.trim(),
-        npn1:             document.getElementById('filtroRevNpn1').value.trim(),
-        npn2:             document.getElementById('filtroRevNpn2').value.trim(),
-        revisionPor:      document.getElementById('filtroRevRevisionPor').value.trim(),
-        fechaIngresoDesde:document.getElementById('filtroRevIngresoDesde').value,
-        fechaIngresoHasta:document.getElementById('filtroRevIngresoHasta').value,
-        fechaRecupDesde:  document.getElementById('filtroRevRecupDesde').value,
-        fechaRecupHasta:  document.getElementById('filtroRevRecupHasta').value,
+        operador:          filtroRevOperador.getSeleccionados(),
+        nombre:            document.getElementById('filtroRevNombre').value.trim(),
+        telefono:          document.getElementById('filtroRevTelefono').value.trim(),
+        npn1:              filtroRevNpn1.getSeleccionados(),
+        npn2:              filtroRevNpn2.getSeleccionados(),
+        revisionPor:       filtroRevRevisionPor.getSeleccionados(),
+        recuperada:        document.getElementById('filtroRevRecuperada').value,
+        fechaIngresoDesde: document.getElementById('filtroRevIngresoDesde').value,
+        fechaIngresoHasta: document.getElementById('filtroRevIngresoHasta').value,
+        fechaRecupDesde:   document.getElementById('filtroRevRecupDesde').value,
+        fechaRecupHasta:   document.getElementById('filtroRevRecupHasta').value,
     };
 
     cerrarModalFiltros();
@@ -488,14 +485,18 @@ function aplicarFiltrosAvanzados() {
 
 function limpiarFiltrosAvanzados() {
     filtrosAvanzados = {};
-    document.querySelectorAll('#modalFiltrosOverlay input').forEach(i => i.value = '');
+    document.querySelectorAll('#modalFiltrosOverlay input, #modalFiltrosOverlay select').forEach(i => i.value = '');
+    filtroRevOperador.limpiar();
+    filtroRevNpn1.limpiar();
+    filtroRevNpn2.limpiar();
+    filtroRevRevisionPor.limpiar();
     cerrarModalFiltros();
     aplicarFiltros();
     actualizarIndicadorFiltros();
 }
 
 function actualizarIndicadorFiltros() {
-    const activos = Object.values(filtrosAvanzados).filter(v => v && v !== '').length;
+    const activos = Object.values(filtrosAvanzados).filter(v => Array.isArray(v) ? v.length > 0 : (v && v !== '')).length;
     const badge = document.getElementById('badgeFiltrosRev');
     if (badge) {
         badge.textContent = activos;
@@ -677,4 +678,215 @@ function limitarTextoExcel(valor) {
     const texto = String(valor);
     const LIMITE = 32000;
     return texto.length > LIMITE ? texto.substring(0, LIMITE) + ' […texto truncado]' : texto;
+}
+
+// ============================================
+// COMPONENTE GENÉRICO DE MULTISELECT (copiado de filtro_multiselect.js)
+// ============================================
+function crearFiltroMultiSelect(config) {
+    const {
+        contenedorId, label, idBase, opciones = null, fetchOpciones = null,
+        conBuscador = false, textoVacio = 'Seleccionar...', textoUno = null, onCambio = () => {}
+    } = config;
+
+    const idPanel = `panel${idBase}`;
+    const idTrigger = `trigger${idBase}`;
+    const idTexto = `texto${idBase}`;
+    const idBuscador = `buscar${idBase}`;
+
+    const contenedor = document.getElementById(contenedorId);
+    if (!contenedor) {
+        console.error(`crearFiltroMultiSelect: no existe #${contenedorId}`);
+        return null;
+    }
+
+    function normalizar(lista) {
+        return (lista || []).map(o => typeof o === 'string' ? { value: o, label: o } : o);
+    }
+
+    let opcionesActuales = normalizar(opciones);
+
+    function renderOpciones() {
+        return opcionesActuales.map(o =>
+            `<label class="checkbox-item"><input type="checkbox" value="${o.value}">${o.label}</label>`
+        ).join('');
+    }
+
+    contenedor.innerHTML = `
+        <label>${label}</label>
+        <div class="dropdown-filter">
+            <button type="button" class="dropdown-trigger" id="${idTrigger}">
+                <span id="${idTexto}">${textoVacio}</span>
+                <span class="material-symbols-rounded">expand_more</span>
+            </button>
+            <div class="dropdown-panel" id="${idPanel}">
+                ${conBuscador ? `<div class="dropdown-search"><input type="text" id="${idBuscador}" placeholder="Buscar..."></div>` : ''}
+                <div class="checkbox-list-scroll" id="lista${idBase}">${renderOpciones()}</div>
+                <div class="dropdown-actions">
+                    <button type="button" class="btn-dropdown-clear">Limpiar</button>
+                    <button type="button" class="btn-dropdown-close">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const elPanel = document.getElementById(idPanel);
+    const elTrigger = document.getElementById(idTrigger);
+    const elTexto = document.getElementById(idTexto);
+    const elLista = document.getElementById(`lista${idBase}`);
+
+    function toggle(event) { event.stopPropagation(); elPanel.classList.toggle('active'); elTrigger.classList.toggle('active'); }
+    function cerrar() { elPanel.classList.remove('active'); elTrigger.classList.remove('active'); }
+
+    function actualizarTexto() {
+        const checked = Array.from(elLista.querySelectorAll('input:checked'));
+        if (checked.length === 0) {
+            elTexto.textContent = textoVacio; elTexto.style.color = '#94a3b8';
+        } else if (checked.length === 1) {
+            const opcion = opcionesActuales.find(o => o.value === checked[0].value);
+            elTexto.textContent = textoUno ? textoUno(checked[0].value) : (opcion ? opcion.label : checked[0].value);
+            elTexto.style.color = '#1e293b';
+        } else {
+            elTexto.textContent = `${checked.length} seleccionados`; elTexto.style.color = '#6366f1';
+        }
+    }
+
+    function limpiar() {
+        elLista.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        actualizarTexto(); onCambio(getSeleccionados());
+    }
+
+    function filtrarOpcionesVisibles() {
+        if (!conBuscador) return;
+        const busqueda = document.getElementById(idBuscador).value.toLowerCase();
+        elLista.querySelectorAll('.checkbox-item').forEach(item => {
+            item.style.display = item.textContent.toLowerCase().includes(busqueda) ? 'flex' : 'none';
+        });
+    }
+
+    function getSeleccionados() {
+        return Array.from(elLista.querySelectorAll('input:checked')).map(cb => cb.value);
+    }
+
+    function setSeleccionados(valores) {
+        elLista.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = valores.includes(cb.value); });
+        actualizarTexto();
+    }
+
+    async function recargarOpciones() {
+        if (!fetchOpciones) return;
+        const nuevas = await fetchOpciones();
+        opcionesActuales = normalizar(nuevas);
+        const seleccionaPrevia = getSeleccionados();
+        elLista.innerHTML = renderOpciones();
+        setSeleccionados(seleccionaPrevia.filter(v => opcionesActuales.some(o => o.value === v)));
+        engancharCheckboxes();
+    }
+
+    function engancharCheckboxes() {
+        elLista.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', () => { actualizarTexto(); onCambio(getSeleccionados()); });
+        });
+    }
+
+    elTrigger.addEventListener('click', toggle);
+    elPanel.querySelector('.btn-dropdown-clear').addEventListener('click', limpiar);
+    elPanel.querySelector('.btn-dropdown-close').addEventListener('click', cerrar);
+    if (conBuscador) document.getElementById(idBuscador).addEventListener('keyup', filtrarOpcionesVisibles);
+    document.addEventListener('click', (e) => { if (!elPanel.contains(e.target) && !elTrigger.contains(e.target)) cerrar(); });
+
+    engancharCheckboxes();
+    actualizarTexto();
+    if (fetchOpciones) recargarOpciones();
+
+    return { getSeleccionados, setSeleccionados, limpiar, recargarOpciones, cerrar };
+}
+
+let filtroRevOperador, filtroRevNpn1, filtroRevNpn2, filtroRevRevisionPor;
+
+function inicializarFiltrosMultiselectRev() {
+    filtroRevOperador = crearFiltroMultiSelect({
+        contenedorId: 'filtroRevOperadorGroup',
+        label: 'Operador',
+        idBase: 'filtroRevOperador',
+        conBuscador: true,
+        fetchOpciones: () => [...new Set(todosLosRegistros.map(r => r.operador_nombre).filter(Boolean))].sort(),
+        textoVacio: 'Todos los operadores...',
+        onCambio: () => { aplicarFiltros(); actualizarIndicadorFiltros(); }
+    });
+
+    filtroRevRevisionPor = crearFiltroMultiSelect({
+        contenedorId: 'filtroRevRevisionPorGroup',
+        label: 'Revisión realizada por',
+        idBase: 'filtroRevRevisionPor',
+        conBuscador: true,
+        fetchOpciones: () => [...new Set(todosLosRegistros.map(r => r.revision_realizada_por).filter(Boolean))].sort(),
+        textoVacio: 'Todos...',
+        onCambio: () => { aplicarFiltros(); actualizarIndicadorFiltros(); }
+    });
+
+    filtroRevNpn1 = crearFiltroMultiSelect({
+        contenedorId: 'filtroRevNpn1Group',
+        label: 'Agente / NPN 1',
+        idBase: 'filtroRevNpn1',
+        conBuscador: true,
+        fetchOpciones: () => [...new Set(todosLosRegistros.map(r => r.npn1).filter(Boolean))].sort(),
+        textoVacio: 'Todos...',
+        onCambio: () => { aplicarFiltros(); actualizarIndicadorFiltros(); }
+    });
+
+    filtroRevNpn2 = crearFiltroMultiSelect({
+        contenedorId: 'filtroRevNpn2Group',
+        label: 'Agente / NPN 2',
+        idBase: 'filtroRevNpn2',
+        conBuscador: true,
+        fetchOpciones: () => [...new Set(todosLosRegistros.map(r => r.npn2).filter(Boolean))].sort(),
+        textoVacio: 'Todos...',
+        onCambio: () => { aplicarFiltros(); actualizarIndicadorFiltros(); }
+    });
+}
+
+let debounceFiltroRevCliente;
+
+function buscarClientesFiltroRev(valor) {
+    clearTimeout(debounceFiltroRevCliente);
+    const lista = document.getElementById('filtroRevAutocompleteLista');
+
+    if (!valor || valor.trim().length < 3) {
+        if (lista) lista.style.display = 'none';
+        return;
+    }
+
+    debounceFiltroRevCliente = setTimeout(async () => {
+        try {
+            const resultados = await buscarClientes(valor.trim());
+            renderAutocompleteFiltroRev(resultados || []);
+        } catch (error) {
+            console.error('Error buscando clientes:', error);
+        }
+    }, 300);
+}
+
+function renderAutocompleteFiltroRev(clientes) {
+    const lista = document.getElementById('filtroRevAutocompleteLista');
+    if (!lista) return;
+
+    if (clientes.length === 0) {
+        lista.style.display = 'none';
+        return;
+    }
+
+    lista.innerHTML = clientes.slice(0, 8).map(c => `
+        <div class="sr-autocomplete-item" onclick='seleccionarClienteFiltroRev(${JSON.stringify(c.nombres + " " + c.apellidos)}, ${JSON.stringify(c.telefono1 || "")})'>
+            ${c.nombres} ${c.apellidos}
+            <small>${c.telefono1 || 'Sin teléfono'}</small>
+        </div>
+    `).join('');
+    lista.style.display = 'block';
+}
+
+function seleccionarClienteFiltroRev(nombre, telefono) {
+    document.getElementById('filtroRevNombre').value = nombre;
+    document.getElementById('filtroRevTelefono').value = telefono;
+    document.getElementById('filtroRevAutocompleteLista').style.display = 'none';
 }

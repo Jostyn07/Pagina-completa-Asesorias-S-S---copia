@@ -241,6 +241,7 @@
                                 <th>Observación Operador</th>
                                 <th>Recuperado</th>
                                 <th>Fecha Recuperación / Fecha de cancelación</th>
+                                <th>Recupera por / Cancelado por</th>
                                 <th>Revisión realizada por</th>
                                 <th>Observación de cambio de estado</th>
                             </tr>
@@ -288,34 +289,31 @@
 
                 <div class="modal-rev-section-title">Persona</div>
                 <div class="modal-rev-grid">
-                    <div class="modal-rev-group">
-                        <label>Operador</label>
-                        <input type="text" id="filtroRevOperador" placeholder="Nombre del operador...">
-                    </div>
-                    <div class="modal-rev-group">
+                    <div class="modal-rev-group" id="filtroRevOperadorGroup"></div>
+                    <div class="modal-rev-group sr-autocomplete-wrapper">
                         <label>Nombre del cliente</label>
-                        <input type="text" id="filtroRevNombre" placeholder="Nombre o apellido...">
+                        <input type="text" id="filtroRevNombre" placeholder="Nombre o apellido..." autocomplete="off" oninput="buscarClientesFiltroRev(this.value)">
+                        <div class="sr-autocomplete-lista" id="filtroRevAutocompleteLista" style="display:none;"></div>
                     </div>
                     <div class="modal-rev-group">
                         <label>Teléfono</label>
-                        <input type="text" id="filtroRevTelefono" placeholder="Número de teléfono...">
+                        <input type="text" id="filtroRevTelefono" placeholder="Número de teléfono..." autocomplete="off" oninput="buscarClientesFiltroRev(this.value)">
                     </div>
+                    <div class="modal-rev-group" id="filtroRevRevisionPorGroup"></div>
                     <div class="modal-rev-group">
-                        <label>Revisión realizada por</label>
-                        <input type="text" id="filtroRevRevisionPor" placeholder="Nombre del agente...">
+                        <label>Recuperada</label>
+                        <select id="filtroRevRecuperada">
+                            <option value="">Todos</option>
+                            <option value="Si">Sí</option>
+                            <option value="No">No</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="modal-rev-section-title">Agentes (NPN)</div>
                 <div class="modal-rev-grid">
-                    <div class="modal-rev-group">
-                        <label>Agente / NPN 1</label>
-                        <input type="text" id="filtroRevNpn1" placeholder="NPN o nombre...">
-                    </div>
-                    <div class="modal-rev-group">
-                        <label>Agente / NPN 2</label>
-                        <input type="text" id="filtroRevNpn2" placeholder="NPN o nombre...">
-                    </div>
+                    <div class="modal-rev-group" id="filtroRevNpn1Group"></div>
+                    <div class="modal-rev-group" id="filtroRevNpn2Group"></div>
                 </div>
 
                 <div class="modal-rev-section-title">Fechas</div>

@@ -100,13 +100,8 @@ function buildFilaSR(r) {
                ${r.actualizado === 'Si' ? '✅ Sí' : r.actualizado === 'No' ? '❌ No' : '— Pendiente'}
            </span>`;
 
-    const notaActDisplay = r.nota_actualizacion
-        ? `<span class="nota-preview">${r.nota_actualizacion.substring(0, 60)}${r.nota_actualizacion.length > 60 ? '…' : ''}</span>`
-        : '<em class="text-muted">Sin nota</em>';
-
-    const obsDisplay = r.observacion
-        ? `<span class="obs-preview">${r.observacion.substring(0, 60)}${r.observacion.length > 60 ? '…' : ''}</span>`
-        : '<em class="text-muted">—</em>';
+    const notaActDisplay = celdaTextoExpandible(r.nota_actualizacion, `nota-${r.id}`)
+    const obsDisplay = celdaTextoExpandible(r.observacion, `obs-${r.id}`);
 
     const fechaSolicitud = formatearFechaSR(r.fecha_solicitud);
     const fechaActualizacion = r.fecha_actualizacion ? formatearFechaSR(r.fecha_actualizacion) : '<em class="text-muted">—</em>';
@@ -723,5 +718,40 @@ async function poblarSelectRevisorAsignado() {
         });
     } catch (error) {
         console.error('Error cargando revisores:', error);
+    }
+}
+
+function celdaTextoExpandible(texto, idUnico) {
+    if (!texto) return '<em class="text-muted">-</em>'
+
+    const LIMITE = 60;
+    if (texto.length <= LIMITE) {
+        return `<span class="texto-completo">${texto}</span>`
+    }
+
+    const preview = texto.substring(0, LIMITE) + '...';
+
+    return `<div class="celda-texto-expandible">
+        <span class="texto-preview" id="preview-${idUnico}">${preview}</span>
+        <span class="text-completo" id="completo-${idUnico}" style="display:none;">${texto}</span>
+        <button type="button" class="btn-mostrar-mas" onclick="toggleTextoExpandido('${idUnico}')">Mostrar más</button>
+    </div>`;
+}
+
+function toggleTextoExpandido(idUnico) {
+    const preview = document.getElementById(`preview-${idUnico}`);
+    const completo = document.getElementById(`completo-${idUnico}`);
+    const btn = completo.parentElement.querySelector('.btn-mostrar-mas');
+
+    const expandido = completo.style.display !== 'none';
+
+    if (expandido) {
+        preview.style.display = 'inline';
+        completo.style.display = 'none';
+        btn.textContent = 'Mostrar más';
+    } else {
+        preview.style.display = 'none';
+        completo.style.display = 'inline';
+        btn.textContent = 'Ver menos'
     }
 }

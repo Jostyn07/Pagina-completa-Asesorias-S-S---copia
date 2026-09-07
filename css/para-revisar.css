@@ -360,8 +360,9 @@
         200px  /* Observación Operador */
         130px  /* Recuperado */
         180px  /* Fecha Recuperación / Cancelación */
-        160px /* Revisión realizada por */
-        200px; 
+        160px  /* Recuperado por / Cancelado por — nueva */
+        160px  /* Revisión realizada por */
+        200px; /* Observación de cambio de estado */
 }
 
 .controls-row {
