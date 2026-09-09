@@ -54,6 +54,7 @@ function guardarFiltrosEnStorage() {
             documentos: filtroDocumentos.getSeleccionados(),
             modificadoPor: filtroModificadoPor.getSeleccionados(),
             portal: filtroPortalAvanzado.getSeleccionados(),
+            filtroAgenteCliente: filtroAgenteCliente.getSeleccionados(),
             seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo')?.value || '',
             filtroAgenteMercado: filtroAgenteMercado.getSeleccionados(),
             estadoMercado:  Array.from(document.querySelectorAll('#panelEstadoMercado input:checked')).map(cb => cb.value),
@@ -174,6 +175,7 @@ function restaurarFiltrosDesdeStorage() {
     filtroMesPagado.setSeleccionados(Array.isArray(datos.mesPagado) ? datos.mesPagado : []);
     filtroModificadoPor.setSeleccionados(Array.isArray(datos.modificadoPor) ? datos.modificadoPor : []);
     filtroPortalAvanzado.setSeleccionados(Array.isArray(datos.portal) ? datos.portal : []);
+    filtroAgenteCliente.setSeleccionados(Array.isArray(datos.filtroAgenteCliente) ? datos.filtroAgenteCliente : []);
     set('filtroSeguimientoEfectivo', datos.seguimientoEfectivo);
     filtroAgenteMercado.setSeleccionados(Array.isArray(datos.filtroAgenteMercado) ? datos.filtroAgenteMercado : []);
     if (datos.estadoMercado && Array.isArray(datos.estadoMercado)) {
@@ -239,6 +241,7 @@ function restaurarFiltrosDesdeStorage() {
         documentos: Array.isArray(datos.documentos) ? datos.documentos : [],
         modificadoPor: Array.isArray(datos.modificadoPor) ? datos.modificadoPor : [],
         portal: Array.isArray(datos.portal) ? datos.portal : [],
+        filtroAgenteCliente: Array.isArray(datos.filtroAgenteCliente) ? datos.filtroAgenteCliente : [],
         seguimientoEfectivo: datos.seguimientoEfectivo || '',
         filtroAgenteMercado: Array.isArray(datos.filtroAgenteMercado) ? datos.filtroAgenteMercado : [],
         estadoMercado:  Array.isArray(datos.estadoMercado)  ? datos.estadoMercado  : [],
@@ -399,6 +402,13 @@ function restaurarFiltrosDesdeStorage() {
 
             if (filtrosActivos.portal?.length > 0 && !filtrosActivos.portal.includes(cliente.portal)) return false;
 
+            if (filtrosActivos.filtroAgenteCliente?.length > 0) {
+                const esNull = filtrosActivos.filtroAgenteCliente.includes('__null__');
+                const estaVacio = !cliente.agente_nombre || cliente.agente_nombre === '';
+                const coincide = filtrosActivos.filtroAgenteCliente.includes(cliente.agente_nombre);
+                if (!(coincide || (esNull && estaVacio))) return false;
+            }
+
             if (filtrosActivos.prima) {
                 const prima = parseFloat(poliza.prima) || 0;
                 if (filtrosActivos.prima === 'cero' && prima !== 0) return false;
@@ -529,6 +539,7 @@ async function cargarPolizas() {
                     archivado,
                     venta_realizada_por,
                     portal,
+                    agente_nombre,
                     metodos_pago (
                         tiene_metodo_pago,
                         tiene_pago_automatico,
@@ -607,6 +618,7 @@ async function cargarPolizas() {
         const estadisticas = calcularEstadisticas(todasLasPolizas);
         filtroModificadoPor.recargarOpciones();
         filtroPortalAvanzado.recargarOpciones();
+        filtroAgenteCliente.recargarOpciones();
         actualizarTarjetas(estadisticas);
         actualizarIndicadoresRol();
 
@@ -2426,6 +2438,7 @@ function limpiarFiltros() {
     filtroModificadoPor.limpiar();
     filtroAgenteMercado.limpiar();
     filtroPortalAvanzado.limpiar();
+    filtroAgenteCliente.limpiar();
     filtroMesPagado.limpiar();
     limpiarEstadoMercado();
     limpiarEstadoCompania();
@@ -2730,6 +2743,7 @@ function aplicarFiltrosAvanzados() {
         documentos: filtroDocumentos.getSeleccionados(),
         filtroAgenteMercado: filtroAgenteMercado.getSeleccionados(),
         portal: filtroPortalAvanzado.getSeleccionados(),
+        filtroAgenteCliente: filtroAgenteCliente.getSeleccionados(),
         estadoMercado:  Array.from(document.querySelectorAll('#panelEstadoMercado input:checked')).map(cb => cb.value),
         estadoCompania: Array.from(document.querySelectorAll('#panelEstadoCompania input:checked')).map(cb => cb.value),
         estado: filtroEstado.getSeleccionados(),
@@ -2916,6 +2930,13 @@ function aplicarFiltrosAvanzados() {
         // Filtro por portal
         if (filtrosActivos.portal?.length > 0 && !filtrosActivos.portal.includes(cliente.portal)) {
             return false;
+        }
+
+        if (filtrosActivos.filtroAgenteCliente?.length > 0) {
+            const esNull = filtrosActivos.filtroAgenteCliente.includes('__null__');
+            const estaVacio = !cliente.agente_nombre || cliente.agente_nombre === '';
+            const coincide = filtrosActivos.filtroAgenteCliente.includes(cliente.agente_nombre);
+            if (!(coincide || (esNull && estaVacio))) return false;
         }
         
         // Filtro por estado mercado

@@ -295,3 +295,16 @@ const filtroPortalAvanzado = crearFiltroMultiSelect({
     textoVacio: 'Seleccionar portal...',
     onCambio: () => { guardarFiltrosEnStorage(); aplicarFiltros(); }
 });
+
+const filtroAgenteCliente = crearFiltroMultiSelect({
+    contenedorId: 'filtroAgenteClienteGroup',
+    label: 'Agente (Cliente)',
+    idBase: 'filtroAgenteCliente',
+    conBuscador: true,
+    fetchOpciones: () => [
+        { value: '__null__', label: 'Pendiente' },
+        ...[...new Set(todasLasPolizas.map(p => p.cliente?.agente_nombre).filter(Boolean))].sort()
+    ],
+    textoVacio: 'Todos',
+    onCambio: () => { guardarFiltrosEnStorage(); aplicarFiltros(); }
+});
