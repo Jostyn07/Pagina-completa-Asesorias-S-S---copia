@@ -549,3 +549,20 @@
 .btn-mostrar-mas:hover {
     text-decoration: underline;
 }
+
+.tabla-sr tbody tr {
+    height: auto;
+    min-height: 50px;
+    overflow: visible;
+    white-space: normal;
+    align-items: start;
+}
+
+.tabla-sr tbody td {
+    align-items: flex-start;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}

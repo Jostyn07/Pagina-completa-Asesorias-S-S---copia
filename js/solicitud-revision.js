@@ -724,7 +724,7 @@ async function poblarSelectRevisorAsignado() {
 function celdaTextoExpandible(texto, idUnico) {
     if (!texto) return '<em class="text-muted">-</em>'
 
-    const LIMITE = 60;
+    const LIMITE = 70;
     if (texto.length <= LIMITE) {
         return `<span class="texto-completo">${texto}</span>`
     }
@@ -733,7 +733,7 @@ function celdaTextoExpandible(texto, idUnico) {
 
     return `<div class="celda-texto-expandible">
         <span class="texto-preview" id="preview-${idUnico}">${preview}</span>
-        <span class="text-completo" id="completo-${idUnico}" style="display:none;">${texto}</span>
+        <span class="texto-completo" id="completo-${idUnico}" style="display:none;">${texto}</span>
         <button type="button" class="btn-mostrar-mas" onclick="toggleTextoExpandido('${idUnico}')">Mostrar más</button>
     </div>`;
 }
