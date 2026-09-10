@@ -63,7 +63,7 @@ function actualizarContadores() {
     const activos = todosLosRegistros.filter(r => r.recuperado !== 'Si');
 
     const robadas    = activos.filter(r => r.estado_mercado === 'Robado').length;
-    const canceladas = activos.filter(r => r.estado_mercado === 'Cancelado a P.C').length;
+    const canceladas = activos.filter(r => r.estado_mercado === 'Cancelado').length;
     const dobles     = activos.filter(r => r.estado_mercado === 'Doble poliza').length;
     const triples    = activos.filter(r => r.estado_mercado === 'Triple poliza').length;
     const recuperados = todosLosRegistros.filter(r => r.recuperado === 'Si').length;
@@ -110,7 +110,7 @@ function aplicarFiltros() {
             resultado = resultado.filter(r => r.recuperado === 'Si');
         } else {
             const mapaTipo = {
-                robadas: 'Robado', canceladas: 'Cancelado a P.C',
+                robadas: 'Robado', canceladas: 'Cancelado',
                 dobles: 'Doble poliza', triples: 'Triple poliza', 'no-registran': 'No registra',
             };
             resultado = resultado.filter(r => r.estado_mercado === mapaTipo[filtroTipoActivo]);
@@ -145,6 +145,13 @@ function aplicarFiltros() {
     }
     if (f.npn2 && f.npn2.length > 0) {
         resultado = resultado.filter(r => f.npn2.includes(r.npn2));
+    }
+    if (f.estadoMercado && f.estadoMercado.length > 0) {
+        resultado = resultado.filter(r => {
+            const esNull = f.estadoMercado.includes('__null__')
+            const estaVacio = !r.estado_mercado || r.estado_mercado === '';
+            return f.estadoMercado.includes(r.estado_mercado) || (esNull && estaVacio);
+        })
     }
     if (f.recuperada) {
         resultado = resultado.filter(r => r.recuperado === f.recuperada);
@@ -470,6 +477,7 @@ function aplicarFiltrosAvanzados() {
         telefono:          document.getElementById('filtroRevTelefono').value.trim(),
         npn1:              filtroRevNpn1.getSeleccionados(),
         npn2:              filtroRevNpn2.getSeleccionados(),
+        estadoMercado:    filtroRevEstadoMercado.getSeleccionados(),
         revisionPor:       filtroRevRevisionPor.getSeleccionados(),
         recuperada:        document.getElementById('filtroRevRecuperada').value,
         fechaIngresoDesde: document.getElementById('filtroRevIngresoDesde').value,
@@ -489,6 +497,7 @@ function limpiarFiltrosAvanzados() {
     filtroRevOperador.limpiar();
     filtroRevNpn1.limpiar();
     filtroRevNpn2.limpiar();
+    filtroRevRevisionPor.limpiar();
     filtroRevRevisionPor.limpiar();
     cerrarModalFiltros();
     aplicarFiltros();
@@ -591,11 +600,12 @@ function stripHtml(html) {
 
 function getBadgeMercado(estado) {
     const mapa = {
-        'Robado':         ['badge-mercado badge-robado',    'gpp_bad',    'Robado'],
-        'Cancelado a P.C':['badge-mercado badge-cancelado', 'cancel',     'Cancelado'],
-        'Doble poliza':   ['badge-mercado badge-doble',     'file_copy',  'Doble Póliza'],
-        'Triple poliza':  ['badge-mercado badge-triple',    'library_books','Triple Póliza'],
-        'No registra':    ['badge-mercado badge-noregistra','help_outline','No Registra'],
+        'Robado':          ['badge-mercado badge-robado',    'gpp_bad',      'Robado'],
+        'Cancelado':       ['badge-mercado badge-cancelado', 'block',        'Cancelado'],
+        'Cancelado a P.C': ['badge-mercado badge-cancelado-pc', 'cancel',    'Cancelado a P.C'],
+        'Doble poliza':    ['badge-mercado badge-doble',     'file_copy',    'Doble Póliza'],
+        'Triple poliza':   ['badge-mercado badge-triple',    'library_books','Triple Póliza'],
+        'No registra':     ['badge-mercado badge-noregistra','help_outline', 'No Registra'],
     };
     const [cls, icon, label] = mapa[estado] || ['badge-mercado', 'info', estado || '—'];
     return `<span class="${cls}"><span class="material-symbols-rounded">${icon}</span>${label}</span>`;
@@ -802,7 +812,7 @@ function crearFiltroMultiSelect(config) {
     return { getSeleccionados, setSeleccionados, limpiar, recargarOpciones, cerrar };
 }
 
-let filtroRevOperador, filtroRevNpn1, filtroRevNpn2, filtroRevRevisionPor;
+let filtroRevOperador, filtroRevNpn1, filtroRevNpn2, filtroRevRevisionPor, filtroRevEstadoMercado;
 
 function inicializarFiltrosMultiselectRev() {
     filtroRevOperador = crearFiltroMultiSelect({
@@ -843,6 +853,19 @@ function inicializarFiltrosMultiselectRev() {
         fetchOpciones: () => [...new Set(todosLosRegistros.map(r => r.npn2).filter(Boolean))].sort(),
         textoVacio: 'Todos...',
         onCambio: () => { aplicarFiltros(); actualizarIndicadorFiltros(); }
+    });
+
+    filtroRevEstadoMercado = crearFiltroMultiSelect({
+        contenedorId: 'filtroRevEstadoMercadoGroup',
+        label: 'Estado en mercado',
+        idBase: 'filtroRevEstadoMercado',
+        conBuscador: false,
+        fetchOpciones: () => [
+            { value: '__null__', label: 'pendiente'},
+            ...[...new Set(todosLosRegistros.map(r => r.estado_mercado).filter(Boolean))].sort()
+        ],
+        textoVacio: 'Todos...',
+        onCambio: () => { aplicarFiltros(); actualizarIndicadorFiltros();}
     });
 }
 

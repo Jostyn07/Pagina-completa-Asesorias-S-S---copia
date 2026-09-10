@@ -18,7 +18,7 @@ function crearFiltroMultiSelect(config) {
 
     const contenedor = document.getElementById(contenedorId);
     if (!contenedor) {
-        console.error(`crearFiltroMultiSelect: no existe #${contenedorId}`);
+        console.debug(`crearFiltroMultiSelect: #${contenedorId} no está en esta página, se omite`);
         return null;
     }
 

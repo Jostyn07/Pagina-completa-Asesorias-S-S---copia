@@ -775,3 +775,5 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 [data-theme="dark"] .btn-mostrar-mas {
     color: #818cf8;
 }
+
+[data-theme="dark"] .badge-cancelado-pc { background: #431407; color: #fdba74; }

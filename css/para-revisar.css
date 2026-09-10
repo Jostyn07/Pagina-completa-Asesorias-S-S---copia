@@ -235,6 +235,18 @@
     transition: border 0.2s;
 }
 .modal-rev-group input:focus { border-color: var(--color-hover-primary); }
+.modal-rev-group select {
+    border: 1px solid var(--color-border-hr, #e2e8f0);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.9rem;
+    background: var(--color-bg-primary, #fff);
+    color: var(--color-text-primary, #1e293b);
+    outline: none;
+    transition: border 0.2s;
+    cursor: pointer;
+}
+.modal-rev-group select:focus { border-color: var(--color-hover-primary); }
 .modal-rev-section-title {
     font-size: 0.78rem;
     font-weight: 700;
@@ -407,3 +419,4 @@
 
 .badge-recuperado { background: #d1fae5; color: #047857; }
 
+.badge-cancelado-pc { background: #ffedd5; color: #9a3412; }
