@@ -37,6 +37,39 @@
     --shadow-sm: 0 2px 6px rgba(0,0,0,0.25);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
     --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+    --background-color: var(--dk-surface-1);
+    --text-color: var(--dk-text-primary);
+    --border-color: var(--dk-border);
+    --text-muted: var(--dk-text-secondary);
+    --card-background: var(--dk-surface-2);
+    --bg-primary: var(--dk-surface-0);
+    --bg-secondary: var(--dk-surface-1);
+    --text-primary: var(--dk-text-primary);
+    --text-secondary: var(--dk-text-secondary);
+    --background-color: var(--dk-surface-2);
+    --background-page: var(--dk-surface-1);
+    --bg-card: var(--dk-surface-2);
+    --card-background: var(--dk-surface-2);
+    --bg-primary: var(--dk-surface-0);
+    --bg-secondary: var(--dk-surface-1);
+    --surface-color: var(--dk-surface-1);
+    --border-color: var(--dk-border);
+    --text-color: var(--dk-text-primary);
+    --text-primary: var(--dk-text-primary);
+    --text-secondary: var(--dk-text-secondary);
+    --text-muted: var(--dk-text-secondary);
+    --text-placeholder: var(--dk-text-tertiary);
+    --primary-color: var(--dk-accent);
+    --primary-dark: #6d70d9;
+    --success-color: var(--dk-success);
+    --success-bg: var(--dk-success-bg);
+    --success-border: rgba(94,205,138,0.3);
+    --danger-color: var(--dk-error);
+    --danger-bg: var(--dk-error-bg);
+    --warning-color: var(--dk-warning);
+    --info-color: var(--dk-accent);
+    --btn-azul: #4d94ff;
+    --btn-verde: #2ecc93;
 }
 
 [data-theme="dark"] body { background: #121218 !important; color: #e2e4e9 !important; }
@@ -777,3 +810,92 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 }
 
 [data-theme="dark"] .badge-cancelado-pc { background: #431407; color: #fdba74; }
+
+
+/* CALENDARIO */
+[data-theme="dark"] .cal-card { background: var(--dk-surface-2) !important; box-shadow: var(--dk-shadow-sm) !important; }
+[data-theme="dark"] .cal-email-box { background: var(--dk-surface-1) !important; }
+[data-theme="dark"] .cal-correo-google { background: var(--dk-surface-1) !important; border-color: var(--dk-border) !important; }
+[data-theme="dark"] .cal-selector-usuario select { border-color: var(--dk-border) !important; color: var(--dk-text-primary) !important; background: var(--dk-surface-1) !important; }
+[data-theme="dark"] .cal-btn-toggle-instrucciones { border-color: var(--dk-border) !important; }
+[data-theme="dark"] .cal-btn-toggle-instrucciones:hover { background: var(--dk-surface-2) !important; }
+[data-theme="dark"] .cal-evento { border-bottom-color: var(--dk-border) !important; }
+
+/* ANÁLISIS */
+[data-theme="dark"] .scoring-card.rojo { background: linear-gradient(135deg, var(--dk-error-bg), var(--dk-surface-2)) !important; }
+[data-theme="dark"] .scoring-card.amarillo { background: linear-gradient(135deg, rgba(229,180,78,0.12), var(--dk-surface-2)) !important; }
+[data-theme="dark"] .scoring-card.verde { background: linear-gradient(135deg, var(--dk-success-bg), var(--dk-surface-2)) !important; }
+[data-theme="dark"] .plan-card-header { background: linear-gradient(135deg, var(--dk-error-bg), var(--dk-surface-2)) !important; }
+[data-theme="dark"] .ia-progreso-barra { background: var(--dk-surface-3) !important; }
+
+/* CALENDARIO */
+[data-theme="dark"] .cal-card { background: var(--dk-surface-2) !important; box-shadow: var(--dk-shadow-sm) !important; }
+[data-theme="dark"] .cal-email-box { background: var(--dk-surface-1) !important; }
+[data-theme="dark"] .cal-correo-google { background: var(--dk-surface-1) !important; border-color: var(--dk-border) !important; }
+[data-theme="dark"] .cal-btn-toggle-instrucciones:hover { background: var(--dk-surface-2) !important; }
+
+/* COMPARTIDO cliente/polizas/home */
+[data-theme="dark"] .user-dropdown-divider,
+[data-theme="dark"] .timeline-item::before { background: var(--dk-border) !important; }
+[data-theme="dark"] input[readonly] { background: var(--dk-surface-0) !important; }
+[data-theme="dark"] .metodo-pago-card,
+[data-theme="dark"] .selector-operador-dropdown,
+[data-theme="dark"] .btn-estado-tipo { background: var(--dk-surface-2) !important; }
+[data-theme="dark"] .selector-operador-header { background: var(--dk-surface-1) !important; }
+[data-theme="dark"] .filtro-fecha-grupo input { background: var(--dk-surface-0) !important; }
+
+/* CONTROL DE CALIDAD / HISTORIAL EVALUACIÓN / USUARIOS (comparten clases) */
+[data-theme="dark"] .header-icon,
+[data-theme="dark"] .section-icon,
+[data-theme="dark"] .tab-btn.active { background: linear-gradient(135deg, var(--dk-accent), var(--primary-dark)) !important; }
+[data-theme="dark"] .section-icon.error { background: linear-gradient(135deg, var(--dk-error), #b91c1c) !important; }
+[data-theme="dark"] .autosave-indicator,
+[data-theme="dark"] .badge-activo,
+[data-theme="dark"] .result-option.approved input:checked ~ .result-content { background: var(--dk-success-bg) !important; }
+[data-theme="dark"] .badge-inactivo,
+[data-theme="dark"] .error-item:hover,
+[data-theme="dark"] .result-option.rejected input:checked ~ .result-content { background: var(--dk-error-bg) !important; }
+[data-theme="dark"] .result-content,
+[data-theme="dark"] .checklist-item,
+[data-theme="dark"] .error-item,
+[data-theme="dark"] .checkbox-label:hover,
+[data-theme="dark"] .toggles-section,
+[data-theme="dark"] .permiso-row:hover,
+[data-theme="dark"] .tab-btn:hover,
+[data-theme="dark"] .permisos-selectores select { background: var(--dk-surface-0) !important; }
+[data-theme="dark"] .radio-group label:hover,
+[data-theme="dark"] .form-actions,
+[data-theme="dark"] .tabs-nav { background: var(--dk-surface-1) !important; }
+[data-theme="dark"] .toggle-row:hover,
+[data-theme="dark"] .toggle-divider { background: var(--dk-border) !important; }
+[data-theme="dark"] .toggle-track::after { background: var(--dk-text-primary) !important; }
+
+/* CHAT IA */
+[data-theme="dark"] .ia-contexto-bar,
+[data-theme="dark"] .ia-btn-accion { background: var(--dk-accent-bg) !important; }
+[data-theme="dark"] .ia-chip,
+[data-theme="dark"] .ia-feedback button:hover { background: var(--dk-surface-2) !important; }
+[data-theme="dark"] .ia-msg-assistant .ia-msg-burbuja { background: var(--dk-surface-1) !important; }
+
+/* MOVIMIENTOS */
+[data-theme="dark"] .mov-card-total .mov-card-icon { background: var(--dk-accent-bg) !important; }
+[data-theme="dark"] .mov-card-mod .mov-card-icon,
+[data-theme="dark"] .mov-obs-cancelar,
+[data-theme="dark"] .mov-tabla tbody tr:hover,
+[data-theme="dark"] .mov-chk-item:hover { background: var(--dk-surface-2) !important; }
+[data-theme="dark"] .mov-rank-bar { background: var(--dk-border) !important; }
+[data-theme="dark"] .mov-dropdown-panel { background: var(--dk-surface-1) !important; }
+
+/* PARA REVISAR / SOLICITUD DE REVISIÓN */
+[data-theme="dark"] .btn-rec-null,
+[data-theme="dark"] .btn-act-null { background: var(--dk-surface-2) !important; }
+
+/* RECORDATORIOS (lo puntual que queda tras el parche de variables) */
+[data-theme="dark"] .drawer-close:hover,
+[data-theme="dark"] .dr-sug-item:hover,
+[data-theme="dark"] .btn-dr-secundario:hover,
+[data-theme="dark"] .dr-item-acciones button:hover,
+[data-theme="dark"] .dr-tabs { background: var(--dk-surface-2) !important; }
+[data-theme="dark"] .dr-cliente-seleccionado { background: var(--dk-accent-bg) !important; }
+[data-theme="dark"] .dr-tab.active { background: var(--dk-surface-0) !important; }
+[data-theme="dark"] .dr-respuesta-box textarea:disabled { background: var(--dk-surface-1) !important; }
