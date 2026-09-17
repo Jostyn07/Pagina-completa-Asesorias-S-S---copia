@@ -899,3 +899,21 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
 [data-theme="dark"] .dr-cliente-seleccionado { background: var(--dk-accent-bg) !important; }
 [data-theme="dark"] .dr-tab.active { background: var(--dk-surface-0) !important; }
 [data-theme="dark"] .dr-respuesta-box textarea:disabled { background: var(--dk-surface-1) !important; }
+
+[data-theme="dark"] .contents { background-color: #1a1a24 !important; border-color: #2e2e3e !important; }
+
+[data-theme="dark"] .bar__search {
+    background-color: #121218 !important;
+    border: none;
+}
+[data-theme="dark"] .bar__search .search {
+    background: transparent !important;
+    border: none !important;
+}
+
+
+[data-theme="dark"] .btn-toggle-rec {
+    background: var(--btn-azul) !important;
+    color: var(--text-color);
+    border: none !important;
+}
