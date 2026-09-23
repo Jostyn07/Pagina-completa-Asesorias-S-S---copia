@@ -283,14 +283,42 @@ body {
 
 .section-content {
     padding: 25px;
-    max-height: 2000px;
-    overflow: hidden;
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
     transition: max-height 0.3s ease, padding 0.3s ease;
 }
 
-.section-header.collapsed + .section-content {
+.section-header.collapsed + .section-content, .form-section.collapsed > .section-content {
     max-height: 0;
     padding: 0 25px;
+    overflow: hidden;
+}
+
+.section-content::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 25px 0;
+}
+
+.section-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.section-content::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--color-hover-primary), var(--color-primary, var(--color-hover-primary)));
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.section-content::-webkit-scrollbar-thumb {
+    background: var(--color-hover-primary);
+    background-clip: padding-box;
+}
+
+.section-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-hover-primary) transparent;
 }
 
 /* ============================================

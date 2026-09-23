@@ -134,6 +134,19 @@
             </div>
         </div>
 
+        <div class="analisis-nav-tabs" id="analisisNavTabs">
+            <button class="analisis-nav-tabs" data-vista="general" onclick="cambiarVistaAnalisis('general')">
+                <span class="material-symbols-rounded">pie_chart</span>
+                Análisis general
+            </button>
+            <button class="analisis-nav-tabs" data-vista="especifico" onclick="cambiarVistaAnalisis('especifico')">
+                <span class="material-symbols-rounded">leaderboard</span>
+                Análisis especifico
+            </button>
+        </div>
+
+        <div id="vistaAnalisisGeneral" class="vista-analisis"></div>
+
         <!-- RESUMEN DE SCORING -->
         <div class="analisis-scoring-resumen" id="scoringResumen">
             <div class="scoring-card rojo">
@@ -373,6 +386,34 @@
             <div id="planesContenedor"></div>
         </div>
 
+    </div>
+    <!-- Vista analisis especifico -->
+    <div id="vistaAnalisisEspecifico" class="vista-analisis" style="display: none;">
+        <div class="analisis-header" style="margin: 20px;">
+            <div class="analisis-header-left">
+                <h1>Rendimiento de vendedores</h1>
+                <p>Cantidad de ventas frente a la meta, por operador</p>
+            </div>
+        </div>
+        <div class="analisis-header-right">
+            <div class="analisis-operador-wrap" id="wrapSelectDepartamentoEspecifico" style="display: none;">
+                <span class="material-symbols-rounded">apartment</span>
+                <select id="selectDepartamentoEspecifico" onchange="cambiarDepartamentoEspecifico()">
+                    <option value="">Todos los departamentos</option>
+                </select>
+            </div>
+            <div class="analisis-operador-wrap" id="wrapSelectOperadorEspecifico" style="display: none;">
+                <span class="material-symbols-rounded">person</span>
+                <select id="selectOperadorEspecifico" onchange="cambiarOperadorEspecifico()"></select>
+            </div>
+            <div class="analisis-operador-wrap">
+                <span class="material-symbols-rounded">calendar_month</span>
+                <select id="selectAnioEspecifico" onchange="cargarRendimientoEspecifico()"></select>
+            </div>
+            <div class="analisis-operador-wrap">
+                <select id="selectAnioEspecifico" onchange="cargarRendimientoEspecifico()"></select>
+            </div>
+        </div>
     </div>
 
     <!-- SCRIPTS -->
