@@ -47,6 +47,16 @@
                 <span class="material-symbols-rounded">description</span>
                 <span>Pólizas</span>
             </a>
+
+            <a href="https://www.xiris.online/login" id="menu-xiris" class="nav-item" target="_blank" rel="noopener">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                <span>Xiris</span>
+            </a>
+
             <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
                 <span class="material-symbols-rounded">task_alt</span>
                 <span>Recordatorios</span>
@@ -416,6 +426,73 @@
         </div>
     </div>
 
+    <div id="rendimientoSinDepartamento" class="analisis-tabla-vacia" style="display: none;">
+        <span class="material-symbols-rounded">apartment</span>
+        Este usuario todavía no tiene un departamento asignado. Pidele al administrador que lo asigne.
+    </div>
+
+    <div id="rendimientoContenido">
+        <!-- KPI´s principales -->
+         <div class="analisis-scoring-resumen">
+            <div class="scoring-card verde" id="cardVentasRealizadas" style="cursor: pointer"; onclick="irAPolizasDesdeRendimiento(mes)" title="Ver estas polizas">
+                <div class="scoring-card-icon"><span class="material-symbols-rounded">sell</span></div>
+                <div class="scoring-card-info">
+                    <span class="scoring-card-label">Ventas realizadas</span>
+                    <span class="scoring-card-num" id="rendVentasRealizadas">0</span>
+                    <span class="scoring-card-sub" id="rendPeriodoTexto">-</span>
+                </div>
+            </div>
+            <div class="scoring-card verde">
+                <div class="scoring-card-icon"><span class="material-symbols-rounded">flag</span></div>
+                <div class="scoring-card-info">
+                    <span class="scoring_cartera-label">Meta del mes</span>
+                    <span class="scoring-card-num" id="rendMeta">0</span>
+                    <span class="scoring-card-sub">Ventas realizadas / Meta x 100</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI's complementarios -->
+        <div class="analisis-scoring-resumen">
+            <div class="scoring-card">
+                <div class="scoring-card-icon"><span class="material-symbols-rounded">treding_up</span></div>
+                <div class="scoring-card-info">
+                    <span class="scoring-card-label">Evolución vs. mes anterior</span>
+                    <span class="scoring-card-num" id="rendEvolucion">-</span>
+                </div>
+            </div>
+            <div class="scoring-card">
+                <div class="scoring-card-icon"><span class="material-symbols-rounded">today</span></div>
+                <div class="scoring-card-info">
+                    <span class="scoring-card-label">Promedio diario</span>
+                    <span class="scoring-card-num" id="rendPromedioDiario">-</span>
+                </div>
+            </div>
+            <div class="scoring-card">
+                <div class="scoring-card-icon"><span class="material-symbols-rounded">arrow_upward</span></div>
+                <div class="scoring-card-info">
+                    <span class="scoring-card-label">Mejor semana</span>
+                    <span class="scoring-card-num" id="rendPeroSemana">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="analisis-graficas">
+            <div class="analisis-grafica-card">
+                <h3><span class="material-symbols-rounded">bar_chart</span>Ventas diarias</h3>
+                <div class="grafica-wrap">
+                    <div class="graficaVentasDiarias" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+            <div class="analisis-grafica-card">
+                <h3><span class="material-symbols-rounded">view_week</span>ventas por semana</h3>
+                <div class="grafica-wrap">
+                    <div id="graficaVentasSemanales" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -427,6 +504,7 @@
     <script src="../js/analisis.js"></script>
     <script src="../js/fab.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
     <script src="../js/campana_notificaciones.js"></script>
     <script src="../js/banners.js"></script>
     <script src="../js/recordatorios.js"></script>
@@ -435,6 +513,7 @@
     <script src="../js/ia_contexto.js"></script>
     <script src="../js/ia_chat.js"></script>
     <script src="../js/notificaciones_calidad.js"></script>
+    script src="../js/xiris.js"></script>
     
 </body>
 </html>

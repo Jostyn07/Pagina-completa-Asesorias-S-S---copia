@@ -1209,3 +1209,146 @@ function toggleFiltroAvanzadoCheck(clave, btn) {
     btn.classList.toggle('active', filtrosAvanzados[clave]);
     renderizarTabla();
 }
+
+// Gráficas de rendimiento
+
+let chartVentasDiarias = null;
+let seriesVentasDiarias = null;
+let chartVentasSemanales = null;
+let seriesVentasSemanales = null;
+
+function fechaLW(fechaStr) {
+    const [anio, mes, dia] = fechaStr.split('-').map(Number);
+    return { year: anio, month: mes, day: dia};
+}
+
+function crearGraficaVentasDiarias() {
+    const contenedor = document.getElementById('grficaVentasDiarias');
+    if (!contenedor || chartVentasDiarias) return;
+
+    chartVentasDiarias = LightweightCharts.createChart(contenedor, {
+        layout: { textColor: '#64748b', background: { type: 'solid', color: 'transparent'} },
+        grid: { vertLines: { visible: false }, horzLines: { color: '#e2e8f0' } },
+        timeScale: { borderColor: '#e2e8f0'},
+        autoSize: true
+    });
+
+    seriesVentasDiarias = chartVentasDiarias.addHistogramSeries({
+        color: '#6366f1',
+        priceFormat: { type: 'volume' }
+    });
+
+    chartVentasDiarias.subscribeClick((param) => {
+        if (!param.time) return;
+        const {year, month, day} = param.time;
+        const fecha = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        irAPolizasDesdeRendimiento('dia', fecha, fecha);
+    });
+}
+
+function renderizarGraficaVentasDiarias(ventasPorDia) {
+    crearGraficaVentasDiarias();
+    const datos = (ventasPorDia || []).map(v => ({
+        time: fechaLW(v.dia),
+        value: v.cantidad
+    }));
+    seriesVentasDiarias.setData(datos);
+    chartVentasDiarias.timeScale().fitContent();
+}
+
+function crearGraficaVentasSemanales() {
+    const contenedor = document.getElementById('graficaVentasSemanales');
+    if (!contenedor || chartVentasSemanales) return;
+
+    chartVentasSemanales = LightweightCharts.createChart(contenedor, {
+        layout: { textColor: '#64748b', background: { type: 'solid', color: 'transparent'} },
+        grid: { vertLines: { visible: false }, horzLines: { color: '#e2e8f0' } },
+        timeScale: { borderColor: '#e2e8f0' },
+        rightPriceScale: { borderColor: '#e2e8f0' },
+        autoSize: true
+    });
+
+    seriesVentasSemanales = chartVentasSemanales.addHistogramSeries({
+        color: '#f9e0b',
+        priceFormat: { type: 'volume'}
+    });
+
+    chartVentasSemanales.subscribeClick((param) => {
+        if (!param.time) return;
+        const { year, month, day } = param.time;
+
+        const inicioSemana = new Date(year, month - 1, day);
+        const finMes = new Date(year, month, 0);
+        let finSemana = new Date(year, month -1, day + 6);
+        if (finSemana > finMes) finSemana = finMes;
+
+        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        irAPolizasDesdeRendimiento('semana', fmt(inicioSemana), fmt(finSemana));
+    });
+}
+
+function renderizarGraficaVentasSemanales(ventasPorSemana, anio, mes) {
+    crearGraficaVentasSemanales();
+    const datos = (ventasPorSemana || []).map(v => ({
+        time: { year: anio, month: mes, day: (v.semana - 1) * 7 + 1},
+        value: v.cantidad
+    }));
+    seriesVentasSemanales.setData(datos);
+    chartVentasSemanales.timeScale().fitContent();
+}
+
+// Analisis especifico
+
+const NOMBRES_MESES_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+let vistaAnalisisActual = 'general';
+let vistaEspecificaInicializada = false;
+let operadoresEspecificoLista = [];
+
+function puedeVerTodosRendimiento() {
+    return esAdministrador() || (datosUsuario && datosUsuario.es_supervisor);
+}
+
+function cambiarVistaAnalisis(vista) {
+    vistaAnalisisActual = vista;
+
+    document.querySelectorAll('.analisis-nav-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataser.vista === vista);
+    });
+
+    document.getElementById('vistaAnalisisGeneral').style.display = vista === 'general' ? 'block' : 'none';
+    document.getElementById('vistaAnalisisEspecifico').style.display = vista === 'especifico' ? 'block' : 'none';
+
+    if (vista === 'especifico' && !vistaEspecificaInicializada) {
+        vistaEspecificaInicializada = true;
+        inicializarVistaEspecifica();
+    }
+}
+
+function inicializarSelectoresEspecifico() {
+    const selectMes = document.getElementById('selectMesEspecifico');
+    const selectAnio = document.getElementById('selectAnioEspecifico');
+
+    const hoy = new Date();
+    selectMes.innerHTML = NOMBRES_MESES_ES
+        .map((nombre, idx) => `<option  value="${idx + 1}">${nombre}</option>`).join('');
+    selectMes.balue = hoy.getMonth() + 1
+
+    const anioActual = hoy.getFullYear();
+    selectAnio.innerHTML = [anioActual - 1, anioActual, anioActual + 1]
+        .map(a => `<option value ="${a}">${a}</option>`).join('');
+    selectAnio.value = anioActual;
+}
+
+async function inicializarVistaEspecifica() {
+    inicializarSelectoresEspecifico();
+
+    if (puedeVerTodosRendimientos()) {
+        document.getElementById('wrapSelectDepartamentoEspecifico').style.display = 'flex';
+        document.getElementById('wrapSelectOperadorEspecifico').style.display = 'flex';
+        await cargarDepartamentosEspecifico();
+        await cargarOperadoresEspecifico();
+    }
+
+    await 
+}
