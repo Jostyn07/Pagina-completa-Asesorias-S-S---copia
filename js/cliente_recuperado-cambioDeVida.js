@@ -513,6 +513,8 @@ function calcularFechasAutomaticas(poliza) {
         if (spanFinal) spanFinal.textContent   = fFinal  || '--/--/----';
         if (hiddenFinal) hiddenFinal.value     = poliza.fecha_final_cobertura  || '';
     }
+
+    aplicarFechaFinalCobertura();
 }
 
 function formatearFechaSinZonaHoraria(fechaStr, formato = 'largo') {
@@ -591,6 +593,36 @@ function detectarCamposModificados(datosNuevos) {
 }
 
 // ============================================
+// FECHA FINAL DE COBERTURA AUTOMÁTICA
+// ============================================
+// Recuperada, Cambio de vida y Recuperada y cambio de vida terminan siempre el
+// 31 de diciembre del año de la fecha de efectividad (ej. 12/31/2026).
+// Se fija aquí para no depender de que el operador la escriba bien.
+
+const TIPOS_FIN_DE_ANIO = ['Recuperada', 'Cambio de vida', 'Recuperada y cambio de vida'];
+
+function fechaFinalCoberturaAutomatica() {
+    const tipo = document.getElementById('tipoModificacion')?.value || '';
+    if (!TIPOS_FIN_DE_ANIO.includes(tipo)) return null;
+    const efectividad = document.getElementById('fechaEfectividad')?.value || '';
+    const anio = Number(efectividad.slice(0, 4)) || new Date().getFullYear();
+    return `${anio}-12-31`;
+}
+
+// Actualiza el campo oculto y lo que se ve en pantalla
+function aplicarFechaFinalCobertura() {
+    const iso = fechaFinalCoberturaAutomatica();
+    if (!iso) return;
+    const hidden = document.getElementById('fechaFinalCobertura');
+    const span   = document.getElementById('displayFechaFinal');
+    if (hidden) hidden.value = iso;
+    if (span) {
+        const [a, m, d] = iso.split('-');
+        span.textContent = `${m}/${d}/${a}`;
+    }
+}
+
+// ============================================
 // OBTENER DATOS DEL FORMULARIO
 // ============================================
 
@@ -644,7 +676,7 @@ function obtenerDatosFormulario() {
         // FECHAS (hidden ISO)
         fecha_efectividad:       getFecha('fechaEfectividad'),
         fecha_inicial_cobertura: getFecha('fechaInicialCobertura'),
-        fecha_final_cobertura:   getFecha('fechaFinalCobertura'),
+        fecha_final_cobertura:   fechaFinalCoberturaAutomatica() || getFecha('fechaFinalCobertura'),
     };
 }
 
@@ -1335,6 +1367,7 @@ function inicializarQuill() {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', async function() {
+    document.getElementById('tipoModificacion')?.addEventListener('change', aplicarFechaFinalCobertura);
 
     // 1. Editor de notas
     inicializarQuill();
