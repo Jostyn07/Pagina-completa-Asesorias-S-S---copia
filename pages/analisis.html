@@ -127,9 +127,9 @@
                     <p>Scoring predictivo de riesgo de cancelación por cliente</p>
                 </div>
             </div>
-            <div class="analisis-header-right">
+            <div class="analisis-header-right" id="accionesGeneral">
                 <!-- Selector de operador -->
-                <div class="analisis-operador-wrap">
+                <div class="analisis-operador-wrap" id="wrapSelectOperador">
                     <span class="material-symbols-rounded">person</span>
                     <select id="selectOperador" onchange="cambiarOperador()">
                         <option value="todos">Todos los operadores</option>
@@ -145,17 +145,18 @@
         </div>
 
         <div class="analisis-nav-tabs" id="analisisNavTabs">
-            <button class="analisis-nav-tabs" data-vista="general" onclick="cambiarVistaAnalisis('general')">
+            <button class="analisis-nav-tab active" data-vista="general" onclick="cambiarVistaAnalisis('general')">
                 <span class="material-symbols-rounded">pie_chart</span>
                 Análisis general
             </button>
-            <button class="analisis-nav-tabs" data-vista="especifico" onclick="cambiarVistaAnalisis('especifico')">
+            <button class="analisis-nav-tab" data-vista="especifico" onclick="cambiarVistaAnalisis('especifico')">
                 <span class="material-symbols-rounded">leaderboard</span>
-                Análisis especifico
+                Análisis específico
             </button>
         </div>
 
-        <div id="vistaAnalisisGeneral" class="vista-analisis"></div>
+        <!-- ============ VISTA: ANÁLISIS GENERAL ============ -->
+        <div id="vistaAnalisisGeneral" class="vista-analisis">
 
         <!-- RESUMEN DE SCORING -->
         <div class="analisis-scoring-resumen" id="scoringResumen">
@@ -302,7 +303,7 @@
                         onclick="filtrarTabla('verde', this)">
                     <span class="dot"></span> Verde
                 </button>
-                <button class="analisis-filtro-btn" id=""btnFiltrosAvanzados onclick="toggleFiltrosPanel()">
+                <button class="analisis-filtro-btn" id="btnFiltrosAvanzados" onclick="toggleFiltrosPanel()">
                     <span class="material-symbols-rounded">tune</span>
                     Filtros avanzados
                 </button>
@@ -374,7 +375,7 @@
                 </thead>
                 <tbody id="analisisTbody">
                     <tr>
-                        <td colspan="8" class="analisis-tabla-vacia">
+                        <td colspan="9" class="analisis-tabla-vacia">
                             <span class="material-symbols-rounded">hourglass_empty</span>
                             Cargando datos...
                         </td>
@@ -396,101 +397,119 @@
             <div id="planesContenedor"></div>
         </div>
 
-    </div>
-    <!-- Vista analisis especifico -->
-    <div id="vistaAnalisisEspecifico" class="vista-analisis" style="display: none;">
-        <div class="analisis-header" style="margin: 20px;">
-            <div class="analisis-header-left">
-                <h1>Rendimiento de vendedores</h1>
-                <p>Cantidad de ventas frente a la meta, por operador</p>
-            </div>
         </div>
-        <div class="analisis-header-right">
-            <div class="analisis-operador-wrap" id="wrapSelectDepartamentoEspecifico" style="display: none;">
+        <!-- ============ FIN VISTA GENERAL ============ -->
+
+        <!-- ============ VISTA: ANÁLISIS ESPECÍFICO ============ -->
+        <div id="vistaAnalisisEspecifico" class="vista-analisis" style="display: none;">
+
+            <div class="analisis-tabla-header">
+                <div class="analisis-tabla-titulo">
+                    <span class="material-symbols-rounded">leaderboard</span>
+                    <div>
+                        <span>Rendimiento de vendedores</span>
+                        <p class="rend-subtitulo">Cantidad de ventas frente a la meta, por operador</p>
+                    </div>
+                </div>
+                <div class="analisis-header-right">
+                    <div class="analisis-operador-wrap" id="wrapSelectDepartamentoEspecifico" style="display: none;">
+                        <span class="material-symbols-rounded">apartment</span>
+                        <select id="selectDepartamentoEspecifico" onchange="cambiarDepartamentoEspecifico()">
+                            <option value="">Todos los departamentos</option>
+                        </select>
+                    </div>
+                    <div class="analisis-operador-wrap" id="wrapSelectOperadorEspecifico" style="display: none;">
+                        <span class="material-symbols-rounded">person</span>
+                        <select id="selectOperadorEspecifico" onchange="cambiarOperadorEspecifico()"></select>
+                    </div>
+                    <div class="analisis-operador-wrap">
+                        <span class="material-symbols-rounded">calendar_month</span>
+                        <select id="selectMesEspecifico" onchange="cargarRendimientoEspecifico()"></select>
+                    </div>
+                    <div class="analisis-operador-wrap">
+                        <select id="selectAnioEspecifico" onchange="cargarRendimientoEspecifico()"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="rendimientoSinDepartamento" class="analisis-tabla-vacia" style="display: none;">
                 <span class="material-symbols-rounded">apartment</span>
-                <select id="selectDepartamentoEspecifico" onchange="cambiarDepartamentoEspecifico()">
-                    <option value="">Todos los departamentos</option>
-                </select>
+                Este usuario todavía no tiene un departamento asignado. Pídele al administrador que lo asigne.
             </div>
-            <div class="analisis-operador-wrap" id="wrapSelectOperadorEspecifico" style="display: none;">
-                <span class="material-symbols-rounded">person</span>
-                <select id="selectOperadorEspecifico" onchange="cambiarOperadorEspecifico()"></select>
-            </div>
-            <div class="analisis-operador-wrap">
-                <span class="material-symbols-rounded">calendar_month</span>
-                <select id="selectAnioEspecifico" onchange="cargarRendimientoEspecifico()"></select>
-            </div>
-            <div class="analisis-operador-wrap">
-                <select id="selectAnioEspecifico" onchange="cargarRendimientoEspecifico()"></select>
-            </div>
-        </div>
-    </div>
 
-    <div id="rendimientoSinDepartamento" class="analisis-tabla-vacia" style="display: none;">
-        <span class="material-symbols-rounded">apartment</span>
-        Este usuario todavía no tiene un departamento asignado. Pidele al administrador que lo asigne.
-    </div>
+            <div id="rendimientoContenido" class="vista-analisis-contenido">
+                <!-- KPIs principales -->
+                <div class="analisis-scoring-resumen">
+                    <div class="scoring-card verde" id="cardVentasRealizadas" style="cursor: pointer;"
+                         onclick="irAPolizasDesdeRendimiento('mes')" title="Ver estas pólizas">
+                        <div class="scoring-card-icon"><span class="material-symbols-rounded">sell</span></div>
+                        <div class="scoring-card-info">
+                            <span class="scoring-card-label">Ventas realizadas</span>
+                            <span class="scoring-card-num" id="rendVentasRealizadas">0</span>
+                            <span class="scoring-card-sub" id="rendPeriodoTexto">-</span>
+                        </div>
+                    </div>
+                    <div class="scoring-card amarillo">
+                        <div class="scoring-card-icon"><span class="material-symbols-rounded">flag</span></div>
+                        <div class="scoring-card-info">
+                            <span class="scoring-card-label">Meta del mes</span>
+                            <span class="scoring-card-num" id="rendMeta">0</span>
+                            <span class="scoring-card-sub">Ventas esperadas en el periodo</span>
+                        </div>
+                    </div>
+                    <div class="scoring-card verde">
+                        <div class="scoring-card-icon"><span class="material-symbols-rounded">percent</span></div>
+                        <div class="scoring-card-info">
+                            <span class="scoring-card-label">Cumplimiento</span>
+                            <span class="scoring-card-num" id="rendCumplimiento">-</span>
+                            <span class="scoring-card-sub">Ventas realizadas / Meta × 100</span>
+                        </div>
+                    </div>
+                </div>
 
-    <div id="rendimientoContenido">
-        <!-- KPI´s principales -->
-         <div class="analisis-scoring-resumen">
-            <div class="scoring-card verde" id="cardVentasRealizadas" style="cursor: pointer"; onclick="irAPolizasDesdeRendimiento(mes)" title="Ver estas polizas">
-                <div class="scoring-card-icon"><span class="material-symbols-rounded">sell</span></div>
-                <div class="scoring-card-info">
-                    <span class="scoring-card-label">Ventas realizadas</span>
-                    <span class="scoring-card-num" id="rendVentasRealizadas">0</span>
-                    <span class="scoring-card-sub" id="rendPeriodoTexto">-</span>
+                <!-- KPIs complementarios -->
+                <div class="analisis-scoring-resumen">
+                    <div class="scoring-card">
+                        <div class="scoring-card-icon rend-icon"><span class="material-symbols-rounded">trending_up</span></div>
+                        <div class="scoring-card-info">
+                            <span class="scoring-card-label">Evolución vs. mes anterior</span>
+                            <span class="scoring-card-num" id="rendEvolucion">-</span>
+                        </div>
+                    </div>
+                    <div class="scoring-card">
+                        <div class="scoring-card-icon rend-icon"><span class="material-symbols-rounded">today</span></div>
+                        <div class="scoring-card-info">
+                            <span class="scoring-card-label">Promedio diario</span>
+                            <span class="scoring-card-num" id="rendPromedioDiario">-</span>
+                        </div>
+                    </div>
+                    <div class="scoring-card">
+                        <div class="scoring-card-icon rend-icon"><span class="material-symbols-rounded">arrow_upward</span></div>
+                        <div class="scoring-card-info">
+                            <span class="scoring-card-label">Mejor semana</span>
+                            <span class="scoring-card-num" id="rendMejorSemana">-</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="scoring-card verde">
-                <div class="scoring-card-icon"><span class="material-symbols-rounded">flag</span></div>
-                <div class="scoring-card-info">
-                    <span class="scoring_cartera-label">Meta del mes</span>
-                    <span class="scoring-card-num" id="rendMeta">0</span>
-                    <span class="scoring-card-sub">Ventas realizadas / Meta x 100</span>
-                </div>
-            </div>
-        </div>
 
-        <!-- KPI's complementarios -->
-        <div class="analisis-scoring-resumen">
-            <div class="scoring-card">
-                <div class="scoring-card-icon"><span class="material-symbols-rounded">treding_up</span></div>
-                <div class="scoring-card-info">
-                    <span class="scoring-card-label">Evolución vs. mes anterior</span>
-                    <span class="scoring-card-num" id="rendEvolucion">-</span>
-                </div>
-            </div>
-            <div class="scoring-card">
-                <div class="scoring-card-icon"><span class="material-symbols-rounded">today</span></div>
-                <div class="scoring-card-info">
-                    <span class="scoring-card-label">Promedio diario</span>
-                    <span class="scoring-card-num" id="rendPromedioDiario">-</span>
-                </div>
-            </div>
-            <div class="scoring-card">
-                <div class="scoring-card-icon"><span class="material-symbols-rounded">arrow_upward</span></div>
-                <div class="scoring-card-info">
-                    <span class="scoring-card-label">Mejor semana</span>
-                    <span class="scoring-card-num" id="rendPeroSemana">-</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="analisis-graficas">
-            <div class="analisis-grafica-card">
-                <h3><span class="material-symbols-rounded">bar_chart</span>Ventas diarias</h3>
-                <div class="grafica-wrap">
-                    <div class="graficaVentasDiarias" style="width: 100%; height: 100%;"></div>
-                </div>
-            </div>
-            <div class="analisis-grafica-card">
-                <h3><span class="material-symbols-rounded">view_week</span>ventas por semana</h3>
-                <div class="grafica-wrap">
-                    <div id="graficaVentasSemanales" style="width: 100%; height: 100%;"></div>
+                <div class="analisis-graficas rend-graficas">
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">bar_chart</span>Ventas diarias</h3>
+                        <div class="grafica-wrap rend-grafica-wrap">
+                            <div id="graficaVentasDiarias" style="width: 100%; height: 100%;"></div>
+                        </div>
+                    </div>
+                    <div class="analisis-grafica-card">
+                        <h3><span class="material-symbols-rounded">view_week</span>Ventas por semana</h3>
+                        <div class="grafica-wrap rend-grafica-wrap">
+                            <div id="graficaVentasSemanales" style="width: 100%; height: 100%;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+        <!-- ============ FIN VISTA ESPECÍFICA ============ -->
+
     </div>
 
     <!-- SCRIPTS -->
@@ -501,10 +520,10 @@
     <script src="../js/main.js"></script>
     <script src="../js/formatear_input_fechas.js"></script>
     <script src="../js/scoring_cartera.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
     <script src="../js/analisis.js"></script>
     <script src="../js/fab.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
     <script src="../js/campana_notificaciones.js"></script>
     <script src="../js/banners.js"></script>
     <script src="../js/recordatorios.js"></script>

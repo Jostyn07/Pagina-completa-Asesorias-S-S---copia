@@ -95,7 +95,7 @@ function toggleFiltrosPanel(){
     const panel = document.getElementById('analisisFiltrosAvanzados');
     const btn = document.getElementById('btnFiltrosAvanzados');
     const abierto = panel.classList.toggle('open');
-    btn.classList.toggle('actvie', abierto);
+    if (btn) btn.classList.toggle('active', abierto);
 }
 
 // ============================================
@@ -110,13 +110,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    esOperadorSimple = datosUsuario.rol !== 'admin' && !datosUsuario.es_supervisor;
+    esOperadorSimple = !['admin', 'admin_general'].includes(datosUsuario.rol) && !datosUsuario.es_supervisor;
 
     if (esOperadorSimple) {
-        const wrap = document.querySelector('.analisis-operador-wrap');
+        const wrap = document.getElementById('wrapSelectOperador');
         if (wrap) wrap.style.display = 'none';
     }
 
+    cambiarVistaAnalisis('general');
     await cargarDatosAnalisis();
 });
 
@@ -188,9 +189,15 @@ async function cargarDatosAnalisis() {
             p.operador_nombre !== 'Jostyn Aragon' && p.estado_mercado !== "Cancelado a P.C"
         );
 
-        const { data: revisionData, error: revisionError } = await supabaseClient
+        let { data: revisionData, error: revisionError } = await supabaseClient
             .from('revision_mercado')
-            .select('estado_mercado, recuperado, fecha_ingreso, fecha_recuperacion');
+            .select('estado_mercado, recuperado, fecha_ingreso, fecha_recuperacion, operador_nombre');
+        if (revisionError) {
+            // Si la tabla no tiene operador_nombre, carga sin esa columna
+            ({ data: revisionData, error: revisionError } = await supabaseClient
+                .from('revision_mercado')
+                .select('estado_mercado, recuperado, fecha_ingreso, fecha_recuperacion'));
+        }
 
         if (revisionError) {
             console.error('Error cargando revision_mercado:', revisionError);
@@ -209,7 +216,7 @@ async function cargarDatosAnalisis() {
         console.error('Error cargando análisis:', err);
         document.getElementById('analisisTbody').innerHTML = `
             <tr>
-                <td colspan="8" class="analisis-tabla-vacia">
+                <td colspan="9" class="analisis-tabla-vacia">
                     <span class="material-symbols-rounded">error</span>
                     Error al cargar datos: ${err.message}
                 </td>
@@ -221,7 +228,7 @@ async function cargarDatosAnalisis() {
 function mostrarCargando() {
     document.getElementById('analisisTbody').innerHTML = `
         <tr>
-            <td colspan="8" class="analisis-tabla-vacia">
+            <td colspan="9" class="analisis-tabla-vacia">
                 <span class="material-symbols-rounded">hourglass_empty</span>
                 Cargando datos...
             </td>
@@ -508,7 +515,7 @@ function renderizarGraficasTodos() {
             options: {
                 ...opcionesDonut(),
                 onClick: (evt, elementos) => {
-                    if (!elementos.legth) return;
+                    if (!elementos.length) return;
                     if (elementos[0].index === 0) toggleFiltroSSNOscar();
                 }
             }
@@ -561,13 +568,15 @@ function renderizarGraficasMercadoMensual() {
             (r.operador_nombre || '').trim().toLowerCase() === operadorSeleccionado.trim().toLowerCase()
         );
 
+    // Compara sin tildes ni mayúsculas ("Triple póliza" = "triple poliza")
+    const norm = (v) => (v || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
     const config = [
-        { id: 'graficaRecuperadosMes', campo: 'fecha_recuperacion', color: '#22c55e', filtro: r => r.recuperado === 'Si' },
-        { id: 'graficaCanceladosMesPc',  campo: 'fecha_ingreso',      color: '#ff4444', filtro: r => r.estado_mercado === 'Cancelado a P.C' },
-        { id: 'graficaCanceladosMes',  campo: 'fecha_ingreso',      color: '#ef4444', filtro: r => r.estado_mercado === 'Cancelados' },
-        { id: 'graficaRobadosMes',     campo: 'fecha_ingreso',      color: '#f97316', filtro: r => r.estado_mercado === 'Robado' },
-        { id: 'graficaDoblesMes',      campo: 'fecha_ingreso',      color: '#8b5cf6', filtro: r => r.estado_mercado === 'Doble poliza' },
-        { id: 'graficaTriplesMes',     campo: 'fecha_ingreso',      color: '#f59e0b', filtro: r => r.estado_mercado === 'Triple poliza' },
+        { id: 'graficaRecuperadosMes',  campo: 'fecha_recuperacion', color: '#22c55e', filtro: r => ['si', 'sí', 'true'].includes(norm(r.recuperado)) },
+        { id: 'graficaCanceladosMesPc', campo: 'fecha_ingreso',      color: '#b91c1c', filtro: r => norm(r.estado_mercado) === 'cancelado a p.c' },
+        { id: 'graficaCanceladosMes',   campo: 'fecha_ingreso',      color: '#ef4444', filtro: r => ['cancelado', 'cancelados'].includes(norm(r.estado_mercado)) },
+        { id: 'graficaRobadosMes',      campo: 'fecha_ingreso',      color: '#f97316', filtro: r => norm(r.estado_mercado) === 'robado' },
+        { id: 'graficaDoblesMes',       campo: 'fecha_ingreso',      color: '#8b5cf6', filtro: r => norm(r.estado_mercado) === 'doble poliza' },
+        { id: 'graficaTriplesMes',      campo: 'fecha_ingreso',      color: '#f59e0b', filtro: r => norm(r.estado_mercado) === 'triple poliza' },
     ];
 
     config.forEach(c => {
@@ -633,120 +642,8 @@ function carruselSiguiente(grupo) {
 function toggleFiltroSSNOscar() {
     filtroSSNOscarActivo = !filtroSSNOscarActivo;
     filtroNivelActivo = 'todos';
-    document.querySelectorAll('.analisis-filtro-btn').forEach(b => b.classList.toggle('active', b.dataset.filro === 'todos'));
+    document.querySelectorAll('.analisis-filtro-btn').forEach(b => b.classList.toggle('active', b.dataset.filtro === 'todos'));
     renderizarTabla()
-}
-
-function renderizarGraficasOperador() {
-    const conteoCompania = {};
-    const conteoMercado  = {};
-    let rojo = 0, amarillo = 0, verde = 0;
-    let docsVencidos = 0, docsMenos15 = 0, docsMenos30 = 0, docsBien = 0;
-    const hoy = new Date();
-
-    polizasFiltradas.forEach(p => {
-        const sc = scoringCache[p.id];
-
-        const ec = p.estado_compania || 'Sin estado';
-        conteoCompania[ec] = (conteoCompania[ec] || 0) + 1;
-
-        const em = p.estado_mercado || 'Sin estado';
-        conteoMercado[em] = (conteoMercado[em] || 0) + 1;
-
-        if (sc) {
-            if (sc.nivel === 'rojo')          rojo++;
-            else if (sc.nivel === 'amarillo') amarillo++;
-            else                              verde++;
-        }
-
-        const docStatus = (p.estado_documentos || '').toLowerCase();
-        if (docStatus.includes('incompleto') || docStatus.includes('pendiente')) {
-            if (p.fecha_plazo_documentos) {
-                const dias = Math.ceil((new Date(p.fecha_plazo_documentos) - hoy) / 86400000);
-                if (dias < 0)       docsVencidos++;
-                else if (dias < 15) docsMenos15++;
-                else if (dias < 30) docsMenos30++;
-                else                docsBien++;
-            } else { docsBien++; }
-        } else { docsBien++; }
-    });
-
-    const coloresEstado = {
-        'Activo': '#22c55e', 'Cancelado': '#ef4444', 'Suspendido': '#f59e0b',
-        'Pendiente': '#6366f1', 'Sin estado': '#94a3b8'
-    };
-
-    // Gráfica 1 — Estado compañía
-    destruirGrafica('graficaCompaniaOp');
-    graficasInstancias['graficaCompaniaOp'] = new Chart(
-        document.getElementById('graficaCompaniaOp').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: Object.keys(conteoCompania),
-                datasets: [{
-                    data: Object.values(conteoCompania),
-                    backgroundColor: Object.keys(conteoCompania).map(k => coloresEstado[k] || '#94a3b8'),
-                    borderWidth: 2, borderColor: '#fff'
-                }]
-            },
-            options: opcionesDonut()
-        }
-    );
-
-    // Gráfica 2 — Estado mercado
-    destruirGrafica('graficaMercadoOp');
-    graficasInstancias['graficaMercadoOp'] = new Chart(
-        document.getElementById('graficaMercadoOp').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: Object.keys(conteoMercado),
-                datasets: [{
-                    data: Object.values(conteoMercado),
-                    backgroundColor: Object.keys(conteoMercado).map(k => coloresEstado[k] || '#6366f1'),
-                    borderWidth: 2, borderColor: '#fff'
-                }]
-            },
-            options: opcionesDonut()
-        }
-    );
-
-    // Gráfica 3 — Distribución de riesgo
-    destruirGrafica('graficaRiesgoOp');
-    graficasInstancias['graficaRiesgoOp'] = new Chart(
-        document.getElementById('graficaRiesgoOp').getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Rojo', 'Amarillo', 'Verde'],
-                datasets: [{
-                    data: [rojo, amarillo, verde],
-                    backgroundColor: ['#ef4444', '#f59e0b', '#22c55e'],
-                    borderWidth: 2, borderColor: '#fff'
-                }]
-            },
-            options: opcionesDonut()
-        }
-    );
-
-    // Gráfica 4 — Documentos por urgencia
-    destruirGrafica('graficaDocsOp');
-    graficasInstancias['graficaDocsOp'] = new Chart(
-        document.getElementById('graficaDocsOp').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: ['Vencidos', 'Vencen <15d', 'Vencen <30d', 'Al día'],
-                datasets: [{
-                    data: [docsVencidos, docsMenos15, docsMenos30, docsBien],
-                    backgroundColor: ['#ef4444', '#f59e0b', '#fcd34d', '#22c55e'],
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-            }
-        }
-    );
 }
 
 function opcionesDonut() {
@@ -1210,114 +1107,47 @@ function toggleFiltroAvanzadoCheck(clave, btn) {
     renderizarTabla();
 }
 
-// Gráficas de rendimiento
+// ============================================
+// ANÁLISIS ESPECÍFICO — RENDIMIENTO DE VENDEDORES
+// ============================================
+// Venta = póliza cuyo cliente tiene tipo_registro "Nuevo" o "Venta con registro",
+// contada por clientes.venta_realizada_por y fechada por polizas.created_at
+// (mismo criterio que la clasificación de ventas de home.js).
+
+const NOMBRES_MESES_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const TIPOS_VENTA = ['nuevo', 'venta con registro'];
+const EXCLUIR_VENDEDORES = ['Jostyn Aragón', 'Jostyn Aragon'];
+
+let vistaAnalisisActual = 'general';
+let vistaEspecificaInicializada = false;
+let usuariosEspecifico = [];
+let rendimientoActual = { vendedores: [], desde: null, hasta: null };
 
 let chartVentasDiarias = null;
 let seriesVentasDiarias = null;
 let chartVentasSemanales = null;
 let seriesVentasSemanales = null;
 
-function fechaLW(fechaStr) {
-    const [anio, mes, dia] = fechaStr.split('-').map(Number);
-    return { year: anio, month: mes, day: dia};
-}
-
-function crearGraficaVentasDiarias() {
-    const contenedor = document.getElementById('grficaVentasDiarias');
-    if (!contenedor || chartVentasDiarias) return;
-
-    chartVentasDiarias = LightweightCharts.createChart(contenedor, {
-        layout: { textColor: '#64748b', background: { type: 'solid', color: 'transparent'} },
-        grid: { vertLines: { visible: false }, horzLines: { color: '#e2e8f0' } },
-        timeScale: { borderColor: '#e2e8f0'},
-        autoSize: true
-    });
-
-    seriesVentasDiarias = chartVentasDiarias.addHistogramSeries({
-        color: '#6366f1',
-        priceFormat: { type: 'volume' }
-    });
-
-    chartVentasDiarias.subscribeClick((param) => {
-        if (!param.time) return;
-        const {year, month, day} = param.time;
-        const fecha = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        irAPolizasDesdeRendimiento('dia', fecha, fecha);
-    });
-}
-
-function renderizarGraficaVentasDiarias(ventasPorDia) {
-    crearGraficaVentasDiarias();
-    const datos = (ventasPorDia || []).map(v => ({
-        time: fechaLW(v.dia),
-        value: v.cantidad
-    }));
-    seriesVentasDiarias.setData(datos);
-    chartVentasDiarias.timeScale().fitContent();
-}
-
-function crearGraficaVentasSemanales() {
-    const contenedor = document.getElementById('graficaVentasSemanales');
-    if (!contenedor || chartVentasSemanales) return;
-
-    chartVentasSemanales = LightweightCharts.createChart(contenedor, {
-        layout: { textColor: '#64748b', background: { type: 'solid', color: 'transparent'} },
-        grid: { vertLines: { visible: false }, horzLines: { color: '#e2e8f0' } },
-        timeScale: { borderColor: '#e2e8f0' },
-        rightPriceScale: { borderColor: '#e2e8f0' },
-        autoSize: true
-    });
-
-    seriesVentasSemanales = chartVentasSemanales.addHistogramSeries({
-        color: '#f9e0b',
-        priceFormat: { type: 'volume'}
-    });
-
-    chartVentasSemanales.subscribeClick((param) => {
-        if (!param.time) return;
-        const { year, month, day } = param.time;
-
-        const inicioSemana = new Date(year, month - 1, day);
-        const finMes = new Date(year, month, 0);
-        let finSemana = new Date(year, month -1, day + 6);
-        if (finSemana > finMes) finSemana = finMes;
-
-        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        irAPolizasDesdeRendimiento('semana', fmt(inicioSemana), fmt(finSemana));
-    });
-}
-
-function renderizarGraficaVentasSemanales(ventasPorSemana, anio, mes) {
-    crearGraficaVentasSemanales();
-    const datos = (ventasPorSemana || []).map(v => ({
-        time: { year: anio, month: mes, day: (v.semana - 1) * 7 + 1},
-        value: v.cantidad
-    }));
-    seriesVentasSemanales.setData(datos);
-    chartVentasSemanales.timeScale().fitContent();
-}
-
-// Analisis especifico
-
-const NOMBRES_MESES_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-
-let vistaAnalisisActual = 'general';
-let vistaEspecificaInicializada = false;
-let operadoresEspecificoLista = [];
-
 function puedeVerTodosRendimiento() {
-    return esAdministrador() || (datosUsuario && datosUsuario.es_supervisor);
+    if (!datosUsuario) return false;
+    if (['admin', 'admin_general'].includes(datosUsuario.rol)) return true;
+    if (typeof esAdministrador === 'function' && esAdministrador()) return true;
+    return !!datosUsuario.es_supervisor;
 }
 
 function cambiarVistaAnalisis(vista) {
     vistaAnalisisActual = vista;
 
     document.querySelectorAll('.analisis-nav-tab').forEach(btn => {
-        btn.classList.toggle('active', btn.dataser.vista === vista);
+        btn.classList.toggle('active', btn.dataset.vista === vista);
     });
 
-    document.getElementById('vistaAnalisisGeneral').style.display = vista === 'general' ? 'block' : 'none';
-    document.getElementById('vistaAnalisisEspecifico').style.display = vista === 'especifico' ? 'block' : 'none';
+    document.getElementById('vistaAnalisisGeneral').style.display    = vista === 'general'    ? 'flex' : 'none';
+    document.getElementById('vistaAnalisisEspecifico').style.display = vista === 'especifico' ? 'flex' : 'none';
+
+    // El selector de operador y el Escaneo IA solo aplican a la vista general
+    const acciones = document.getElementById('accionesGeneral');
+    if (acciones) acciones.style.display = vista === 'general' ? 'flex' : 'none';
 
     if (vista === 'especifico' && !vistaEspecificaInicializada) {
         vistaEspecificaInicializada = true;
@@ -1326,29 +1156,289 @@ function cambiarVistaAnalisis(vista) {
 }
 
 function inicializarSelectoresEspecifico() {
-    const selectMes = document.getElementById('selectMesEspecifico');
+    const selectMes  = document.getElementById('selectMesEspecifico');
     const selectAnio = document.getElementById('selectAnioEspecifico');
-
     const hoy = new Date();
+
     selectMes.innerHTML = NOMBRES_MESES_ES
-        .map((nombre, idx) => `<option  value="${idx + 1}">${nombre}</option>`).join('');
-    selectMes.balue = hoy.getMonth() + 1
+        .map((nombre, idx) => `<option value="${idx + 1}">${nombre}</option>`).join('');
+    selectMes.value = hoy.getMonth() + 1;
 
     const anioActual = hoy.getFullYear();
-    selectAnio.innerHTML = [anioActual - 1, anioActual, anioActual + 1]
-        .map(a => `<option value ="${a}">${a}</option>`).join('');
+    selectAnio.innerHTML = [anioActual - 1, anioActual]
+        .map(a => `<option value="${a}">${a}</option>`).join('');
     selectAnio.value = anioActual;
 }
 
 async function inicializarVistaEspecifica() {
     inicializarSelectoresEspecifico();
 
-    if (puedeVerTodosRendimientos()) {
+    if (puedeVerTodosRendimiento()) {
         document.getElementById('wrapSelectDepartamentoEspecifico').style.display = 'flex';
         document.getElementById('wrapSelectOperadorEspecifico').style.display = 'flex';
         await cargarDepartamentosEspecifico();
-        await cargarOperadoresEspecifico();
+        cargarOperadoresEspecifico();
+    } else if (!datosUsuario.departamento) {
+        // Operador sin departamento: no se puede calcular su meta
+        document.getElementById('rendimientoSinDepartamento').style.display = 'block';
+        document.getElementById('rendimientoContenido').style.display = 'none';
+        return;
     }
 
-    await 
+    await cargarRendimientoEspecifico();
+}
+
+async function cargarDepartamentosEspecifico() {
+    const { data, error } = await supabaseClient
+        .from('usuarios')
+        .select('id, nombre, departamento, activo')
+        .eq('activo', true)
+        .order('nombre');
+
+    if (error) {
+        console.error('Error cargando usuarios:', error);
+        usuariosEspecifico = [];
+    } else {
+        usuariosEspecifico = (data || []).filter(u => !EXCLUIR_VENDEDORES.includes(u.nombre));
+    }
+
+    const departamentos = [...new Set(usuariosEspecifico.map(u => u.departamento).filter(Boolean))].sort();
+    const select = document.getElementById('selectDepartamentoEspecifico');
+    select.innerHTML = '<option value="">Todos los departamentos</option>' +
+        departamentos.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+}
+
+function cargarOperadoresEspecifico() {
+    const depto = document.getElementById('selectDepartamentoEspecifico').value;
+    const lista = usuariosEspecifico.filter(u => !depto || u.departamento === depto);
+
+    const select = document.getElementById('selectOperadorEspecifico');
+    select.innerHTML = '<option value="">Todos los operadores</option>' +
+        lista.map(u => `<option value="${escapeHtml(u.nombre)}">${escapeHtml(u.nombre)}</option>`).join('');
+}
+
+async function cambiarDepartamentoEspecifico() {
+    cargarOperadoresEspecifico();
+    await cargarRendimientoEspecifico();
+}
+
+async function cambiarOperadorEspecifico() {
+    await cargarRendimientoEspecifico();
+}
+
+// Vendedores que entran en el cálculo según los selectores
+function vendedoresSeleccionados() {
+    if (!puedeVerTodosRendimiento()) return [datosUsuario.nombre];
+
+    const operador = document.getElementById('selectOperadorEspecifico').value;
+    if (operador) return [operador];
+
+    const depto = document.getElementById('selectDepartamentoEspecifico').value;
+    if (depto) return usuariosEspecifico.filter(u => u.departamento === depto).map(u => u.nombre);
+
+    return null; // null = todos
+}
+
+function fechaLocalISO(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+async function cargarRendimientoEspecifico() {
+    const anio = Number(document.getElementById('selectAnioEspecifico').value);
+    const mes  = Number(document.getElementById('selectMesEspecifico').value);
+
+    const inicioMes     = new Date(anio, mes - 1, 1);
+    const inicioSig     = new Date(anio, mes, 1);
+    const inicioAnterior = new Date(anio, mes - 2, 1);
+    const diasDelMes    = new Date(anio, mes, 0).getDate();
+
+    document.getElementById('rendPeriodoTexto').textContent = `${NOMBRES_MESES_ES[mes - 1]} ${anio}`;
+    document.getElementById('rendVentasRealizadas').textContent = '…';
+
+    // Trae el mes anterior y el actual en una sola consulta
+    const { data, error } = await supabaseClient
+        .from('polizas')
+        .select('id, created_at, clientes!inner ( tipo_registro, venta_realizada_por, archivado )')
+        .gte('created_at', inicioAnterior.toISOString())
+        .lt('created_at', inicioSig.toISOString());
+
+    if (error) {
+        console.error('Error cargando rendimiento:', error);
+        document.getElementById('rendVentasRealizadas').textContent = '—';
+        return;
+    }
+
+    const vendedores = vendedoresSeleccionados();
+    const ventas = (data || []).filter(p => {
+        const c = p.clientes || {};
+        if (c.archivado) return false;
+        if (!TIPOS_VENTA.includes((c.tipo_registro || '').toLowerCase().trim())) return false;
+        const v = c.venta_realizada_por;
+        if (!v || EXCLUIR_VENDEDORES.includes(v)) return false;
+        return !vendedores || vendedores.includes(v);
+    });
+
+    const delMes      = ventas.filter(p => new Date(p.created_at) >= inicioMes);
+    const delAnterior = ventas.filter(p => new Date(p.created_at) <  inicioMes);
+
+    // Conteo por día y por semana del mes (semana 1 = días 1-7, etc.)
+    const porDia = {};
+    for (let d = 1; d <= diasDelMes; d++) porDia[d] = 0;
+    delMes.forEach(p => { porDia[new Date(p.created_at).getDate()]++; });
+
+    const porSemana = {};
+    Object.entries(porDia).forEach(([dia, n]) => {
+        const sem = Math.floor((Number(dia) - 1) / 7) + 1;
+        porSemana[sem] = (porSemana[sem] || 0) + n;
+    });
+
+    rendimientoActual = {
+        vendedores,
+        desde: fechaLocalISO(inicioMes),
+        hasta: fechaLocalISO(new Date(anio, mes, 0))
+    };
+
+    // ---- KPIs
+    const total = delMes.length;
+    document.getElementById('rendVentasRealizadas').textContent = total;
+
+    const meta = await obtenerMetaVentas(vendedores, anio, mes);
+    document.getElementById('rendMeta').textContent = meta ?? 'Sin meta';
+    document.getElementById('rendCumplimiento').textContent =
+        meta ? `${Math.round((total / meta) * 100)}%` : '—';
+
+    const prev = delAnterior.length;
+    const evo  = document.getElementById('rendEvolucion');
+    if (prev === 0) {
+        evo.textContent = total > 0 ? `+${total}` : '—';
+    } else {
+        const pct = Math.round(((total - prev) / prev) * 100);
+        evo.textContent = `${pct > 0 ? '+' : ''}${pct}%`;
+    }
+    evo.style.color = total >= prev ? '#16a34a' : '#dc2626';
+
+    const hoy = new Date();
+    const esMesActual = hoy.getFullYear() === anio && hoy.getMonth() + 1 === mes;
+    const diasTranscurridos = esMesActual ? hoy.getDate() : diasDelMes;
+    document.getElementById('rendPromedioDiario').textContent = (total / diasTranscurridos).toFixed(1);
+
+    const mejor = Object.entries(porSemana).sort((a, b) => b[1] - a[1])[0];
+    document.getElementById('rendMejorSemana').textContent =
+        mejor && mejor[1] > 0 ? `Sem. ${mejor[0]} (${mejor[1]})` : '—';
+
+    // ---- Gráficas
+    renderizarGraficaVentasDiarias(
+        Object.entries(porDia).map(([dia, cantidad]) => ({
+            dia: `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`,
+            cantidad
+        }))
+    );
+    renderizarGraficaVentasSemanales(
+        Object.entries(porSemana).map(([semana, cantidad]) => ({ semana: Number(semana), cantidad })),
+        anio, mes
+    );
+}
+
+// Meta de ventas: tabla metas_ventas (operador_nombre, anio, mes, meta).
+// Si la tabla no existe o no hay metas cargadas, devuelve null.
+async function obtenerMetaVentas(vendedores, anio, mes) {
+    try {
+        let q = supabaseClient.from('metas_ventas').select('operador_nombre, meta').eq('anio', anio).eq('mes', mes);
+        if (vendedores) q = q.in('operador_nombre', vendedores);
+        const { data, error } = await q;
+        if (error || !data || data.length === 0) return null;
+        return data.reduce((s, m) => s + (Number(m.meta) || 0), 0) || null;
+    } catch {
+        return null;
+    }
+}
+
+// ---- Gráficas (Lightweight Charts)
+
+function fechaLW(fechaStr) {
+    const [anio, mes, dia] = fechaStr.split('-').map(Number);
+    return { year: anio, month: mes, day: dia };
+}
+
+function opcionesGraficaLW() {
+    const oscuro = document.documentElement.getAttribute('data-theme') === 'dark';
+    const linea = oscuro ? '#2e2e3e' : '#e2e8f0';
+    return {
+        layout: { textColor: oscuro ? '#9ca3b4' : '#64748b', background: { type: 'solid', color: 'transparent' } },
+        grid: { vertLines: { visible: false }, horzLines: { color: linea } },
+        timeScale: { borderColor: linea },
+        rightPriceScale: { borderColor: linea },
+        autoSize: true
+    };
+}
+
+function crearGraficaVentasDiarias() {
+    const contenedor = document.getElementById('graficaVentasDiarias');
+    if (!contenedor || chartVentasDiarias) return;
+
+    chartVentasDiarias = LightweightCharts.createChart(contenedor, opcionesGraficaLW());
+    seriesVentasDiarias = chartVentasDiarias.addHistogramSeries({
+        color: '#6366f1',
+        priceFormat: { type: 'volume' }
+    });
+
+    chartVentasDiarias.subscribeClick((param) => {
+        if (!param.time) return;
+        const { year, month, day } = param.time;
+        const fecha = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        irAPolizasDesdeRendimiento('dia', fecha, fecha);
+    });
+}
+
+function renderizarGraficaVentasDiarias(ventasPorDia) {
+    crearGraficaVentasDiarias();
+    if (!seriesVentasDiarias) return;
+    seriesVentasDiarias.setData((ventasPorDia || []).map(v => ({ time: fechaLW(v.dia), value: v.cantidad })));
+    chartVentasDiarias.timeScale().fitContent();
+}
+
+function crearGraficaVentasSemanales() {
+    const contenedor = document.getElementById('graficaVentasSemanales');
+    if (!contenedor || chartVentasSemanales) return;
+
+    chartVentasSemanales = LightweightCharts.createChart(contenedor, opcionesGraficaLW());
+    seriesVentasSemanales = chartVentasSemanales.addHistogramSeries({
+        color: '#f59e0b',
+        priceFormat: { type: 'volume' }
+    });
+
+    chartVentasSemanales.subscribeClick((param) => {
+        if (!param.time) return;
+        const { year, month, day } = param.time;
+        const inicioSemana = new Date(year, month - 1, day);
+        const finMes = new Date(year, month, 0);
+        let finSemana = new Date(year, month - 1, day + 6);
+        if (finSemana > finMes) finSemana = finMes;
+        irAPolizasDesdeRendimiento('semana', fechaLocalISO(inicioSemana), fechaLocalISO(finSemana));
+    });
+}
+
+function renderizarGraficaVentasSemanales(ventasPorSemana, anio, mes) {
+    crearGraficaVentasSemanales();
+    if (!seriesVentasSemanales) return;
+    seriesVentasSemanales.setData((ventasPorSemana || []).map(v => ({
+        time: { year: anio, month: mes, day: (v.semana - 1) * 7 + 1 },
+        value: v.cantidad
+    })));
+    chartVentasSemanales.timeScale().fitContent();
+}
+
+// Abre Pólizas filtrado por vendedor y rango de fechas (mes, semana o día)
+function irAPolizasDesdeRendimiento(tipo, desde, hasta) {
+    if (tipo === 'mes' || !desde) {
+        desde = rendimientoActual.desde;
+        hasta = rendimientoActual.hasta;
+    }
+    if (!desde) return;
+
+    const params = new URLSearchParams({ desde, hasta, tipo: 'venta' });
+    const v = rendimientoActual.vendedores;
+    if (v && v.length === 1) params.set('vendedor', v[0]);
+
+    window.open(`./polizas.html?${params.toString()}`, '_blank');
 }
