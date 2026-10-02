@@ -2,10 +2,9 @@
 // Botón "Xiris" del sidebar (id="menu-xiris").
 //
 // Al hacer clic muestra a pantalla completa "Conectando tu cuenta de Xiris"
-// (alojada en Xiris: /conexion/index.html?modo=embed) con su sonido ambiente,
-// pide el acceso a la Edge Function "ir-a-xiris" y, al abrirse el candado,
-// navega a Xiris en la misma pestaña. Allí /auth/sso muestra la misma
-// pantalla mientras termina de abrir la sesión.
+// (alojada en Asesorías: /conexion/index.html?modo=embed) con su sonido ambiente,
+// pide el acceso a la Edge Function "ir-a-xiris" y pasa a Xiris (/auth/sso),
+// que muestra su pantalla de carga mientras abre la sesión.
 //
 // Si el usuario no tiene cuenta de Xiris (o algo falla), la pantalla muestra
 // el aviso con el botón "Ir al inicio de sesión", que lleva al login de Xiris.
@@ -16,11 +15,14 @@
 // Cargar DESPUÉS del script que crea el cliente de Supabase.
 
 (function () {
-  const XIRIS_URL = 'https://www.xiris.online'; // sin "/" al final; debe coincidir EXACTO con el origen de Xiris
+  const XIRIS_URL = 'https://www.xiris.online'; // sin "/" al final
   const XIRIS_LOGIN = `${XIRIS_URL}/login`;
+  // La pantalla de conexión vive en ESTE sitio (carpeta /conexion junto a /js y /pages)
+  const CONEXION_BASE = new URL('../conexion/', document.currentScript?.src || location.href).href;
+  const ORIGEN = location.origin;
   const XIRIS_REDIRECT = '/dashboard';
   const VOLUMEN = 0.5;
-  const MINIMO_MS = 2200; // duración mínima de la animación antes de abrir el candado
+  const MINIMO_MS = 1800; // tiempo mínimo de la animación antes de pasar a Xiris
 
   function getClient() {
     // `const` globales no quedan en window, por eso se revisan con typeof
@@ -51,7 +53,7 @@
     link.style.pointerEvents = 'none';
 
     // ---------- 1) Sonido: play() directo en el clic (necesario en iPhone/Safari)
-    const audio = new Audio(`${XIRIS_URL}/conexion/ambient.mp3`);
+    const audio = new Audio(`${CONEXION_BASE}ambient.mp3`);
     audio.loop = true;
     audio.volume = 0;
     let fadeId;
@@ -71,7 +73,7 @@
     const capa = document.createElement('div');
     capa.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#0D0D0F;';
     const frame = document.createElement('iframe');
-    frame.src = `${XIRIS_URL}/conexion/index.html?modo=embed`;
+    frame.src = `${CONEXION_BASE}index.html?modo=embed`;
     frame.title = 'Conectando con Xiris';
     frame.allow = 'autoplay';
     frame.style.cssText = 'width:100%;height:100%;border:0;display:block;';
@@ -84,14 +86,16 @@
     let destino = null;
     let salio = false;
     const pendientes = [];
-    const enviar = (m) => (cargada ? frame.contentWindow.postMessage(m, XIRIS_URL) : pendientes.push(m));
+    const enviar = (m) => (cargada ? frame.contentWindow.postMessage(m, ORIGEN) : pendientes.push(m));
 
     const ir = (url) => {
       if (salio) return;
       salio = true;
-      fade(0, 400);
       window.location.href = url; // misma pestaña
     };
+
+    // Pasa a Xiris, que muestra su propia pantalla de carga mientras abre la sesión
+    const irADestino = () => ir(destino);
 
     const cerrar = () => {
       window.removeEventListener('message', onMsg);
@@ -103,17 +107,16 @@
     };
 
     function onMsg(e) {
-      if (e.origin !== XIRIS_URL || e.source !== frame.contentWindow) return;
+      if (e.origin !== ORIGEN || e.source !== frame.contentWindow) return;
       const d = e.data || {};
       if (d.type === 'xiris-conexion:cargada') {
         cargada = true;
-        pendientes.splice(0).forEach((m) => frame.contentWindow.postMessage(m, XIRIS_URL));
+        pendientes.splice(0).forEach((m) => frame.contentWindow.postMessage(m, ORIGEN));
       }
       if (d.type === 'xiris-conexion:sonido') {
         if (d.on) audio.play().then(() => fade(VOLUMEN, 600)).catch(() => {});
         else fade(0, 400, () => audio.pause());
       }
-      if (d.type === 'xiris-conexion:fin' && destino) ir(destino);
       // Botón del aviso de error: lleva al login de Xiris para entrar manualmente
       if (d.type === 'xiris-conexion:cerrar') ir(XIRIS_LOGIN);
     }
@@ -134,15 +137,21 @@
     (async () => {
       try {
         if (!client) throw new Error('No se encontró la sesión de Asesorías.');
-        const { data, error } = await client.functions.invoke('ir-a-xiris', { body: { redirect: XIRIS_REDIRECT } });
+        // Límite de 15 s para que la pantalla no quede esperando indefinidamente
+        const limite = new Promise((_, no) =>
+          setTimeout(() => no(new Error('Xiris está tardando en responder. Vuelve a intentarlo.')), 15000));
+        console.info('[Ir a Xiris] pidiendo acceso');
+        const { data, error } = await Promise.race([
+          client.functions.invoke('ir-a-xiris', { body: { redirect: XIRIS_REDIRECT } }),
+          limite,
+        ]);
         if (error || !data?.url) throw new Error(await mensajeDeError(error, data));
 
         destino = data.url;
-        setTimeout(() => enviar({ type: 'xiris-conexion:listo' }), Math.max(0, MINIMO_MS - (Date.now() - inicio)));
-        // Respaldo: si la pantalla no cargó, se entra igual
-        setTimeout(() => !cargada && ir(destino), MINIMO_MS + 2500);
+        console.info('[Ir a Xiris] acceso recibido, pasando a Xiris');
+        setTimeout(irADestino, Math.max(0, MINIMO_MS - (Date.now() - inicio)));
       } catch (e) {
-        console.warn('[Xiris]', e.message);
+        console.error('[Ir a Xiris]', e.message);
         if (cargada) {
           enviar({ type: 'xiris-conexion:error', msg: `${e.message} Puedes entrar con tu correo y contraseña.`, boton: 'Ir al inicio de sesión' });
         } else {
