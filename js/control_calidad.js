@@ -194,6 +194,11 @@ async function guardarEvaluacionEnSupabase(formData) {
         evaluador: formData.get('evaluator'),
         asesor_nombre: document.getElementById('asesorNombre').value || null,
         cliente_id: document.getElementById('ccClienteId').value || null,
+        // Nombre y teléfono del cliente evaluado (queda guardado aunque el cliente cambie)
+        cliente_id_venta: [
+            document.getElementById('ccClienteNombre').textContent.trim(),
+            document.getElementById('ccClienteTelefono').textContent.trim(),
+        ].filter(Boolean).join(' · ') || null,
         operador_id: opId || null,
         canal: formData.get('channel'),
         duracion_audio: formData.get('audioDuration') || null,

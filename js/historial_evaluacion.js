@@ -93,6 +93,33 @@ async function cargarOperadoresFiltro() {
 // ============================================
 // CARGAR EVALUACIONES
 // ============================================
+// Trae nombre y teléfono del cliente evaluado (columna cliente_id)
+async function adjuntarClientes(evaluaciones) {
+    const ids = [...new Set(evaluaciones.map(e => e.cliente_id).filter(Boolean))];
+    if (ids.length === 0) return;
+    const { data, error } = await supabaseClient
+        .from('clientes')
+        .select('id, nombres, apellidos, telefono1')
+        .in('id', ids);
+    if (error) {
+        console.warn('No se pudieron cargar los clientes evaluados:', error);
+        return;
+    }
+    const mapa = Object.fromEntries((data || []).map(c => [c.id, c]));
+    evaluaciones.forEach(e => { e._cliente = mapa[e.cliente_id] || null; });
+}
+
+// Cliente evaluado: enlace a su ficha si existe; si no, el texto guardado
+function htmlClienteEvaluado(evaluacion) {
+    const c = evaluacion._cliente;
+    if (c) {
+        const nombre = `${c.nombres || ''} ${c.apellidos || ''}`.trim() || 'Cliente';
+        const tel = c.telefono1 ? ` · ${c.telefono1}` : '';
+        return `<a href="./cliente_editar.html?id=${c.id}" target="_blank">${nombre}</a>${tel}`;
+    }
+    return evaluacion.cliente_id_venta || 'Sin cliente asociado';
+}
+
 async function cargarEvaluaciones() {
     try {
         ;
@@ -116,6 +143,7 @@ async function cargarEvaluaciones() {
             todasEvaluaciones = obtenerEvaluacionesEjemplo();
         } else {
             todasEvaluaciones = data || [];
+            await adjuntarClientes(todasEvaluaciones);
         }
         
         evaluacionesFiltradas = [...todasEvaluaciones];
@@ -224,8 +252,8 @@ function crearEvaluacionHTML(evaluacion) {
                         <span>${evaluacion.canal}</span>
                     </div>
                     <div class="evaluacion-item">
-                        <label>ID Venta</label>
-                        <span>${evaluacion.cliente_id_venta}</span>
+                        <label>Cliente</label>
+                        <span>${htmlClienteEvaluado(evaluacion)}</span>
                     </div>
                     <div class="evaluacion-item">
                         <label>Checklist</label>
@@ -283,15 +311,15 @@ function verDetalleEvaluacion(evaluacionId) {
                 </div>
                 <div class="detalle-item">
                     <label>Fecha Evaluación</label>
-                    <p>${new Date(evaluacion.fecha_evaluacion).toLocaleDateString('es-ES')}</p>
+                    <p>${new Date(evaluacion.fecha_evaluacion + 'T12:00:00').toLocaleDateString('es-ES')}</p>
                 </div>
                 <div class="detalle-item">
                     <label>Evaluador</label>
                     <p>${evaluacion.evaluador}</p>
                 </div>
                 <div class="detalle-item">
-                    <label>ID Cliente/Venta</label>
-                    <p>${evaluacion.cliente_id_venta}</p>
+                    <label>Cliente</label>
+                    <p>${htmlClienteEvaluado(evaluacion)}</p>
                 </div>
                 <div class="detalle-item">
                     <label>Canal</label>

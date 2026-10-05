@@ -1,597 +1,563 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Calidad - Asesorías S&S</title>
-    <script>
-    const t = localStorage.getItem('ss_theme') || 'light';
-    document.documentElement.setAttribute('data-theme', t);
-    </script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/sidebar.css">
-    <link rel="stylesheet" href="../css/control_calidad.css">
-    <link rel="stylesheet" href="../css/darkmode.css">
-    <link rel="stylesheet" href="../css/recordatorios.css">
-    <link rel="stylesheet" href="../css/ia.css">
-    <link rel="stylesheet" href="../css/fab.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
-    <link rel="stylesheet" href="../css/campana.css">
-    <link rel="stylesheet" href="../css/banner.css">
+// ============================================
+// VARIABLES GLOBALES
+// ============================================
+let autoguardadoTimer = null;
+const AUTOSAVE_DELAY = 30000; // 30 segundos
 
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+document.addEventListener('DOMContentLoaded', async function() {
+    await cargarRolUsuario();
+    
+    if (!datosUsuario) {
+        console.error('❌ No hay usuario autenticado');
+        window.location.href = './login.html';
+        return;
+    }
+    
+    // Verificar que sea admin o supervisor
+   if (!tienePermiso('acceso_control_calidad')) {
+        alert('⚠️ No tienes permisos para acceder a esta página');
+        window.location.href = '../pages/home.html';
+        return;
+    }
+    
+    // Inicializar fecha actual
+    const fechaInput = document.getElementById('fechaEvaluacion');
+    if (fechaInput) {
+        fechaInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Cargar nombre del evaluador
+    const evaluadorInput = document.getElementById('evaluador');
+    if (evaluadorInput && datosUsuario.nombre) {
+        evaluadorInput.value = datosUsuario.nombre;
+    }
+    
+    // Intentar cargar borrador guardado
+    cargarBorrador();
+    
+    // Configurar eventos del formulario
+    configurarEventos();
+    
+    // Iniciar autoguardado
+    iniciarAutoguardado();
+    
+    ;
+});
 
-    <!-- For Modern Browsers (SVG) -->
-    <link rel="icon" type="image/svg+xml" href="../images/Logo.png">
+// ============================================
+// CONFIGURAR EVENTOS
+// ============================================
+function configurarEventos() {
+    const form = document.getElementById('formEvaluacion');
+    
+    // Evento de submit
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await enviarEvaluacion();
+    });
+    
+    // Validar resultado seleccionado y mostrar/ocultar errores críticos
+    const resultRadios = document.querySelectorAll('input[name="result"]');
+    resultRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            validarErroresCriticos();
+        });
+    });
+    
+    // Validar cuando se marca/desmarca un error crítico
+    const errorCheckboxes = document.querySelectorAll('input[name="criticalError"]');
+    errorCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            validarErroresCriticos();
+        });
+    });
+}
 
-    <!-- Fallback for Legacy Browsers (ICO) -->
-    <link rel="icon" type="image/x-icon" href="../images/Logo.png" sizes="any">
+// ============================================
+// VALIDAR ERRORES CRÍTICOS
+// ============================================
+function validarErroresCriticos() {
+    const resultadoSeleccionado = document.querySelector('input[name="result"]:checked');
+    const seccionErrores = document.getElementById('seccionErrores');
+    
+    if (!seccionErrores) return;
+    
+    if (resultadoSeleccionado && resultadoSeleccionado.value === 'rejected') {
+        // Si es rechazada, resaltar la sección de errores
+        seccionErrores.style.borderColor = '#ef4444';
+        seccionErrores.style.background = '#fef2f2';
+    } else {
+        // Si es aprobada, volver al estilo normal
+        seccionErrores.style.borderColor = '#e2e8f0';
+        seccionErrores.style.background = '#ffffff';
+    }
+}
 
-    <!-- For Apple Devices (iOS) -->
-    <link rel="apple-touch-icon" href="../images/Logo.png">
-</head>
-<body>
-    <!-- SIDEBAR UNIFICADO -->
-    <aside class="sidebar-unified" id="sidebar">
-        <div class="sidebar-header">
-            <a href="./home.html" class="sidebar-logo-link">
-                <img src="../images/Logo.png" alt="S&S Asesorías" class="sidebar-logo-img">
-            </a>
-            <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
-                <span class="material-symbols-rounded">chevron_left</span>
-            </button>
-        </div>
+// ============================================
+// ENVIAR EVALUACIÓN
+// ============================================
+async function enviarEvaluacion() {
+    const form = document.getElementById('formEvaluacion');
+    
+    // Validar que el formulario esté completo
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    // Validar resultado seleccionado
+    const resultadoSeleccionado = document.querySelector('input[name="result"]:checked');
+    if (!resultadoSeleccionado) {
+        alert('⚠️ Por favor, seleccione un resultado de evaluación (Aprobada/Rechazada)');
+        document.querySelector('.result-options').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    
+    // Si es rechazada, verificar que haya al menos un error crítico
+    if (resultadoSeleccionado.value === 'rejected') {
+        const erroresSeleccionados = document.querySelectorAll('input[name="criticalError"]:checked');
+        if (erroresSeleccionados.length === 0) {
+            alert('⚠️ Si la venta es rechazada, debe marcar al menos un error crítico.');
+            document.getElementById('seccionErrores').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+    }
+    
+    // Recopilar datos del formulario
+    const formData = new FormData(form);
+    
+    try {
+        // Mostrar indicador de carga
+        mostrarCargando(true);
+        
+        // Guardar en Supabase
+        await guardarEvaluacionEnSupabase(formData);
+        
+        // Ocultar indicador
+        mostrarCargando(false);
+        
+        // Mostrar mensaje de éxito
+        mostrarNotificacion('✅ Evaluación guardada correctamente', 'success');
+        
+        // Limpiar borrador
+        localStorage.removeItem('qualityControl_draft');
+        
+        // Preguntar si quiere crear otra o ver historial
+        const respuesta = confirm('Evaluación guardada exitosamente.\n\n¿Desea crear una nueva evaluación?\n\n(Cancelar para ir al historial)');
+        
+        if (respuesta) {
+            limpiarFormulario();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            window.location.href = '../pages/historial_evaluacion.html';
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al guardar evaluación:', error);
+        mostrarCargando(false);
+        mostrarNotificacion('❌ Error al guardar: ' + error.message, 'error');
+    }
+}
 
-        <div class="sidebar-search">
-            <div class="search-box">
-                <span class="material-symbols-rounded">search</span>
-                <input type="text" placeholder="Buscar...">
-            </div>
-        </div>
+// ============================================
+// GUARDAR EVALUACIÓN EN SUPABASE
+// ============================================
+async function guardarEvaluacionEnSupabase(formData) {
 
-        <nav class="sidebar-nav">
-            <a href="./home.html" class="menu-item">
-                <span class="material-symbols-rounded">home</span>
-                <span>Inicio</span>
-            </a>
+    // Notificar al operador
+    const { data: userData } = await supabaseClient
+        .from('usuarios')
+        .select('id')
+        .eq('nombre', document.getElementById('asesorNombre').value || '')
+        .maybeSingle();
 
-            <a href="./polizas.html" class="menu-item">
-                <span class="material-symbols-rounded">description</span>
-                <span>Pólizas</span>
-            </a>
+    const opId = userData?.id || null
 
-            <a href="https://www.xiris.online/login" id="menu-xiris" class="menu-item" target="_blank" rel="noopener">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                    <polyline points="15 3 21 3 21 9"/>
-                    <line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-                <span>Xiris</span>
-            </a>
+    // Recopilar errores críticos
+    const erroresCriticos = [];
+    document.querySelectorAll('input[name="criticalError"]:checked').forEach(checkbox => {
+        erroresCriticos.push(checkbox.value);
+    });
+    
+    // Recopilar seguimiento
+    const seguimiento = [];
+    document.querySelectorAll('input[name="followUp"]:checked').forEach(checkbox => {
+        seguimiento.push(checkbox.value);
+    });
+    
+    // Preparar datos para Supabase
+    const evaluacionData = {
+        fecha_evaluacion: formData.get('evaluationDate'),
+        evaluador: formData.get('evaluator'),
+        asesor_nombre: document.getElementById('asesorNombre').value || null,
+        cliente_id: document.getElementById('ccClienteId').value || null,
+        // Nombre y teléfono del cliente evaluado (queda guardado aunque el cliente cambie)
+        cliente_id_venta: [
+            document.getElementById('ccClienteNombre').textContent.trim(),
+            document.getElementById('ccClienteTelefono').textContent.trim(),
+        ].filter(Boolean).join(' · ') || null,
+        operador_id: opId || null,
+        canal: formData.get('channel'),
+        duracion_audio: formData.get('audioDuration') || null,
+        resultado: formData.get('result'),
+        
+        // Checklist
+        checklist_presentacion: formData.get('item1') || null,
+        checklist_identificacion: formData.get('item2') || null,
+        checklist_explicacion: formData.get('item3') || null,
+        checklist_condiciones: formData.get('item4') || null,
+        checklist_consentimiento: formData.get('item5') || null,
+        checklist_cierre: formData.get('item6') || null,
+        checklist_lenguaje: formData.get('item7') || null,
+        
+        // Errores críticos
+        errores_criticos: erroresCriticos,
+        minuto_error: formData.get('errorMinute') || null,
+        descripcion_error: formData.get('errorDescription') || null,
+        
+        // Feedback
+        hecho_observado: formData.get('observedFact'),
+        impacto: formData.get('impact'),
+        accion_esperada: formData.get('expectedAction'),
+        buenas_practicas: formData.get('goodPractices') || null,
+        
+        // Seguimiento
+        seguimiento: seguimiento,
+        conclusion: formData.get('conclusion') || null,
+        
+        // Metadatos
+        autor_nombre: datosUsuario.nombre || 'Evaluador'
+    };
+    
+    const { data, error } = await supabaseClient
+        .from('evaluaciones_calidad')
+        .insert([evaluacionData])
+        .select()
+        .single();
+    
+    if (error) throw error;
 
-            <a href="#" class="menu-item" onclick="abrirDrawerRecordatorios(); return false;">
-                <span class="material-symbols-rounded">task_alt</span>
-                <span>Recordatorios</span>
-                <span class="sidebar-badge-rec" id="badgeRecordatorios">0</span>
-            </a>
-            <a href="./calendario.html" class="menu-item" id="menuCalendario">
-                <span class="material-symbols-rounded">calendar_month</span>
-                <span>Google Calendar</span>
-            </a>
+    if (opId) {
+        await supabaseClient.from('notificaciones_calidad').insert({
+            operador_id: opId,
+            evaluacion_id: data.id,
+            cliente_nombre: document.getElementById('ccClienteNombre').textContent,
+            resultado: evaluacionData.resultado,
+        })
+    }
 
-            <a href="./tablero.html" class="menu-item" target="_blank">
-                <span class="material-symbols-rounded">grid_view</span>
-                <span>Tablero</span>
-            </a>
+    return data;
+}
 
-            <a href="./analisis.html" class="menu-item" id="menuAnalisis">
-                <span class="material-symbols-rounded">analytics</span>
-                <span>Análisis</span>
-            </a>
+// ============================================
+// AUTOGUARDADO DE BORRADOR
+// ============================================
+function iniciarAutoguardado() {
+    const form = document.getElementById('formEvaluacion');
+    
+    // Guardar borrador cada vez que cambie el formulario
+    form.addEventListener('input', function() {
+        // Reiniciar timer
+        if (autoguardadoTimer) {
+            clearTimeout(autoguardadoTimer);
+        }
+        
+        // Programar autoguardado
+        autoguardadoTimer = setTimeout(() => {
+            guardarBorrador(true);
+        }, AUTOSAVE_DELAY);
+    });
+}
 
-            <a href="#" class="menu-item">
-                <span class="material-symbols-rounded">folder</span>
-                <span>Gestiones</span>
-            </a>
+function guardarBorrador(esAutomatico = false) {
+    const form = document.getElementById('formEvaluacion');
+    const formData = new FormData(form);
+    
+    // Convertir FormData a objeto
+    const borrador = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (borrador[key]) {
+            // Si ya existe, convertir a array
+            if (Array.isArray(borrador[key])) {
+                borrador[key].push(value);
+            } else {
+                borrador[key] = [borrador[key], value];
+            }
+        } else {
+            borrador[key] = value;
+        }
+    }
+    
+    // Guardar en localStorage
+    localStorage.setItem('qualityControl_draft', JSON.stringify(borrador));
+    
+    // Mostrar indicador
+    if (esAutomatico) {
+        mostrarIndicadorAutoguardado();
+    } else {
+        mostrarNotificacion('💾 Borrador guardado', 'success');
+    }
+    
+    ;
+}
 
-            <a href="./solicitud-revision.html" class="menu-item">
-                <span class="material-symbols-rounded">rate_review</span>
-                <span>Solicitud de revisión</span>
-            </a>
-
-            <a href="./para-revisar.html" class="menu-item">
-                <span class="material-symbols-rounded">fact_check</span>
-                <span>Para revisar</span>
-            </a>
-
-            <a href="./control_calidad.html" class="menu-item active">
-                <span class="material-symbols-rounded">verified</span>
-                <span>Control de calidad</span>
-            </a>
-
-            <a href="./historial_evaluacion.html" class="menu-item">
-                <span class="material-symbols-rounded">history</span>
-                <span>Mis Evaluaciones</span>
-            </a>
-
-            <a href="./clientes_archivados.html" class="menu-item" id="menuArchivados">
-                <span class="material-symbols-rounded">inventory_2</span>
-                <span>Archivados</span>
-            </a>
-
-            <a href="./monitoreo.html" class="menu-item" id="menuMonitoreo" style="display:none">
-                <span class="material-symbols-rounded">monitor_heart</span>
-                <span>Monitoreo</span>
-            </a>
-
-            <a href="./movimientos.html" class="menu-item" id="menuMovimientos" style="display:none">
-                <span class="material-symbols-rounded">swap_horiz</span>
-                <span>Movimientos</span>
-            </a>
+function cargarBorrador() {
+    const borradorStr = localStorage.getItem('qualityControl_draft');
+    
+    if (!borradorStr) return;
+    
+    try {
+        const borrador = JSON.parse(borradorStr);
+        const form = document.getElementById('formEvaluacion');
+        
+        // Preguntar si quiere cargar el borrador
+        if (!confirm('📋 Se encontró un borrador guardado.\n\n¿Desea continuar con la evaluación anterior?')) {
+            localStorage.removeItem('qualityControl_draft');
+            return;
+        }
+        
+        // Cargar datos en el formulario
+        for (let [name, value] of Object.entries(borrador)) {
+            const elements = form.elements[name];
             
-            <a href="./usuarios.html" class="menu-item">
-                <span class="material-symbols-rounded">group</span>
-                <span>Usuarios</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-        <button id="btnDarkMode" class="theme-toggle" onclick="toggleDarkMode()" title="Cambiar tema">
-            <span class="material-symbols-rounded">dark_mode</span>
-        </button>
-        </div>
-    </aside>
-
-    <!-- CONTENEDOR PRINCIPAL -->
-    <div class="main-container">
-        <!-- HEADER -->
-        <header class="page-header">
-            <div class="header-content">
-                <div class="header-icon">
-                    <i class="fas fa-clipboard-check"></i>
-                </div>
-                <div class="header-text">
-                    <h1>Control de Calidad</h1>
-                    <p>Evaluación de ventas y desempeño de asesores</p>
-                </div>
-            </div>
-            <div class="header-actions">
-                <button class="btn-secondary" onclick="window.location.href='./historial_evaluaciones.html'">
-                    <i class="fas fa-history"></i>
-                    Ver Historial
-                </button>
-                <button class="btn-secondary" onclick="limpiarFormulario()">
-                    <i class="fas fa-redo"></i>
-                    Nueva Evaluación
-                </button>
-            </div>
-        </header>
-
-        <!-- INDICADOR DE AUTOGUARDADO -->
-        <div class="autosave-indicator" id="autosaveIndicator">
-            <i class="fas fa-check-circle"></i>
-            <span>Borrador guardado automáticamente</span>
-        </div>
-
-        <!-- FORMULARIO DE EVALUACIÓN -->
-        <form id="formEvaluacion" class="evaluation-form">
+            if (!elements) continue;
             
-            <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
-            <section class="form-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-info-circle"></i>
-                    </div>
-                    <div class="section-title">
-                        <h2>Información Básica</h2>
-                        <p>Datos generales de la evaluación</p>
-                    </div>
-                </div>
+            if (elements.length) {
+                // Es un NodeList (radio buttons, checkboxes)
+                if (Array.isArray(value)) {
+                    // Múltiples valores (checkboxes)
+                    value.forEach(val => {
+                        const element = Array.from(elements).find(el => el.value === val);
+                        if (element) element.checked = true;
+                    });
+                } else {
+                    // Un solo valor (radio button)
+                    const element = Array.from(elements).find(el => el.value === value);
+                    if (element) element.checked = true;
+                }
+            } else {
+                // Es un solo elemento
+                elements.value = value;
+            }
+        }
+        
+        ;
+        mostrarNotificacion('📋 Borrador cargado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('Error al cargar borrador:', error);
+        localStorage.removeItem('qualityControl_draft');
+    }
+}
 
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="fechaEvaluacion">
-                            <i class="far fa-calendar"></i>
-                            Fecha de Evaluación
-                            <span class="required">*</span>
-                        </label>
-                        <input type="date" id="fechaEvaluacion" name="evaluationDate" required>
-                    </div>
+function mostrarIndicadorAutoguardado() {
+    const indicador = document.getElementById('autosaveIndicator');
+    if (!indicador) return;
+    
+    indicador.classList.add('show');
+    
+    setTimeout(() => {
+        indicador.classList.remove('show');
+    }, 3000);
+}
 
-                    <div class="form-group">
-                        <label for="evaluador">
-                            <i class="far fa-user"></i>
-                            Evaluador
-                            <span class="required">*</span>
-                        </label>
-                        <input type="text" id="evaluador" name="evaluator" placeholder="Nombre del evaluador" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>
-                            <i class="fas fa-search"></i>
-                            Buscar cliente
-                            <span class="required">*</span>
-                        </label>
-                        <input type="text" id="ccBuscarCliente" placeholder="Nombre o télefono del cliente" oninput="buscarClienteCC(this.value)" autocomplete="off">
-                        <div id="ccSugerencias" style="position: absolute; z-index: 100; background: white; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 200px; overflow: auto; width: 100%; display: none;">
-                        </div>
-                        <div id="ccClienteSeleccionado" style="display: none; margin-top: 8px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 10px; padding: 12px 16px; align-items: center; justify-content: space-between; gap: 12px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span class="material-symbols-rounded" style="color: #22c55e;">check_circle</span>
-                                <div>
-                                    <strong id="ccClienteNombre" style="display: block; font-size: 0.95rem; color: #1e293b;"></strong>
-                                    <small id="ccClienteTelefono" style="color: #64748b;"></small>
-                                </div>
-                            </div>
-                            <button type="button" onclick="limpiarClienteCC()" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 1.2rem;">X</button>
-                        </div>
+// ============================================
+// LIMPIAR FORMULARIO
+// ============================================
+function limpiarFormulario() {
+    const form = document.getElementById('formEvaluacion');
+    form.reset();
+    
+    // Restablecer fecha actual
+    const fechaInput = document.getElementById('fechaEvaluacion');
+    if (fechaInput) {
+        fechaInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Restablecer evaluador
+    const evaluadorInput = document.getElementById('evaluador');
+    if (evaluadorInput && datosUsuario.nombre) {
+        evaluadorInput.value = datosUsuario.nombre;
+    }
+    
+    // Limpiar borrador
+    localStorage.removeItem('qualityControl_draft');
+    
+    // Resetear estilos de sección de errores
+    const seccionErrores = document.getElementById('seccionErrores');
+    if (seccionErrores) {
+        seccionErrores.style.borderColor = '#e2e8f0';
+        seccionErrores.style.background = '#ffffff';
+    }
+    
+    mostrarNotificacion('🔄 Formulario limpiado', 'success');
+}
 
-                        <input type="hidden" id="ccClienteId" name="clienteId">
-                        <input type="hidden" id="ccOperadorId" name="operadorId">
-                    </div>
+// ============================================
+// UTILIDADES
+// ============================================
+function mostrarCargando(mostrar) {
+    const form = document.getElementById('formEvaluacion');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    if (mostrar) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        
+        // Deshabilitar todos los inputs
+        const inputs = form.querySelectorAll('input, select, textarea, button');
+        inputs.forEach(input => input.disabled = true);
+    } else {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Evaluación';
+        
+        // Habilitar todos los inputs
+        const inputs = form.querySelectorAll('input, select, textarea, button');
+        inputs.forEach(input => input.disabled = false);
+    }
+}
 
-                    <!-- Operador se llena automaticamente -->
-                    <div class="form-group">
-                        <label for="asesorNombre">
-                            <i class="fas fa-user-tie"></i>
-                            Operador asignado
-                            <span class="requiered">*</span>
-                        </label>
-                        <input type="text" id="asesorNombre" name="advisorName" placeholder="Se rellena al seleccionar cliente" readonly required style="background: #f8fafc; cursor: not-allowed; opacity: 0.8;">
-                    </div>
+function mostrarNotificacion(mensaje, tipo) {
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        background: ${tipo === 'success' ? '#10b981' : '#ef4444'};
+        color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        font-weight: 600;
+        max-width: 400px;
+    `;
+    notif.textContent = mensaje;
+    
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+        notif.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
 
-                    <div class="form-group">
-                        <label for="canal">
-                            <i class="fas fa-phone"></i>
-                            Canal
-                            <span class="required">*</span>
-                        </label>
-                        <select id="canal" name="channel" required>
-                            <option value="">Seleccionar canal...</option>
-                            <option value="Teléfono">Teléfono</option>
-                            <option value="Chat">Chat</option>
-                        </select>
-                    </div>
+// Agregar estilos de animación
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+    }
+`;
+document.head.appendChild(style);
 
-                    <div class="form-group">
-                        <label for="duracionAudio">
-                            <i class="far fa-clock"></i>
-                            Duración del Audio
-                        </label>
-                        <input type="text" id="duracionAudio" name="audioDuration" placeholder="Ej: 05:30">
-                        <small>Formato: MM:SS</small>
-                    </div>
-                </div>
-            </section>
+// ============================================
+// PREVENIR PÉRDIDA DE DATOS
+// ============================================
+window.addEventListener('beforeunload', function(e) {
+    const form = document.getElementById('formEvaluacion');
+    const hayCambios = Array.from(new FormData(form)).some(([key, value]) => value !== '');
+    
+    if (hayCambios && !localStorage.getItem('qualityControl_draft')) {
+        // Guardar borrador automáticamente antes de salir
+        guardarBorrador(true);
+    }
+});
 
-            <!-- SECCIÓN 2: RESULTADO DE LA EVALUACIÓN -->
-            <section class="form-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-clipboard-check"></i>
-                    </div>
-                    <div class="section-title">
-                        <h2>Resultado de la Evaluación</h2>
-                        <p>Decisión sobre la venta evaluada</p>
-                    </div>
-                </div>
+// Buscar cliente
+let timeoutCC;
+async function buscarClienteCC(texto) {
+    clearTimeout(timeoutCC);
+    const sugerencias = document.getElementById('ccSugerencias');
+    if (texto.trim().length < 2) {
+        sugerencias.style.display = 'none';
+        return;
+    }
 
-                <div class="result-options">
-                    <label class="result-option approved">
-                        <input type="radio" name="result" value="approved" required>
-                        <div class="result-content">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Venta Aprobada</span>
-                            <small>La venta cumple con todos los requisitos</small>
-                        </div>
-                    </label>
+    timeoutCC = setTimeout(async () => {
+        const termino = texto.replace(/[%,]/g, '').trim();
+        const { data } = await supabaseClient
+            .from('clientes')
+            .select('id, nombres, apellidos, telefono1, operador_id, operador_nombre')
+            .or(`nombres.ilike.%${termino}%,apellidos.ilike.%${termino}%,telefono1.ilike.%${termino}%`)
+            .neq('archivado', true)
+            .limit(8);
 
-                    <label class="result-option rejected">
-                        <input type="radio" name="result" value="rejected">
-                        <div class="result-content">
-                            <i class="fas fa-times-circle"></i>
-                            <span>Venta Rechazada</span>
-                            <small>La venta no cumple con los requisitos</small>
-                        </div>
-                    </label>
-                </div>
-            </section>
+        if (!data || data.length === 0) {
+            sugerencias.innerHTML = `<div style="padding:12px;color:#94a3b8;font-size:0.84rem">Sin resultados</div>`;
+            sugerencias.style.display = 'block';
+            return;
+        }
 
-            <!-- SECCIÓN 3: CHECKLIST DE CUMPLIMIENTO -->
-            <section class="form-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                    <div class="section-title">
-                        <h2>Checklist de Cumplimiento</h2>
-                        <p>Evaluación de cada punto del proceso de venta</p>
-                    </div>
-                </div>
-
-                <div class="checklist-grid">
-                    <div class="checklist-item">
-                        <label>
-                            <i class="fas fa-handshake"></i>
-                            1. Presentación adecuada
-                        </label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="item1" value="Sí"> Sí</label>
-                            <label><input type="radio" name="item1" value="No"> No</label>
-                            <label><input type="radio" name="item1" value="Parcial"> Parcial</label>
-                        </div>
-                    </div>
-
-                    <div class="checklist-item">
-                        <label>
-                            <i class="fas fa-id-badge"></i>
-                            2. Recolección adecuada de la información
-                        </label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="item2" value="Sí"> Sí</label>
-                            <label><input type="radio" name="item2" value="No"> No</label>
-                            <label><input type="radio" name="item2" value="Parcial"> Parcial</label>
-                        </div>
-                    </div>
-
-                    <div class="checklist-item">
-                        <label>
-                            <i class="fas fa-box"></i>
-                            3. Explicación del producto
-                        </label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="item3" value="Sí"> Sí</label>
-                            <label><input type="radio" name="item3" value="No"> No</label>
-                            <label><input type="radio" name="item3" value="Parcial"> Parcial</label>
-                        </div>
-                    </div>
-
-                    <div class="checklist-item">
-                        <label>
-                            <i class="fas fa-file-contract"></i>
-                            4. Condiciones claramente explicadas
-                        </label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="item4" value="Sí"> Sí</label>
-                            <label><input type="radio" name="item4" value="No"> No</label>
-                            <label><input type="radio" name="item4" value="Parcial"> Parcial</label>
-                        </div>
-                    </div>
-
-                    <div class="checklist-item">
-                        <label>
-                            <i class="fas fa-signature"></i>
-                            5. Consentimiento verbal o escrito obtenido
-                        </label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="item5" value="Sí"> Sí</label>
-                            <label><input type="radio" name="item5" value="No"> No</label>
-                            <label><input type="radio" name="item5" value="Parcial"> Parcial</label>
-                        </div>
-                    </div>
-
-                    <div class="checklist-item">
-                        <label>
-                            <i class="fas fa-check-double"></i>
-                            6. Cierre de venta correcto
-                        </label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="item6" value="Sí"> Sí</label>
-                            <label><input type="radio" name="item6" value="No"> No</label>
-                            <label><input type="radio" name="item6" value="Parcial"> Parcial</label>
-                        </div>
-                    </div>
-
-                    <div class="checklist-item">
-                        <label>
-                            <i class="fas fa-comments"></i>
-                            7. Lenguaje apropiado
-                        </label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="item7" value="Sí"> Sí</label>
-                            <label><input type="radio" name="item7" value="No"> No</label>
-                            <label><input type="radio" name="item7" value="Parcial"> Parcial</label>
-                        </div>
+        sugerencias.innerHTML = data.map(c => {
+            const nombre = `${c.nombres} ${c.apellidos}`.trim();
+            const nSafe  = nombre.replace(/'/g, "\\'");
+            const tSafe  = (c.operador_nombre || '').replace(/'/g, "\\'");
+            return `
+                <div onclick="seleccionarClienteCC('${c.id}','${nSafe}','${c.telefono1 || ''}','${c.operador_id || ''}','${tSafe}')"
+                     style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;font-size:0.88rem;"
+                     onmouseover="this.style.background='#f8fafc'"
+                     onmouseout="this.style.background='white'">
+                    <span class="material-symbols-rounded" style="color:#6366f1;font-size:1.1rem">person</span>
+                    <div>
+                        <strong style="display:block;color:#1e293b">${nombre}</strong>
+                        <small style="color:#64748b">${c.telefono1 || ''} • ${c.operador_nombre || 'Sin operador'}</small>
                     </div>
                 </div>
-            </section>
+            `;
+        }).join('');
+        sugerencias.style.display = 'block';
+    }, 300);
+}
 
-            <!-- SECCIÓN 4: ERRORES CRÍTICOS -->
-            <section class="form-section" id="seccionErrores">
-                <div class="section-header">
-                    <div class="section-icon error">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div class="section-title">
-                        <h2>Errores Críticos</h2>
-                        <p>Marcar si se identificaron errores graves (requerido si la venta es rechazada)</p>
-                    </div>
-                </div>
+function seleccionarClienteCC(clienteId, nombre, telefono, operadorId, operadorNombre) {
+    document.getElementById('ccClienteId').value = clienteId;
+    document.getElementById('ccOperadorId').value = operadorId; 
+    document.getElementById('ccClienteNombre').textContent = nombre; 
+    document.getElementById('ccClienteTelefono').textContent = telefono; 
+    document.getElementById('ccClienteSeleccionado').style.display = 'flex';
+    document.getElementById('ccSugerencias').style.display = 'none'; 
+    document.getElementById('ccBuscarCliente').value = nombre;
+    document.getElementById('asesorNombre').value = operadorNombre; 
+}
 
-                <div class="error-list">
-                    <label class="error-item">
-                        <input type="checkbox" name="criticalError" value="No mencionó el período de prueba">
-                        <span>No mencionó la información del agente</span>
-                    </label>
+function limpiarClienteCC() {
+    document.getElementById('ccClienteId').value = '';
+    document.getElementById('ccOperadorId').value = ''; 
+    document.getElementById('ccClienteNombre').textContent = ''; 
+    document.getElementById('ccClienteTelefono').textContent = ''; 
+    document.getElementById('ccClienteSeleccionado').style.display = 'none';
+    document.getElementById('ccSugerencias').style.display = 'none'; 
+    document.getElementById('ccBuscarCliente').value = '';
+    document.getElementById('asesorNombre').value = ''; 
+}
 
-                    <label class="error-item">
-                        <input type="checkbox" name="criticalError" value="Omitió el precio total">
-                        <span>Omitió información de costos del plan</span>
-                    </label>
-
-                    <label class="error-item">
-                        <input type="checkbox" name="criticalError" value="Información engañosa sobre el producto">
-                        <span>Información engañosa sobre el producto</span>
-                    </label>
-
-                    <label class="error-item">
-                        <input type="checkbox" name="criticalError" value="No obtuvo consentimiento verbal claro">
-                        <span>No obtuvo consentimiento verbal o escrito claro</span>
-                    </label>
-
-                    <label class="error-item">
-                        <input type="checkbox" name="criticalError" value="Lenguaje inapropiado o agresivo">
-                        <span>Lenguaje inapropiado o agresivo</span>
-                    </label>
-                </div>
-
-                <div class="form-grid" style="margin-top: 20px; position: relative;">
-                    <div class="form-group">
-                        <label for="minutoError">
-                            <i class="far fa-clock"></i>
-                            Minuto del Error
-                        </label>
-                        <input type="text" id="minutoError" name="errorMinute" placeholder="Ej: 03:45">
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="descripcionError">
-                            <i class="fas fa-align-left"></i>
-                            Descripción Detallada del Error
-                        </label>
-                        <textarea id="descripcionError" name="errorDescription" rows="3" placeholder="Describe el error crítico identificado..."></textarea>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 5: FEEDBACK ESTRUCTURADO -->
-            <section class="form-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-comments"></i>
-                    </div>
-                    <div class="section-title">
-                        <h2>Feedback Estructurado</h2>
-                        <p>Retroalimentación constructiva para el asesor</p>
-                    </div>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="hechoObservado">
-                        <i class="fas fa-eye"></i>
-                        Hecho Observado
-                        <span class="required">*</span>
-                    </label>
-                    <textarea id="hechoObservado" name="observedFact" rows="4" placeholder="Describe objetivamente lo que observaste en la llamada/interacción..." required></textarea>
-                    <small>Sé específico y objetivo. Ejemplo: "En el minuto 2:30, el asesor no mencionó el costo mensual del servicio."</small>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="impacto">
-                        <i class="fas fa-bolt"></i>
-                        Impacto
-                        <span class="required">*</span>
-                    </label>
-                    <textarea id="impacto" name="impact" rows="4" placeholder="¿Qué impacto tuvo esto en la venta o experiencia del cliente?" required></textarea>
-                    <small>Explica las consecuencias. Ejemplo: "Esto puede generar confusión y afectar la confianza del cliente."</small>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="accionEsperada">
-                        <i class="fas fa-tasks"></i>
-                        Acción Esperada
-                        <span class="required">*</span>
-                    </label>
-                    <textarea id="accionEsperada" name="expectedAction" rows="4" placeholder="¿Qué acción o comportamiento se espera del asesor?" required></textarea>
-                    <small>Sé claro y accionable. Ejemplo: "Mencionar siempre el precio completo antes de solicitar confirmación."</small>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="buenasPracticas">
-                        <i class="fas fa-star"></i>
-                        Buenas Prácticas Identificadas
-                    </label>
-                    <textarea id="buenasPracticas" name="goodPractices" rows="3" placeholder="Reconoce aspectos positivos de la interacción..."></textarea>
-                    <small>Opcional pero recomendado. Refuerza comportamientos positivos.</small>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 6: SEGUIMIENTO -->
-            <section class="form-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
-                    <div class="section-title">
-                        <h2>Seguimiento</h2>
-                        <p>Acciones y seguimiento requerido</p>
-                    </div>
-                </div>
-
-                <div class="followup-list">
-                    <label class="followup-item">
-                        <input type="checkbox" name="followUp" value="Capacitación">
-                        <div class="followup-content">
-                            <i class="fas fa-graduation-cap"></i>
-                            <span>Requiere capacitación adicional</span>
-                        </div>
-                    </label>
-
-                    <label class="followup-item">
-                        <input type="checkbox" name="followUp" value="Revisión en 1 semana">
-                        <div class="followup-content">
-                            <i class="fas fa-calendar-check"></i>
-                            <span>Revisión en 1 semana</span>
-                        </div>
-                    </label>
-
-                    <label class="followup-item">
-                        <input type="checkbox" name="followUp" value="Coaching individual">
-                        <div class="followup-content">
-                            <i class="fas fa-user-friends"></i>
-                            <span>Coaching individual</span>
-                        </div>
-                    </label>
-
-                    <label class="followup-item">
-                        <input type="checkbox" name="followUp" value="Reconocimiento público">
-                        <div class="followup-content">
-                            <i class="fas fa-trophy"></i>
-                            <span>Reconocimiento público</span>
-                        </div>
-                    </label>
-                </div>
-
-                <div class="form-group full-width" style="margin-top: 20px;">
-                    <label for="conclusion">
-                        <i class="fas fa-flag-checkered"></i>
-                        Conclusión General
-                    </label>
-                    <textarea id="conclusion" name="conclusion" rows="4" placeholder="Resumen final de la evaluación y próximos pasos..."></textarea>
-                </div>
-            </section>
-
-            <!-- BOTONES DE ACCIÓN -->
-            <div class="form-actions">
-                <button type="button" class="btn-secondary" onclick="guardarBorrador()">
-                    <i class="fas fa-save"></i>
-                    Guardar Borrador
-                </button>
-                <button type="submit" class="btn-primary">
-                    <i class="fas fa-paper-plane"></i>
-                    Enviar Evaluación
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- SCRIPTS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../js/supabase_config.js"></script>
-    <script src="../js/permisos.js"></script>
-    <script src="../js/main.js"></script>
-    <script src="../js/fab.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-    <script src="../js/campana_notificaciones.js"></script>
-    <script src="../js/banners.js"></script>
-    <script src="../js/control_calidad.js"></script>
-    <script src="../js/actividad.js"></script>
-    <script src="../js/recordatorios.js"></script>
-    <script src="../js/notificaciones_push.js"></script>
-    <script src="../js/ia_contexto.js"></script>
-    <script src="../js/ia_chat.js"></script>
-    <script src="../js/notificaciones_calidad.js"></script>
-    <script src="../js/xiris.js"></script>
-</body>
-</html>
+document.addEventListener('click', e => {
+    const sug = document.getElementById('ccSugerencias');
+    if (sug && !sug.contains(e.target) && e.target.id !== 'ccBuscarCliente') {
+        sug.style.display = 'none';
+    }
+});
