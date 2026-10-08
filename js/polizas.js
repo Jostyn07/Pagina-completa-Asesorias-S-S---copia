@@ -2792,7 +2792,6 @@ function aplicarFiltrosAvanzados() {
         filtroTipoModificacion: filtroTipoModificacion.getSeleccionados(),
         tiposVenta: Array.from(document.querySelectorAll('#panelTipoVentas input:checked')).map(cb => cb.value),
         estadosRenovacion: Array.from(document.querySelectorAll('#panelEstadoRenovacion input:checked')).map(cb => cb.value),
-        estadosRenovacion: Array.from(document.querySelectorAll('#panelEstadoRenovacion input:checked')).map(cb => cb.value),
         operadores: Array.from(document.querySelectorAll('#panelOperadores input:checked')).map(cb => cb.value),
         ventaRealizadaPor: Array.from(document.querySelectorAll('#panelVentaRealizadaPor input:checked')).map(cb => cb.value),
         mesPagado: filtroMesPagado.getSeleccionados(),
