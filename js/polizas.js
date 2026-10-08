@@ -32,6 +32,7 @@ function guardarFiltrosEnStorage() {
             // Checkboxes de año
             anio2025: document.getElementById('2025')?.checked || false,
             anio2026: document.getElementById('2026')?.checked || false,
+            anio2027: document.getElementById('2027')?.checked || false,
 
             // Pólizas por página
             porPagina: document.getElementById('polizasPorPagina')?.value || '10',
@@ -48,6 +49,7 @@ function guardarFiltrosEnStorage() {
             prima: document.getElementById('filtroPrima')?.value || '',
             filtroTipoModificacion: filtroTipoModificacion.getSeleccionados(),
             tiposVenta: Array.from(document.querySelectorAll('#panelTipoVentas input:checked'))?.map(cb => cb.value),
+            estadosRenovacion: Array.from(document.querySelectorAll('#panelEstadoRenovacion input:checked')).map(cb => cb.value),
             operadores: Array.from(document.querySelectorAll('#panelOperadores input:checked')).map(cb => cb.value),
             mesPagado: filtroMesPagado.getSeleccionados(),
             ventaRealizadaPor: Array.from(document.querySelectorAll('#panelVentaRealizadaPor input:checked')).map(cb => cb.value),
@@ -243,6 +245,7 @@ function restaurarFiltrosDesdeStorage() {
         filtroTipoModificacion: Array.isArray(datos.filtroTipoModificacion) ? datos.filtroTipoModificacion : [],
         tiposVenta: datos.tiposVenta || [],
         estadosRenovacion: datos.estadosRenovacion || [],
+        estadosRenovacion: datos.estadosRenovacion || [],
         operadores: datos.operadores || [],
         ventaRealizadaPor: datos.ventaRealizadaPor || [],
         mesPagado: Array.isArray(datos.mesPagado) ? datos.mesPagado : [],
@@ -360,6 +363,10 @@ function restaurarFiltrosDesdeStorage() {
 
             if (filtrosActivos.tiposVenta && filtrosActivos.tiposVenta.length > 0) {
                 if (!filtrosActivos.tiposVenta.includes(cliente.tipo_registro)) return false;
+            }
+            if (filtrosActivos.estadosRenovacion?.length > 0) {
+                const estadoRen = poliza.estado_renovacion || 'pendiente';
+                if (!filtrosActivos.estadosRenovacion.includes(estadoRen)) return false;
             }
             if (filtrosActivos.filtroTipoModificacion?.length > 0 && !filtrosActivos.filtroTipoModificacion.includes(cliente.tipo_modificacion)) return false;
             if (filtrosActivos.operadores?.length > 0 && !filtrosActivos.operadores.includes(poliza.operador_nombre)) return false;
