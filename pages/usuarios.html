@@ -261,6 +261,61 @@
                             Guardar cambios
                         </button>
                     </div>
+
+                <div id="gestionCarterasManual" style="margin-top:24px;padding-top:24px;border-top:1px solid #e5e7eb;display:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px;">
+                        <div>
+                            <h3 style="margin:0 0 5px;">Acceso manual a carteras</h3>
+                            <p style="margin:0;color:#64748b;font-size:.84rem;">
+                                Permite que un operador vea la cartera de un usuario específico o todas las carteras de Asesorías.
+                            </p>
+                        </div>
+                        <button type="button" class="btn-primary" onclick="otorgarAccesoCarteraUI()">
+                            <span class="material-symbols-rounded">lock_open</span>
+                            Conceder acceso
+                        </button>
+                    </div>
+
+                    <div class="permisos-selectores" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+                        <div class="form-group">
+                            <label>Operador que recibirá acceso</label>
+                            <select id="selectCarteraOperador"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de acceso</label>
+                            <select id="selectCarteraScope" onchange="actualizarSelectorPropietarioCartera()">
+                                <option value="user_portfolio">Cartera de un usuario</option>
+                                <option value="all_asesorias">Todas las carteras de Asesorías</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="grupoPropietarioCartera">
+                            <label>Propietario de la cartera</label>
+                            <select id="selectCarteraPropietario"></select>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:18px;overflow:auto;">
+                        <table class="usuarios-table">
+                            <thead>
+                                <tr>
+                                    <th>Operador</th>
+                                    <th>Alcance</th>
+                                    <th>Propietario</th>
+                                    <th>Concedido por</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaAccesosCartera">
+                                <tr>
+                                    <td colspan="7" style="text-align:center;padding:25px;color:#94a3b8;">Cargando accesos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 </div>
 
             </div>
