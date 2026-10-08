@@ -9,12 +9,18 @@ let overridesUsuarioActual = {};
 let cambiosPendientesUsuario = {};
 
 async function verificarAccesoPermisos() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    const botonTab = document.querySelector('[data-tab="permisos"]');
+    await cargarRolUsuario();
 
-    if (!user || user.email !== EMAIL_AUTORIZADO_PERMISOS) {
+    const botonTab = document.querySelector('[data-tab="permisos"]');
+    const contenedor = document.getElementById('tab-permisos');
+
+    const permitido =
+        (typeof esAdminGenearl === 'function' && esAdminGenearl()) ||
+        (typeof esAdminOMayor === 'function' && esAdminOMayor()) ||
+        (typeof tienePermiso === 'function' && tienePermiso('gestionar_carteras'));
+
+    if (!permitido) {
         if (botonTab) botonTab.style.display = 'none';
-        const contenedor = document.getElementById('tab-permisos');
         if (contenedor) {
             contenedor.innerHTML = `
                 <div style="text-align:center;padding:60px 20px;color:var(--color-text-placeholder)">
@@ -24,6 +30,7 @@ async function verificarAccesoPermisos() {
         }
         return false;
     }
+
     return true;
 }
 
@@ -35,21 +42,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await cargarPortalesDisponibles();
     await cargarMatrizRol();
     await cargarUsuariosParaSelector();
-})
-
-async function cargarCatalogoPermisos() {
-    const { data, error } = await supabaseClient
-        .from('catalogo_permisos')
-        .select('*')
-        .order('categoria', {ascending: true});
-
-    if (error) {
-        console.error('Error cargando catálogo de permisos:', error);
-        return;
-    }
-    catalogoPermisos = data || [];
-}
-
+    await prepararGestionCarteras();
+});
 async function cargarUsuariosParaSelector() {
     const { data, error } = await supabaseClient
         .from('usuarios')
