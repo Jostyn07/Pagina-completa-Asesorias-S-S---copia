@@ -520,6 +520,10 @@ async function cargarPolizas() {
                 updated_at,
                 estado_documentos,
                 tipo_venta,
+                estado_renovacion,
+                renovada_at,
+                renovacion_origen_poliza_id,
+                renovacion_destino_poliza_id,
                 estado_compania,
                 fecha_revision_mercado,
                 fecha_revision_compania,
@@ -681,6 +685,17 @@ async function cargarPolizas() {
     }
 }
 
+function renderBadgeRenovacion(poliza) {
+    const estado = poliza?.estado_renovacion || 'pendiente';
+    if (estado === 'renovada') {
+        return '<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:#dcfce7;color:#166534;font-size:.75rem;font-weight:800;"><span class="material-symbols-rounded" style="font-size:15px;">check_circle</span>Renovada</span>';
+    }
+    if (estado === 'no_renovada') {
+        return '<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:#fee2e2;color:#991b1b;font-size:.75rem;font-weight:800;">No renovada</span>';
+    }
+    return '<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:#fff7ed;color:#b45309;font-size:.75rem;font-weight:800;"><span class="material-symbols-rounded" style="font-size:15px;">schedule</span>Pendiente</span>';
+}
+
 function renderizarTabla() {
     const tbody = document.getElementById('tabla-polizas');
     
@@ -743,6 +758,7 @@ function renderizarTabla() {
             <td data-label="Portal">${cliente?.portal || '-'}</td>
             <td data-label="Factores">${renderCeldaFactores(poliza.id)}</td>
             <td data-label="Tipo de registro">${cliente?.tipo_registro || '-'}</td>
+            <td data-label="Renovación">${renderBadgeRenovacion(poliza)}</td>
             <td data-label="Tipo de modificación">${cliente?.tipo_modificacion || '-'}</td>
             <td data-label="Agente (Mercado)">${poliza.nombre_agente_mercado || '-'}</td>
             <td data-label="Operador">
@@ -2447,6 +2463,7 @@ function limpiarFiltros() {
         cb.checked = false
     });
     actualizarTextoTipoVentas();
+    limpiarEstadoRenovacion();
     document.querySelectorAll('#panelOperadores input[type="checkbox"]').forEach(cb => cb.checked = false);
     actualizarTextoOperadores();
     document.querySelectorAll('#panelVentaRealizadaPor input[type="checkbox"]').forEach(cb => cb.checked = false);
