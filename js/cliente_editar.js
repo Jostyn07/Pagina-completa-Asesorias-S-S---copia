@@ -462,6 +462,10 @@ async function cargarDatosCliente(id) {
         }
 
         await aplicarPermisosEstadoMercado();
+        actualizarUIRenovacion(clienteData, polizaData);
+        if (window.auditarClienteAbierto) {
+            await window.auditarClienteAbierto({ cliente: clienteData, poliza: polizaData });
+        }
         capturarDatosOriginales(clienteData , polizaData);
     
         if (document.querySelector('#tab-historial.active ')) {
