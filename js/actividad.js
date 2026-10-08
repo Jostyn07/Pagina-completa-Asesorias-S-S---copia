@@ -19,6 +19,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function inicializarActividad() {
     try {
+        // La sesión sigue registrándose en actividad_sesiones.
+        // La auditoría detallada de navegación/acciones se centraliza en auditoria.js.
+        // Si la página ya lo cargó, registramos el acceso aquí como respaldo.
+        if (typeof window.registrarEventoAuditoria === 'function') {
+            window.registrarEventoAuditoria({
+                accion: 'session.page.open',
+                recurso: 'pagina',
+                ruta: window.location.pathname,
+                metodo: 'SESSION',
+                detalle: { pagina: obtenerNombrePagina() }
+            });
+        }
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (!user) return;
 
