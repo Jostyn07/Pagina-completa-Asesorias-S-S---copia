@@ -245,7 +245,6 @@ function restaurarFiltrosDesdeStorage() {
         filtroTipoModificacion: Array.isArray(datos.filtroTipoModificacion) ? datos.filtroTipoModificacion : [],
         tiposVenta: datos.tiposVenta || [],
         estadosRenovacion: datos.estadosRenovacion || [],
-        estadosRenovacion: datos.estadosRenovacion || [],
         operadores: datos.operadores || [],
         ventaRealizadaPor: datos.ventaRealizadaPor || [],
         mesPagado: Array.isArray(datos.mesPagado) ? datos.mesPagado : [],
