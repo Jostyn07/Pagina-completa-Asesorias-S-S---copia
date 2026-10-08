@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Auditoría - Asesorías S&S</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
+    <style>
+        .audit-shell{padding:24px}
+        .audit-toolbar{display:grid;grid-template-columns:180px 180px 220px 1fr auto;gap:12px;align-items:end;margin-bottom:18px}
+        .audit-toolbar label{display:block;font-size:.78rem;color:#64748b;margin-bottom:6px}
+        .audit-toolbar input,.audit-toolbar select{width:100%;padding:10px 12px;border:1px solid #dbe3ef;border-radius:9px;background:#fff}
+        .audit-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden}
+        .audit-table{width:100%;border-collapse:collapse}
+        .audit-table th,.audit-table td{padding:11px 12px;border-bottom:1px solid #eef2f7;text-align:left;font-size:.82rem;vertical-align:top}
+        .audit-table th{background:#f8fafc;color:#475569;position:sticky;top:0;z-index:1}
+        .audit-detail{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem;white-space:pre-wrap;max-width:420px;color:#475569}
+        .audit-badge{display:inline-flex;padding:4px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;font-weight:700}
+        .audit-empty{padding:48px;text-align:center;color:#94a3b8}
+        @media(max-width:1000px){.audit-toolbar{grid-template-columns:1fr 1fr}}
+        @media(max-width:700px){.audit-toolbar{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<div class="main-container">
+    <header class="page-header">
+        <div class="header-content">
+            <div class="header-icon"><span class="material-symbols-rounded">admin_panel_settings</span></div>
+            <div class="header-text">
+                <h1>Auditoría de actividad</h1>
+                <p>Registro de accesos, acciones y cambios realizados por los operadores.</p>
+            </div>
+        </div>
+        <button class="btn-secondary" onclick="window.location.href='./usuarios.html'">
+            <span class="material-symbols-rounded">arrow_back</span>
+            Volver a usuarios
+        </button>
+    </header>
+
+    <main class="audit-shell">
+        <div class="audit-toolbar">
+            <div>
+                <label>Desde</label>
+                <input type="date" id="auditDesde">
+            </div>
+            <div>
+                <label>Hasta</label>
+                <input type="date" id="auditHasta">
+            </div>
+            <div>
+                <label>Acción</label>
+                <select id="auditAccion">
+                    <option value="">Todas</option>
+                    <option value="page.view">Apertura de página</option>
+                    <option value="cliente.view">Apertura de cliente</option>
+                    <option value="poliza.renovada">Renovación</option>
+                    <option value="ui.click">Click</option>
+                    <option value="ui.filter.change">Cambio de filtro</option>
+                    <option value="ui.form.submit">Envío de formulario</option>
+                </select>
+            </div>
+            <div>
+                <label>Buscar cliente / operador</label>
+                <input type="text" id="auditBuscar" placeholder="Nombre, email, póliza...">
+            </div>
+            <button class="btn-primary" onclick="cargarAuditoria()">
+                <span class="material-symbols-rounded">filter_alt</span>
+                Consultar
+            </button>
+        </div>
+
+        <div class="audit-card">
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Operador</th>
+                        <th>Acción</th>
+                        <th>Recurso</th>
+                        <th>Cliente</th>
+                        <th>Póliza</th>
+                        <th>Ruta</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody id="auditTbody">
+                    <tr><td colspan="8" class="audit-empty">Cargando auditoría...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase_config.js"></script>
+<script src="../js/permisos.js"></script>
+<script src="../js/auditoria.js"></script>
+<script src="../js/auditoria_page.js"></script>
+<script src="../js/main.js"></script>
+</body>
+</html>

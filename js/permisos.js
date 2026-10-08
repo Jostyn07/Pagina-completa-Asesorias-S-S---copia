@@ -187,5 +187,9 @@ function tienePermiso(clave) {
 const EMAIL_AUTORIZADO_PERMISOS = 'jostynaragon@asesoriasth.com';
 
 function esUsuarioAutorizadoPermisos() {
-    return usuarioActual?.email === EMAIL_AUTORIZADO_PERMISOS
+    return (
+        (typeof esAdminGenearl === 'function' && esAdminGenearl()) ||
+        (typeof esAdminOMayor === 'function' && esAdminOMayor()) ||
+        (typeof tienePermiso === 'function' && tienePermiso('gestionar_carteras'))
+    );
 }

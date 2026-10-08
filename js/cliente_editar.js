@@ -462,6 +462,10 @@ async function cargarDatosCliente(id) {
         }
 
         await aplicarPermisosEstadoMercado();
+        actualizarUIRenovacion(clienteData, polizaData);
+        if (window.auditarClienteAbierto) {
+            await window.auditarClienteAbierto({ cliente: clienteData, poliza: polizaData });
+        }
         capturarDatosOriginales(clienteData , polizaData);
     
         if (document.querySelector('#tab-historial.active ')) {
@@ -488,6 +492,113 @@ async function cargarDatosCliente(id) {
  * @param {string|Date} fecha - Fecha en cualquier formato
  * @returns {string} Fecha en formato yyyy-mm-dd
  */
+
+// ================================================================
+// RENOVACIÓN DE PÓLIZA
+// ================================================================
+
+function actualizarUIRenovacion(cliente, poliza) {
+    const btn = document.getElementById('btnRenovarCliente');
+    const title = document.getElementById('pageTitle');
+    if (!btn) return;
+
+    const yaRenovada = poliza?.estado_renovacion === 'renovada' || !!poliza?.renovacion_destino_poliza_id;
+    const esRenovacion = String(cliente?.tipo_registro || '').toLowerCase() === 'renovacion';
+
+    let puedeRenovar = false;
+    try {
+        puedeRenovar = typeof tienePermiso === 'function' && tienePermiso('renovar_poliza');
+    } catch (_) {
+        puedeRenovar = false;
+    }
+
+    btn.style.display = puedeRenovar && !yaRenovada && !esRenovacion ? 'inline-flex' : 'none';
+
+    if (esRenovacion) {
+        title.textContent = '🔄 Renovación: ' + [cliente?.nombres, cliente?.apellidos].filter(Boolean).join(' ');
+        const badge = document.getElementById('badgeRenovacion');
+        if (badge) badge.style.display = 'inline-flex';
+    } else if (yaRenovada) {
+        title.textContent = '✅ Renovada: ' + [cliente?.nombres, cliente?.apellidos].filter(Boolean).join(' ');
+        const badge = document.getElementById('badgeRenovacion');
+        if (badge) {
+            badge.style.display = 'inline-flex';
+            badge.textContent = 'Póliza renovada';
+        }
+    }
+}
+
+async function confirmarRenovacion() {
+    if (!polizaId || !clienteId) {
+        alert('No se pudo identificar la póliza actual.');
+        return;
+    }
+
+    const confirmado = confirm(
+        '¿Renovar esta póliza?\n\n' +
+        'Se creará un NUEVO cliente con un nuevo client_id y una nueva póliza.\n' +
+        'La póliza actual quedará marcada como RENOVADA.\n' +
+        'Fecha de efectividad e inicio de cobertura: 01/01/2027.'
+    );
+
+    if (!confirmado) return;
+
+    const btn = document.getElementById('btnRenovarCliente');
+    const textoAnterior = btn?.innerHTML;
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.65';
+            btn.innerHTML = '<span class="material-symbols-rounded">progress_activity</span> Renovando...';
+        }
+
+        const { data, error } = await supabaseClient.rpc('renovar_poliza', {
+            p_poliza_id: polizaId
+        });
+
+        if (error) throw error;
+        if (!data?.ok) throw new Error(data?.error || 'No se pudo completar la renovación.');
+
+        if (window.registrarEventoAuditoria) {
+            await window.registrarEventoAuditoria({
+                accion: 'poliza.renew.confirmed',
+                recurso: 'poliza',
+                recursoId: data.poliza_nueva_id,
+                clienteId: data.cliente_nuevo_id,
+                polizaId: data.poliza_nueva_id,
+                metodo: 'RPC',
+                detalle: {
+                    poliza_origen_id: data.poliza_origen_id,
+                    cliente_origen_id: data.cliente_origen_id,
+                    numero_poliza_nueva: data.numero_poliza_nueva,
+                    fecha_efectividad: data.fecha_efectividad
+                }
+            });
+        }
+
+        alert(
+            'Renovación realizada correctamente.\n\n' +
+            'Nueva póliza: ' + (data.numero_poliza_nueva || '-') + '\n' +
+            'Nuevo cliente_id: ' + (data.cliente_nuevo_id || '-')
+        );
+
+        window.location.href = './cliente_editar.html?id='
+            + encodeURIComponent(data.cliente_nuevo_id)
+            + '&modo=renovacion';
+    } catch (error) {
+        console.error('❌ Error renovando póliza:', error);
+        alert('No se pudo renovar la póliza: ' + (error?.message || error));
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '';
+            btn.innerHTML = textoAnterior;
+        }
+    }
+}
+
+window.confirmarRenovacion = confirmarRenovacion;
+
 
 // ============================================
 // RELLENAR FORMULARIO

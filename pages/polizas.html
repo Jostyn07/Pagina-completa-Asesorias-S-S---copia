@@ -348,6 +348,10 @@
                                         <input type="checkbox" id="2026" name="year" value="2026" checked onchange="aplicarFiltros()">
                                         2026
                                     </label>
+                                    <label for="2027">
+                                        <input type="checkbox" id="2027" name="year" value="2027" onchange="aplicarFiltros()">
+                                        2027
+                                    </label>
                                 </div>
                             </div>
                             
@@ -617,6 +621,26 @@
                                                 <div class="dropdown-actions">
                                                     <button type="button" class="btn-dropdown-clear" onclick="limpiarTipoVentas()">Limpiar</button>
                                                     <button type="button" class="btn-dropdown-close" onclick="cerrarDropdownTipoVentas()">Cerrar</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="filtro-group">
+                                        <label>Estado de renovación</label>
+                                        <div class="dropdown-filter">
+                                            <button type="button" class="dropdown-trigger" id="triggerEstadoRenovacion" onclick="toggleDropdownEstadoRenovacion(event)">
+                                                <span id="textoEstadoRenovacion">Todos</span>
+                                                <span class="material-symbols-rounded">expand_more</span>
+                                            </button>
+                                            <div class="dropdown-panel" id="panelEstadoRenovacion">
+                                                <div class="checkbox-list-scroll">
+                                                    <label class="checkbox-item"><input type="checkbox" value="pendiente">Pendiente</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="renovada">Renovada</label>
+                                                    <label class="checkbox-item"><input type="checkbox" value="no_renovada">No renovada</label>
+                                                </div>
+                                                <div class="dropdown-actions">
+                                                    <button type="button" class="btn-dropdown-clear" onclick="limpiarEstadoRenovacion()">Limpiar</button>
+                                                    <button type="button" class="btn-dropdown-close" onclick="cerrarDropdownEstadoRenovacion()">Cerrar</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -994,6 +1018,7 @@
                                 <th class="sortable" data-column="portal">Portal</th>
                                 <th>Factores</th>
                                 <th class="sortable" data-column="tipoRegistro">Tipo de registro</th>
+                                <th>Renovación</th>
                                 <th>Tipo de modificación</th>
                                 <th>Agente (Mercado)</th>
                                 <th class="sortable" data-column="operador_nombre">Operador</th>
@@ -1125,6 +1150,7 @@
     <script src="../js/scoring_cartera.js"></script>
 
     <script src="../js/polizas.js"></script>
+    <script src="../js/auditoria.js"></script>
 
     <script src="../js/filtro_multiselect.js"></script>
     
