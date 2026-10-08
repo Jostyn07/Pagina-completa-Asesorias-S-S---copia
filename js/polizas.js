@@ -2652,6 +2652,45 @@ function filtrarTipoVentas() {
     });
 }
 
+function toggleDropdownEstadoRenovacion(event) {
+    event.stopPropagation();
+    const panel = document.getElementById('panelEstadoRenovacion');
+    const trigger = document.getElementById('triggerEstadoRenovacion');
+    if (!panel || !trigger) return;
+    panel.classList.toggle('active');
+    trigger.classList.toggle('active');
+}
+
+function cerrarDropdownEstadoRenovacion() {
+    const panel = document.getElementById('panelEstadoRenovacion');
+    const trigger = document.getElementById('triggerEstadoRenovacion');
+    if (panel) panel.classList.remove('active');
+    if (trigger) trigger.classList.remove('active');
+}
+
+function actualizarTextoEstadoRenovacion() {
+    const checkboxes = document.querySelectorAll('#panelEstadoRenovacion input[type="checkbox"]:checked');
+    const texto = document.getElementById('textoEstadoRenovacion');
+    if (!texto) return;
+
+    if (checkboxes.length === 0) {
+        texto.textContent = 'Todos';
+        texto.style.color = '#94a3b8';
+    } else if (checkboxes.length === 1) {
+        texto.textContent = checkboxes[0].parentElement?.textContent?.trim() || checkboxes[0].value;
+        texto.style.color = '#1e293b';
+    } else {
+        texto.textContent = checkboxes.length + ' estados seleccionados';
+        texto.style.color = '#6366f1';
+    }
+}
+
+function limpiarEstadoRenovacion() {
+    document.querySelectorAll('#panelEstadoRenovacion input[type="checkbox"]').forEach(cb => cb.checked = false);
+    actualizarTextoEstadoRenovacion();
+    aplicarFiltrosAvanzados();
+}
+
 // Cerrar dropdown al hacer clic fuera
 document.addEventListener('click', function(event) {
     const panel = document.getElementById('panelTipoVentas');
