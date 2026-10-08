@@ -150,9 +150,14 @@
         <!-- HEADER -->
         <header class="page-header">
             <div class="header-left">
-                <button class="btn-back" onclick="window.location.href='./polizas.html'">
+                <button class="btn-back" onclick="window.location.href='./polizas.html'" data-audit-action="navigation.back.polizas">
                     <span class="material-symbols-rounded">arrow_back</span>
                     Volver a Pólizas
+                </button>
+                <button id="btnRenovarCliente" type="button" onclick="confirmarRenovacion()" data-audit-action="poliza.renew"
+                    style="display:none; margin-left:8px; align-items:center; gap:7px; padding:9px 14px; border:1px solid #f59e0b; background:#fff7ed; color:#b45309; border-radius:9px; font-weight:700; cursor:pointer;">
+                    <span class="material-symbols-rounded" style="font-size:18px;">autorenew</span>
+                    Renovar
                 </button>
                 <h1 id="pageTitle">✏️ Editar Cliente y Póliza</h1>
             </div>
@@ -1794,6 +1799,7 @@
     <script src="../js/operadores_dinamico.js"></script>
     <script src="../js/filtro_multiselect.js"></script>
     <script src="../js/cliente_editar.js"></script>
+    <script src="../js/auditoria.js"></script>
     <script src="../js/recordatorios.js"></script>
     <script src="../js/notificaciones_push.js"></script>
     <script src="../js/actividad.js"></script>
