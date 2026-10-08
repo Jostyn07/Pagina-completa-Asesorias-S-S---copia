@@ -126,6 +126,217 @@ async function cargarMatrizRol() {
     renderizarMatrizRol()
 }
 
+// ================================================================
+// GESTIÓN MANUAL DE CARTERAS
+// ================================================================
+
+function tienePermisoGestionCarteras() {
+    return (
+        (typeof esAdminGenearl === 'function' && esAdminGenearl()) ||
+        (typeof esAdminOMayor === 'function' && esAdminOMayor()) ||
+        (typeof tienePermiso === 'function' && tienePermiso('gestionar_carteras'))
+    );
+}
+
+async function prepararGestionCarteras() {
+    const panel = document.getElementById('gestionCarterasManual');
+    if (!panel || !tienePermisoGestionCarteras()) return;
+
+    panel.style.display = 'block';
+
+    const operadores = usuariosParaSelector.filter(u =>
+        u.rol === 'operador' && u.activo !== false
+    );
+
+    const propietarios = usuariosParaSelector.filter(u =>
+        u.activo !== false
+    );
+
+    const selOperador = document.getElementById('selectCarteraOperador');
+    const selPropietario = document.getElementById('selectCarteraPropietario');
+
+    if (selOperador) {
+        selOperador.innerHTML =
+            '<option value="">Selecciona un operador...</option>' +
+            operadores.map(u =>
+                '<option value="' + u.id + '">' +
+                escapeHtmlCartera(u.nombre + ' (' + u.email + ')') +
+                '</option>'
+            ).join('');
+    }
+
+    if (selPropietario) {
+        selPropietario.innerHTML =
+            '<option value="">Selecciona el usuario propietario...</option>' +
+            propietarios.map(u =>
+                '<option value="' + u.id + '">' +
+                escapeHtmlCartera(u.nombre + ' (' + u.email + ')') +
+                '</option>'
+            ).join('');
+    }
+
+    actualizarSelectorPropietarioCartera();
+    await cargarAccesosCartera();
+}
+
+function escapeHtmlCartera(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function actualizarSelectorPropietarioCartera() {
+    const scope = document.getElementById('selectCarteraScope')?.value;
+    const grupo = document.getElementById('grupoPropietarioCartera');
+    const select = document.getElementById('selectCarteraPropietario');
+
+    if (!grupo || !select) return;
+
+    const esTodas = scope === 'all_asesorias';
+    grupo.style.display = esTodas ? 'none' : 'block';
+    select.disabled = esTodas;
+
+    if (esTodas) select.value = '';
+}
+
+async function cargarAccesosCartera() {
+    const tbody = document.getElementById('tablaAccesosCartera');
+    if (!tbody) return;
+
+    const { data, error } = await supabaseClient
+        .from('portfolio_access')
+        .select('*')
+        .order('granted_at', { ascending: false });
+
+    if (error) {
+        console.error('Error cargando accesos de cartera:', error);
+        tbody.innerHTML =
+            '<tr><td colspan="7" style="text-align:center;padding:25px;color:#ef4444;">' +
+            escapeHtmlCartera(error.message) +
+            '</td></tr>';
+        return;
+    }
+
+    const usuariosMap = new Map(
+        usuariosParaSelector.map(u => [u.id, u])
+    );
+
+    const filas = data || [];
+
+    if (!filas.length) {
+        tbody.innerHTML =
+            '<tr><td colspan="7" style="text-align:center;padding:25px;color:#94a3b8;">No hay accesos manuales configurados.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filas.map(row => {
+        const operador = usuariosMap.get(row.operator_id);
+        const propietario = row.owner_user_id
+            ? usuariosMap.get(row.owner_user_id)
+            : null;
+        const concedido = usuariosMap.get(row.granted_by);
+
+        const alcance = row.scope === 'all_asesorias'
+            ? 'Todas las carteras de Asesorías'
+            : 'Cartera de un usuario';
+
+        const propietarioTexto = propietario
+            ? propietario.nombre
+            : row.scope === 'all_asesorias' ? '—' : (row.owner_user_id || '—');
+
+        const estado = row.activo
+            ? '<span class="badge-estado badge-activo">Activo</span>'
+            : '<span class="badge-estado badge-inactivo">Revocado</span>';
+
+        const acciones = row.activo
+            ? '<button class="btn-delete" type="button" onclick="revocarAccesoCarteraUI(\'' + row.id + '\')"><span class="material-symbols-rounded">lock</span> Revocar</button>'
+            : '—';
+
+        return '<tr>' +
+            '<td>' + escapeHtmlCartera(operador?.nombre || row.operator_id) + '</td>' +
+            '<td>' + escapeHtmlCartera(alcance) + '</td>' +
+            '<td>' + escapeHtmlCartera(propietarioTexto) + '</td>' +
+            '<td>' + escapeHtmlCartera(concedido?.nombre || row.granted_by || '—') + '</td>' +
+            '<td>' + escapeHtmlCartera(new Date(row.granted_at).toLocaleString('es-CO')) + '</td>' +
+            '<td>' + estado + '</td>' +
+            '<td>' + acciones + '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+async function otorgarAccesoCarteraUI() {
+    if (!tienePermisoGestionCarteras()) {
+        alert('No tienes permiso para gestionar carteras.');
+        return;
+    }
+
+    const operatorId = document.getElementById('selectCarteraOperador')?.value;
+    const scope = document.getElementById('selectCarteraScope')?.value || 'user_portfolio';
+    const ownerId = scope === 'all_asesorias'
+        ? null
+        : document.getElementById('selectCarteraPropietario')?.value || null;
+
+    if (!operatorId) {
+        alert('Selecciona el operador que recibirá el acceso.');
+        return;
+    }
+
+    if (scope === 'user_portfolio' && !ownerId) {
+        alert('Selecciona el propietario de la cartera.');
+        return;
+    }
+
+    const confirmado = confirm(
+        scope === 'all_asesorias'
+            ? '¿Conceder acceso a TODAS las carteras de Asesorías para este operador?'
+            : '¿Conceder acceso a la cartera seleccionada para este operador?'
+    );
+
+    if (!confirmado) return;
+
+    const { error } = await supabaseClient.rpc('otorgar_acceso_cartera', {
+        p_operator_id: operatorId,
+        p_owner_user_id: ownerId,
+        p_scope: scope
+    });
+
+    if (error) {
+        console.error(error);
+        alert('No se pudo conceder el acceso: ' + error.message);
+        return;
+    }
+
+    alert('Acceso concedido correctamente.');
+
+    document.getElementById('selectCarteraOperador').value = '';
+    document.getElementById('selectCarteraPropietario').value = '';
+    await cargarAccesosCartera();
+}
+
+async function revocarAccesoCarteraUI(accessId) {
+    if (!tienePermisoGestionCarteras()) {
+        alert('No tienes permiso para gestionar carteras.');
+        return;
+    }
+
+    if (!confirm('¿Revocar este acceso a cartera?')) return;
+
+    const { error } = await supabaseClient.rpc('revocar_acceso_cartera', {
+        p_access_id: accessId
+    });
+
+    if (error) {
+        console.error(error);
+        alert('No se pudo revocar el acceso: ' + error.message);
+        return;
+    }
+
+    await cargarAccesosCartera();
+}
+
 function renderizarMatrizRol() {
     const contenedor = document.getElementById('matrizPermisosRol');
 
