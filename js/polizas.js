@@ -137,6 +137,7 @@ function restaurarFiltrosDesdeStorage() {
     // Checkboxes de año
     setChecked('2025', datos.anio2025);
     setChecked('2026', datos.anio2026);
+    setChecked('2027', datos.anio2027);
 
     // Modal avanzado
     set('filtroNombre', datos.nombre);
@@ -151,6 +152,12 @@ function restaurarFiltrosDesdeStorage() {
         actualizarTextoCompanias();
     }
     set('filtroPrima', datos.prima);
+    if (datos.estadosRenovacion && Array.isArray(datos.estadosRenovacion)) {
+        document.querySelectorAll('#panelEstadoRenovacion input[type="checkbox"]').forEach(cb => {
+            cb.checked = datos.estadosRenovacion.includes(cb.value);
+        });
+        actualizarTextoEstadoRenovacion();
+    }
     if (datos.tiposVenta && Array.isArray(datos.tiposVenta)) {
         document.querySelectorAll('#panelTipoVentas input[type="checkbox"]').forEach(cb => {
             cb.checked = datos.tiposVenta.includes(cb.value);
@@ -235,6 +242,7 @@ function restaurarFiltrosDesdeStorage() {
         prima: datos.prima || '',
         filtroTipoModificacion: Array.isArray(datos.filtroTipoModificacion) ? datos.filtroTipoModificacion : [],
         tiposVenta: datos.tiposVenta || [],
+        estadosRenovacion: datos.estadosRenovacion || [],
         operadores: datos.operadores || [],
         ventaRealizadaPor: datos.ventaRealizadaPor || [],
         mesPagado: Array.isArray(datos.mesPagado) ? datos.mesPagado : [],
@@ -273,7 +281,7 @@ function restaurarFiltrosDesdeStorage() {
 
     // 4. Determinar si hay filtros activos realmente (para el indicador visual)
     const hayAvanzados = Object.values(filtrosActivos).some(v => v !== '');
-    const hayAnios = datos.anio2025 || datos.anio2026;
+    const hayAnios = datos.anio2025 || datos.anio2026 || datos.anio2027;
     const hayBusqueda = !!datos.busqueda;
     hayFiltrosActivos = hayAvanzados || hayBusqueda;
 
@@ -1588,8 +1596,9 @@ function filtrarPorEstado(estado) {
 function aplicarFiltros() {
     const checkbox2025 = document.getElementById('2025');
     const checkbox2026 = document.getElementById('2026');
+    const checkbox2027 = document.getElementById('2027');
     
-    if (!checkbox2025 || !checkbox2026) {
+    if (!checkbox2025 || !checkbox2026 || !checkbox2027) {
         console.warn('⚠️ Checkboxes de filtro no encontrados');
         return;
     }
@@ -1597,6 +1606,7 @@ function aplicarFiltros() {
     const años = [];
     if (checkbox2025.checked) años.push('2025');
     if (checkbox2026.checked) años.push('2026');
+    if (checkbox2027.checked) años.push('2027');
     
     if (años.length === 0) {
         polizasFiltradas = todasLasPolizas;
@@ -2736,6 +2746,7 @@ function aplicarFiltrosAvanzados() {
         prima: document.getElementById('filtroPrima').value,
         filtroTipoModificacion: filtroTipoModificacion.getSeleccionados(),
         tiposVenta: Array.from(document.querySelectorAll('#panelTipoVentas input:checked')).map(cb => cb.value),
+        estadosRenovacion: Array.from(document.querySelectorAll('#panelEstadoRenovacion input:checked')).map(cb => cb.value),
         operadores: Array.from(document.querySelectorAll('#panelOperadores input:checked')).map(cb => cb.value),
         ventaRealizadaPor: Array.from(document.querySelectorAll('#panelVentaRealizadaPor input:checked')).map(cb => cb.value),
         mesPagado: filtroMesPagado.getSeleccionados(),
