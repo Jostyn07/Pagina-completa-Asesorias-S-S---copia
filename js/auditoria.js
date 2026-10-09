@@ -1,3 +1,24 @@
+// ============================================================================
+// Ruta en el repo: js/auditoria.js
+// FASE 1 — Auditoría desde el navegador
+//
+// Se carga solo desde js/supabase_config.js (no hay que tocar cada HTML).
+// Registra lo que los triggers de la base de datos no pueden ver:
+//   - sesion.inicio      al iniciar sesión
+//   - pagina.view        al entrar a cualquier página
+//   - cliente.view       al abrir la ficha de un cliente (con su id)
+//   - poliza.view        al abrir la póliza dentro de la ficha (con cliente y póliza)
+//   - filtros.aplicar    al aplicar filtros avanzados en Pólizas (qué filtros, no datos sensibles)
+// Además agrega el enlace "Auditoría" al menú para quien tenga ver_logs_auditoria.
+//
+// Los cambios de datos (crear, editar, eliminar, archivar, cambiar estado…)
+// los registran los triggers de la fase 1 en el servidor.
+//
+// Uso manual desde cualquier página:
+//   auditar('modulo.accion', { recurso, recurso_id, cliente_id, poliza_id, detalle })
+// Nunca lanza errores ni bloquea la página.
+// ============================================================================
+
 (function () {
   if (window.__auditoriaCargada) return;
   window.__auditoriaCargada = true;
@@ -105,7 +126,28 @@
     };
   }
 
+  // ---------- Enlace "Auditoría" en el menú lateral (solo con ver_logs_auditoria)
+  async function menuAuditoria() {
+    try {
+      const nav = document.querySelector('.sidebar-nav');
+      const sb = cliente();
+      if (!nav || !sb || nav.querySelector('#menuAuditoria')) return;
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return;
+      const { data: puede } = await sb.rpc('tiene_permiso', { p_clave: 'ver_logs_auditoria' });
+      if (!puede || nav.querySelector('#menuAuditoria')) return;
+      const a = document.createElement('a');
+      a.href = './auditoria.html';
+      a.id = 'menuAuditoria';
+      a.className = 'menu-item' + (ruta === 'auditoria.html' ? ' active' : '');
+      a.innerHTML = '<span class="material-symbols-rounded">policy</span><span>Auditoría</span>';
+      const usuarios = nav.querySelector('a[href="./usuarios.html"]');
+      if (usuarios) nav.insertBefore(a, usuarios); else nav.appendChild(a);
+    } catch (e) {}
+  }
+
   function iniciar() {
+    menuAuditoria();
     escucharInicioSesion();
     if (ruta !== 'login.html' && ruta !== 'index.html') {
       auditar('pagina.view', { recurso: 'pagina', metodo: 'navegacion', detalle: { query: location.search ? 'si' : 'no' } });
