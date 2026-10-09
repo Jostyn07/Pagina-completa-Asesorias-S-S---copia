@@ -621,8 +621,9 @@ async function cargarPolizas() {
         
         ;
 
-        todasLasPolizas = (data || []).filter(p => !p.cliente?.archivado);
-        polizasFiltradas = (data || []).filter(p => !p.cliente?.archivado);
+        // Los borradores de renovación no se listan: se abren desde la póliza original ("Continuar renovación")
+        todasLasPolizas = (data || []).filter(p => !p.cliente?.archivado && p.estado_renovacion !== 'Borrador');
+        polizasFiltradas = (data || []).filter(p => !p.cliente?.archivado && p.estado_renovacion !== 'Borrador');
         paginaActual = 1;
 
         const estadisticas = calcularEstadisticas(todasLasPolizas);
@@ -694,6 +695,7 @@ function celdaRenovacion(poliza) {
         'Renovada':    'background:#dcfce7;color:#166534;',
         'No renovada': 'background:#fee2e2;color:#991b1b;',
         'Pendiente':   'background:#f1f5f9;color:#475569;',
+        'En proceso':  'background:#fff7ed;color:#9b5c1c;',
     };
     const chip = `<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.75rem;font-weight:600;${estilos[estado] || estilos.Pendiente}">${estado}</span>`;
     const origen = poliza.poliza_origen_id
