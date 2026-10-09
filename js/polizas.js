@@ -592,19 +592,16 @@ async function cargarPolizas() {
             `)
             .order('updated_at', { ascending: false });
         
-        if (!esAdmin && nombreOperador) {
-            query = query.ilike('operador_nombre', nombreOperador);
-            ;
-        } else {
-            ;
-        }
+        // Fase 3: qué pólizas ve cada usuario lo decide la base de datos (RLS de carteras):
+        // su cartera + su equipo + las carteras concedidas en Usuarios → Carteras.
+        // Por eso ya no se filtra aquí por operador_nombre.
 
         const btnExportar = document.getElementById('btnExportar');
         if (btnExportar && esAdmin) {
             btnExportar.style.display = 'inline-flex';
         }
         
-        const { data, error } = await query;
+        let { data, error } = await query;
 
         if (error) {
             console.error('❌ Error:', error);
@@ -613,7 +610,7 @@ async function cargarPolizas() {
                 await new Promise(r => setTimeout(r, 2000));
                 const { data: data2, error: error2 } = await query;
                 if (error2) throw error2;
-                // usar data2
+                data = data2;
             } else {
                 throw error;
             }
