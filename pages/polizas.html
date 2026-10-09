@@ -348,6 +348,10 @@
                                         <input type="checkbox" id="2026" name="year" value="2026" checked onchange="aplicarFiltros()">
                                         2026
                                     </label>
+                                    <label for="2027">
+                                        <input type="checkbox" id="2027" name="year" value="2027" onchange="aplicarFiltros()">
+                                        2027
+                                    </label>
                                 </div>
                             </div>
                             
@@ -691,6 +695,17 @@
                                     
 
                                     <div class="filtro-group">
+                                        <label for="filtroEstadoRenovacion">Estado de renovación</label>
+                                        <select id="filtroEstadoRenovacion">
+                                            <option value="">Todos</option>
+                                            <option value="Pendiente">Pendiente</option>
+                                            <option value="Renovada">Renovada</option>
+                                            <option value="No renovada">No renovada</option>
+                                            <option value="renovacion">Es una renovación</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="filtro-group">
                                         <label>Seguimiento efectivo</label>
                                         <select id="filtroSeguimientoEfectivo">
                                             <option value="">Todos</option>
@@ -1022,12 +1037,13 @@
                                 <th class="sortable" data-column="modificado_por_nombre">Modificación realizada por</th>
                                 <th class="sortable" data-column="ultimo_seguimiento">Último Seguimiento</th>
                                 <th >Seguimiento efectivo</th>
+                                <th>Renovación</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-polizas">
                             <!-- Los datos se cargarán dinámicamente -->
                             <tr>
-                                <td colspan="23" style="text-align: center; padding: 40px;">
+                                <td colspan="32" style="text-align: center; padding: 40px;">
                                     <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
                                         <div style="width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite;"></div>
                                         <p style="color: #64748b; margin: 0;">Cargando pólizas...</p>

@@ -32,6 +32,7 @@ function guardarFiltrosEnStorage() {
             // Checkboxes de año
             anio2025: document.getElementById('2025')?.checked || false,
             anio2026: document.getElementById('2026')?.checked || false,
+            anio2027: document.getElementById('2027')?.checked || false,
 
             // Pólizas por página
             porPagina: document.getElementById('polizasPorPagina')?.value || '10',
@@ -56,6 +57,7 @@ function guardarFiltrosEnStorage() {
             portal: filtroPortalAvanzado.getSeleccionados(),
             filtroAgenteCliente: filtroAgenteCliente.getSeleccionados(),
             seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo')?.value || '',
+            estadoRenovacion: document.getElementById('filtroEstadoRenovacion')?.value || '',
             filtroAgenteMercado: filtroAgenteMercado.getSeleccionados(),
             estadoMercado:  Array.from(document.querySelectorAll('#panelEstadoMercado input:checked')).map(cb => cb.value),
             estadoCompania: Array.from(document.querySelectorAll('#panelEstadoCompania input:checked')).map(cb => cb.value),
@@ -137,6 +139,7 @@ function restaurarFiltrosDesdeStorage() {
     // Checkboxes de año
     setChecked('2025', datos.anio2025);
     setChecked('2026', datos.anio2026);
+    setChecked('2027', datos.anio2027);
 
     // Modal avanzado
     set('filtroNombre', datos.nombre);
@@ -177,6 +180,7 @@ function restaurarFiltrosDesdeStorage() {
     filtroPortalAvanzado.setSeleccionados(Array.isArray(datos.portal) ? datos.portal : []);
     filtroAgenteCliente.setSeleccionados(Array.isArray(datos.filtroAgenteCliente) ? datos.filtroAgenteCliente : []);
     set('filtroSeguimientoEfectivo', datos.seguimientoEfectivo);
+    set('filtroEstadoRenovacion', datos.estadoRenovacion);
     filtroAgenteMercado.setSeleccionados(Array.isArray(datos.filtroAgenteMercado) ? datos.filtroAgenteMercado : []);
     if (datos.estadoMercado && Array.isArray(datos.estadoMercado)) {
         document.querySelectorAll('#panelEstadoMercado input[type="checkbox"]').forEach(cb => {
@@ -243,6 +247,7 @@ function restaurarFiltrosDesdeStorage() {
         portal: Array.isArray(datos.portal) ? datos.portal : [],
         filtroAgenteCliente: Array.isArray(datos.filtroAgenteCliente) ? datos.filtroAgenteCliente : [],
         seguimientoEfectivo: datos.seguimientoEfectivo || '',
+        estadoRenovacion: datos.estadoRenovacion || '',
         filtroAgenteMercado: Array.isArray(datos.filtroAgenteMercado) ? datos.filtroAgenteMercado : [],
         estadoMercado:  Array.isArray(datos.estadoMercado)  ? datos.estadoMercado  : [],
         estadoCompania: Array.isArray(datos.estadoCompania) ? datos.estadoCompania : [],
@@ -273,7 +278,7 @@ function restaurarFiltrosDesdeStorage() {
 
     // 4. Determinar si hay filtros activos realmente (para el indicador visual)
     const hayAvanzados = Object.values(filtrosActivos).some(v => v !== '');
-    const hayAnios = datos.anio2025 || datos.anio2026;
+    const hayAnios = datos.anio2025 || datos.anio2026 || datos.anio2027;
     const hayBusqueda = !!datos.busqueda;
     hayFiltrosActivos = hayAvanzados || hayBusqueda;
 
@@ -318,10 +323,11 @@ function restaurarFiltrosDesdeStorage() {
         const anios = [];
         if (datos.anio2025) anios.push('2025');
         if (datos.anio2026) anios.push('2026');
+        if (datos.anio2027) anios.push('2027');
         resultado = resultado.filter(poliza => {
             if (poliza.cliente?.archivado === true) return false;
             if (!poliza.fecha_efectividad) return false;
-            const anio = new Date(poliza.fecha_efectividad).getFullYear().toString();
+            const anio = String(poliza.fecha_efectividad).slice(0, 4);
             return anios.includes(anio);
         });
     }
@@ -417,6 +423,8 @@ function restaurarFiltrosDesdeStorage() {
                 if (filtrosActivos.prima === 'sinAsignar' && poliza.prima !== null && poliza.prima !== '' && poliza.prima !== undefined) return false;
             }
 
+            if (!cumpleFiltroRenovacion(poliza, filtrosActivos.estadoRenovacion)) return false;
+
             if (filtrosActivos.seguimientoEfectivo) {
                 if (!poliza.seguimientos || poliza.seguimientos.length === 0) return false;
                 const ultimoSeg = [...poliza.seguimientos].sort((a, b) =>
@@ -497,6 +505,8 @@ async function cargarPolizas() {
                 compania,
                 fecha_revision_compania,
                 plan,
+                estado_renovacion,
+                poliza_origen_id,
                 prima,
                 agente_nombre,
                 fecha_efectividad,
@@ -667,6 +677,31 @@ async function cargarPolizas() {
     }
 }
 
+// ============================================
+// RENOVACIÓN (fase 2)
+// ============================================
+// 'renovacion' = la póliza es una renovación (viene de otra); los demás
+// valores son el estado de renovación de la póliza.
+function cumpleFiltroRenovacion(poliza, filtro) {
+    if (!filtro) return true;
+    if (filtro === 'renovacion') return !!poliza.poliza_origen_id;
+    return (poliza.estado_renovacion || 'Pendiente') === filtro;
+}
+
+function celdaRenovacion(poliza) {
+    const estado = poliza.estado_renovacion || 'Pendiente';
+    const estilos = {
+        'Renovada':    'background:#dcfce7;color:#166534;',
+        'No renovada': 'background:#fee2e2;color:#991b1b;',
+        'Pendiente':   'background:#f1f5f9;color:#475569;',
+    };
+    const chip = `<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.75rem;font-weight:600;${estilos[estado] || estilos.Pendiente}">${estado}</span>`;
+    const origen = poliza.poliza_origen_id
+        ? ' <span title="Esta póliza es una renovación" style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.75rem;font-weight:600;background:#ede9fe;color:#5b21b6;">Renovación</span>'
+        : '';
+    return chip + origen;
+}
+
 function renderizarTabla() {
     const tbody = document.getElementById('tabla-polizas');
     
@@ -680,7 +715,7 @@ function renderizarTabla() {
     if (polizasFiltradas.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="17" style="text-align: center; padding: 40px; color: #94a3b8;">
+                <td colspan="32" style="text-align: center; padding: 40px; color: #94a3b8;">
                     <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
                         <span class="material-symbols-rounded" style="font-size: 48px; opacity: 0.3;">search_off</span>
                         <p style="font-size: 1.1rem; margin: 0;">No se encontraron pólizas</p>
@@ -779,6 +814,7 @@ function renderizarTabla() {
             <td data-label="Modificación realizada por">${poliza.modificado_por_nombre || '-'}</td>
             <td data-label="Último seguimiento">${ultimoSeguimiento}</td>
             <td data-label="Seguimiento efectivo">${seguimientoEfectivo}</td>
+            <td data-label="Renovación">${celdaRenovacion(poliza)}</td>
         `;
         
         tbody.appendChild(tr);
@@ -1597,6 +1633,7 @@ function aplicarFiltros() {
     const años = [];
     if (checkbox2025.checked) años.push('2025');
     if (checkbox2026.checked) años.push('2026');
+    if (document.getElementById('2027')?.checked) años.push('2027');
     
     if (años.length === 0) {
         polizasFiltradas = todasLasPolizas;
@@ -1604,7 +1641,7 @@ function aplicarFiltros() {
         polizasFiltradas = todasLasPolizas.filter(poliza => {
             if (poliza.cliente?.archivado === true) return false;
             if (!poliza.fecha_efectividad) return false;
-            const año = new Date(poliza.fecha_efectividad).getFullYear().toString();
+            const año = String(poliza.fecha_efectividad).slice(0, 4);
             return años.includes(año);
         });
     }
@@ -2470,6 +2507,8 @@ function limpiarFiltros() {
     document.getElementById('filtroSeguimientoDesde').value = '';
     document.getElementById('filtroSeguimientoHasta').value = '';
     document.getElementById('filtroSeguimientoEfectivo').value = '';
+    const selRenovacion = document.getElementById('filtroEstadoRenovacion');
+    if (selRenovacion) selRenovacion.value = '';
     document.getElementById('filtroFechaPlazoDocumentosDesde').value = '';
     document.getElementById('filtroFechaPlazoDocumentosHasta').value = '';
     document.getElementById('filtroModificacionDesde').value = '',
@@ -2768,6 +2807,7 @@ function aplicarFiltrosAvanzados() {
         fechaSeguimientoDesde: document.getElementById('filtroSeguimientoDesde').value,
         fechaSeguimientoHasta: document.getElementById('filtroSeguimientoHasta').value,
         seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo').value,
+        estadoRenovacion: document.getElementById('filtroEstadoRenovacion')?.value || '',
         plazoDocumentosDesde: document.getElementById('filtroFechaPlazoDocumentosDesde').value,
         plazoDocumentosHasta: document.getElementById('filtroFechaPlazoDocumentosHasta').value,
         filtroModificacionDesde: document.getElementById('filtroModificacionDesde').value,
@@ -2870,6 +2910,8 @@ function aplicarFiltrosAvanzados() {
                 return false;
             }
         }
+
+        if (!cumpleFiltroRenovacion(poliza, filtrosActivos.estadoRenovacion)) return false;
 
         if (filtrosActivos.filtroTipoModificacion?.length > 0 && !filtrosActivos.filtroTipoModificacion.includes(cliente.tipo_modificacion)) {
             return false

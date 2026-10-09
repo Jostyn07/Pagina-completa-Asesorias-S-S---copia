@@ -175,7 +175,8 @@ async function cargarPermisosEfectivos() {
     (filasRol || []).filter(f => f.portal !== 'TODOS')
         .forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor; });
 
-    (filasRol || []).forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor; });
+    // Excepciones individuales del usuario: tienen la última palabra
+    (filasUsuario || []).forEach(f => { permisosEfectivos[f.permiso_clave] = f.valor; });
 }
 
 // Chequeo granular

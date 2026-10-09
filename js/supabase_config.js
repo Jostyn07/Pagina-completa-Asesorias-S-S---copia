@@ -466,3 +466,19 @@ async function buscarClientes(termino) {
 // =============================================
 // Log de inicio
 // =============================================
+
+// =============================================
+// AUDITORÍA (fase 1): se carga en todas las páginas que usan este archivo
+// =============================================
+(function cargarAuditoria() {
+    try {
+        const actual = document.currentScript && document.currentScript.src;
+        const src = actual ? new URL('auditoria.js', actual).href : '../js/auditoria.js';
+        const s = document.createElement('script');
+        s.src = src;
+        s.defer = true;
+        document.head.appendChild(s);
+    } catch (error) {
+        console.warn('No se pudo cargar la auditoría:', error);
+    }
+})();

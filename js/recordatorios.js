@@ -78,7 +78,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         await cargarRecordatorios();
         verificarNotificaciones();
     }, 60 * 1000);
+    suscribirRecordatoriosEnVivo();
 });
+
+// ── Tiempo real: cambios hechos aquí, en otra pestaña o desde Xiris ──
+let recargaEnVivo = null;
+function suscribirRecordatoriosEnVivo() {
+    try {
+        if (!supabaseClient?.channel) return;
+        supabaseClient
+            .channel('recordatorios-en-vivo')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'recordatorios' }, () => {
+                clearTimeout(recargaEnVivo);
+                recargaEnVivo = setTimeout(async () => {
+                    await cargarRecordatorios();
+                    verificarNotificaciones();
+                }, 500);
+            })
+            .subscribe();
+    } catch (e) {
+        console.warn('Recordatorios en vivo no disponibles:', e);
+    }
+}
 
 // ── Inyectar drawer en el DOM ─────────────────
 function inyectarDrawer() {
@@ -113,6 +134,15 @@ function inyectarDrawer() {
                 <div class="form-group-dr">
                     <label>Fecha y hora *</label>
                     <input type="datetime-local" id="drFecha">
+                </div>
+                <div class="form-group-dr">
+                    <label>Prioridad</label>
+                    <select id="drPrioridad">
+                        <option value="baja">Baja</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
                 </div>
                 <div class="form-group-dr">
                     <label>¿Para quién es? *</label>
@@ -193,7 +223,7 @@ async function cargarRecordatorios() {
 
         let query = supabaseClient
             .from('recordatorios')
-            .select('*, usuario:usuarios!usuario_id(nombre, portales), creador:usuarios!creado_por_id(portales)')
+            .select('*, usuario:usuarios!usuario_id(nombre, portales), creador:usuarios!creado_por_id(portales), xiris_comentarios(autor_nombre, rol, cuerpo, creado_en)')
             .order('fecha_recordatorio', { ascending: true });
 
         const requiereFiltroPortal = usuarioActual.rol !== 'admin_general' &&
@@ -295,10 +325,18 @@ function renderizarRecordatorios(estado) {
                 <div class="dr-item-header">
                     <span class="dr-item-titulo">${escapeHtml(r.titulo)}</span>
                     ${badgeTiempo}
+                    ${r.prioridad === 'alta' || r.prioridad === 'urgente' ? `<span class="dr-badge-prioridad dr-prio-${escapeAttr(r.prioridad)}">${r.prioridad === 'urgente' ? 'Urgente' : 'Alta'}</span>` : ''}
+                    ${r.estado === 'cancelado' ? '<span class="dr-badge-cancelado">Cancelado</span>' : ''}
+                    ${r.xiris_task_id ? '<span class="dr-badge-xiris" title="Sincronizado con Xiris">Xiris</span>' : ''}
                     <div class="dr-item-acciones">
                         ${r.estado === 'pendiente' ? `
                             <button title="Completar" onclick="cambiarEstadoRecordatorio('${escapeAttr(r.id)}', 'completado')">
                                 <span class="material-symbols-rounded">check_circle</span>
+                            </button>
+                        ` : ''}
+                        ${r.estado === 'completado' || r.estado === 'cancelado' ? `
+                            <button title="Reabrir" onclick="cambiarEstadoRecordatorio('${escapeAttr(r.id)}', 'pendiente')">
+                                <span class="material-symbols-rounded">undo</span>
                             </button>
                         ` : ''}
                         <button title="Editar" onclick="editarRecordatorio('${escapeAttr(r.id)}')">
@@ -310,6 +348,14 @@ function renderizarRecordatorios(estado) {
                     </div>
                 </div>
                 ${r.descripcion ? `<p class="dr-item-desc">${escapeHtml(r.descripcion)}</p>` : ''}
+                ${(r.xiris_comentarios || []).length ? `
+                    <div class="dr-xiris-coms">
+                        ${[...r.xiris_comentarios].sort((x, y) => new Date(x.creado_en) - new Date(y.creado_en)).map(c => `
+                            <div class="dr-xiris-com">
+                                <span>${escapeHtml(c.autor_nombre || 'Xiris')} · desde Xiris</span>
+                                <p>${escapeHtml(c.cuerpo)}</p>
+                            </div>`).join('')}
+                    </div>` : ''}
                 <div class="dr-item-meta">
                     <span><span class="material-symbols-rounded">schedule</span>
                         ${escapeHtml(fechaTexto)}
@@ -490,6 +536,7 @@ async function guardarRecordatorio() {
             cliente_nombre: clienteNombre,
             numero_poliza: numeroPoliza,
             portal: portalDestinatario,
+            prioridad: document.getElementById('drPrioridad')?.value || 'normal',
             updated_at: new Date().toISOString()
         };
 
@@ -547,6 +594,8 @@ async function editarRecordatorio(id) {
     document.getElementById('drawerFormTitulo').textContent = 'Editar recordatorio';
     document.getElementById('drTitulo').value = r.titulo;
     document.getElementById('drDescripcion').value = r.descripcion || '';
+    const selPrioridad = document.getElementById('drPrioridad');
+    if (selPrioridad) selPrioridad.value = r.prioridad || 'normal';
     await cargarOpcionesParaQuien(r.usuario_id);
 
     // Formatear fecha para datetime-local
