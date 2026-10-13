@@ -1,3 +1,18 @@
+/* ============================================================================
+ * Ruta en el repo: js/documentos_familia.js
+ * MÓDULO DE DOCUMENTOS — FASE 2: Pólizas > Documentos (diseño Figma 8-2 / 10-122)
+ *
+ * Reemplaza la pestaña "Documentos" de cliente_editar.html por la vista por
+ * familia: selector de integrantes, tarjetas Estado migratorio / Income,
+ * Otros documentos y casillas de documentos solicitados por la póliza.
+ *
+ * - Sube al instante (no espera "Guardar Cliente").
+ * - No borra archivos: "Eliminar" oculta el documento (vigente = false).
+ * - "Reemplazar" crea una versión nueva y conserva la anterior.
+ * - Audios y otros formatos antiguos se pueden abrir y reproducir.
+ * - Requiere sql/documentos_fase1_modelo.sql.
+ * Se carga DESPUÉS de cliente_editar.js (sobrescribe cargarDocumentos).
+ * ==========================================================================*/
 (function () {
   'use strict';
 
@@ -28,6 +43,7 @@
       comprobante_ingresos: 'Comprobante de ingresos (paystub / carta)'
     },
     otro: {
+      aviso_elegibilidad_mercado: 'Aviso de Elegibilidad del Mercado',
       ssn: 'Tarjeta del Seguro Social',
       carta_rechazo_medicaid: 'Carta de rechazo Medicaid',
       carta_uscis: 'Carta de USCIS',
