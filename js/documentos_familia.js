@@ -3,7 +3,7 @@
 
   const BUCKET = 'documentos';
   const MAX_MB = 15;
-  const EXT_PERMITIDAS = ['pdf', 'jpg', 'jpeg', 'png', 'heic', 'heif'];
+  const EXT_PERMITIDAS = ['pdf', 'jpg', 'jpeg', 'png', 'heic', 'heif', 'jfif', 'webp', 'gif', 'doc', 'docx', 'mp3', 'ogg', 'oga', 'opus', 'wav', 'm4a', 'aac', 'amr', 'webm'];
 
   const CATEGORIAS = {
     estado_migratorio: { label: 'Estado migratorio', icono: 'badge', desc: 'Identidad, emisión y vencimiento' },
@@ -210,7 +210,8 @@
           <div class="docf-integrantes">${S.integrantes.map(htmlIntegrante).join('')}</div>
         </div>
         <div class="docf-bloque">
-          <h3 class="docf-h3">Documentación</h3>
+          <div class="docf-h3-fila"><h3 class="docf-h3">Documentación</h3>
+            ${S.modo === 'bd' ? `<button type="button" class="docf-btn-sec" data-docf-ia="1"><span class="material-symbols-rounded">auto_awesome</span> Clasificar con IA (${docsSel.filter(pendienteIA).length})</button>` : ''}</div>
           <p class="docf-sub">Clasificación asistida · Revisión humana antes de confirmar campos dudosos</p>
           <div class="docf-grid">
             ${htmlCategoria('estado_migratorio', porCat('estado_migratorio'))}
@@ -277,6 +278,7 @@
             ${d.integrante_tipo == null ? '<small class="docf-vence">Integrante sin confirmar · usa ⋮ para asignarlo</small>' : ''}
             ${d.fecha_vencimiento ? `<small class="docf-vence">Vence: ${fecha(d.fecha_vencimiento + 'T12:00:00')}</small>` : ''}
           </div>
+          ${d.estado_ia === 'procesando' || d.estado_ia === 'en_cola' ? '<span class="docf-chip azul">Analizando…</span>' : d.estado_ia === 'error' ? '<span class="docf-chip rojo" title="La IA no pudo leerlo">Error IA</span>' : ''}
           <span class="docf-chip ${col}">${est}</span>
           <div class="docf-doc-acc">
             <button type="button" class="docf-btn-ver" data-docf-ver="${d.id}">Ver archivo</button>
@@ -284,8 +286,8 @@
           </div>
         </div>
         ${ext_.length ? `<div class="docf-ext"><small>DATOS EXTRAÍDOS</small>${ext_.map((x) => `
-            <div class="docf-ext-row"><span>${esc(x.campo.replace(/_/g, ' '))}: <b>${esc(x.estado === 'no_identificado' ? 'No identificado' : x.estado === 'no_aplica' ? 'No aplica' : x.valor)}</b></span>
-            ${x.confianza != null ? `<span class="docf-chip ${x.confianza >= 95 ? 'verde' : x.confianza >= 80 ? 'azul' : 'amarillo'}">${Math.round(x.confianza)}% confianza</span>` : ''}</div>`).join('')}
+            <div class="docf-ext-row" data-docf-ext="${x.id}" title="Revisar dato"><span>${esc(x.campo.replace(/_/g, ' '))}: <b>${esc(x.estado === 'no_identificado' ? 'No identificado' : x.estado === 'no_aplica' ? 'No aplica' : x.valor)}</b></span>
+            ${x.estado === 'confirmado' ? '<span class="docf-chip verde">Confirmado</span>' : x.confianza != null ? `<span class="docf-chip ${x.confianza >= 95 ? 'verde' : x.confianza >= 80 ? 'azul' : 'amarillo'}">${Math.round(x.confianza)}% confianza</span>` : ''}</div>`).join('')}
           </div>` : ''}
       </div>`;
   }
@@ -379,8 +381,8 @@
       <label>Categoría<select name="categoria">${opcionesCategoria(cat)}</select></label>
       <label>Tipo de documento<select name="subtipo">${opcionesSubtipo(cat, reemplazo?.subtipo || '')}</select></label>
       <label>Año fiscal (Income)<input name="anio" type="number" min="2000" max="2100" placeholder="${new Date().getFullYear() - 1}" value="${reemplazo?.anio_fiscal || ''}"></label>
-      <label>Archivo${reemplazo ? '' : 's'} (PDF, JPG, PNG, HEIC · máx. ${MAX_MB} MB)
-        <input name="archivo" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif" ${reemplazo ? '' : 'multiple'}></label>
+      <label>Archivo${reemplazo ? '' : 's'} (PDF, imágenes, Word o audio · máx. ${MAX_MB} MB)
+        <input name="archivo" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.jfif,.webp,.gif,.doc,.docx,audio/*" ${reemplazo ? '' : 'multiple'}></label>
       <div class="docf-modal-acc">
         <button type="button" class="docf-btn-sec" data-docf-cerrar>Cancelar</button>
         <button type="button" class="docf-btn-pri" data-docf-ok>Subir</button>
@@ -487,20 +489,41 @@
     const url = await urlDe(d);
     const t = (d.tipo_archivo || '').toLowerCase(), e = ext(d.nombre_archivo);
     let cuerpo;
-    if (t.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'jfif'].includes(e)) cuerpo = `<img src="${esc(url)}" alt="${esc(d.nombre_archivo)}">`;
+    const esImg = t.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'jfif'].includes(e);
+    if (esImg || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'jfif'].includes(e)) cuerpo = `<img src="${esc(url)}" alt="${esc(d.nombre_archivo)}">`;
     else if (t === 'application/pdf' || e === 'pdf') cuerpo = `<iframe src="${esc(url)}" title="${esc(d.nombre_archivo)}"></iframe>`;
-    else if (t.startsWith('audio/') || ['mp3', 'ogg', 'wav', 'm4a'].includes(e)) cuerpo = `<audio controls src="${esc(url)}"></audio>`;
+    else if (t.startsWith('audio/') || ['mp3', 'ogg', 'oga', 'opus', 'wav', 'm4a', 'aac', 'amr', 'webm'].includes(e)) cuerpo = `<audio controls src="${esc(url)}"></audio>`;
     else cuerpo = `<p class="docf-sub">Este formato no tiene vista previa.</p>`;
     modal(`
       <div class="docf-visor-head"><h3>${esc(d.nombre_estandar || d.nombre || d.nombre_archivo)}</h3>
         <button type="button" class="docf-btn-ico" data-docf-cerrar><span class="material-symbols-rounded">close</span></button></div>
       <div class="docf-visor">${cuerpo}</div>
       <div class="docf-modal-acc">
+        ${esImg ? `<div class="docf-giro">
+          <button type="button" class="docf-btn-ico" data-giro="-90" title="Girar a la izquierda"><span class="material-symbols-rounded">rotate_left</span></button>
+          <button type="button" class="docf-btn-ico" data-giro="90" title="Girar a la derecha"><span class="material-symbols-rounded">rotate_right</span></button>
+          <button type="button" class="docf-btn-ico" data-zoom="0.25" title="Acercar"><span class="material-symbols-rounded">zoom_in</span></button>
+          <button type="button" class="docf-btn-ico" data-zoom="-0.25" title="Alejar"><span class="material-symbols-rounded">zoom_out</span></button>
+        </div>` : ''}
         <a class="docf-btn-sec" href="${esc(url)}" target="_blank" rel="noopener">Abrir en otra pestaña</a>
         <button type="button" class="docf-btn-pri" data-docf-desc>Descargar</button>
       </div>`, (m) => {
       m.querySelector('.docf-modal-caja').classList.add('ancho');
       m.querySelector('[data-docf-desc]').addEventListener('click', () => descargar(url, d.nombre_archivo));
+      // Girar y acercar la imagen (solo en pantalla, no cambia el archivo)
+      const img = m.querySelector('.docf-visor img');
+      if (img) {
+        let giro = 0, zoom = 1;
+        const aplicar = () => {
+          const lado = giro % 180 !== 0;
+          img.style.transform = `rotate(${giro}deg) scale(${zoom})`;
+          // Al girar 90°, el alto disponible pasa a ser el ancho
+          img.style.maxWidth = lado ? '70vh' : '100%';
+          img.style.maxHeight = lado ? 'min(100%, 900px)' : '70vh';
+        };
+        m.querySelectorAll('[data-giro]').forEach((b) => b.addEventListener('click', () => { giro = (giro + Number(b.dataset.giro) + 360) % 360; aplicar(); }));
+        m.querySelectorAll('[data-zoom]').forEach((b) => b.addEventListener('click', () => { zoom = Math.min(3, Math.max(0.5, zoom + Number(b.dataset.zoom))); aplicar(); }));
+      }
     });
   }
   async function descargar(url, nombre) {
@@ -532,6 +555,7 @@
     modal(`
       <h3>${esc(d.nombre_estandar || d.nombre || d.nombre_archivo)}</h3>
       <div class="docf-menu">
+        <button type="button" data-a="ia"><span class="material-symbols-rounded">auto_awesome</span> Clasificar con IA</button>
         <button type="button" data-a="clasificar"><span class="material-symbols-rounded">sell</span> Cambiar tipo o integrante</button>
         <button type="button" data-a="confirmar"><span class="material-symbols-rounded">verified</span> Marcar como revisado</button>
         <button type="button" data-a="no_aplica"><span class="material-symbols-rounded">block</span> Marcar «No aplica»</button>
@@ -543,6 +567,7 @@
       m.querySelector('.docf-menu').addEventListener('click', async (e) => {
         const a = e.target.closest('[data-a]')?.dataset.a;
         if (!a) return;
+        if (a === 'ia') { cerrarModal(); return clasificarIA([d.id]); }
         if (a === 'clasificar') return clasificar(d);
         if (a === 'reemplazar') return abrirSubir(null, d);
         if (a === 'descargar') { cerrarModal(); return descargar(await urlDe(d), d.nombre_archivo); }
@@ -643,10 +668,57 @@
     });
   }
 
+  // ------------------------------------------------------------------ IA
+  const pendienteIA = (d) => ['sin_procesar', 'error'].includes(d.estado_ia) && !d._file;
+  let iaOcupada = false;
+  async function clasificarIA(ids) {
+    if (iaOcupada) return aviso('Ya hay un análisis en curso', 'warning');
+    iaOcupada = true;
+    let ok = 0, errores = 0, noComp = 0;
+    try {
+      ids.forEach((id) => { const d = S.documentos.find((x) => x.id === id); if (d) d.estado_ia = 'procesando'; });
+      render();
+      aviso(`Analizando ${ids.length} documento(s)…`, 'info');
+      for (let i = 0; i < ids.length; i += 5) {
+        const { data, error } = await sb().functions.invoke('clasificar-documento', { body: { documento_ids: ids.slice(i, i + 5) } });
+        if (error) { errores += Math.min(5, ids.length - i); console.error('IA:', error); continue; }
+        (data?.resultados || []).forEach((r) => { if (r.estado === 'procesado') ok++; else if (r.estado === 'no_compatible') noComp++; else errores++; });
+      }
+      aviso(`IA: ${ok} procesado(s)${noComp ? `, ${noComp} no compatible(s)` : ''}${errores ? `, ${errores} con error` : ''}. Revisa los datos antes de confirmar.`, errores ? 'warning' : 'success');
+    } finally {
+      iaOcupada = false;
+      await recargar();
+    }
+  }
+
+  // Revisar un dato extraído: confirmar, corregir o marcar No aplica
+  function revisarDato(x, d) {
+    modal(`
+      <h3>${esc(x.campo.replace(/_/g, ' '))}</h3>
+      <p class="docf-sub">${esc(d?.nombre_estandar || d?.nombre_archivo || '')}${x.confianza != null ? ` · IA ${Math.round(x.confianza)}% confianza` : ''}</p>
+      <label>Valor<input name="valor" type="text" value="${esc(x.valor || '')}" placeholder="No identificado"></label>
+      <div class="docf-modal-acc">
+        <button type="button" class="docf-btn-sec" data-e="no_aplica">No aplica</button>
+        <button type="button" class="docf-btn-sec" data-e="no_identificado">No identificado</button>
+        <button type="button" class="docf-btn-pri" data-e="confirmado">Confirmar</button>
+      </div>`, (m) => {
+      m.querySelectorAll('[data-e]').forEach((b) => b.addEventListener('click', async () => {
+        const estado = b.dataset.e;
+        const valor = m.querySelector('[name=valor]').value.trim();
+        if (estado === 'confirmado' && !valor) return aviso('Escribe el valor o marca «No identificado»', 'warning');
+        const cambios = { estado, valor: estado === 'confirmado' ? valor : x.valor };
+        if (estado === 'confirmado' && valor !== (x.valor || '')) cambios.origen = 'manual';
+        const { error } = await sb().from('documento_extracciones').update(cambios).eq('id', x.id);
+        if (error) return aviso('No se pudo guardar: ' + error.message, 'error');
+        cerrarModal(); aviso('Dato guardado', 'success'); await recargar();
+      }));
+    });
+  }
+
   // ------------------------------------------------------------------ eventos
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#documentosContainer')) return;
-    const t = e.target.closest('[data-docf-int],[data-docf-subir],[data-docf-ver],[data-docf-menu],[data-docf-sol],[data-docf-sol-nuevo]');
+    const t = e.target.closest('[data-docf-int],[data-docf-subir],[data-docf-ver],[data-docf-menu],[data-docf-sol],[data-docf-sol-nuevo],[data-docf-ia],[data-docf-ext]');
     if (!t) return;
     e.preventDefault();
     const doc = (id) => S.documentos.find((d) => d.id === id);
@@ -656,6 +728,18 @@
     if (t.dataset.docfMenu) return menu(doc(t.dataset.docfMenu));
     if (t.dataset.docfSol) return menuSolicitado(S.solicitados.find((s) => s.id === t.dataset.docfSol));
     if (t.dataset.docfSolNuevo) return nuevoSolicitado();
+    if (t.dataset.docfIa) {
+      const docs = (S.seleccionado === 'general' ? S.documentos : S.documentos.filter((d) => integranteDe(d) === S.seleccionado)).filter(pendienteIA);
+      if (!docs.length) return aviso('No hay documentos pendientes de analizar', 'info');
+      if (!confirm(`Se analizarán ${docs.length} documento(s) con IA (OpenAI). ¿Continuar?`)) return;
+      return clasificarIA(docs.map((d) => d.id));
+    }
+    if (t.dataset.docfExt) {
+      for (const [docId, lista] of Object.entries(S.extracciones)) {
+        const x = lista.find((y) => y.id === t.dataset.docfExt);
+        if (x) return revisarDato(x, S.documentos.find((d) => d.id === docId));
+      }
+    }
   });
 
   async function recargar() {
