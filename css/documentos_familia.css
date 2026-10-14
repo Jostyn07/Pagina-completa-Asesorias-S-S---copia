@@ -184,3 +184,13 @@
 .docf-h3-fila { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .docf-ext-row { cursor: pointer; border-radius: 6px; padding: 2px 4px; margin: 0 -4px; }
 .docf-ext-row:hover { background: var(--docf-hover); }
+
+.docf-ext > summary {
+  list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+  font-size: .72rem; color: var(--docf-sub); user-select: none; padding: 2px 0;
+}
+.docf-ext > summary::-webkit-details-marker { display: none; }
+.docf-ext > summary .material-symbols-rounded { font-size: 18px; transition: transform .15s; transform: rotate(-90deg); }
+.docf-ext[open] > summary .material-symbols-rounded { transform: rotate(0); }
+.docf-ext[open] > summary { margin-bottom: 4px; }
+.docf-amar-txt { color: var(--docf-amar); font-weight: 600; }

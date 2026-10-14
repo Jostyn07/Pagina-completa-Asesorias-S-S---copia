@@ -44,6 +44,7 @@
     },
     otro: {
       aviso_elegibilidad_mercado: 'Aviso de Elegibilidad del Mercado',
+      resumen_plan: 'Resumen de aplicación y plan',
       ssn: 'Tarjeta del Seguro Social',
       carta_rechazo_medicaid: 'Carta de rechazo Medicaid',
       carta_uscis: 'Carta de USCIS',
@@ -301,10 +302,15 @@
             <button type="button" class="docf-btn-ico" data-docf-menu="${d.id}" title="Más acciones"><span class="material-symbols-rounded">more_vert</span></button>
           </div>
         </div>
-        ${ext_.length ? `<div class="docf-ext"><small>DATOS EXTRAÍDOS</small>${ext_.map((x) => `
+        ${ext_.length ? `<details class="docf-ext" data-docf-det="${d.id}"${abiertos.has(d.id) ? ' open' : ''}>
+            <summary><span class="material-symbols-rounded">expand_more</span>Datos extraídos (${ext_.length})${(() => {
+              const rev = ext_.filter((x) => x.estado === 'por_revisar' || x.estado === 'sugerido').length;
+              const conf = ext_.filter((x) => x.estado === 'confirmado').length;
+              return (rev ? ` · <b class="docf-amar-txt">${rev} por revisar</b>` : '') + (conf ? ` · ${conf} confirmado${conf === 1 ? '' : 's'}` : '');
+            })()}</summary>${ext_.map((x) => `
             <div class="docf-ext-row" data-docf-ext="${x.id}" title="Revisar dato"><span>${esc(x.campo.replace(/_/g, ' '))}: <b>${esc(x.estado === 'no_identificado' ? 'No identificado' : x.estado === 'no_aplica' ? 'No aplica' : x.valor)}</b></span>
             ${x.estado === 'confirmado' ? '<span class="docf-chip verde">Confirmado</span>' : x.confianza != null ? `<span class="docf-chip ${x.confianza >= 95 ? 'verde' : x.confianza >= 80 ? 'azul' : 'amarillo'}">${Math.round(x.confianza)}% confianza</span>` : ''}</div>`).join('')}
-          </div>` : ''}
+          </details>` : ''}
       </div>`;
   }
 
@@ -683,6 +689,14 @@
       });
     });
   }
+
+  // Detalles abiertos (se recuerdan al recargar la lista)
+  const abiertos = new Set();
+  document.addEventListener('toggle', (e) => {
+    const det = e.target;
+    if (!det.matches || !det.matches('[data-docf-det]')) return;
+    if (det.open) abiertos.add(det.dataset.docfDet); else abiertos.delete(det.dataset.docfDet);
+  }, true);
 
   // ------------------------------------------------------------------ IA
   const pendienteIA = (d) => ['sin_procesar', 'error'].includes(d.estado_ia) && !d._file;
