@@ -1,3 +1,7 @@
+/* ============================================================================
+ * Ruta en el repo: css/documentos_familia.css
+ * Estilos de Pólizas > Documentos (Figma 8-2 claro / 10-122 oscuro)
+ * ==========================================================================*/
 .docf {
   --docf-bg: #ffffff;
   --docf-borde: #e5e7eb;
@@ -194,3 +198,16 @@
 .docf-ext[open] > summary .material-symbols-rounded { transform: rotate(0); }
 .docf-ext[open] > summary { margin-bottom: 4px; }
 .docf-amar-txt { color: var(--docf-amar); font-weight: 600; }
+
+/* Verificación rápida */
+.docf-btn-verif { padding: 6px 12px; font-size: .78rem; }
+.docf-verif { display: grid; grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); gap: 16px; min-height: 60vh; }
+.docf-verif-doc { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.docf-verif-doc .docf-visor { min-height: 60vh; flex: 1; border: 1px solid var(--docf-borde); border-radius: 10px; }
+.docf-verif-doc .docf-visor iframe { height: 65vh; }
+.docf-verif-campos { display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow: auto; padding-right: 4px; }
+.docf-verif-fila { display: grid; grid-template-columns: auto 1fr 110px; gap: 8px; align-items: end; }
+.docf-verif-fila > input[type=checkbox] { width: 18px; height: 18px; margin-bottom: 9px; accent-color: var(--docf-pri); }
+.docf-verif-fila label { text-transform: capitalize; }
+.docf-verif-fila select { padding: 8px 6px; }
+@media (max-width: 800px) { .docf-verif { grid-template-columns: 1fr; } .docf-verif-doc .docf-visor { min-height: 40vh; } }

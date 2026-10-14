@@ -1,3 +1,10 @@
+/* ============================================================================
+ * Ruta en el repo: js/analisis_documentos.js
+ * MÓDULO DE DOCUMENTOS — FASE 4: pestaña "Documentos" en Análisis
+ * (diseño Figma 7-2 claro / 10-261 oscuro).
+ * Requiere sql/documentos_fase4_analisis.sql. Se carga en pages/analisis.html
+ * después de analisis.js. Las métricas cuentan FAMILIAS.
+ * ==========================================================================*/
 (function () {
   'use strict';
   const sb = () => (typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient);
@@ -73,7 +80,6 @@
       .ad-pag-btns button.act{border-color:var(--ad-pri);color:var(--ad-pri);font-weight:600}
       .ad-pag-btns button:disabled{opacity:.4;cursor:default}
       .ad-vacio{padding:28px;text-align:center;color:var(--ad-sub)}
-      .ad-nota{background:var(--ad-amar-bg);color:var(--ad-amar);border-radius:8px;padding:8px 12px;font-size:.75rem}
       @media (max-width:1100px){.ad-filtros{grid-template-columns:repeat(3,1fr)}}
       @media (max-width:640px){.ad-filtros{grid-template-columns:1fr}}
     `;
@@ -107,7 +113,7 @@
       <div class="ad-kpis">
         <div class="ad-kpi"><span class="ic"><span class="material-symbols-rounded">folder_shared</span></span><small>Familias con documentos</small><strong id="adK1">–</strong><em>Expedientes en cartera</em></div>
         <div class="ad-kpi"><span class="ic"><span class="material-symbols-rounded">rule</span></span><small>Documentación incompleta</small><strong id="adK2">–</strong><em id="adK2b">&nbsp;</em></div>
-        <div class="ad-kpi"><span class="ic"><span class="material-symbols-rounded">event_busy</span></span><small>Vencidos o por vencer</small><strong id="adK3">–</strong><em id="adK3b">&nbsp;</em></div>
+        <div class="ad-kpi"><span class="ic"><span class="material-symbols-rounded">event_busy</span></span><small>Plazo Mercado vencido o ≤ 30 días</small><strong id="adK3">–</strong><em id="adK3b">&nbsp;</em></div>
         <div class="ad-kpi"><span class="ic"><span class="material-symbols-rounded">auto_awesome</span></span><small>Pendientes de IA</small><strong id="adK4">–</strong><em>Clasificación o revisión</em></div>
       </div>
       <div class="ad-card">
@@ -127,11 +133,12 @@
         <div class="ad-card-head"><div><h3>Expedientes</h3><small id="adTotal">–</small></div>
           <select class="ad-orden" id="adOrden"><option value="prioridad">Orden: prioridad</option><option value="vencimiento">Orden: vencimiento</option><option value="nombre">Orden: nombre</option></select></div>
         <div class="ad-tabla-wrap"><table class="ad-tabla">
-          <thead><tr><th>Familia / cliente</th><th>Estado migratorio</th><th>Income</th><th>Vencimiento</th><th>Estado de IA</th><th>Asesor</th><th>Acción</th></tr></thead>
+          <thead><tr><th>Familia / cliente</th><th>Estado migratorio</th><th>Income</th><th title="Fecha de plazo de documento (Estado en Mercado)">Vencimiento (plazo Mercado)</th><th>Estado de IA</th><th>Asesor</th><th>Acción</th></tr></thead>
           <tbody id="adCuerpo"><tr><td colspan="7" class="ad-vacio">Cargando…</td></tr></tbody>
         </table></div>
         <div class="ad-pag"><span id="adPagTxt"></span><div class="ad-pag-btns" id="adPag"></div></div>
-      </div>`;
+      </div>
+`;
     const ancla = document.getElementById('vistaRankingRenovaciones') || document.getElementById('vistaAnalisisEspecifico') || nav;
     ancla.insertAdjacentElement('afterend', vista);
 
@@ -212,6 +219,7 @@
       if (f.dias < 0) { vence = `Vencido · ${Math.abs(f.dias)} d`; clase = 'ad-vence-rojo'; }
       else if (f.dias === 0) { vence = 'Vence hoy'; clase = 'ad-vence-rojo'; }
       else vence = `En ${f.dias} día${f.dias === 1 ? '' : 's'}`;
+      vence += `<small>Plazo ${f.vence.split('-').slice(1).concat(f.vence.slice(0, 4)).join('/')}${f.documentos_pendientes && f.documentos_pendientes !== '-' ? ' · ' + esc(f.documentos_pendientes) : ''}</small>`;
     }
     const tipo = F.tipo;
     return `<tr>
@@ -254,8 +262,8 @@
       const E = { completo: 'Completo', por_revisar: 'Por revisar', faltante: 'Faltante', vencido: 'Vencido' };
       const I = { procesado: 'Procesado', revision: 'Revisión requerida', sin_clasificar: 'Sin clasificar', error: 'Error', sin_documentos: 'Sin documentos' };
       const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-      const csv = ['Familia,Estado general,Estado migratorio,Income,Vencimiento,Días,Estado IA,Asesor,Documentos']
-        .concat(todas.map((f) => [f.nombre, f.general, E[f.mig], E[f.inc], f.vence || '', f.dias ?? '', I[f.ia], f.asesor, f.n_docs].map(q).join(','))).join('\n');
+      const csv = ['Familia,Estado general,Estado migratorio,Income,Plazo Mercado,Días,Documentos solicitados,Estado de documentos,Estado IA,Asesor,Documentos']
+        .concat(todas.map((f) => [f.nombre, f.general, E[f.mig], E[f.inc], f.vence || '', f.dias ?? '', f.documentos_pendientes, f.estado_documentos, I[f.ia], f.asesor, f.n_docs].map(q).join(','))).join('\n');
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
       a.download = `analisis_documentos_${new Date().toISOString().slice(0, 10)}.csv`;

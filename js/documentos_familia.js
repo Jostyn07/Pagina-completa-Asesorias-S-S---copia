@@ -1,18 +1,3 @@
-/* ============================================================================
- * Ruta en el repo: js/documentos_familia.js
- * MÓDULO DE DOCUMENTOS — FASE 2: Pólizas > Documentos (diseño Figma 8-2 / 10-122)
- *
- * Reemplaza la pestaña "Documentos" de cliente_editar.html por la vista por
- * familia: selector de integrantes, tarjetas Estado migratorio / Income,
- * Otros documentos y casillas de documentos solicitados por la póliza.
- *
- * - Sube al instante (no espera "Guardar Cliente").
- * - No borra archivos: "Eliminar" oculta el documento (vigente = false).
- * - "Reemplazar" crea una versión nueva y conserva la anterior.
- * - Audios y otros formatos antiguos se pueden abrir y reproducir.
- * - Requiere sql/documentos_fase1_modelo.sql.
- * Se carga DESPUÉS de cliente_editar.js (sobrescribe cargarDocumentos).
- * ==========================================================================*/
 (function () {
   'use strict';
 
@@ -179,14 +164,18 @@
     S.clienteId = clienteId;
     S.polizaId = polizaGlobal() || window.polizaId || new URLSearchParams(location.search).get('poliza') || null;
 
-    const [cli, deps, docs, sol] = await Promise.all([
+    const [cli, deps, docs, sol, pol] = await Promise.all([
       sb().from('clientes').select('nombres, apellidos').eq('id', clienteId).maybeSingle(),
       sb().from('dependientes').select('id, nombres, apellidos, relacion, fecha_nacimiento').eq('cliente_id', clienteId).order('created_at'),
       sb().from('documentos').select('*').eq('cliente_id', clienteId).eq('vigente', true).order('created_at', { ascending: false }),
       S.polizaId
         ? sb().from('poliza_documentos_solicitados').select('*').eq('poliza_id', S.polizaId).order('creado_en')
-        : Promise.resolve({ data: [] })
+        : Promise.resolve({ data: [] }),
+      S.polizaId
+        ? sb().from('polizas').select('fecha_plazo_documentos, estado_documentos').eq('id', S.polizaId).maybeSingle()
+        : Promise.resolve({ data: null })
     ]);
+    S.poliza = pol.data || null;
     if (docs.error) throw docs.error;
 
     armarIntegrantes(cli.data?.nombres, cli.data?.apellidos, (deps.data || []).map((d) => ({ ...d, clave: 'dep:' + d.id, dependienteId: d.id })));
@@ -298,6 +287,8 @@
           ${d.estado_ia === 'procesando' || d.estado_ia === 'en_cola' ? '<span class="docf-chip azul">Analizando…</span>' : d.estado_ia === 'error' ? '<span class="docf-chip rojo" title="La IA no pudo leerlo">Error IA</span>' : ''}
           <span class="docf-chip ${col}">${est}</span>
           <div class="docf-doc-acc">
+            ${ext_.some((x) => x.estado === 'por_revisar' || x.estado === 'sugerido')
+              ? `<button type="button" class="docf-btn-pri docf-btn-verif" data-docf-verif="${d.id}" title="Ver el archivo y confirmar todos los datos a la vez"><span class="material-symbols-rounded">fact_check</span> Verificar</button>` : ''}
             <button type="button" class="docf-btn-ver" data-docf-ver="${d.id}">Ver archivo</button>
             <button type="button" class="docf-btn-ico" data-docf-menu="${d.id}" title="Más acciones"><span class="material-symbols-rounded">more_vert</span></button>
           </div>
@@ -343,6 +334,17 @@
       default: return false;
     }
   }
+  // Fecha de plazo de documento (Estado en Mercado): lo que evita la cancelación del cliente
+  function htmlPlazo() {
+    const p = S.poliza;
+    if (!p?.fecha_plazo_documentos || /documentos completos/i.test(p.estado_documentos || '')) return '';
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const dias = Math.round((new Date(p.fecha_plazo_documentos + 'T00:00:00') - hoy) / 86400000);
+    const color = dias < 0 ? 'rojo' : dias <= 7 ? 'rojo' : dias <= 30 ? 'amarillo' : 'verde';
+    const txt = dias < 0 ? `vencido hace ${-dias} d` : dias === 0 ? 'vence hoy' : `vence en ${dias} d`;
+    return ` <span class="docf-chip ${color}" title="Fecha de plazo de documento (Estado en Mercado)">Plazo Mercado ${fecha(p.fecha_plazo_documentos + 'T12:00:00')} · ${txt}</span>`;
+  }
+
   function htmlSolicitados() {
     if (!S.polizaId) return '';
     const items = S.solicitados.map((s) => {
@@ -355,7 +357,7 @@
         </span>`;
     }).join('');
     return `<div class="docf-solicitados">
-        <div><strong>Documentos solicitados para esta póliza</strong>
+        <div><strong>Documentos solicitados para esta póliza</strong>${htmlPlazo()}
           <small>${S.solicitados.length ? 'Se marcan como recibidos cuando hay un documento de ese tipo en el titular.' : 'No hay documentos solicitados.'}</small></div>
         <div class="docf-sol-lista">${items}
           <button type="button" class="docf-btn-sec" data-docf-sol-nuevo="1"><span class="material-symbols-rounded">add</span> Solicitar otro</button>
@@ -721,6 +723,102 @@
     }
   }
 
+  // Verificación rápida: archivo a la izquierda, todos los datos a la derecha, un solo botón
+  const pendientesDe = (d) => (S.extracciones[d.id] || []).some((x) => x.estado === 'por_revisar' || x.estado === 'sugerido');
+  async function verificar(d) {
+    if (!d) return;
+    const lista = (S.extracciones[d.id] || []).slice().sort((a, b) => (a.estado === 'confirmado') - (b.estado === 'confirmado'));
+    const url = await urlDe(d);
+    const t = (d.tipo_archivo || '').toLowerCase(), e = ext(d.nombre_archivo);
+    const esImg = t.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'jfif'].includes(e);
+    const visor = esImg ? `<img src="${esc(url)}" alt="">` : `<iframe src="${esc(url)}" title="documento"></iframe>`;
+    const siguientes = S.documentos.filter((x) => x.id !== d.id && pendientesDe(x));
+    modal(`
+      <div class="docf-visor-head"><h3>Verificar: ${esc(d.nombre_estandar || d.nombre_archivo)}</h3>
+        <button type="button" class="docf-btn-ico" data-docf-cerrar><span class="material-symbols-rounded">close</span></button></div>
+      <div class="docf-verif">
+        <div class="docf-verif-doc">
+          ${esImg ? `<div class="docf-giro">
+            <button type="button" class="docf-btn-ico" data-giro="-90" title="Girar a la izquierda"><span class="material-symbols-rounded">rotate_left</span></button>
+            <button type="button" class="docf-btn-ico" data-giro="90" title="Girar a la derecha"><span class="material-symbols-rounded">rotate_right</span></button>
+            <button type="button" class="docf-btn-ico" data-zoom="0.25" title="Acercar"><span class="material-symbols-rounded">zoom_in</span></button>
+            <button type="button" class="docf-btn-ico" data-zoom="-0.25" title="Alejar"><span class="material-symbols-rounded">zoom_out</span></button></div>` : ''}
+          <div class="docf-visor">${visor}</div>
+        </div>
+        <div class="docf-verif-campos">
+          <p class="docf-sub">Corrige lo que esté mal y pulsa <b>Confirmar todo</b>. Desmarca un dato para dejarlo pendiente.</p>
+          ${lista.map((x) => `
+            <div class="docf-verif-fila" data-id="${x.id}">
+              <input type="checkbox" class="docf-verif-ok" ${x.estado === 'confirmado' ? 'checked disabled' : x.estado === 'no_aplica' ? 'disabled' : 'checked'} title="Confirmar este dato">
+              <label>${esc(x.campo.replace(/_/g, ' '))}
+                <input type="text" class="docf-verif-valor" value="${esc(x.valor || '')}" data-orig="${esc(x.valor || '')}" placeholder="No identificado" ${x.estado === 'confirmado' ? 'disabled' : ''}>
+              </label>
+              <select class="docf-verif-est" ${x.estado === 'confirmado' ? 'disabled' : ''}>
+                <option value="confirmado">${x.estado === 'confirmado' ? 'Confirmado' : x.confianza != null ? Math.round(x.confianza) + '%' : 'Dato'}</option>
+                <option value="no_aplica" ${x.estado === 'no_aplica' ? 'selected' : ''}>No aplica</option>
+                <option value="no_identificado" ${x.estado === 'no_identificado' ? 'selected' : ''}>No identificado</option>
+              </select>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="docf-modal-acc">
+        <button type="button" class="docf-btn-sec" data-docf-cerrar>Cancelar</button>
+        ${siguientes.length ? `<button type="button" class="docf-btn-sec" data-verif-sig>Confirmar y siguiente (${siguientes.length})</button>` : ''}
+        <button type="button" class="docf-btn-pri" data-verif-ok>Confirmar todo</button>
+      </div>`, (m) => {
+      m.querySelector('.docf-modal-caja').classList.add('ancho');
+      const img = m.querySelector('.docf-visor img');
+      if (img) {
+        let giro = 0, zoom = 1;
+        const aplicar = () => { img.style.transform = `rotate(${giro}deg) scale(${zoom})`; };
+        m.querySelectorAll('[data-giro]').forEach((b) => b.addEventListener('click', () => { giro = (giro + Number(b.dataset.giro) + 360) % 360; aplicar(); }));
+        m.querySelectorAll('[data-zoom]').forEach((b) => b.addEventListener('click', () => { zoom = Math.min(3, Math.max(0.5, zoom + Number(b.dataset.zoom))); aplicar(); }));
+      }
+      // Escribir o cambiar el estado marca el dato para confirmar
+      m.querySelectorAll('.docf-verif-fila').forEach((fila) => {
+        const ok = fila.querySelector('.docf-verif-ok'), est = fila.querySelector('.docf-verif-est');
+        fila.querySelector('.docf-verif-valor').addEventListener('input', () => { if (!ok.disabled) ok.checked = true; });
+        est.addEventListener('change', () => { ok.disabled = false; ok.checked = true; });
+      });
+      const guardar = async (siguiente) => {
+        const botones = m.querySelectorAll('[data-verif-ok],[data-verif-sig]');
+        botones.forEach((b) => { b.disabled = true; });
+        const cambios = [];
+        m.querySelectorAll('.docf-verif-fila').forEach((fila) => {
+          const ok = fila.querySelector('.docf-verif-ok');
+          if (ok.disabled || !ok.checked) return;
+          const input = fila.querySelector('.docf-verif-valor');
+          let estado = fila.querySelector('.docf-verif-est').value;
+          const valor = input.value.trim();
+          if (estado === 'confirmado' && !valor) estado = 'no_identificado';
+          const c = { estado, valor: valor || null };
+          if (valor !== input.dataset.orig) c.origen = 'manual';
+          cambios.push(sb().from('documento_extracciones').update(c).eq('id', fila.dataset.id));
+        });
+        const res = await Promise.all(cambios);
+        const err = res.find((r) => r.error);
+        if (err) { botones.forEach((b) => { b.disabled = false; }); return aviso('No se pudo guardar: ' + err.error.message, 'error'); }
+        // Si ya no quedan datos pendientes, el documento queda revisado
+        const quedan = m.querySelectorAll('.docf-verif-ok:not(:checked):not(:disabled)').length;
+        if (!quedan) {
+          await sb().from('documentos').update({ estado_revision: 'confirmado', confirmado_por: await usuarioId(), confirmado_en: new Date().toISOString() }).eq('id', d.id);
+          await historial(d.id, 'confirmar', null, null, `${cambios.length} datos verificados`);
+        }
+        aviso(`${cambios.length} dato(s) guardados`, 'success');
+        await recargar();
+        if (siguiente) {
+          const prox = S.documentos.find((x) => x.id !== d.id && pendientesDe(x));
+          if (prox) return verificar(prox);
+        }
+        cerrarModal();
+      };
+      m.querySelector('[data-verif-ok]').addEventListener('click', () => guardar(false));
+      m.querySelector('[data-verif-sig]')?.addEventListener('click', () => guardar(true));
+      m.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) guardar(!!m.querySelector('[data-verif-sig]')); });
+      m.querySelector('.docf-verif-valor:not([disabled])')?.focus();
+    });
+  }
+
   // Revisar un dato extraído: confirmar, corregir o marcar No aplica
   function revisarDato(x, d) {
     modal(`
@@ -748,13 +846,14 @@
   // ------------------------------------------------------------------ eventos
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#documentosContainer')) return;
-    const t = e.target.closest('[data-docf-int],[data-docf-subir],[data-docf-ver],[data-docf-menu],[data-docf-sol],[data-docf-sol-nuevo],[data-docf-ia],[data-docf-ext]');
+    const t = e.target.closest('[data-docf-int],[data-docf-subir],[data-docf-ver],[data-docf-menu],[data-docf-sol],[data-docf-sol-nuevo],[data-docf-ia],[data-docf-ext],[data-docf-verif]');
     if (!t) return;
     e.preventDefault();
     const doc = (id) => S.documentos.find((d) => d.id === id);
     if (t.dataset.docfInt) { S.seleccionado = t.dataset.docfInt; return render(); }
     if (t.dataset.docfSubir) return abrirSubir(t.dataset.docfSubir);
     if (t.dataset.docfVer) return ver(doc(t.dataset.docfVer));
+    if (t.dataset.docfVerif) return verificar(doc(t.dataset.docfVerif));
     if (t.dataset.docfMenu) return menu(doc(t.dataset.docfMenu));
     if (t.dataset.docfSol) return menuSolicitado(S.solicitados.find((s) => s.id === t.dataset.docfSol));
     if (t.dataset.docfSolNuevo) return nuevoSolicitado();
