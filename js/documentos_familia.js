@@ -1,3 +1,18 @@
+/* ============================================================================
+ * Ruta en el repo: js/documentos_familia.js
+ * MÓDULO DE DOCUMENTOS — FASE 2: Pólizas > Documentos (diseño Figma 8-2 / 10-122)
+ *
+ * Reemplaza la pestaña "Documentos" de cliente_editar.html por la vista por
+ * familia: selector de integrantes, tarjetas Estado migratorio / Income,
+ * Otros documentos y casillas de documentos solicitados por la póliza.
+ *
+ * - Sube al instante (no espera "Guardar Cliente").
+ * - No borra archivos: "Eliminar" oculta el documento (vigente = false).
+ * - "Reemplazar" crea una versión nueva y conserva la anterior.
+ * - Audios y otros formatos antiguos se pueden abrir y reproducir.
+ * - Requiere sql/documentos_fase1_modelo.sql.
+ * Se carga DESPUÉS de cliente_editar.js (sobrescribe cargarDocumentos).
+ * ==========================================================================*/
 (function () {
   'use strict';
 
@@ -219,6 +234,11 @@
           <div class="docf-h3-fila"><h3 class="docf-h3">Documentación</h3>
             ${S.modo === 'bd' ? `<button type="button" class="docf-btn-sec" data-docf-ia="1"><span class="material-symbols-rounded">auto_awesome</span> Clasificar con IA (${docsSel.filter(pendienteIA).length})</button>` : ''}</div>
           <p class="docf-sub">Clasificación asistida · Revisión humana antes de confirmar campos dudosos</p>
+          <label class="docf-drop" data-docf-drop>
+            <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.jfif,.webp,.gif,.doc,.docx,audio/*" hidden>
+            <span class="material-symbols-rounded">cloud_upload</span>
+            <span class="docf-drop-txt"><b>Arrastra los archivos aquí</b> o haz clic para elegirlos · la IA los clasifica sola</span>
+          </label>
           <div class="docf-grid">
             ${htmlCategoria('estado_migratorio', porCat('estado_migratorio'))}
             ${htmlCategoria('income', porCat('income'))}
@@ -451,12 +471,13 @@
         nombre_estandar: nombreEstandar(o.categoria, o.subtipo, o.anio, it.clave), nombre_archivo: file.name,
         tipo_archivo: file.type, tamanio: file.size, created_at: new Date().toISOString(),
         categoria: o.categoria, subtipo: o.subtipo, anio_fiscal: o.anio, estado_revision: 'pendiente', version: 1,
-        integrante_tipo: it.rol
+        integrante_tipo: o.auto ? null : it.rol, _auto: !!o.auto, estado_ia: o.auto ? 'en_cola' : 'sin_procesar'
       });
+      if (o.auto) S.pendientes[0].nombre_estandar = file.name;
       return;
     }
     const it = infoIntegrante(o.integrante);
-    const carpeta = it.clave === 'general' ? 'general' : it.clave === 'titular' ? 'titular' : slug(it.nombre) || 'dependiente';
+    const carpeta = o.auto ? 'por_clasificar' : it.clave === 'general' ? 'general' : it.clave === 'titular' ? 'titular' : slug(it.nombre) || 'dependiente';
     const base = slug(o.subtipo || o.categoria) || 'documento';
     const path = `${S.clienteId}/${carpeta}/${o.categoria}/${Date.now()}_${base}${o.anio ? '_' + o.anio : ''}.${ext(file.name) || 'bin'}`;
 
@@ -464,7 +485,8 @@
     if (up.error) throw up.error;
     const { data: pub } = sb().storage.from(BUCKET).getPublicUrl(path);
 
-    const nombre = nombreEstandar(o.categoria, o.subtipo, o.anio, it.clave);
+    // Subida rápida: sin datos; la IA decide tipo e integrante
+    const nombre = o.auto ? file.name : nombreEstandar(o.categoria, o.subtipo, o.anio, it.clave);
     const fila = {
       cliente_id: S.clienteId,
       poliza_id: S.polizaId,
@@ -479,9 +501,9 @@
       categoria: o.categoria,
       subtipo: o.subtipo,
       anio_fiscal: o.anio,
-      integrante_tipo: it.rol === 'sin_asignar' ? null : it.rol === 'conyuge' ? 'conyuge' : it.rol,
-      dependiente_id: it.dependienteId || null,
-      clasificado_por: 'manual',
+      integrante_tipo: o.auto ? null : it.rol === 'sin_asignar' ? null : it.rol === 'conyuge' ? 'conyuge' : it.rol,
+      dependiente_id: o.auto ? null : it.dependienteId || null,
+      clasificado_por: o.auto ? null : 'manual',
       estado_revision: 'pendiente',
       version: reemplazo ? (reemplazo.version || 1) + 1 : 1,
       reemplaza_a: reemplazo ? reemplazo.id : null
@@ -496,6 +518,36 @@
       await sb().from('documentos').update({ vigente: false }).eq('id', reemplazo.id);
       await historial(reemplazo.id, 'reemplazado', null, null, ins.data.id);
     }
+    return ins.data.id;
+  }
+
+  // Subida rápida: arrastrar o elegir archivos → se suben sin preguntar nada y la IA los analiza
+  async function subirRapido(files) {
+    files = [...(files || [])];
+    if (!files.length) return;
+    const malos = files.filter((f) => !EXT_PERMITIDAS.includes(ext(f.name)) || f.size > MAX_MB * 1048576);
+    if (malos.length) aviso(`No se subieron (formato o > ${MAX_MB} MB): ${malos.map((f) => f.name).join(', ')}`, 'warning');
+    files = files.filter((f) => !malos.includes(f));
+    if (!files.length) return;
+    if (pagina() === 'recuperado' && !clienteRecuperado()) return aviso('Primero selecciona un cliente', 'warning');
+    if (S.modo === 'pendiente') cargarPendiente();
+    const zona = document.querySelector('#documentosContainer .docf-drop');
+    zona?.classList.add('subiendo');
+    const ids = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        if (zona) zona.querySelector('.docf-drop-txt').textContent = `Subiendo ${i + 1} de ${files.length}…`;
+        try { const id = await subirArchivo(files[i], { integrante: 'titular', categoria: 'sin_clasificar', subtipo: null, anio: null, auto: true }); if (id) ids.push(id); }
+        catch (e) { console.error(e); aviso(`No se pudo subir ${files[i].name}: ${e.message || e}`, 'error'); }
+      }
+    } finally {
+      zona?.classList.remove('subiendo');
+    }
+    await recargar();
+    if (S.modo === 'pendiente') return aviso(`${files.length} archivo(s) listos. Se subirán y analizarán al guardar el cliente.`, 'success');
+    // Análisis automático (sin confirmación: son pocos archivos)
+    const analizables = ids.filter((id) => { const d = S.documentos.find((x) => x.id === id); return d && !String(d.tipo_archivo || '').startsWith('audio/'); });
+    if (analizables.length) clasificarIA(analizables);
   }
 
   // Ver archivo (imagen, PDF, audio u otro)
@@ -843,6 +895,29 @@
     });
   }
 
+  // ------------------------------------------------------------------ arrastrar y soltar
+  document.addEventListener('change', (e) => {
+    if (e.target.matches('#documentosContainer .docf-drop input[type=file]')) { subirRapido(e.target.files); e.target.value = ''; }
+  });
+  let arrastres = 0;
+  const marcar = (on) => document.querySelector('#documentosContainer .docf')?.classList.toggle('docf-arrastrando', on);
+  document.addEventListener('dragenter', (e) => {
+    if (!e.target.closest?.('#documentosContainer') || !e.dataTransfer?.types?.includes('Files')) return;
+    arrastres++; marcar(true);
+  });
+  document.addEventListener('dragleave', (e) => {
+    if (!e.target.closest?.('#documentosContainer')) return;
+    if (--arrastres <= 0) { arrastres = 0; marcar(false); }
+  });
+  document.addEventListener('dragover', (e) => {
+    if (e.target.closest?.('#documentosContainer') && e.dataTransfer?.types?.includes('Files')) e.preventDefault();
+  });
+  document.addEventListener('drop', (e) => {
+    if (!e.target.closest?.('#documentosContainer') || !e.dataTransfer?.files?.length) return;
+    e.preventDefault(); arrastres = 0; marcar(false);
+    subirRapido(e.dataTransfer.files);
+  });
+
   // ------------------------------------------------------------------ eventos
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#documentosContainer')) return;
@@ -851,7 +926,7 @@
     e.preventDefault();
     const doc = (id) => S.documentos.find((d) => d.id === id);
     if (t.dataset.docfInt) { S.seleccionado = t.dataset.docfInt; return render(); }
-    if (t.dataset.docfSubir) return abrirSubir(t.dataset.docfSubir);
+    if (t.dataset.docfSubir) return document.querySelector('#documentosContainer .docf-drop input')?.click();
     if (t.dataset.docfVer) return ver(doc(t.dataset.docfVer));
     if (t.dataset.docfVerif) return verificar(doc(t.dataset.docfVerif));
     if (t.dataset.docfMenu) return menu(doc(t.dataset.docfMenu));
@@ -915,7 +990,7 @@
     if (pag === 'recuperado' && !clienteRecuperado()) return aviso('Primero selecciona un cliente', 'warning');
     if (pag === 'crear') cargarPendiente();
     else if (pag === 'recuperado' && S.clienteId !== clienteRecuperado()) await iniciar();
-    abrirSubir('otro');
+    document.querySelector('#documentosContainer .docf-drop input')?.click();
   };
 
   // Al abrir la pestaña Documentos se refrescan integrantes (crear) o se carga el cliente (recuperado)
@@ -939,7 +1014,7 @@
   async function subirPendientes(clienteId) {
     if (!S.pendientes.length || !clienteId) return;
     const pendientes = S.pendientes.slice();
-    const fallidos = [];
+    const fallidos = [], paraIA = [];
     try {
       S.modo = 'bd';
       await cargarTodo(clienteId);   // integrantes reales con sus IDs
@@ -950,7 +1025,8 @@
           clave = (S.integrantes.find((i) => i.dependienteId && norm(i.nombre) === norm(d._integranteNombre)) || {}).clave || 'titular';
         }
         try {
-          await subirArchivo(d._file, { integrante: clave, categoria: d.categoria, subtipo: d.subtipo, anio: d.anio_fiscal });
+          const nuevo = await subirArchivo(d._file, { integrante: clave, categoria: d.categoria, subtipo: d.subtipo, anio: d.anio_fiscal, auto: d._auto });
+          if (d._auto && nuevo && !String(d.tipo_archivo || '').startsWith('audio/')) paraIA.push(nuevo);
         } catch (err) { console.error('No se pudo subir', d.nombre_archivo, err); fallidos.push(d.nombre_archivo); }
       }
     } catch (err) {
@@ -958,6 +1034,11 @@
       fallidos.push(...pendientes.map((d) => d.nombre_archivo));
     }
     S.pendientes = [];
+    // Análisis IA de lo que se subió sin datos (espera máx. 20 s para no frenar el guardado del cliente)
+    if (paraIA.length) {
+      const ia = (async () => { for (let i = 0; i < paraIA.length; i += 5) await sb().functions.invoke('clasificar-documento', { body: { documento_ids: paraIA.slice(i, i + 5) } }); })();
+      await Promise.race([ia.catch((e) => console.warn('IA:', e)), new Promise((r) => setTimeout(r, 20000))]);
+    }
     if (fallidos.length) alert('El cliente se guardó, pero estos archivos no se pudieron subir. Súbelos desde Editar cliente > Documentos:\n\n' + fallidos.join('\n'));
   }
   if (pagina() === 'crear' && typeof window.guardarNotas === 'function') {

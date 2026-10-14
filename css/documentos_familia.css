@@ -211,3 +211,15 @@
 .docf-verif-fila label { text-transform: capitalize; }
 .docf-verif-fila select { padding: 8px 6px; }
 @media (max-width: 800px) { .docf-verif { grid-template-columns: 1fr; } .docf-verif-doc .docf-visor { min-height: 40vh; } }
+
+/* Subida rápida (arrastrar y soltar) */
+.docf-drop {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin: 0 0 14px;
+  border: 1.5px dashed var(--docf-borde); border-radius: 10px; cursor: pointer;
+  color: var(--docf-sub); font-size: .85rem; transition: border-color .15s, background .15s;
+}
+.docf-drop:hover, .docf-arrastrando .docf-drop { border-color: var(--docf-pri); background: var(--docf-pri-suave); color: var(--docf-texto); }
+.docf-drop b { color: var(--docf-pri); font-weight: 600; }
+.docf-drop .material-symbols-rounded { color: var(--docf-pri); }
+.docf-drop.subiendo { pointer-events: none; opacity: .7; }
+.docf-arrastrando { outline: 2px dashed var(--docf-pri); outline-offset: 6px; border-radius: 12px; }
