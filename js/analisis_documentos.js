@@ -131,8 +131,7 @@
           <tbody id="adCuerpo"><tr><td colspan="7" class="ad-vacio">Cargando…</td></tr></tbody>
         </table></div>
         <div class="ad-pag"><span id="adPagTxt"></span><div class="ad-pag-btns" id="adPag"></div></div>
-      </div>
-      <div class="ad-nota">Al pulsar «Ver documentos» se abre la póliza del cliente en Pólizas → Documentos.</div>`;
+      </div>`;
     const ancla = document.getElementById('vistaRankingRenovaciones') || document.getElementById('vistaAnalisisEspecifico') || nav;
     ancla.insertAdjacentElement('afterend', vista);
 
