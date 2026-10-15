@@ -75,7 +75,7 @@
             <th>Operador</th>
             <th title="Nuevas + renovadas">Total</th>
             <th>Nuevas</th>
-            <th>Renovadas</th>
+            <th>Rev</th>
             <th>% del total</th>
           </tr>
         </thead>
