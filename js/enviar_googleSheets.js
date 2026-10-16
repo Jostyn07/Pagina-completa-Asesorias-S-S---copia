@@ -1,8 +1,8 @@
 // ============================================
 // CONFIGURACIÓN
 // ============================================
-const GOOGLE_SHEETS_URL_EVELYN_MORILLO = 'https://script.google.com/macros/s/AKfycbzeP7yINlpV2oxT-05-RCkhOdOtOMjj9a1tp6dy-buD4tZEr2-lkLRI2Qwh00-01o1G/exec';
-const GOOGLE_SHEETS_URL_OTROS_PORTALES = 'https://script.google.com/macros/s/AKfycbw51qG3DHI4PkU58kD38YbXJ1_MNaudhiI5upbs7ZRXTQzyQAtwp_TeM8pEIV05RZgdQQ/exec'
+const GOOGLE_SHEETS_URL_EVELYN_MORILLO = 'https://script.google.com/macros/s/AKfycbw9_zm9yJ5u23KUGr4-PZUcMuxyMJCY-eUJfCRI3jaQcMrOYxArPSWZ0CFrJD3-9eop/exec';
+const GOOGLE_SHEETS_URL_OTROS_PORTALES = 'https://script.google.com/macros/s/AKfycbzA3UNZ3WoULBCUUB-zI3aVt1wJCmkHVMH1XztoItPLRQ4PX2IA0-D91lxdfi8fC1vKYw/exec'
 // ============================================
 // ENVIAR A GOOGLE SHEETS
 // ============================================
