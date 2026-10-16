@@ -468,9 +468,9 @@
   // Usa los mismos Apps Script que cliente_crear (enviar_googleSheets.js):
   //   Evelyn Morillo (Asesorías) → hoja de Asesorías · Dante SY / Isabel SY → su hoja.
   const SHEETS_RENOVACION = {
-    'Evelyn Morillo': 'https://script.google.com/macros/s/AKfycbzeP7yINlpV2oxT-05-RCkhOdOtOMjj9a1tp6dy-buD4tZEr2-lkLRI2Qwh00-01o1G/exec',
-    'Dante SY':       'https://script.google.com/macros/s/AKfycbw51qG3DHI4PkU58kD38YbXJ1_MNaudhiI5upbs7ZRXTQzyQAtwp_TeM8pEIV05RZgdQQ/exec',
-    'Isabel SY':      'https://script.google.com/macros/s/AKfycbw51qG3DHI4PkU58kD38YbXJ1_MNaudhiI5upbs7ZRXTQzyQAtwp_TeM8pEIV05RZgdQQ/exec',
+    'Evelyn Morillo': 'https://script.google.com/macros/s/AKfycbw9_zm9yJ5u23KUGr4-PZUcMuxyMJCY-eUJfCRI3jaQcMrOYxArPSWZ0CFrJD3-9eop/exec',
+    'Dante SY':       'https://script.google.com/macros/s/AKfycbzA3UNZ3WoULBCUUB-zI3aVt1wJCmkHVMH1XztoItPLRQ4PX2IA0-D91lxdfi8fC1vKYw/exec',
+    'Isabel SY':      'https://script.google.com/macros/s/AKfycbzA3UNZ3WoULBCUUB-zI3aVt1wJCmkHVMH1XztoItPLRQ4PX2IA0-D91lxdfi8fC1vKYw/exec',
   };
 
   async function enviarRenovacionASheets(fd, anio) {
