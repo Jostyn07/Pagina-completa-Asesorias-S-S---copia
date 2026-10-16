@@ -162,6 +162,7 @@
         .select('cliente_id, numero_poliza, fecha_efectividad')
         .eq('id', poliza.poliza_origen_id)
         .maybeSingle();
+      polizaOrigenNumero = origen?.numero_poliza || null;
       const div = document.createElement('div');
       div.className = 'aviso-renovacion es-renovacion';
       const enlace = origen?.cliente_id
@@ -463,6 +464,99 @@
     }
   }
 
+  // ---------- Envío de la renovación terminada a Google Sheets (hoja "Renovación AAAA")
+  // Usa los mismos Apps Script que cliente_crear (enviar_googleSheets.js):
+  //   Evelyn Morillo (Asesorías) → hoja de Asesorías · Dante SY / Isabel SY → su hoja.
+  const SHEETS_RENOVACION = {
+    'Evelyn Morillo': 'https://script.google.com/macros/s/AKfycbw9_zm9yJ5u23KUGr4-PZUcMuxyMJCY-eUJfCRI3jaQcMrOYxArPSWZ0CFrJD3-9eop/exec',
+    'Dante SY':       'https://script.google.com/macros/s/AKfycbzA3UNZ3WoULBCUUB-zI3aVt1wJCmkHVMH1XztoItPLRQ4PX2IA0-D91lxdfi8fC1vKYw/exec',
+    'Isabel SY':      'https://script.google.com/macros/s/AKfycbzA3UNZ3WoULBCUUB-zI3aVt1wJCmkHVMH1XztoItPLRQ4PX2IA0-D91lxdfi8fC1vKYw/exec',
+  };
+
+  async function enviarRenovacionASheets(fd, anio) {
+    try {
+      const portal = fd.portalCliente || document.querySelector('input[name="portalCliente"]:checked')?.value || '';
+      // Usa SIEMPRE la misma URL que las ventas (enviar_googleSheets.js). Así, si se cambia el
+      // link allí, la renovación también lo toma. Las de aquí son solo respaldo.
+      const url = (typeof obtenerUrlGoogleSheets === 'function' && obtenerUrlGoogleSheets(portal))
+        || SHEETS_RENOVACION[portal];
+      console.info('[renovación] enviando a Google Sheets · portal:', portal || '(vacío)', '· url:', url || '(ninguna)');
+      if (!url) { console.info('[renovación] portal sin hoja de Google Sheets:', portal); return; }
+
+      const dependientes = [];
+      for (let i = 1; i <= 50; i++) {
+        if (!fd[`dep_nombres_${i}`]) continue;
+        dependientes.push({
+          nombres: fd[`dep_nombres_${i}`] || '', apellidos: fd[`dep_apellidos_${i}`] || '',
+          fechaNacimiento: fd[`dep_fecha_nacimiento_${i}`] || '', sexo: fd[`dep_sexo_${i}`] || '',
+          ssn: fd[`dep_ssn_${i}`] || '', estadoMigratorio: fd[`dep_estado_migratorio_${i}`] || '',
+          relacion: fd[`dep_relacion_${i}`] || '', aplica: fd[`dep_aplica_${i}`] || '',
+          memberId: fd[`dep_memberId_${i}`] || '',
+        });
+      }
+
+      const datos = {
+        hoja:                   `Renovación ${anio}`,   // el Apps Script escribe en esta pestaña
+        nombreOperador:         fd.operadorNombre || '',
+        registradoPor:          (typeof datosUsuario !== 'undefined' && datosUsuario?.nombre) || fd.operadorNombre || '',
+        portal,
+        fecha:                  new Date().toISOString().split('T')[0],
+        tipoRegistro:           'Renovación',
+        tipoModificacion:       fd.tipoModificacion || '',
+        ventaRealizadaPor:      fd.ventaRealizadaPor || '',
+        fechaEfectiva:          fd.displayFechaEfectividad || fd.fechaEfectividad || `01/01/${anio}`,
+        camposModificados:      `Renovación ${anio} de ${polizaOrigenNumero || 'póliza anterior'}`,
+        numeroPoliza:           polizaActual?.numero_poliza || '',
+        polizaAnterior:         polizaOrigenNumero || '',
+        nombre:                 fd.nombres || '',
+        apellidos:              fd.apellidos || '',
+        genero:                 fd.genero || '',
+        sexo:                   fd.genero || '',
+        fechaNacimiento:        fd.fechaNacimiento || '',
+        nacionalidad:           fd.nacionalidad || '',
+        aplica:                 fd.aplica || '',
+        correo:                 fd.email || '',
+        email:                  fd.email || '',
+        telefono1:              fd.telefono1 || '',
+        telefono2:              fd.telefono2 || '',
+        direccion:              fd.direccion || '',
+        casaApartamento:        fd.casaApartamento || '',
+        condado:                fd.condado || '',
+        ciudad:                 fd.ciudad || '',
+        estado:                 fd.estado || '',
+        codigoPostal:           fd.codigoPostal || '',
+        poBox:                  fd.poBox || '',
+        estatus:                fd.estadoMigratorio || '',
+        estadoMigratorio:       fd.estadoMigratorio || '',
+        social:                 fd.ssn || '',
+        ingresos:               fd.ingresos || '',
+        ocupacion:              fd.ocupacion || '',
+        tipoDeclaracion:        fd.tipoDeclaracion || '',
+        aplicantes:             document.getElementById('aplicantes')?.value || '',
+        compania:               fd.compania || '',
+        plan:                   fd.plan || '',
+        prima:                  fd.prima || '',
+        creditoFiscal:          fd.creditoFiscal || '',
+        memberId:               fd.memberId || '',
+        claveSeguridad:         fd.claveSeguridad || '',
+        link:                   fd.enlacePoliza || '',
+        agenteNombre:           fd.agenteNombre || '',
+        fechaInicialCobertura:  fd.displayFechaInicial || '',
+        fechaFinalCobertura:    fd.displayFechaFinal || '',
+        cantidadDependientes:   dependientes.length,
+        dependientes,
+      };
+
+      await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(datos) });
+      console.info('[renovación] enviada a Google Sheets →', datos.hoja, '·', portal);
+    } catch (e) {
+      // Nunca bloquea la renovación: ya quedó guardada en la base de datos
+      console.warn('[renovación] no se pudo enviar a Google Sheets:', e?.message || e);
+    }
+  }
+
+  let polizaOrigenNumero = null;
+
   async function finalizarRenovacion() {
     if (renovando || !polizaActual) return;
     if (typeof validarFormularioCompleto === 'function' && !validarFormularioCompleto()) return;
@@ -491,10 +585,13 @@
     const btn = document.querySelector('.btn-submit');
     renovando = true;
     try {
+      const fdSheets = obtenerDatosFormulario();
       if (!(await guardarFormularioEnBD(btn, 'Guardando...'))) { renovando = false; return; }
       if (btn) btn.innerHTML = '<span class="material-symbols-rounded">hourglass_top</span> Renovando...';
       const { error } = await sb().rpc('finalizar_renovacion', { p_poliza_id: String(polizaActual.id) });
       if (error) throw error;
+      if (btn) btn.innerHTML = '<span class="material-symbols-rounded">hourglass_top</span> Enviando a Google Sheets...';
+      await enviarRenovacionASheets(fdSheets, anio);
       try { clearInterval(autosaveTimer); } catch (e) {}
       aviso('Renovación terminada correctamente.', 'success');
       setTimeout(() => location.reload(), 900);
