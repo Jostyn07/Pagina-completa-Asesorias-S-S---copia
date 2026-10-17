@@ -1,5 +1,9 @@
 (function () {
   'use strict';
+
+  // ---- Inicio anterior (home.js) en espera ----
+  // home.js descargaba TODAS las pólizas al abrir el Inicio. Con el tablero nuevo
+  // esa descarga se omite; solo se hace si el tablero nuevo falla (plan B).
   const homeCargarOriginal = typeof window.cargarPolizasParaGrafico === 'function' ? window.cargarPolizasParaGrafico : null;
   if (homeCargarOriginal) window.cargarPolizasParaGrafico = async () => [];
 
@@ -40,6 +44,13 @@
   const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const PERIODOS = [['mes', 'Este mes'], ['90d', 'Últimos 3 meses'], ['anio', 'Año actual']];
   const TXT_PERIODO = { mes: 'este mes', '90d': 'últimos 3 meses', anio: 'año actual' };
+  const PERIODOS_RANKING = [...PERIODOS, ['rango', 'Rango de fechas']];
+  const isoHoy = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const fechaUS = (iso) => { const [a, m, d] = String(iso || '').split('-'); return a ? `${m}/${d}/${a}` : ''; };
+  function txtRanking() {
+    if (st.pRanking !== 'rango') return TXT_PERIODO[st.pRanking];
+    return `del ${fechaUS(st.desde)} al ${fechaUS(st.hasta)}`;
+  }
 
   // Mosaico [código, fila, columna]
   const MOSAICO = [
@@ -59,7 +70,7 @@
     VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'Virginia Occidental',WI:'Wisconsin',WY:'Wyoming' };
 
   const st = {
-    pNuevas: 'mes', pRenovadas: 'mes', pRanking: 'mes', anio: new Date().getFullYear(),
+    pNuevas: 'mes', pRenovadas: 'mes', pRanking: 'mes', desde: isoHoy().slice(0, 8) + '01', hasta: isoHoy(), anio: new Date().getFullYear(),
     compania: '', operador: '', registro: '', vista: 'polizas', estadoSel: null, zoomEstado: null, datos: null, cargando: false,
   };
   let raiz, ocultos = [];
@@ -126,6 +137,7 @@
       const { data, error } = await sb().rpc('dashboard_inicio', {
         p_periodo_nuevas: st.pNuevas, p_periodo_renovadas: st.pRenovadas, p_periodo_ranking: st.pRanking,
         p_anio: st.anio, p_compania: st.compania || null, p_operador: st.operador || null, p_registro: st.registro || null,
+        p_desde: st.pRanking === 'rango' ? st.desde : null, p_hasta: st.pRanking === 'rango' ? st.hasta : null,
       });
       if (error) throw error;
       if (!data || !data.kpis) throw new Error('Respuesta vacía de dashboard_inicio');
@@ -155,7 +167,7 @@
         <span class="idash-eyebrow">Vista general</span>
         <div class="idash-filtros">
           <label class="idash-sel"><span class="material-symbols-rounded">schedule</span>
-            <select data-f="pRanking">${opts(PERIODOS.map(([v, t]) => [v, 'Periodo: ' + t]), st.pRanking)}</select></label>
+            <select data-f="pRanking">${opts(PERIODOS_RANKING.map(([v, t]) => [v, 'Periodo: ' + t]), st.pRanking)}</select></label>
           <label class="idash-sel"><select data-f="compania">${opts([['', 'Compañía: Todas'], ...(o.companias || []).map((c) => [c, c])], st.compania)}</select></label>
           <label class="idash-sel"><select data-f="operador">${opts([['', 'Operador: Todos'], ...(o.operadores || []).map((c) => [c, c])], st.operador)}</select></label>
           <label class="idash-sel"><select data-f="registro">${opts([['', 'Registro: Todos'], ...(o.registros || []).map((c) => [c, c])], st.registro)}</select></label>
@@ -200,7 +212,14 @@
 
       <div class="idash-fila">
         <div class="idash-card idash-ranking">
-          <div class="idash-card-head"><div><h3>Clasificación de operadores</h3><p>Rendimiento ${esc(TXT_PERIODO[st.pRanking])}</p></div></div>
+          <div class="idash-card-head"><div><h3>Clasificación de operadores</h3><p>Rendimiento ${esc(txtRanking())}</p></div>
+            <div class="idash-rango">
+              <label class="idash-sel idash-sel-sm"><select data-f="pRanking">${opts(PERIODOS_RANKING, st.pRanking)}</select></label>
+              ${st.pRanking === 'rango' ? `
+                <label class="idash-fecha"><span>Desde</span><input type="date" data-f="desde" value="${esc(st.desde)}" max="${esc(st.hasta)}"></label>
+                <label class="idash-fecha"><span>Hasta</span><input type="date" data-f="hasta" value="${esc(st.hasta)}" min="${esc(st.desde)}"></label>` : ''}
+            </div>
+          </div>
           ${tablaRanking(5)}
           <div class="idash-pie"><a href="#" data-acc="ranking">Ver clasificación completa →</a></div>
         </div>
@@ -565,7 +584,7 @@
     const fondo = document.createElement('div');
     fondo.className = 'idash-modal-fondo';
     fondo.innerHTML = `<div class="idash-modal idash" role="dialog" aria-modal="true">
-      <div class="idash-card-head"><div><h3>Clasificación completa</h3><p>Periodo: ${esc(TXT_PERIODO[st.pRanking])} · Activos = pólizas activas en compañía (total cartera)</p></div>
+      <div class="idash-card-head"><div><h3>Clasificación completa</h3><p>Periodo: ${esc(txtRanking())} · Activos = pólizas activas en compañía (total cartera)</p></div>
       <button class="idash-x" aria-label="Cerrar"><span class="material-symbols-rounded">close</span></button></div>
       ${tablaRanking(0, true)}</div>`;
     const cerrar = () => { fondo.remove(); document.removeEventListener('keydown', esc_); };
@@ -622,7 +641,9 @@
     raiz.addEventListener('change', (e) => {
       const f = e.target.dataset.f;
       if (!f) return;
+      if ((f === 'desde' || f === 'hasta') && !e.target.value) return;     // fecha incompleta: no recarga
       st[f] = f === 'anio' ? Number(e.target.value) : e.target.value;
+      if (st.desde > st.hasta) { if (f === 'desde') st.hasta = st.desde; else st.desde = st.hasta; }
       cargar();
     });
     raiz.addEventListener('click', (e) => {

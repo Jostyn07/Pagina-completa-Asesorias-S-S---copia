@@ -158,6 +158,15 @@
       if (typeof original === 'function') return original.apply(this, arguments);
     };
     btn.addEventListener('click', () => window.cambiarVistaAnalisis('documentos'));
+    // Cualquier otra pestaña (incluida Ranking de renovaciones, cargue en el orden que cargue)
+    // oculta Documentos; y al abrir Documentos se ocultan las demás vistas.
+    nav.addEventListener('click', (e) => {
+      const t = e.target.closest('.analisis-nav-tab');
+      if (t && t.dataset.vista !== 'documentos') vista.style.display = 'none';
+    }, true);
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.vista-analisis, #vistaRankingRenovaciones').forEach((el) => { if (el !== vista) el.style.display = 'none'; });
+    });
 
     const mapa = { adEstado: 'estado', adTipo: 'tipo', adVencimiento: 'vencimiento', adEstadoIa: 'estado_ia', adIntegrante: 'integrante', adOrden: 'orden' };
     Object.entries(mapa).forEach(([id, k]) => document.getElementById(id).addEventListener('change', (e) => { F[k] = e.target.value; pagina = 1; cargar(); }));

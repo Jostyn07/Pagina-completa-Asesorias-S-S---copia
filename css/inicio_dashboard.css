@@ -177,3 +177,10 @@
 .idash-condados li:last-child { border-bottom: 0; }
 .idash-condados li b { color: #22b8cf; }
 .idash-mapa-cuerpo { grid-template-columns: minmax(0, 1fr) 230px; }
+
+/* ---------- v4: rango de fechas en la clasificación ---------- */
+.idash-rango { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.idash-fecha { display: inline-flex; align-items: center; gap: 6px; background: var(--id-sel); border: 1px solid var(--id-borde);
+  border-radius: 8px; padding: 0 8px; font-size: .78rem; color: var(--id-sub); }
+.idash-fecha input { border: 0; background: transparent; color: var(--id-txt); font: inherit; padding: 6px 0; outline: none; color-scheme: light dark; }
+[data-theme="dark"] .idash-fecha input { color-scheme: dark; }
