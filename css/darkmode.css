@@ -917,3 +917,122 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
     color: var(--text-color);
     border: none !important;
 }
+
+/* ============================================================================
+ * Ruta en el repo: css/cliente_darkmode.css
+ * Tema oscuro: elementos de cliente_editar / cliente_crear que quedaban claros.
+ * Se carga DESPUÉS de darkmode.css.
+ * ==========================================================================*/
+
+/* ---------- MÉTODO DE PAGO ---------- */
+[data-theme="dark"] .metodo-pago-card,
+[data-theme="dark"] .metodo-pago-card-header { background: var(--dk-surface-2) !important; border-color: var(--dk-border) !important; }
+[data-theme="dark"] .metodo-pago-card.principal { border-color: var(--dk-accent) !important; }
+[data-theme="dark"] .metodo-pago-card-nombre h4 { color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .metodo-pago-card-nombre small,
+[data-theme="dark"] .metodo-pago-detalle .detalle-label { color: var(--dk-text-secondary) !important; }
+[data-theme="dark"] .metodo-pago-card-info .material-symbols-rounded { color: var(--dk-accent) !important; }
+[data-theme="dark"] .metodo-pago-detalle .detalle-valor { color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .metodo-pago-detalle .detalle-fila { border-bottom-color: var(--dk-border) !important; }
+[data-theme="dark"] .payment-option { border-color: var(--dk-border) !important; }
+[data-theme="dark"] .radio-label { background: var(--dk-surface-1) !important; }
+[data-theme="dark"] .radio-label:hover { background: var(--dk-accent-bg) !important; }
+[data-theme="dark"] .payment-form { background: var(--dk-surface-2) !important; }
+
+/* ---------- MESES PAGADOS ---------- */
+[data-theme="dark"] .mes-pago-btn { background: var(--dk-surface-1) !important; border-color: var(--dk-border) !important; color: var(--dk-text-secondary) !important; }
+[data-theme="dark"] .mes-pago-btn:hover,
+[data-theme="dark"] .mes-pago-btn.activo { background: var(--dk-success-bg) !important; border-color: rgba(94,205,138,0.4) !important; color: var(--dk-success) !important; }
+
+/* ---------- SECCIONES / ENCABEZADOS ---------- */
+[data-theme="dark"] .section-header { background: var(--dk-surface-1) !important; }
+[data-theme="dark"] .section-header:hover { background: var(--dk-surface-3) !important; }
+[data-theme="dark"] .tabs-container,
+[data-theme="dark"] .page-header,
+[data-theme="dark"] .form-actions { background: var(--dk-surface-1) !important; }
+[data-theme="dark"] .btn-back { background: var(--dk-surface-2) !important; border-color: var(--dk-border) !important; color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .tab-header h2 { color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .readonly-field { color: var(--dk-text-secondary) !important; }
+[data-theme="dark"] .info-message { background: var(--dk-accent-bg) !important; border-color: var(--dk-border) !important; color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .info-message .material-symbols-rounded { color: var(--dk-accent) !important; }
+[data-theme="dark"] .checkbox-list-inline .checkbox-item { background: var(--dk-surface-1) !important; border-color: var(--dk-border) !important; color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .checkbox-list-inline .checkbox-item:has(.chk-portal-cliente:checked) { background: var(--dk-accent-bg) !important; border-color: var(--dk-accent) !important; color: var(--dk-accent) !important; }
+
+/* ---------- VALIDACIÓN ---------- */
+[data-theme="dark"] input.campo-invalido,
+[data-theme="dark"] select.campo-invalido { background-color: var(--dk-error-bg) !important; border-color: var(--dk-error) !important; }
+[data-theme="dark"] input.campo-valido,
+[data-theme="dark"] select.campo-valido { background-color: var(--dk-success-bg) !important; border-color: var(--dk-success) !important; }
+
+/* ---------- DEPENDIENTES ---------- */
+[data-theme="dark"] .dependiente-card-nombre small,
+[data-theme="dark"] .dependiente-detalle label { color: var(--dk-text-secondary) !important; }
+[data-theme="dark"] .dependiente-detalle span { color: var(--dk-text-primary) !important; }
+
+/* ---------- DOCUMENTOS ---------- */
+[data-theme="dark"] .documento-nombre { color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .documento-meta { color: var(--dk-text-secondary) !important; }
+[data-theme="dark"] .btn-eliminar-doc { background: transparent !important; }
+[data-theme="dark"] .btn-eliminar-doc:hover { background: var(--dk-error-bg) !important; }
+
+/* ---------- ESTADO Y SEGUIMIENTO ---------- */
+[data-theme="dark"] .badge.en_revision,
+[data-theme="dark"] .badge.en_verificacion { background: #1e2a4a !important; color: #93c5fd !important; }
+[data-theme="dark"] .badge.aprobado,
+[data-theme="dark"] .badge.activo,
+[data-theme="dark"] .badge.completo { background: var(--dk-success-bg) !important; color: var(--dk-success) !important; }
+[data-theme="dark"] .timeline-title { color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .timeline-description { color: var(--dk-text-secondary) !important; }
+[data-theme="dark"] .timeline-date,
+[data-theme="dark"] .timeline-meta-item { color: var(--dk-text-tertiary) !important; }
+[data-theme="dark"] .seguimiento-card { background: var(--dk-surface-1) !important; }
+[data-theme="dark"] .seguimiento-fecha { color: var(--dk-accent) !important; }
+[data-theme="dark"] .seguimiento-medio.telefono { background: #1e2a4a !important; color: #93c5fd !important; }
+[data-theme="dark"] .seguimiento-medio.whatsapp { background: var(--dk-success-bg) !important; color: var(--dk-success) !important; }
+[data-theme="dark"] .seguimiento-medio.presencial { background: var(--dk-accent-bg) !important; color: var(--dk-accent) !important; }
+[data-theme="dark"] .seguimiento-meta { color: var(--dk-text-tertiary) !important; }
+
+/* ---------- HISTORIAL DE CAMBIOS ---------- */
+[data-theme="dark"] .historial-usuario { background: var(--dk-surface-3) !important; color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .historial-seccion { background: var(--dk-accent-bg) !important; color: var(--dk-accent) !important; }
+[data-theme="dark"] .historial-icono .material-symbols-rounded { color: var(--dk-text-secondary) !important; }
+[data-theme="dark"] .historial-item { border-left-color: var(--dk-border) !important; }
+[data-theme="dark"] .filtro-grupo label { color: var(--dk-text-secondary) !important; }
+[data-theme="dark"] .loading-state { color: var(--dk-text-secondary) !important; }
+[data-theme="dark"] .spinner { border-color: var(--dk-surface-3) !important; border-top-color: var(--dk-accent) !important; }
+[data-theme="dark"] #paginaActual { color: var(--dk-text-secondary) !important; }
+
+/* ---------- NOTAS ---------- */
+[data-theme="dark"] .nueva-nota { background: var(--dk-surface-2) !important; border-color: var(--dk-border) !important; }
+[data-theme="dark"] .nota-usuario { color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .nota-mensaje { color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .nota-card.nota-importante { background: linear-gradient(90deg, #3d3520 0%, #121218 20%) !important; }
+[data-theme="dark"] .nota-mensaje .mencion { background: #1e2a4a !important; color: #93c5fd !important; }
+
+/* ---------- MENÚ DE USUARIO ---------- */
+[data-theme="dark"] .user-info strong { color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .user-info small { color: var(--dk-text-secondary) !important; }
+[data-theme="dark"] .dropdown-item.danger { color: var(--dk-error) !important; }
+
+/* ---------- MODAL ARCHIVAR ---------- */
+[data-theme="dark"] .modal-archivar-header { background: linear-gradient(135deg, #2e2a1a 0%, #3d3520 50%, #2e2a1a 100%) !important; }
+[data-theme="dark"] .modal-archivar-header h2 { color: var(--dk-warning) !important; }
+[data-theme="dark"] .modal-archivar-body > p:first-child { color: var(--dk-text-primary) !important; border-bottom-color: var(--dk-border) !important; }
+[data-theme="dark"] .modal-archivar-body p,
+[data-theme="dark"] .modal-archivar-body ul li { color: var(--dk-text-secondary) !important; border-bottom-color: var(--dk-border) !important; }
+[data-theme="dark"] .motivo-archivo { border-top-color: var(--dk-border) !important; }
+[data-theme="dark"] .motivo-archivo label { color: var(--dk-text-primary) !important; }
+
+/* ---------- MODALES (detalle de método de pago, dependiente, seguimiento) ---------- */
+[data-theme="dark"] .modal-body { background: var(--dk-surface-1) !important; color: var(--dk-text-primary) !important; }
+
+/* ---------- CAMBIOS PROGRAMADOS (modal con estilos en línea) ---------- */
+[data-theme="dark"] #modalDetallesCambio > div { background: var(--dk-surface-1) !important; color: var(--dk-text-primary) !important; }
+[data-theme="dark"] #modalDetallesCambio button[onclick^="descargarArchivo"] { background: var(--dk-success-bg) !important; color: var(--dk-success) !important; }
+[data-theme="dark"] #modalDetallesCambio a[target="_blank"] { background: var(--dk-accent-bg) !important; color: var(--dk-accent) !important; }
+
+/* ---------- COMISIONES / EXTRAS ---------- */
+[data-theme="dark"] .summary-item span { color: var(--dk-text-primary) !important; }
+[data-theme="dark"] .badge-admin { background: #3d3520 !important; color: var(--dk-warning) !important; }
+[data-theme="dark"] .dropdown-search { border-bottom-color: var(--dk-border) !important; }
+[data-theme="dark"] .btn-dropdown-close { background: var(--dk-accent) !important; }
