@@ -553,7 +553,7 @@ async function rellenarFormulario(cliente, poliza, dependientes, notas) {
        if(poliza.enlace_poliza) document.getElementById('enlacePoliza').value = poliza.enlace_poliza || '';
        if(poliza.documentos_pendientes) document.getElementById('documentosPendientes').value = poliza.documentos_pendientes;
        if(poliza.agente35_estado) document.getElementById('agente35_estado').value = poliza.agente35_estado || '';
-       if(poliza.agente35_nota) document.getElementById('agente35_notas').value = poliza.agente35_nota || '';
+       if(poliza.agente35_notas) document.getElementById('agente35_notas').value = poliza.agente35_notas || '';
         // Fechas de la póliza
         const fechaEfectividadInput = document.getElementById('fechaEfectividad');
         if (fechaEfectividadInput && poliza.fecha_efectividad) {
