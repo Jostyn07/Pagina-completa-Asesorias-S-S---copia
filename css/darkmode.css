@@ -918,12 +918,6 @@ body, .sidebar-unified, .dashboard-header, .card, .stat-card, table, thead, th, 
     border: none !important;
 }
 
-/* ============================================================================
- * Ruta en el repo: css/cliente_darkmode.css
- * Tema oscuro: elementos de cliente_editar / cliente_crear que quedaban claros.
- * Se carga DESPUÉS de darkmode.css.
- * ==========================================================================*/
-
 /* ---------- MÉTODO DE PAGO ---------- */
 [data-theme="dark"] .metodo-pago-card,
 [data-theme="dark"] .metodo-pago-card-header { background: var(--dk-surface-2) !important; border-color: var(--dk-border) !important; }
