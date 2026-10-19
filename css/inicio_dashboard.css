@@ -201,3 +201,6 @@
 .idash-cum-n b { font-size: .86rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .idash-cum-n small { font-size: .72rem; color: var(--id-sub); }
 .idash-cum-f { font-size: .8rem; color: var(--id-sub); }
+
+/* ---------- v6b: separación del sidebar y del borde inferior ---------- */
+#idash { padding-left: 8px; padding-bottom: 8px; box-sizing: border-box; }
