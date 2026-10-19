@@ -1,3 +1,12 @@
+/* ============================================================================
+ * Ruta en el repo: js/inicio_dashboard.js
+ * Nuevo Inicio (diseño Figma "Tablero"). Todo se calcula en la base con
+ * una sola llamada: supabase.rpc('dashboard_inicio').
+ *
+ * Seguridad de producción: si la RPC falla o no existe, se elimina el panel
+ * nuevo y se vuelve a mostrar el Inicio anterior (home.js sigue cargado).
+ * Se carga DESPUÉS de home.js.
+ * ==========================================================================*/
 (function () {
   'use strict';
 
@@ -71,7 +80,7 @@
 
   const st = {
     pNuevas: 'mes', pRenovadas: 'mes', pRanking: 'mes', desde: isoHoy().slice(0, 8) + '01', hasta: isoHoy(), anio: new Date().getFullYear(),
-    compania: '', operador: '', registro: '', vista: 'polizas', estadoSel: null, zoomEstado: null, datos: null, cargando: false,
+    compania: '', operador: '', registro: '', portal: '', sinCancelado: false, sinCanceladoPc: false, vista: 'polizas', estadoSel: null, zoomEstado: null, datos: null, cargando: false,
   };
   let raiz, ocultos = [];
   let mapa = null, mapaDiv = null, marcadores = {}, usarMosaico = false, promesaGoogle = null;
@@ -138,6 +147,7 @@
         p_periodo_nuevas: st.pNuevas, p_periodo_renovadas: st.pRenovadas, p_periodo_ranking: st.pRanking,
         p_anio: st.anio, p_compania: st.compania || null, p_operador: st.operador || null, p_registro: st.registro || null,
         p_desde: st.pRanking === 'rango' ? st.desde : null, p_hasta: st.pRanking === 'rango' ? st.hasta : null,
+        p_portal: st.portal || null, p_excluir_cancelado: st.sinCancelado, p_excluir_cancelado_pc: st.sinCanceladoPc,
       });
       if (error) throw error;
       if (!data || !data.kpis) throw new Error('Respuesta vacía de dashboard_inicio');
@@ -171,6 +181,9 @@
           <label class="idash-sel"><select data-f="compania">${opts([['', 'Compañía: Todas'], ...(o.companias || []).map((c) => [c, c])], st.compania)}</select></label>
           <label class="idash-sel"><select data-f="operador">${opts([['', 'Operador: Todos'], ...(o.operadores || []).map((c) => [c, c])], st.operador)}</select></label>
           <label class="idash-sel"><select data-f="registro">${opts([['', 'Registro: Todos'], ...(o.registros || []).map((c) => [c, c])], st.registro)}</select></label>
+          ${(o.portales || []).length ? `<label class="idash-sel"><select data-f="portal">${opts([['', 'Portal: Todos'], ...o.portales.map((c) => [c, c])], st.portal)}</select></label>` : ''}
+          <label class="idash-check"><input type="checkbox" data-f="sinCancelado" ${st.sinCancelado ? 'checked' : ''}>Excluir Cancelado</label>
+          <label class="idash-check"><input type="checkbox" data-f="sinCanceladoPc" ${st.sinCanceladoPc ? 'checked' : ''}>Excluir Cancelado a P.C</label>
           <button class="idash-btn-prim" data-acc="exportar"><span class="material-symbols-rounded">download</span>Exportar resumen</button>
         </div>
       </div>
@@ -239,6 +252,7 @@
         <div class="idash-card">
           <div class="idash-card-head"><div><h3>Tipos de documento</h3><p>Estado migratorio registrado del titular</p></div></div>
           ${dona()}
+          ${cumpleanos()}
         </div>
         <div class="idash-card">
           <div class="idash-card-head"><div><h3>Clientes por compañía</h3><p>Entre más clientes, más grande el recuadro</p></div></div>
@@ -535,6 +549,26 @@
     </div>`;
   }
 
+  // ---------------------------------------------------------------- cumpleaños (hoy y mañana)
+  function cumpleanos() {
+    const lista = st.datos.cumpleanos || [];
+    const fecha = (iso) => { const [, m, d] = String(iso || '').split('-'); return m ? `${m}/${d}` : ''; };
+    const grupo = (cuando, titulo) => {
+      const filas = lista.filter((x) => x.cuando === cuando);
+      if (!filas.length) return '';
+      return `<div class="idash-cum-grupo">${titulo}</div>${filas.map((x) => `
+        <a class="idash-cum" href="cliente_editar.html?id=${encodeURIComponent(x.cliente_id)}">
+          <span class="idash-cum-n"><b>${esc(x.nombre)}</b>${x.titular ? `<small>${esc(x.titular)}</small>` : ''}</span>
+          <span class="idash-cum-f">${fecha(x.fecha)}</span>
+          <span class="material-symbols-rounded idash-flecha">chevron_right</span>
+        </a>`).join('')}`;
+    };
+    return `<div class="idash-cumple">
+      <div class="idash-card-head"><div><h3>Cumpleaños</h3></div><span class="idash-pill">${fmt(lista.length)}</span></div>
+      ${lista.length ? grupo('hoy', 'Hoy') + grupo('manana', 'Mañana') : '<p class="idash-vacio">Nadie cumple años hoy ni mañana.</p>'}
+    </div>`;
+  }
+
   // ---------------------------------------------------------------- mapa de árbol por compañía
   function squarify(items, x, y, w, h) {
     const out = [];
@@ -642,7 +676,7 @@
       const f = e.target.dataset.f;
       if (!f) return;
       if ((f === 'desde' || f === 'hasta') && !e.target.value) return;     // fecha incompleta: no recarga
-      st[f] = f === 'anio' ? Number(e.target.value) : e.target.value;
+      st[f] = e.target.type === 'checkbox' ? e.target.checked : (f === 'anio' ? Number(e.target.value) : e.target.value);
       if (st.desde > st.hasta) { if (f === 'desde') st.hasta = st.desde; else st.desde = st.hasta; }
       cargar();
     });

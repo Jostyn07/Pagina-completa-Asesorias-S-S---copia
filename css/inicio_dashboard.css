@@ -1,3 +1,7 @@
+/* ============================================================================
+ * Ruta en el repo: css/inicio_dashboard.css
+ * Estilos del nuevo Inicio (Figma "Tablero"). Claro y oscuro ([data-theme="dark"]).
+ * ==========================================================================*/
 .idash {
   --id-bg: #f6f7fb; --id-card: #ffffff; --id-borde: #e5e7ef; --id-txt: #1f2333; --id-sub: #6b7085;
   --id-prim: #7c5cf5; --id-prim-txt: #fff; --id-sel: #ffffff; --id-hover: #f1f0fd;
@@ -184,3 +188,16 @@
   border-radius: 8px; padding: 0 8px; font-size: .78rem; color: var(--id-sub); }
 .idash-fecha input { border: 0; background: transparent; color: var(--id-txt); font: inherit; padding: 6px 0; outline: none; color-scheme: light dark; }
 [data-theme="dark"] .idash-fecha input { color-scheme: dark; }
+
+/* ---------- v6: filtros extra y cumpleaños ---------- */
+.idash-check { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; color: var(--id-txt); cursor: pointer; }
+.idash-check input { margin: 0; accent-color: var(--id-prim); }
+.idash-cumple { max-height: 380px; overflow-y: auto; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--id-borde); }
+.idash-cumple .idash-card-head { align-items: center; margin-bottom: 8px; }
+.idash-cum-grupo { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--id-sub); font-weight: 600; margin: 10px 0 4px; }
+.idash-cum { display: flex; align-items: center; gap: 12px; padding: 8px 4px; border-bottom: 1px solid var(--id-borde); color: var(--id-txt); text-decoration: none; border-radius: 6px; }
+.idash-cum:hover { background: var(--id-hover); }
+.idash-cum-n { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.idash-cum-n b { font-size: .86rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.idash-cum-n small { font-size: .72rem; color: var(--id-sub); }
+.idash-cum-f { font-size: .8rem; color: var(--id-sub); }
