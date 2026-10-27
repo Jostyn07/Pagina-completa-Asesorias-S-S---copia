@@ -1,0 +1,242 @@
+/* ============================================================================
+ * Ruta en el repo: js/agente35.js
+ * Pestaña Agente 3.5: Nuevas, Ventas con registro, Renovaciones, Recuperadas y
+ * Cambios de vida (vista_agente35), la más reciente primero. Con permiso
+ * editar_agente35 se cambia el estado y la observación de la póliza; quién y
+ * cuándo los llena la base.
+ * ==========================================================================*/
+(function () {
+  'use strict';
+
+  const ESTADOS = ['Pendiente', 'New application', 'Policy change', 'Procesado',
+                   'Cambio necesario', 'Termination request', 'Cancelado'];
+  const TIPOS = [
+    { valor: ['Nueva', 'Nuevo'], texto: 'Nueva' },
+    { valor: ['Venta con registro'], texto: 'Venta con registro' },
+    { valor: ['Renovación'], texto: 'Renovación' },
+    { valor: ['Recuperada'], texto: 'Recuperada' },
+    { valor: ['Cambio de vida'], texto: 'Cambio de vida' },
+  ];
+  const POR_PAGINA = 50;
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const claseEstado = (e) => 'a35-e-' + String(e || 'Pendiente').toLowerCase().replace(/[^a-z]+/g, '-');
+  const fecha = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const estado = { pagina: 1, tipos: [], filas: [], total: 0, puedeEditar: false, actual: null, timer: null };
+
+  function toast(msg, tipo) {
+    try { if (window.Notyf) { (window._a35Notyf ||= new Notyf({ duration: 3000 }))[tipo === 'error' ? 'error' : 'success'](msg); return; } } catch (e) {}
+    alert(msg);
+  }
+
+  // ------------------------------------------------------------ consulta
+  function filtrar(q, incluirEstado) {
+    if (estado.tipos.length) {
+      q = q.in('tipo', TIPOS.filter((t) => estado.tipos.includes(t.texto)).flatMap((t) => t.valor));
+    }
+    const est = $('a35Estado').value;
+    if (incluirEstado && est) q = q.eq('agente35_estado', est);
+    const desde = $('a35Desde').value;
+    const hasta = $('a35Hasta').value;
+    if (desde) q = q.gte('created_at', new Date(desde + 'T00:00:00').toISOString());
+    if (hasta) q = q.lt('created_at', new Date(new Date(hasta + 'T00:00:00').getTime() + 86400000).toISOString());
+    const txt = $('a35Buscar').value.trim().replace(/[,()%*"]/g, ' ').trim();
+    if (txt) {
+      const dig = txt.replace(/\D/g, '');
+      const ors = [`cliente_nombre.ilike.%${txt}%`, `numero_poliza.ilike.%${txt}%`];
+      if (dig.length >= 3) ors.push(`cliente_telefono.ilike.%${dig}%`);
+      q = q.or(ors.join(','));
+    }
+    return q;
+  }
+
+  async function cargar() {
+    const tbody = $('a35Tbody');
+    tbody.innerHTML = `<tr><td colspan="9" class="a35-vacio"><span class="a35-spinner"></span></td></tr>`;
+    try {
+      const desde = (estado.pagina - 1) * POR_PAGINA;
+      const { data, error, count } = await filtrar(supabaseClient.from('vista_agente35').select('*', { count: 'exact' }).order('created_at', { ascending: false }), true).range(desde, desde + POR_PAGINA - 1);
+      if (error) throw error;
+      estado.filas = data || [];
+      estado.total = count || 0;
+      pintarTabla();
+      pintarPaginacion();
+      cargarResumen();
+    } catch (e) {
+      console.error('[agente35]', e);
+      tbody.innerHTML = `<tr><td colspan="9" class="a35-vacio">No se pudo cargar la información</td></tr>`;
+    }
+  }
+
+  async function cargarResumen() {
+    const cont = $('a35Resumen');
+    try {
+      const pares = await Promise.all(ESTADOS.map(async (e) => {
+        const q = filtrar(supabaseClient.from('vista_agente35').select('movimiento_id', { count: 'exact', head: true }), false)
+          .eq('agente35_estado', e);
+        const { count, error } = await q;
+        if (error) throw error;
+        return [e, count || 0];
+      }));
+      cont.innerHTML = pares.map(([e, n]) => `
+        <button type="button" class="a35-res ${claseEstado(e)}${$('a35Estado').value === e ? ' activo' : ''}" data-estado="${esc(e)}">
+          <span class="a35-res-n">${n.toLocaleString('es-CO')}</span><span class="a35-res-t">${esc(e)}</span>
+        </button>`).join('');
+      cont.querySelectorAll('[data-estado]').forEach((b) => b.addEventListener('click', () => {
+        $('a35Estado').value = $('a35Estado').value === b.dataset.estado ? '' : b.dataset.estado;
+        reiniciar();
+      }));
+    } catch (e) { console.warn('[agente35] resumen', e); cont.innerHTML = ''; }
+  }
+
+  // ------------------------------------------------------------ pintar
+  function pintarTabla() {
+    const tbody = $('a35Tbody');
+    if (!estado.filas.length) {
+      tbody.innerHTML = `<tr><td colspan="9" class="a35-vacio">Sin registros</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = estado.filas.map((r, i) => `
+      <tr>
+        <td class="a35-nowrap">${esc(fecha(r.created_at))}</td>
+        <td><span class="a35-tipo">${esc(r.tipo === 'Nuevo' ? 'Nueva' : r.tipo)}</span></td>
+        <td>
+          <a class="a35-cliente" href="./cliente_editar.html?id=${encodeURIComponent(r.cliente_id)}&abrir=agente35">${esc(r.cliente_nombre || '—')}</a>
+          <div class="a35-sub">${esc(r.cliente_telefono || '')}</div>
+        </td>
+        <td>${esc(r.compania || '')}</td>
+        <td class="a35-nowrap">${esc(r.numero_poliza || '')}</td>
+        <td>${esc(r.operador_nombre || '')}</td>
+        <td>
+          ${estado.puedeEditar
+            ? `<select class="a35-sel-estado ${claseEstado(r.agente35_estado)}" data-i="${i}">
+                 ${opcionesEstado(r.agente35_estado)}
+               </select>`
+            : `<span class="a35-badge ${claseEstado(r.agente35_estado)}">${esc(r.agente35_estado)}</span>`}
+        </td>
+        <td>
+          <button type="button" class="a35-obs" data-i="${i}" title="${esc(r.agente35_notas || '')}">
+            ${r.agente35_notas ? esc(r.agente35_notas.length > 60 ? r.agente35_notas.slice(0, 60) + '…' : r.agente35_notas)
+                               : `<span class="material-symbols-rounded">${estado.puedeEditar ? 'edit_note' : 'remove'}</span>`}
+          </button>
+        </td>
+        <td class="a35-sub">${r.agente35_actualizado_por ? `${esc(r.agente35_actualizado_por)}<br>${esc(fecha(r.agente35_fecha_actualizacion))}` : ''}</td>
+      </tr>`).join('');
+
+    tbody.querySelectorAll('.a35-sel-estado').forEach((s) => s.addEventListener('change', async () => {
+      const r = estado.filas[+s.dataset.i];
+      const ok = await guardar(r, s.value, r.agente35_notas);
+      if (!ok) s.value = r.agente35_estado;
+    }));
+    tbody.querySelectorAll('.a35-obs').forEach((b) => b.addEventListener('click', () => abrirModal(estado.filas[+b.dataset.i])));
+  }
+
+  function opcionesEstado(sel) {
+    const lista = ESTADOS.includes(sel) ? ESTADOS : [sel, ...ESTADOS];
+    return lista.map((e) => `<option value="${esc(e)}"${e === sel ? ' selected' : ''}>${esc(e)}</option>`).join('');
+  }
+
+  function pintarPaginacion() {
+    const paginas = Math.max(1, Math.ceil(estado.total / POR_PAGINA));
+    $('a35Contador').textContent = `${estado.total.toLocaleString('es-CO')} registros`;
+    $('a35Pagina').textContent = `${estado.pagina} / ${paginas}`;
+    $('a35Ant').disabled = estado.pagina <= 1;
+    $('a35Sig').disabled = estado.pagina >= paginas;
+  }
+
+  function pintarTipos() {
+    $('a35Tipos').innerHTML = TIPOS.map((t) =>
+      `<button type="button" class="a35-chip${estado.tipos.includes(t.texto) ? ' activo' : ''}" data-tipo="${esc(t.texto)}">${esc(t.texto)}</button>`).join('');
+    $('a35Tipos').querySelectorAll('[data-tipo]').forEach((b) => b.addEventListener('click', () => {
+      const v = b.dataset.tipo;
+      const i = estado.tipos.indexOf(v);
+      if (i === -1) estado.tipos.push(v); else estado.tipos.splice(i, 1);
+      pintarTipos();
+      reiniciar();
+    }));
+  }
+
+  // ------------------------------------------------------------ guardar
+  async function guardar(fila, nuevoEstado, nuevasNotas) {
+    if (!estado.puedeEditar) return false;
+    try {
+      const { data, error } = await supabaseClient.from('polizas')
+        .update({ agente35_estado: nuevoEstado, agente35_notas: nuevasNotas ?? null })
+        .eq('id', fila.poliza_id)
+        .select('agente35_estado, agente35_notas, agente35_actualizado_por, agente35_fecha_actualizacion')
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error('Sin acceso a esta póliza');
+      estado.filas.filter((r) => r.poliza_id === fila.poliza_id).forEach((r) => Object.assign(r, data));
+      pintarTabla();
+      cargarResumen();
+      toast('Guardado');
+      return true;
+    } catch (e) {
+      console.error('[agente35] guardar', e);
+      toast('No se pudo guardar: ' + (e.message || e), 'error');
+      return false;
+    }
+  }
+
+  // ------------------------------------------------------------ modal
+  function abrirModal(fila) {
+    estado.actual = fila;
+    $('a35ModalTitulo').textContent = `${fila.cliente_nombre || ''} · ${fila.numero_poliza || ''}`;
+    $('a35ModalEstado').innerHTML = opcionesEstado(fila.agente35_estado);
+    $('a35ModalNotas').value = fila.agente35_notas || '';
+    $('a35ModalEstado').disabled = !estado.puedeEditar;
+    $('a35ModalNotas').readOnly = !estado.puedeEditar;
+    $('a35ModalGuardar').style.display = estado.puedeEditar ? '' : 'none';
+    $('a35ModalMeta').textContent = fila.agente35_actualizado_por
+      ? `${fila.agente35_actualizado_por} · ${fecha(fila.agente35_fecha_actualizacion)}` : '';
+    $('a35ModalFicha').href = `./cliente_editar.html?id=${encodeURIComponent(fila.cliente_id)}&abrir=agente35`;
+    $('a35Modal').classList.add('activo');
+  }
+  function cerrarModal() { $('a35Modal').classList.remove('activo'); estado.actual = null; }
+
+  // ------------------------------------------------------------ inicio
+  function reiniciar() { estado.pagina = 1; cargar(); }
+
+  async function iniciar() {
+    try { if (typeof cargarRolUsuario === 'function') await cargarRolUsuario(); } catch (e) {}
+    const puede = (k) => { try { return typeof tienePermiso === 'function' && tienePermiso(k); } catch (e) { return false; } };
+    if (!puede('ver_agente35')) { window.location.href = './home.html'; return; }
+    estado.puedeEditar = puede('editar_agente35');
+
+    $('a35Estado').insertAdjacentHTML('beforeend', ESTADOS.map((e) => `<option value="${esc(e)}">${esc(e)}</option>`).join(''));
+    pintarTipos();
+
+    $('a35Estado').addEventListener('change', reiniciar);
+    $('a35Desde').addEventListener('change', reiniciar);
+    $('a35Hasta').addEventListener('change', reiniciar);
+    $('a35Buscar').addEventListener('input', () => { clearTimeout(estado.timer); estado.timer = setTimeout(reiniciar, 400); });
+    $('a35Limpiar').addEventListener('click', () => {
+      estado.tipos = []; $('a35Estado').value = ''; $('a35Desde').value = ''; $('a35Hasta').value = ''; $('a35Buscar').value = '';
+      pintarTipos(); reiniciar();
+    });
+    $('a35Recargar').addEventListener('click', cargar);
+    $('a35Ant').addEventListener('click', () => { if (estado.pagina > 1) { estado.pagina--; cargar(); } });
+    $('a35Sig').addEventListener('click', () => { estado.pagina++; cargar(); });
+    $('a35ModalCerrar').addEventListener('click', cerrarModal);
+    $('a35Modal').addEventListener('click', (e) => { if (e.target.id === 'a35Modal') cerrarModal(); });
+    $('a35ModalGuardar').addEventListener('click', async () => {
+      if (!estado.actual) return;
+      const btn = $('a35ModalGuardar');
+      btn.disabled = true;
+      const ok = await guardar(estado.actual, $('a35ModalEstado').value, $('a35ModalNotas').value.trim());
+      btn.disabled = false;
+      if (ok) cerrarModal();
+    });
+
+    cargar();
+  }
+
+  document.addEventListener('DOMContentLoaded', iniciar);
+})();

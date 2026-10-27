@@ -503,6 +503,25 @@ async function inicializarMenuAdmin() {
         menuMovimientos.style.display = 'flex';
     }
 
+    if (tienePermiso('ver_agente35')) {
+        let menuAgente35 = document.getElementById('menuAgente35');
+        if (!menuAgente35) {
+            menuAgente35 = document.createElement('a');
+            menuAgente35.href = './agente35.html';
+            menuAgente35.className = 'menu-item';
+            menuAgente35.id = 'menuAgente35';
+            menuAgente35.innerHTML = '<span class="material-symbols-rounded">smart_toy</span><span>Agente 3.5</span>';
+            const ref = document.getElementById('menuMovimientos');
+            const nav = document.querySelector('.sidebar-nav');
+            if (ref && ref.parentElement) ref.insertAdjacentElement('afterend', menuAgente35);
+            else if (nav) nav.appendChild(menuAgente35);
+        }
+        menuAgente35.style.display = 'flex';
+    } else {
+        const menuAgente35 = document.getElementById('menuAgente35');
+        if (menuAgente35) menuAgente35.style.display = 'none';
+    }
+
     await verificarNotificacionesCalidad();
 }
 document.addEventListener('DOMContentLoaded', inicializarMenuAdmin);

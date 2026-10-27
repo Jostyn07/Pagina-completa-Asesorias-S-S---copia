@@ -1,0 +1,102 @@
+/* ============================================================================
+ * Ruta en el repo: css/agente35.css
+ * Pestaña Agente 3.5 + insignias de estado (también usadas en Pólizas y la ficha).
+ * ==========================================================================*/
+.a35-main {
+    --a35-bg: #f8fafc; --a35-card: #ffffff; --a35-borde: #e2e8f0; --a35-txt: #1e293b;
+    --a35-sub: #64748b; --a35-acento: #6366f1; --a35-acento-bg: #eef2ff;
+    margin-left: 260px; padding: 24px; min-height: 100vh; background: var(--a35-bg);
+    color: var(--a35-txt); font-family: 'Poppins', 'Inter', sans-serif; box-sizing: border-box;
+}
+.sidebar-unified.collapsed ~ .a35-main { margin-left: 80px; }
+[data-theme="dark"] .a35-main {
+    --a35-bg: #121218; --a35-card: #1a1a24; --a35-borde: #2e2e3e; --a35-txt: #e2e4e9;
+    --a35-sub: #9ca3b4; --a35-acento: #8b8ef8; --a35-acento-bg: #2a2650;
+}
+.a35-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.a35-header h1 { display: flex; align-items: center; gap: 10px; font-size: 1.5rem; margin: 0; color: var(--a35-txt); }
+.a35-header h1 .material-symbols-rounded { color: var(--a35-acento); }
+
+.a35-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px;
+    border: 1px solid var(--a35-acento); background: var(--a35-acento); color: #fff;
+    font-size: .85rem; font-weight: 500; cursor: pointer; text-decoration: none;
+}
+.a35-btn:disabled { opacity: .45; cursor: not-allowed; }
+.a35-btn-sec { background: var(--a35-card); color: var(--a35-txt); border-color: var(--a35-borde); }
+.a35-btn .material-symbols-rounded { font-size: 18px; }
+
+/* Resumen por estado */
+.a35-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.a35-res {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 14px;
+    border-radius: 10px; border: 1px solid var(--a35-borde); background: var(--a35-card); cursor: pointer;
+    text-align: left; color: var(--a35-txt);
+}
+.a35-res.activo { outline: 2px solid var(--a35-acento); }
+.a35-res-n { font-size: 1.35rem; font-weight: 700; }
+.a35-res-t { font-size: .78rem; opacity: .85; }
+
+/* Filtros */
+.a35-filtros { background: var(--a35-card); border: 1px solid var(--a35-borde); border-radius: 12px; padding: 12px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+.a35-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.a35-chip { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--a35-borde); background: transparent; color: var(--a35-txt); cursor: pointer; font-size: .85rem; }
+.a35-chip.activo { background: var(--a35-acento-bg); border-color: var(--a35-acento); color: var(--a35-acento); font-weight: 600; }
+.a35-fila { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.a35-input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--a35-borde); background: var(--a35-card); color: var(--a35-txt); font-size: .88rem; font-family: inherit; box-sizing: border-box; }
+.a35-fecha { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--a35-sub); }
+.a35-buscar { flex: 1; min-width: 200px; }
+
+/* Tabla */
+.a35-tabla-wrap { background: var(--a35-card); border: 1px solid var(--a35-borde); border-radius: 12px; overflow: hidden; }
+.a35-tabla-scroll { overflow-x: auto; }
+.a35-tabla { width: 100%; border-collapse: collapse; font-size: .86rem; }
+.a35-tabla th { text-align: left; padding: 10px 12px; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; color: var(--a35-sub); border-bottom: 1px solid var(--a35-borde); white-space: nowrap; }
+.a35-tabla td { padding: 10px 12px; border-bottom: 1px solid var(--a35-borde); vertical-align: middle; color: var(--a35-txt); }
+.a35-nowrap { white-space: nowrap; }
+.a35-sub { font-size: .76rem; color: var(--a35-sub); }
+.a35-cliente { color: var(--a35-acento); font-weight: 600; text-decoration: none; }
+.a35-cliente:hover { text-decoration: underline; }
+.a35-tipo { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--a35-acento-bg); color: var(--a35-acento); font-size: .76rem; font-weight: 600; white-space: nowrap; }
+.a35-obs { background: none; border: 0; padding: 0; color: var(--a35-txt); cursor: pointer; text-align: left; font: inherit; max-width: 260px; }
+.a35-obs .material-symbols-rounded { color: var(--a35-sub); font-size: 20px; }
+.a35-vacio { text-align: center; padding: 40px !important; color: var(--a35-sub) !important; }
+.a35-spinner { display: inline-block; width: 26px; height: 26px; border: 3px solid var(--a35-borde); border-top-color: var(--a35-acento); border-radius: 50%; animation: a35spin .8s linear infinite; }
+@keyframes a35spin { to { transform: rotate(360deg); } }
+.a35-paginacion { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; font-size: .85rem; color: var(--a35-sub); }
+.a35-paginacion > div { display: flex; align-items: center; gap: 8px; }
+.a35-sel-estado { padding: 5px 8px; border-radius: 999px; font-size: .78rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+/* Modal */
+.a35-modal { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 16px; }
+.a35-modal.activo { display: flex; }
+.a35-modal-box { width: 100%; max-width: 520px; background: var(--a35-card, #fff); color: var(--a35-txt, #1e293b); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--a35-borde, #e2e8f0); }
+[data-theme="dark"] .a35-modal-box { --a35-card: #1a1a24; --a35-txt: #e2e4e9; --a35-borde: #2e2e3e; --a35-sub: #9ca3b4; --a35-acento: #8b8ef8; }
+.a35-modal-box { --a35-card: #fff; --a35-txt: #1e293b; --a35-borde: #e2e8f0; --a35-sub: #64748b; --a35-acento: #6366f1; }
+.a35-modal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.a35-modal-head h3 { margin: 0; font-size: 1.05rem; }
+.a35-label { display: flex; flex-direction: column; gap: 6px; font-size: .85rem; font-weight: 500; }
+.a35-modal-meta { font-size: .78rem; color: var(--a35-sub); }
+.a35-modal-acciones { display: flex; justify-content: space-between; gap: 10px; }
+
+@media (max-width: 1024px) { .a35-main { margin-left: 80px; } }
+@media (max-width: 768px) { .a35-main { margin-left: 0; padding: 16px; } .a35-fila > * { flex: 1 1 100%; } }
+
+/* ---------- Colores por estado (pestaña, Pólizas y ficha) ---------- */
+.a35-e-pendiente,           .badge-agente35.pendiente   { background: #fef3c7 !important; color: #92400e !important; border-color: #fbbf24 !important; }
+.a35-e-new-application,     .badge-agente35.new         { background: #dbeafe !important; color: #1e40af !important; border-color: #93c5fd !important; }
+.a35-e-policy-change,       .badge-agente35.policy      { background: #ede9fe !important; color: #5b21b6 !important; border-color: #c4b5fd !important; }
+.a35-e-procesado,           .badge-agente35.procesado   { background: #d1fae5 !important; color: #065f46 !important; border-color: #6ee7b7 !important; }
+.a35-e-cambio-necesario,    .badge-agente35.cambio      { background: #fee2e2 !important; color: #991b1b !important; border-color: #fca5a5 !important; }
+.a35-e-termination-request, .badge-agente35.termination { background: #ffedd5 !important; color: #9a3412 !important; border-color: #fdba74 !important; }
+.a35-e-cancelado,           .badge-agente35.cancelado   { background: #f1f5f9 !important; color: #475569 !important; border-color: #cbd5e1 !important; }
+.a35-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: .78rem; font-weight: 600; border: 1px solid; white-space: nowrap; }
+.badge-agente35 { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: .85rem; font-weight: 600; white-space: nowrap; border: 1px solid; }
+
+[data-theme="dark"] .a35-e-pendiente,           [data-theme="dark"] .badge-agente35.pendiente   { background: #3d3520 !important; color: #e5b44e !important; border-color: #5a4a20 !important; }
+[data-theme="dark"] .a35-e-new-application,     [data-theme="dark"] .badge-agente35.new         { background: #1e2a4a !important; color: #93c5fd !important; border-color: #2c3e66 !important; }
+[data-theme="dark"] .a35-e-policy-change,       [data-theme="dark"] .badge-agente35.policy      { background: #2a2650 !important; color: #c4b5fd !important; border-color: #3d3670 !important; }
+[data-theme="dark"] .a35-e-procesado,           [data-theme="dark"] .badge-agente35.procesado   { background: #1a2e25 !important; color: #5ecd8a !important; border-color: #24503b !important; }
+[data-theme="dark"] .a35-e-cambio-necesario,    [data-theme="dark"] .badge-agente35.cambio      { background: #2e1a1a !important; color: #f07070 !important; border-color: #4a2424 !important; }
+[data-theme="dark"] .a35-e-termination-request, [data-theme="dark"] .badge-agente35.termination { background: #33241a !important; color: #f0a46a !important; border-color: #5a3a22 !important; }
+[data-theme="dark"] .a35-e-cancelado,           [data-theme="dark"] .badge-agente35.cancelado   { background: #22222e !important; color: #9ca3b4 !important; border-color: #2e2e3e !important; }
