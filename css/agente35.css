@@ -100,3 +100,4 @@
 [data-theme="dark"] .a35-e-cambio-necesario,    [data-theme="dark"] .badge-agente35.cambio      { background: #2e1a1a !important; color: #f07070 !important; border-color: #4a2424 !important; }
 [data-theme="dark"] .a35-e-termination-request, [data-theme="dark"] .badge-agente35.termination { background: #33241a !important; color: #f0a46a !important; border-color: #5a3a22 !important; }
 [data-theme="dark"] .a35-e-cancelado,           [data-theme="dark"] .badge-agente35.cancelado   { background: #22222e !important; color: #9ca3b4 !important; border-color: #2e2e3e !important; }
+.a35-origen { margin-top: 3px; font-size: .72rem; }

@@ -18,6 +18,7 @@
     { valor: ['Cambio de vida'], texto: 'Cambio de vida' },
   ];
   const POR_PAGINA = 50;
+  const ORIGEN_TXT = { 'Nueva': 'nueva', 'Venta con registro': 'de venta con registro', 'Renovación': 'renovada' };
 
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -97,7 +98,10 @@
     tbody.innerHTML = estado.filas.map((r, i) => `
       <tr>
         <td class="a35-nowrap">${esc(fecha(r.created_at))}</td>
-        <td><span class="a35-tipo">${esc(r.tipo === 'Nuevo' ? 'Nueva' : r.tipo)}</span></td>
+        <td>
+          <span class="a35-tipo">${esc(r.tipo === 'Nuevo' ? 'Nueva' : r.tipo)}</span>
+          ${r.origen && r.origen !== r.tipo ? `<div class="a35-sub a35-origen">Póliza ${esc(ORIGEN_TXT[r.origen] || r.origen)}</div>` : ''}
+        </td>
         <td>
           <a class="a35-cliente" href="./cliente_editar.html?id=${encodeURIComponent(r.cliente_id)}&abrir=agente35">${esc(r.cliente_nombre || '—')}</a>
           <div class="a35-sub">${esc(r.cliente_telefono || '')}</div>
