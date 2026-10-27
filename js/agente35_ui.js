@@ -123,6 +123,28 @@
     });
   }
 
+  // --------------------------------------------------------------- movimientos: tarjeta "Nuevas"
+  // Misma regla que Inicio: Nueva + Venta con registro, una vez por póliza
+  // (las renovaciones ya no se suman aquí).
+  if (typeof window.actualizarCards === 'function') {
+    const cardsOriginal = window.actualizarCards;
+    window.actualizarCards = function () {
+      const r = cardsOriginal.apply(this, arguments);
+      try {
+        const lista = (typeof movimientosFiltrados !== 'undefined' && movimientosFiltrados) || [];
+        const unicas = new Set();
+        lista.forEach((x) => {
+          if (['Nueva', 'Nuevo', 'Venta con registro'].includes(x.tipo)) {
+            unicas.add(x.cliente_id || x.uid);  // cada renovación crea un cliente nuevo: 1 cliente = 1 póliza
+          }
+        });
+        const el = document.getElementById('cardNuevas');
+        if (el) el.textContent = unicas.size;
+      } catch (e) { console.warn('[agente35_ui] cards', e); }
+      return r;
+    };
+  }
+
   // --------------------------------------------------------------- movimientos
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('#panelFiltroTipo input[value="Renovacion"]').forEach((i) => { i.value = 'Renovación'; });
