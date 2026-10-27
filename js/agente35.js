@@ -36,63 +36,55 @@
   }
 
   // ------------------------------------------------------------ consulta
-  function filtrar(q, incluirEstado) {
-    if (estado.tipos.length) {
-      q = q.in('tipo', TIPOS.filter((t) => estado.tipos.includes(t.texto)).flatMap((t) => t.valor));
-    }
-    const est = $('a35Estado').value;
-    if (incluirEstado && est) q = q.eq('agente35_estado', est);
-    const desde = $('a35Desde').value;
-    const hasta = $('a35Hasta').value;
-    if (desde) q = q.gte('created_at', new Date(desde + 'T00:00:00').toISOString());
-    if (hasta) q = q.lt('created_at', new Date(new Date(hasta + 'T00:00:00').getTime() + 86400000).toISOString());
-    const txt = $('a35Buscar').value.trim().replace(/[,()%*"]/g, ' ').trim();
-    if (txt) {
-      const dig = txt.replace(/\D/g, '');
-      const ors = [`cliente_nombre.ilike.%${txt}%`, `numero_poliza.ilike.%${txt}%`];
-      if (dig.length >= 3) ors.push(`cliente_telefono.ilike.%${dig}%`);
-      q = q.or(ors.join(','));
-    }
-    return q;
+  // Una sola llamada: página + total + conteo por estado (agente35_listar).
+  function parametros() {
+    const tipos = TIPOS.filter((t) => estado.tipos.includes(t.texto)).flatMap((t) => t.valor);
+    const txt = $('a35Buscar').value.trim();
+    return {
+      p_tipos: tipos.length ? tipos : null,
+      p_estado: $('a35Estado').value || null,
+      p_desde: $('a35Desde').value || null,
+      p_hasta: $('a35Hasta').value || null,
+      p_buscar: txt || null,
+      p_offset: (estado.pagina - 1) * POR_PAGINA,
+      p_limit: POR_PAGINA,
+    };
   }
 
+  let solicitud = 0;
   async function cargar() {
     const tbody = $('a35Tbody');
-    tbody.innerHTML = `<tr><td colspan="9" class="a35-vacio"><span class="a35-spinner"></span></td></tr>`;
+    const mia = ++solicitud;
+    if (!estado.filas.length) tbody.innerHTML = `<tr><td colspan="9" class="a35-vacio"><span class="a35-spinner"></span></td></tr>`;
+    else tbody.style.opacity = '.5';
     try {
-      const desde = (estado.pagina - 1) * POR_PAGINA;
-      const { data, error, count } = await filtrar(supabaseClient.from('vista_agente35').select('*', { count: 'exact' }).order('created_at', { ascending: false }), true).range(desde, desde + POR_PAGINA - 1);
+      const { data, error } = await supabaseClient.rpc('agente35_listar', parametros());
+      if (mia !== solicitud) return; // llegó una respuesta más nueva
       if (error) throw error;
-      estado.filas = data || [];
-      estado.total = count || 0;
+      estado.filas = data?.filas || [];
+      estado.total = data?.total || 0;
       pintarTabla();
       pintarPaginacion();
-      cargarResumen();
+      pintarResumen(data?.resumen || {});
     } catch (e) {
+      if (mia !== solicitud) return;
       console.error('[agente35]', e);
       tbody.innerHTML = `<tr><td colspan="9" class="a35-vacio">No se pudo cargar la información</td></tr>`;
+    } finally {
+      if (mia === solicitud) tbody.style.opacity = '';
     }
   }
 
-  async function cargarResumen() {
+  function pintarResumen(resumen) {
     const cont = $('a35Resumen');
-    try {
-      const pares = await Promise.all(ESTADOS.map(async (e) => {
-        const q = filtrar(supabaseClient.from('vista_agente35').select('movimiento_id', { count: 'exact', head: true }), false)
-          .eq('agente35_estado', e);
-        const { count, error } = await q;
-        if (error) throw error;
-        return [e, count || 0];
-      }));
-      cont.innerHTML = pares.map(([e, n]) => `
-        <button type="button" class="a35-res ${claseEstado(e)}${$('a35Estado').value === e ? ' activo' : ''}" data-estado="${esc(e)}">
-          <span class="a35-res-n">${n.toLocaleString('es-CO')}</span><span class="a35-res-t">${esc(e)}</span>
-        </button>`).join('');
-      cont.querySelectorAll('[data-estado]').forEach((b) => b.addEventListener('click', () => {
-        $('a35Estado').value = $('a35Estado').value === b.dataset.estado ? '' : b.dataset.estado;
-        reiniciar();
-      }));
-    } catch (e) { console.warn('[agente35] resumen', e); cont.innerHTML = ''; }
+    cont.innerHTML = ESTADOS.map((e) => `
+      <button type="button" class="a35-res ${claseEstado(e)}${$('a35Estado').value === e ? ' activo' : ''}" data-estado="${esc(e)}">
+        <span class="a35-res-n">${(resumen[e] || 0).toLocaleString('es-CO')}</span><span class="a35-res-t">${esc(e)}</span>
+      </button>`).join('');
+    cont.querySelectorAll('[data-estado]').forEach((b) => b.addEventListener('click', () => {
+      $('a35Estado').value = $('a35Estado').value === b.dataset.estado ? '' : b.dataset.estado;
+      reiniciar();
+    }));
   }
 
   // ------------------------------------------------------------ pintar
@@ -174,8 +166,7 @@
       if (error) throw error;
       if (!data) throw new Error('Sin acceso a esta póliza');
       estado.filas.filter((r) => r.poliza_id === fila.poliza_id).forEach((r) => Object.assign(r, data));
-      pintarTabla();
-      cargarResumen();
+      cargar();
       toast('Guardado');
       return true;
     } catch (e) {
