@@ -14,11 +14,12 @@
     { valor: ['Nueva', 'Nuevo'], texto: 'Nueva' },
     { valor: ['Venta con registro'], texto: 'Venta con registro' },
     { valor: ['Renovación'], texto: 'Renovación' },
+    { valor: ['Tipo renovación'], texto: 'Tipo renovación' },
     { valor: ['Recuperada'], texto: 'Recuperada' },
     { valor: ['Cambio de vida'], texto: 'Cambio de vida' },
   ];
   const POR_PAGINA = 50;
-  const ORIGEN_TXT = { 'Nueva': 'nueva', 'Venta con registro': 'de venta con registro', 'Renovación': 'renovada' };
+  const ORIGEN_TXT = { 'Nueva': 'nueva', 'Venta con registro': 'de venta con registro', 'Renovación': 'renovada', 'Tipo renovación': 'tipo renovación' };
 
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

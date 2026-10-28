@@ -1,3 +1,9 @@
+/* ============================================================================
+ * Ruta en el repo: js/cliente_editar_historial.js
+ * Completa el Historial de Cambios de cliente_editar sin modificar cliente_editar.js.
+ * Se carga DESPUÉS de cliente_editar.js. No toca la lógica de Agente 3.5.
+ * Si algo falla aquí, el guardado normal sigue funcionando (solo se omite el registro).
+ * ==========================================================================*/
 (function () {
   'use strict';
   if (typeof window.compararCambios !== 'function') return;
@@ -363,6 +369,10 @@
     cliente_archivado: ['Cliente Archivado', 'archive'],
     cambio_programado_aplicado: ['Cambio Programado Aplicado', 'bolt'],
     cambio_programado_eliminado: ['Cambio Programado Eliminado', 'event_busy'],
+    poliza_creada: ['Póliza Creada', 'add_circle'],
+    poliza_renovada: ['Póliza Renovada', 'autorenew'],
+    recuperada_registrada: ['Recuperada Registrada', 'published_with_changes'],
+    cambio_vida_registrado: ['Cambio de Vida Registrado', 'family_restroom'],
   };
   const itemOriginal = window.crearItemHistorial;
   window.crearItemHistorial = function (grupo) {
