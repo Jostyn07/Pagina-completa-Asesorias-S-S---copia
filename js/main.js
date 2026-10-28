@@ -836,3 +836,11 @@ function validarFormatoDecimalComaPegado(input) {
     input.value = limpio;
     mostrarErrorCampo(input, 'Formato corregido. Usa solo números y coma decimal, máx. 2 decimales (ej: 1500,50)');
 }
+
+(function () {
+    if (document.querySelector('script[data-menu-orden]')) return;
+    const s = document.createElement('script');
+    s.src = '../js/menu_orden.js';
+    s.dataset.menuOrden = '1';
+    document.head.appendChild(s);
+})();
