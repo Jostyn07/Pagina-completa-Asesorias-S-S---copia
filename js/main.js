@@ -838,6 +838,26 @@ function validarFormatoDecimalComaPegado(input) {
 }
 
 (function () {
+    try {
+        const u = JSON.parse(localStorage.getItem('usuario') || 'null');
+        const orden = u?.id ? JSON.parse(localStorage.getItem('menu_orden_' + u.id) || '[]') : [];
+        const nav = document.querySelector('#sidebar .sidebar-nav, .sidebar-nav');
+        if (nav && orden.length) {
+            const lista = Array.from(nav.querySelectorAll(':scope > a.menu-item'));
+            const clave = (a) => {
+                const href = (a.getAttribute('href') || '').trim();
+                const k = (href && href !== '#') ? href.split('?')[0].replace(/^\.\//, '').split('/').pop()
+                                                 : (a.id || a.textContent.trim().toLowerCase().replace(/\s+/g, '_'));
+                a.dataset.menuKey = k;
+                return k;
+            };
+            const pos = new Map(orden.map((k, i) => [k, i]));
+            lista.map((a, i) => ({ a, p: pos.has(clave(a)) ? pos.get(a.dataset.menuKey) : 1000 + i }))
+                 .sort((x, y) => x.p - y.p)
+                 .forEach(({ a }) => nav.appendChild(a));
+        }
+    } catch (e) { /* si falla, el menú queda como siempre */ }
+ 
     if (document.querySelector('script[data-menu-orden]')) return;
     const s = document.createElement('script');
     s.src = '../js/menu_orden.js';

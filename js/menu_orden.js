@@ -66,17 +66,37 @@
     } catch (e) { console.warn('[menu_orden] no se guardó en el perfil:', e); }
   }
 
+  // id del usuario sin esperar a la red (lo guarda el login en localStorage)
+  function uidLocal() {
+    try { return JSON.parse(localStorage.getItem('usuario') || 'null')?.id || null; } catch (e) { return null; }
+  }
+
+  // El orden se aplica primero desde el navegador (sin parpadeo). La base se
+  // consulta una sola vez por sesión del navegador, y solo se reacomoda si cambió.
   async function cargar() {
+    uid = uidLocal();
+    const local = uid ? leerLocal() : [];
+    if (local.length) { orden = local; aplicar(); }
+
+    const marca = 'menu_orden_sync_' + (uid || '');
+    try { if (uid && local.length && sessionStorage.getItem(marca)) return; } catch (e) {}
+
     try {
-      const { data: { user } } = await sb().auth.getUser();
-      if (!user) return;
-      uid = user.id;
-      const local = leerLocal();
-      if (local.length) { orden = local; aplicar(); }
+      if (!uid) {
+        const { data: { user } } = await sb().auth.getUser();
+        if (!user) return;
+        uid = user.id;
+      }
       const { data, error } = await sb().from('preferencias_usuario')
         .select('menu_orden').eq('usuario_id', uid).maybeSingle();
       if (error) throw error;
-      if (data?.menu_orden?.length) { orden = data.menu_orden; guardarLocal(); aplicar(); }
+      const remoto = data?.menu_orden || [];
+      if (remoto.length && JSON.stringify(remoto) !== JSON.stringify(orden)) {
+        orden = remoto; guardarLocal(); aplicar();
+      } else if (!remoto.length && orden.length) {
+        guardar();   // había orden local y aún no estaba en el perfil
+      }
+      try { sessionStorage.setItem(marca, '1'); } catch (e) {}
     } catch (e) { console.warn('[menu_orden] usando orden local:', e); }
   }
 
