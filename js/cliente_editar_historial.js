@@ -373,6 +373,8 @@
     poliza_renovada: ['Póliza Renovada', 'autorenew'],
     recuperada_registrada: ['Recuperada Registrada', 'published_with_changes'],
     cambio_vida_registrado: ['Cambio de Vida Registrado', 'family_restroom'],
+    poliza_no_renovada: ['No Quiere Renovar', 'block'],
+    poliza_reactivada_renovacion: ['Renovación Reactivada', 'restart_alt'],
   };
   const itemOriginal = window.crearItemHistorial;
   window.crearItemHistorial = function (grupo) {
