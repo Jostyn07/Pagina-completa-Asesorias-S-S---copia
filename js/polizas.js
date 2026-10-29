@@ -3071,7 +3071,7 @@ function aplicarFiltrosAvanzados() {
     guardarFiltrosEnStorage();
 
     // Guardar datos filtrados para gráficas
-    sessionStorage.setItem('graficas_data', JSON.stringify(polizasFiltradas));
+    try { sessionStorage.removeItem('graficas_data'); } catch (e) {}
     // Mostrar botón "Ver gráfica"
     document.getElementById('btnVerGrafica')?.style.setProperty('display', 'inline-flex');
     
