@@ -3,6 +3,10 @@
   if (typeof window.aplicarFiltrosAvanzados !== 'function') return;
 
   const CLAVE = 'ss_polizas_filtro_renovacion';
+  const CLAVE_FIRMA = 'ss_polizas_filtro_firma';
+  let firma = '';
+  try { firma = localStorage.getItem(CLAVE_FIRMA) || ''; } catch (e) {}
+  const firmaDe = new Map();   // poliza_id → true/false
   const ANIOS = ['2025', '2026', '2027'];
   const sb = () => (typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient);
   let valor = '';
@@ -27,6 +31,16 @@
     return n ? n[1] : '';
   };
 
+  async function asegurarFirma() {
+    if (!firma) return;
+    const faltan = lista().map((p) => p.id).filter((id) => id && !firmaDe.has(id));
+    for (let i = 0; i < faltan.length; i += 300) {
+      const { data, error } = await sb().from('polizas').select('id, firma_docusign').in('id', faltan.slice(i, i + 300));
+      if (error) throw error;
+      (data || []).forEach((r) => firmaDe.set(r.id, !!r.firma_docusign));
+    }
+  }
+
   async function asegurarDatos() {
     if (!valor) return;
     const l = lista();
@@ -45,7 +59,8 @@
     const base = Array.isArray(polizasFiltradas) ? polizasFiltradas : lista();
     polizasFiltradas = base.filter((p) =>
       (!anios.length || anios.includes(anioDe(p))) &&
-      (!valor || estadoDe(p) === valor));
+      (!valor || estadoDe(p) === valor) &&
+      (!firma || !firmaDe.size || (firma === 'si') === !!(p.firma_docusign ?? firmaDe.get(p.id))));
     paginaActual = 1;
     try { renderizarTabla(); } catch (e) {}
     try { actualizarPaginacion(); } catch (e) {}
@@ -56,6 +71,7 @@
 
   async function aplicar() {
     try { await asegurarDatos(); } catch (e) { console.warn('[filtro renovación] sin estado de renovación:', e); }
+    try { await asegurarFirma(); } catch (e) { console.warn('[filtro firma] sin datos de firma:', e); }
     try { posfiltro(); } catch (e) { console.warn('[filtro año/renovación] sin efecto:', e); }
   }
 
@@ -78,9 +94,18 @@
             <option value="no_renovadas">No quiere renovar</option>
           </select>
         </div>
+        <div class="filtro-group">
+          <label for="filtroFirmaDocusign">Firma DocuSign</label>
+          <select id="filtroFirmaDocusign">
+            <option value="">Todas</option>
+            <option value="si">Con firma</option>
+            <option value="no">Sin firma</option>
+          </select>
+        </div>
       </div>`;
     cuerpo.insertBefore(sec, cuerpo.firstChild);
     document.getElementById('filtroRenovacion').value = valor;
+    document.getElementById('filtroFirmaDocusign').value = firma;
   }
 
   // ---- envolturas
@@ -88,14 +113,16 @@
   window.aplicarFiltrosAvanzados = function () {
     const sel = document.getElementById('filtroRenovacion');
     if (sel) valor = sel.value || '';
-    try { localStorage.setItem(CLAVE, valor); } catch (e) {}
+    const selF = document.getElementById('filtroFirmaDocusign');
+    if (selF) firma = selF.value || '';
+    try { localStorage.setItem(CLAVE, valor); localStorage.setItem(CLAVE_FIRMA, firma); } catch (e) {}
     try { filtroAnioActivado = false; } catch (e) {}   // el año lo aplica posfiltro()
     let r;
     try { r = aplicarOriginal.apply(this, arguments); }
     catch (e) { console.warn('[filtros] error en los filtros base, se continúa:', e); }
-    try { if (valor) hayFiltrosActivos = true; } catch (e) {}
+    try { if (valor || firma) hayFiltrosActivos = true; } catch (e) {}
     try { posfiltro(); } catch (e) {}
-    if (valor) Promise.resolve(r).catch(() => {}).then(aplicar);
+    if (valor || firma) Promise.resolve(r).catch(() => {}).then(aplicar);
     return r;
   };
 
@@ -112,10 +139,12 @@
   if (typeof window.limpiarFiltros === 'function') {
     const limpiarOriginal = window.limpiarFiltros;
     window.limpiarFiltros = function () {
-      valor = '';
-      try { localStorage.removeItem(CLAVE); } catch (e) {}
+      valor = ''; firma = '';
+      try { localStorage.removeItem(CLAVE); localStorage.removeItem(CLAVE_FIRMA); } catch (e) {}
       const sel = document.getElementById('filtroRenovacion');
       if (sel) sel.value = '';
+      const selF = document.getElementById('filtroFirmaDocusign');
+      if (selF) selF.value = '';
       const r = limpiarOriginal.apply(this, arguments);
       try { posfiltro(); } catch (e) {}   // mantiene los años marcados
       return r;

@@ -1,9 +1,3 @@
-/* ============================================================================
- * Ruta en el repo: js/cliente_editar_historial.js
- * Completa el Historial de Cambios de cliente_editar sin modificar cliente_editar.js.
- * Se carga DESPUÉS de cliente_editar.js. No toca la lógica de Agente 3.5.
- * Si algo falla aquí, el guardado normal sigue funcionando (solo se omite el registro).
- * ==========================================================================*/
 (function () {
   'use strict';
   if (typeof window.compararCambios !== 'function') return;
@@ -375,6 +369,8 @@
     cambio_vida_registrado: ['Cambio de Vida Registrado', 'family_restroom'],
     poliza_no_renovada: ['No Quiere Renovar', 'block'],
     poliza_reactivada_renovacion: ['Renovación Reactivada', 'restart_alt'],
+    firma_docusign_marcada: ['Firma DocuSign Marcada', 'verified'],
+    firma_docusign_desmarcada: ['Firma DocuSign Quitada', 'draw'],
   };
   const itemOriginal = window.crearItemHistorial;
   window.crearItemHistorial = function (grupo) {
