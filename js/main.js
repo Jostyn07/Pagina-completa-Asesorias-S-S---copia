@@ -534,7 +534,9 @@ async function inicializarMenuAdmin() {
         if (menuAgente35) menuAgente35.style.display = 'none';
     }
 
-    await verificarNotificacionesCalidad();
+    if (typeof verificarNotificacionesCalidad === 'function') {
+        try { await verificarNotificacionesCalidad(); } catch (e) { console.warn('[calidad] notificaciones:', e); }
+    }
 }
 document.addEventListener('DOMContentLoaded', inicializarMenuAdmin);
 
