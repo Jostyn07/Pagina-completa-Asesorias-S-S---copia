@@ -1,10 +1,3 @@
-/* ============================================================================
- * Ruta en el repo: js/agente35.js
- * Pestaña Agente 3.5: Nuevas, Ventas con registro, Renovaciones, Recuperadas y
- * Cambios de vida (vista_agente35), la más reciente primero. Con permiso
- * editar_agente35 se cambia el estado y la observación de la póliza; quién y
- * cuándo los llena la base.
- * ==========================================================================*/
 (function () {
   'use strict';
 
@@ -65,6 +58,8 @@
       if (error) throw error;
       estado.filas = data?.filas || [];
       estado.total = data?.total || 0;
+      await cargarSubiendo();
+      if (mia !== solicitud) return;
       pintarTabla();
       pintarPaginacion();
       pintarResumen(data?.resumen || {});
@@ -75,6 +70,19 @@
     } finally {
       if (mia === solicitud) tbody.style.opacity = '';
     }
+  }
+
+  // Borradores de renovación sin guardar: poliza_id → operador que la está subiendo
+  let subiendo = new Map();
+  async function cargarSubiendo() {
+    try {
+      const ids = estado.filas.map((r) => String(r.poliza_id)).filter(Boolean);
+      if (!ids.length) { subiendo = new Map(); return; }
+      const { data, error } = await supabaseClient.from('renovaciones')
+        .select('poliza_destino_id, operador_nombre').eq('estado', 'en_proceso').in('poliza_destino_id', ids);
+      if (error) throw error;
+      subiendo = new Map((data || []).map((x) => [String(x.poliza_destino_id), x.operador_nombre || '']));
+    } catch (e) { subiendo = new Map(); }
   }
 
   function pintarResumen(resumen) {
@@ -118,6 +126,8 @@
             : `<span class="a35-badge ${claseEstado(r.agente35_estado)}">${esc(r.agente35_estado)}</span>`}
         </td>
         <td>
+          ${subiendo.has(String(r.poliza_id))
+            ? `<div class="a35-subiendo">Subiendo renovada por: ${esc(subiendo.get(String(r.poliza_id)) || '—')}</div>` : ''}
           <button type="button" class="a35-obs" data-i="${i}" title="${esc(r.agente35_notas || '')}">
             ${r.agente35_notas ? esc(r.agente35_notas.length > 60 ? r.agente35_notas.slice(0, 60) + '…' : r.agente35_notas)
                                : `<span class="material-symbols-rounded">${estado.puedeEditar ? 'edit_note' : 'remove'}</span>`}
@@ -235,4 +245,10 @@
   }
 
   document.addEventListener('DOMContentLoaded', iniciar);
+  const cssSubiendo = document.createElement('style');
+  cssSubiendo.textContent = `
+    .a35-subiendo { display:inline-block; padding:5px 10px; border-radius:8px; font-size:.8rem; font-weight:600;
+      background:#ede9fe; color:#5b21b6; border:1px dashed #a78bfa; white-space:nowrap; margin-bottom:4px; }
+    [data-theme="dark"] .a35-subiendo { background:#2a2140; color:#c4b5fd; border-color:#6d55b8; }`;
+  document.head.appendChild(cssSubiendo);
 })();
