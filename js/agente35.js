@@ -60,6 +60,7 @@
       estado.total = data?.total || 0;
       await cargarSubiendo();
       if (mia !== solicitud) return;
+      marcarLinea();
       pintarTabla();
       pintarPaginacion();
       pintarResumen(data?.resumen || {});
@@ -70,6 +71,68 @@
     } finally {
       if (mia === solicitud) tbody.style.opacity = '';
     }
+  }
+
+  // ------------------------------------------------------------ aviso de actualizaciones
+  // Cada 60 s (solo con la pestaña visible) cuenta los cambios hechos por otros
+  // desde la última carga y lo muestra junto a "Recargar". No recarga solo.
+  const linea = { pol: null, ren: null, timer: null };
+  const maxDe = (...v) => v.filter(Boolean).sort().pop() || null;
+
+  async function marcarLinea() {
+    try {
+      const [a, b, c, d] = await Promise.all([
+        supabaseClient.from('polizas').select('agente35_fecha_actualizacion').not('agente35_fecha_actualizacion', 'is', null)
+          .order('agente35_fecha_actualizacion', { ascending: false }).limit(1).maybeSingle(),
+        supabaseClient.from('polizas').select('agente35_evento_en').not('agente35_evento_en', 'is', null)
+          .order('agente35_evento_en', { ascending: false }).limit(1).maybeSingle(),
+        supabaseClient.from('renovaciones').select('iniciada_en').not('iniciada_en', 'is', null)
+          .order('iniciada_en', { ascending: false }).limit(1).maybeSingle(),
+        supabaseClient.from('renovaciones').select('fecha_renovacion').not('fecha_renovacion', 'is', null)
+          .order('fecha_renovacion', { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      linea.pol = maxDe(a.data?.agente35_fecha_actualizacion, b.data?.agente35_evento_en) || new Date().toISOString();
+      linea.ren = maxDe(c.data?.iniciada_en, d.data?.fecha_renovacion) || new Date().toISOString();
+      pintarAviso(0);
+      if (!linea.timer) linea.timer = setInterval(revisarCambios, 60000);
+    } catch (e) { /* sin aviso */ }
+  }
+
+  async function revisarCambios() {
+    if (document.hidden || !linea.pol) return;
+    try {
+      const [p, r] = await Promise.all([
+        supabaseClient.from('polizas').select('id', { count: 'exact', head: true })
+          .or(`agente35_fecha_actualizacion.gt."${linea.pol}",agente35_evento_en.gt."${linea.pol}"`),
+        supabaseClient.from('renovaciones').select('id', { count: 'exact', head: true })
+          .or(`iniciada_en.gt."${linea.ren}",fecha_renovacion.gt."${linea.ren}"`),
+      ]);
+      if (p.error || r.error) return;
+      pintarAviso((p.count || 0) + (r.count || 0));
+    } catch (e) {}
+  }
+
+  function pintarAviso(n) {
+    const btn = $('a35Recargar');
+    if (!btn) return;
+    let grupo = btn.parentElement.classList.contains('a35-recarga-grupo') ? btn.parentElement : null;
+    if (!grupo) {
+      grupo = document.createElement('div');
+      grupo.className = 'a35-recarga-grupo';
+      btn.parentNode.insertBefore(grupo, btn);
+      grupo.appendChild(btn);
+    }
+    let av = $('a35Actualizaciones');
+    if (!n) { av?.remove(); return; }
+    if (!av) {
+      av = document.createElement('button');
+      av.type = 'button';
+      av.id = 'a35Actualizaciones';
+      av.className = 'a35-actualizaciones';
+      av.addEventListener('click', () => cargar());
+      grupo.insertBefore(av, btn);   // [x actualizaciones] [recargar]
+    }
+    av.textContent = `${n} ${n === 1 ? 'actualización' : 'actualizaciones'}`;
   }
 
   // Borradores de renovación sin guardar: poliza_id → operador que la está subiendo
@@ -249,6 +312,10 @@
   cssSubiendo.textContent = `
     .a35-subiendo { display:inline-block; padding:5px 10px; border-radius:8px; font-size:.8rem; font-weight:600;
       background:#ede9fe; color:#5b21b6; border:1px dashed #a78bfa; white-space:nowrap; margin-bottom:4px; }
+    .a35-actualizaciones { padding:6px 12px; border-radius:999px; border:0; background:#f59e0b; color:#fff; font:inherit;
+      font-size:.8rem; font-weight:700; cursor:pointer; animation:a35pulso 2s ease-in-out infinite; }
+    .a35-recarga-grupo { display:flex; align-items:center; gap:8px; margin-left:auto; }
+    @keyframes a35pulso { 0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,.5); } 50% { box-shadow:0 0 0 6px rgba(245,158,11,0); } }
     [data-theme="dark"] .a35-subiendo { background:#2a2140; color:#c4b5fd; border-color:#6d55b8; }`;
   document.head.appendChild(cssSubiendo);
 })();
