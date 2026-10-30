@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     matchers: [
                         ['img', function(node, delta) {
                             // Bloquear imágenes que Quill intenta pegar nativamente
-                            return new Quill.import('delta')();
+                                const Delta = Quill.import('delta');
+                                return new Delta();
                         }]
                     ]
                 }

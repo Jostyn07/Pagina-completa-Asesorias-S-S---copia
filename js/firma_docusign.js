@@ -1,3 +1,13 @@
+/* ============================================================================
+ * Ruta en el repo: js/firma_docusign.js
+ * Ficha de la póliza (cliente_editar): casilla "Tiene firma (DocuSign)" en
+ * Información General, encima de Datos Personales.
+ *   - Marcada: se ve en verde con quién la marcó y cuándo.
+ *   - Se puede desmarcar (pide confirmación).
+ *   - Cada cambio queda en el Historial (lo registra la base de datos).
+ * Requiere sql/firma_docusign.sql. Si la columna no existe, no aparece nada.
+ * Se carga DESPUÉS de cliente_editar.js.
+ * ==========================================================================*/
 (function () {
   'use strict';
   const sb = () => (typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient);
@@ -31,12 +41,16 @@
   function pintar() {
     let el = document.getElementById('firmaDocusign');
     if (!el) {
-      const destino = document.querySelector('.page-header .header-right');
-      if (!destino) return;
+      const tab = document.getElementById('tab-info-general');
+      const seccion = tab && tab.querySelector('.form-section');
+      if (!seccion) return;
+      const fila = document.createElement('div');
+      fila.className = 'firma-ds-fila';
       el = document.createElement('label');
       el.id = 'firmaDocusign';
       el.className = 'firma-ds';
-      destino.insertBefore(el, destino.firstChild);
+      fila.appendChild(el);
+      seccion.parentNode.insertBefore(fila, seccion);
       el.addEventListener('change', cambiar);
     }
     const si = !!poliza.firma_docusign;
@@ -44,7 +58,6 @@
     el.title = si && poliza.firma_docusign_por ? `${poliza.firma_docusign_por} · ${fecha(poliza.firma_docusign_en)}` : '';
     el.innerHTML = `
       <input type="checkbox" ${si ? 'checked' : ''}>
-      <span class="material-symbols-rounded">${si ? 'verified' : 'draw'}</span>
       <span class="firma-ds-txt">
         <strong>Tiene firma (DocuSign)</strong>
         ${si && poliza.firma_docusign_por ? `<small>${esc(poliza.firma_docusign_por)} · ${fecha(poliza.firma_docusign_en)}</small>` : ''}
@@ -72,8 +85,9 @@
 
   const css = document.createElement('style');
   css.textContent = `
+    .firma-ds-fila { display:flex; justify-content:flex-end; margin:0 0 12px; }
     .firma-ds { display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border-radius:10px; cursor:pointer;
-      border:1px solid #e2e8f0; background:#fff; color:#475569; font-size:.85rem; user-select:none; margin-right:8px; }
+      border:1px solid #e2e8f0; background:#fff; color:#475569; font-size:.85rem; user-select:none; }
     .firma-ds input { width:16px; height:16px; accent-color:#16a34a; cursor:pointer; margin:0; }
     .firma-ds .material-symbols-rounded { font-size:20px; }
     .firma-ds-txt { display:flex; flex-direction:column; line-height:1.2; }
