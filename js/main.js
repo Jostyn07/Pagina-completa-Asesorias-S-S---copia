@@ -1,3 +1,15 @@
+(function () {
+  try {
+    if (document.querySelector('script[data-sentry-init]')) return;
+    var actual = document.currentScript && document.currentScript.src;
+    var s = document.createElement('script');
+    s.src = actual ? actual.replace(/main\.js(\?.*)?$/, 'sentry_init.js') : '../js/sentry_init.js';
+    s.async = true;
+    s.setAttribute('data-sentry-init', '');
+    (document.head || document.documentElement).appendChild(s);
+  } catch (e) {}
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
