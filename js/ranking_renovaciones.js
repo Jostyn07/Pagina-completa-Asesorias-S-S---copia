@@ -1,7 +1,8 @@
 // ============================================================================
 // Ruta en el repo: js/ranking_renovaciones.js
 // FASE 4 — Pestaña "Ranking de renovaciones" en Análisis
-// Requiere sql/fase4_ranking.sql. Se carga en pages/analisis.html después de analisis.js.
+// Requiere sql/fase4_ranking.sql y sql/ranking_renovaciones_portal.sql (filtro por portal).
+// Filtro por portal: checklist, todos activos por defecto; se recuerda lo último que dejó cada usuario. Se carga en pages/analisis.html después de analisis.js.
 // Solo aparece con el permiso ver_ranking_renovaciones (el servidor lo vuelve a validar).
 // ============================================================================
 
@@ -33,6 +34,11 @@
       .rk-vacio{padding:24px;text-align:center;color:var(--text-secondary,#64748b)}
       .rk-pos{font-weight:700;width:60px}
       [data-theme="dark"] .rk-barra-prog{background:#3b0764}
+      .rk-portales{display:flex;flex-wrap:wrap;gap:8px}
+      .rk-portal{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--border-color,#e2e8f0);background:var(--bg-secondary,#fff);font-size:.85rem;cursor:pointer;user-select:none}
+      .rk-portal input{accent-color:#7c3aed;margin:0;cursor:pointer}
+      .rk-portal.off{opacity:.55}
+      .rk-portal small{color:var(--text-secondary,#64748b);font-variant-numeric:tabular-nums}
     `;
     document.head.appendChild(css);
   }
@@ -55,12 +61,12 @@
     const anios = [anioSiguiente, anioSiguiente - 1, anioSiguiente - 2];
     vista.innerHTML = `
       <div class="rk-barra">
-        <div><h2 style="margin:0">Ranking de renovaciones</h2>
-          <small style="color:var(--text-secondary,#64748b)">Cuenta solo renovaciones terminadas, a nombre de quien pulsó "Renovar".</small></div>
+        <div><h2 style="margin:0">Ranking de renovaciones</h2></div>
         <label>Año de efectividad
           <select id="rkAnio">${anios.map((a) => `<option value="${a}">${a}</option>`).join('')}</select>
         </label>
       </div>
+      <div class="rk-portales" id="rkPortales"></div>
       <div class="rk-kpis">
         <div class="rk-kpi"><small>Total renovadas</small><strong id="rkTotal">0</strong></div>
         <div class="rk-kpi"><small>En proceso (sin terminar)</small><strong id="rkProceso">0</strong></div>
@@ -94,15 +100,60 @@
     };
     btn.addEventListener('click', () => window.cambiarVistaAnalisis('ranking'));
     document.getElementById('rkAnio').addEventListener('change', cargar);
+    document.getElementById('rkPortales').addEventListener('change', (e) => {
+      const cb = e.target.closest('input[data-portal]');
+      if (!cb) return;
+      if (cb.checked) apagados.delete(cb.dataset.portal); else apagados.add(cb.dataset.portal);
+      cb.closest('.rk-portal').classList.toggle('off', !cb.checked);
+      guardarApagados();
+      cargarRanking();
+    });
     return true;
+  }
+
+  // ---- portales: se guardan los DESMARCADOS, así un portal nuevo aparece marcado
+  let apagados = new Set();
+  let portales = [];
+  const claveApagados = () => {
+    let id = '';
+    try { id = JSON.parse(localStorage.getItem('usuario') || '{}').id || ''; } catch (e) {}
+    return 'ss_rk_portales_off_' + id;
+  };
+  function leerApagados() {
+    try { apagados = new Set(JSON.parse(localStorage.getItem(claveApagados()) || '[]')); } catch (e) { apagados = new Set(); }
+  }
+  function guardarApagados() {
+    try { localStorage.setItem(claveApagados(), JSON.stringify([...apagados])); } catch (e) {}
   }
 
   async function cargar() {
     const anio = Number(document.getElementById('rkAnio').value);
+    leerApagados();
+    const cont = document.getElementById('rkPortales');
+    try {
+      const { data, error } = await sb().rpc('ranking_renovaciones_portales', { p_anio: anio });
+      if (error) throw error;
+      portales = (data || []).map((p) => ({ nombre: p.portal, n: Number(p.renovaciones) || 0 }));
+    } catch (e) { portales = []; }
+    cont.innerHTML = portales.map((p) => `
+      <label class="rk-portal${apagados.has(p.nombre) ? ' off' : ''}">
+        <input type="checkbox" data-portal="${esc(p.nombre)}" ${apagados.has(p.nombre) ? '' : 'checked'}>
+        ${esc(p.nombre)} <small>${p.n.toLocaleString('es-CO')}</small>
+      </label>`).join('');
+    cont.style.display = portales.length ? '' : 'none';
+    return cargarRanking();
+  }
+
+  async function cargarRanking() {
+    const anio = Number(document.getElementById('rkAnio').value);
     const cuerpo = document.getElementById('rkCuerpo');
     cuerpo.innerHTML = '<tr><td colspan="6" class="rk-vacio">Cargando…</td></tr>';
 
-    const { data, error } = await sb().rpc('ranking_renovaciones', { p_anio: anio });
+    const activos = portales.map((p) => p.nombre).filter((n) => !apagados.has(n));
+    const params = { p_anio: anio };
+    if (portales.length && activos.length < portales.length) params.p_portales = activos;
+    let { data, error } = await sb().rpc('ranking_renovaciones', params);
+    if (error && params.p_portales) ({ data, error } = await sb().rpc('ranking_renovaciones', { p_anio: anio }));
     if (error) {
       cuerpo.innerHTML = `<tr><td colspan="6" class="rk-vacio">No se pudo cargar: ${esc(error.message)}</td></tr>`;
       return;
@@ -130,7 +181,7 @@
       </tr>`).join('');
 
     if (typeof window.auditar === 'function') {
-      window.auditar('ranking.consulta', { recurso: 'renovaciones', detalle: { anio } });
+      window.auditar('ranking.consulta', { recurso: 'renovaciones', detalle: { anio, portales: params.p_portales || 'todos' } });
     }
   }
 
