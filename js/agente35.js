@@ -1,3 +1,10 @@
+/* ============================================================================
+ * Ruta en el repo: js/agente35.js
+ * Pestaña Agente 3.5: Nuevas, Ventas con registro, Renovaciones, Recuperadas y
+ * Cambios de vida (vista_agente35), la más reciente primero. Con permiso
+ * editar_agente35 se cambia el estado y la observación de la póliza; quién y
+ * cuándo los llena la base.
+ * ==========================================================================*/
 (function () {
   'use strict';
 
@@ -115,13 +122,7 @@
   function pintarAviso(n) {
     const btn = $('a35Recargar');
     if (!btn) return;
-    let grupo = btn.parentElement.classList.contains('a35-recarga-grupo') ? btn.parentElement : null;
-    if (!grupo) {
-      grupo = document.createElement('div');
-      grupo.className = 'a35-recarga-grupo';
-      btn.parentNode.insertBefore(grupo, btn);
-      grupo.appendChild(btn);
-    }
+    const grupo = grupoRecarga();
     let av = $('a35Actualizaciones');
     if (!n) { av?.remove(); return; }
     if (!av) {
@@ -133,6 +134,117 @@
       grupo.insertBefore(av, btn);   // [x actualizaciones] [recargar]
     }
     av.textContent = `${n} ${n === 1 ? 'actualización' : 'actualizaciones'}`;
+  }
+
+  // ------------------------------------------------------------ exportar (permiso exportar_agente35)
+  // Exporta a Excel TODAS las filas que cumplen los filtros actuales (no solo la página).
+  function grupoRecarga() {
+    const btn = $('a35Recargar');
+    let grupo = btn.parentElement.classList.contains('a35-recarga-grupo') ? btn.parentElement : null;
+    if (!grupo) {
+      grupo = document.createElement('div');
+      grupo.className = 'a35-recarga-grupo';
+      btn.parentNode.insertBefore(grupo, btn);
+      grupo.appendChild(btn);
+    }
+    return grupo;
+  }
+
+  function pintarExportar() {
+    if ($('a35Exportar')) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.id = 'a35Exportar';
+    b.className = 'a35-exportar';
+    b.innerHTML = '<span class="material-symbols-rounded">download</span> Exportar';
+    b.addEventListener('click', () => exportar(b));
+    grupoRecarga().insertBefore(b, grupoRecarga().firstChild);
+  }
+
+  function cargarExcelJS() {
+    if (window.ExcelJS) return Promise.resolve();
+    return new Promise((ok, mal) => {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+      sc.onload = ok; sc.onerror = () => mal(new Error('No se pudo cargar ExcelJS'));
+      document.head.appendChild(sc);
+    });
+  }
+
+  async function exportar(btn) {
+    const txt = btn.innerHTML;
+    btn.disabled = true;
+    try {
+      await cargarExcelJS();
+      const base = parametros();
+      const filas = [];
+      let total = Infinity;
+      for (let off = 0; off < total; off += 200) {
+        btn.innerHTML = `<span class="material-symbols-rounded">hourglass_empty</span> ${filas.length.toLocaleString('es-CO')}…`;
+        const { data, error } = await supabaseClient.rpc('agente35_listar', { ...base, p_offset: off, p_limit: 200 });
+        if (error) throw error;
+        total = data?.total || 0;
+        const lote = data?.filas || [];
+        filas.push(...lote);
+        if (!lote.length) break;
+      }
+      if (!filas.length) { toast('No hay filas para exportar', 'error'); return; }
+
+      const ids = filas.map((r) => String(r.poliza_id));
+      const sube = new Map();
+      for (let i = 0; i < ids.length; i += 300) {
+        const { data } = await supabaseClient.from('renovaciones').select('poliza_destino_id, operador_nombre')
+          .eq('estado', 'en_proceso').in('poliza_destino_id', ids.slice(i, i + 300));
+        (data || []).forEach((x) => sube.set(String(x.poliza_destino_id), x.operador_nombre || ''));
+      }
+
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('Agente 3.5');
+      ws.columns = [
+        { header: 'Fecha', key: 'fecha', width: 18 },
+        { header: 'Acción', key: 'accion', width: 16 },
+        { header: 'Origen', key: 'origen', width: 16 },
+        { header: 'Cliente', key: 'cliente', width: 32 },
+        { header: 'Teléfono', key: 'tel', width: 15 },
+        { header: 'Compañía', key: 'compania', width: 24 },
+        { header: 'Póliza', key: 'poliza', width: 16 },
+        { header: 'Operador', key: 'operador', width: 22 },
+        { header: 'Estado', key: 'estado', width: 18 },
+        { header: 'Observación', key: 'obs', width: 40 },
+        { header: 'Subiendo renovada por', key: 'sube', width: 22 },
+        { header: 'Actualizado por', key: 'por', width: 22 },
+        { header: 'Actualizado', key: 'cuando', width: 18 },
+      ];
+      filas.forEach((r) => ws.addRow({
+        fecha: fecha(r.created_at),
+        accion: r.tipo === 'Nuevo' ? 'Nueva' : r.tipo,
+        origen: r.origen && r.origen !== r.tipo ? r.origen : '',
+        cliente: r.cliente_nombre || '', tel: r.cliente_telefono || '', compania: r.compania || '',
+        poliza: r.numero_poliza || '', operador: r.operador_nombre || '', estado: r.agente35_estado || '',
+        obs: r.agente35_notas || '', sube: sube.get(String(r.poliza_id)) || '',
+        por: r.agente35_actualizado_por || '', cuando: fecha(r.agente35_fecha_actualizacion),
+      }));
+      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6366F1' } };
+      ws.views = [{ state: 'frozen', ySplit: 1 }];
+      ws.autoFilter = { from: 'A1', to: 'M1' };
+
+      const buf = await wb.xlsx.writeBuffer();
+      const hoy = new Date();
+      const nombre = `agente35_${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}.xlsx`;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      a.download = nombre;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      toast(`${filas.length.toLocaleString('es-CO')} filas exportadas`);
+    } catch (e) {
+      console.error('[agente35] exportar', e);
+      toast('No se pudo exportar: ' + (e.message || e), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = txt;
+    }
   }
 
   // Borradores de renovación sin guardar: poliza_id → operador que la está subiendo
@@ -278,6 +390,7 @@
     const puede = (k) => { try { return typeof tienePermiso === 'function' && tienePermiso(k); } catch (e) { return false; } };
     if (!puede('ver_agente35')) { window.location.href = './home.html'; return; }
     estado.puedeEditar = puede('editar_agente35');
+    if (puede('exportar_agente35')) pintarExportar();
 
     $('a35Estado').insertAdjacentHTML('beforeend', ESTADOS.map((e) => `<option value="${esc(e)}">${esc(e)}</option>`).join(''));
     pintarTipos();
@@ -314,6 +427,12 @@
       background:#ede9fe; color:#5b21b6; border:1px dashed #a78bfa; white-space:nowrap; margin-bottom:4px; }
     .a35-actualizaciones { padding:6px 12px; border-radius:999px; border:0; background:#f59e0b; color:#fff; font:inherit;
       font-size:.8rem; font-weight:700; cursor:pointer; animation:a35pulso 2s ease-in-out infinite; }
+    .a35-exportar { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:10px; border:1px solid #e2e8f0;
+      background:#fff; color:#334155; font:inherit; font-size:.85rem; font-weight:600; cursor:pointer; }
+    .a35-exportar:hover { border-color:#6366f1; color:#6366f1; }
+    .a35-exportar:disabled { opacity:.6; cursor:wait; }
+    .a35-exportar .material-symbols-rounded { font-size:18px; }
+    [data-theme="dark"] .a35-exportar { background:#1a1a24; border-color:#2e2e3e; color:#cbd5e1; }
     .a35-recarga-grupo { display:flex; align-items:center; gap:8px; margin-left:auto; }
     @keyframes a35pulso { 0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,.5); } 50% { box-shadow:0 0 0 6px rgba(245,158,11,0); } }
     [data-theme="dark"] .a35-subiendo { background:#2a2140; color:#c4b5fd; border-color:#6d55b8; }`;
