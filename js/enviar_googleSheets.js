@@ -1,8 +1,9 @@
 // ============================================
+// Ruta en el repo: js/enviar_googleSheets.js
 // CONFIGURACIÓN
 // ============================================
-const GOOGLE_SHEETS_URL_EVELYN_MORILLO = 'https://script.google.com/macros/s/AKfycbw9_zm9yJ5u23KUGr4-PZUcMuxyMJCY-eUJfCRI3jaQcMrOYxArPSWZ0CFrJD3-9eop/exec';
-const GOOGLE_SHEETS_URL_OTROS_PORTALES = 'https://script.google.com/macros/s/AKfycbzA3UNZ3WoULBCUUB-zI3aVt1wJCmkHVMH1XztoItPLRQ4PX2IA0-D91lxdfi8fC1vKYw/exec'
+const GOOGLE_SHEETS_URL_EVELYN_MORILLO = 'https://script.google.com/macros/s/AKfycbzHI1hZBhts44n87V2I_OYm4hufTKBgR4vPkS9JwDVq2Qq9l7AC9aF30wdI9joeDwKy/exec';
+const GOOGLE_SHEETS_URL_OTROS_PORTALES = 'https://script.google.com/macros/s/AKfycbxdhFcO73xI4DgGoZ_kOuQ0p_jYvU4TPt6eg6VPfa8XHB6bDGkRQjpnZiapBXsfROospg/exec'
 // ============================================
 // ENVIAR A GOOGLE SHEETS
 // ============================================
@@ -91,6 +92,9 @@ async function enviarAGoogleSheets(datosFormulario) {
             return;
         }
 
+        // El envío final no espera a que termine ningún borrador
+        detenerGuardadoBorrador();
+
         await fetch(url, {
             method: 'POST',
             mode: 'no-cors',
@@ -107,21 +111,25 @@ async function enviarAGoogleSheets(datosFormulario) {
 }
 
 // ============================================
-// BORRADOR - ENVÍO AUTOMÁTICO CADA 30 SEGUNDOS
+// BORRADOR - cada 60 s, y SOLO si el formulario cambió desde el último envío
+// (antes: cada 30 s siempre, aunque nadie hubiera escrito nada)
 // ============================================
 
 let intervaloBorrador = null;
+let ultimoBorradorEnviado = '';
 
 function iniciarGuardadoBorrador(pagina, obtenerDatos) {
     detenerGuardadoBorrador();
+    ultimoBorradorEnviado = '';
 
     // Guardar inmediatamente al iniciar
     enviarBorrador(pagina, obtenerDatos);
 
-    // Luego cada 30 segundos
+    // Luego cada 60 segundos (si hubo cambios)
     intervaloBorrador = setInterval(() => {
+        if (document.hidden) return;   // pestaña en segundo plano: no se envía
         enviarBorrador(pagina, obtenerDatos);
-    }, 30000);
+    }, 60000);
 }
 
 function detenerGuardadoBorrador() {
@@ -137,6 +145,10 @@ async function enviarBorrador(pagina, obtenerDatos) {
 
         // Si no hay datos mínimos, no guardar
         if (!datos.nombres && !datos.nombre && !datos.apellidos && !datos.email) return;
+
+        // Sin cambios desde el último envío: no se manda nada
+        const huella = JSON.stringify(datos);
+        if (huella === ultimoBorradorEnviado) return;
 
         const payload = {
             ...datos,
@@ -161,6 +173,7 @@ async function enviarBorrador(pagina, obtenerDatos) {
             return;
         }
 
+        ultimoBorradorEnviado = huella;
         await fetch(url, {
             method: 'POST',
             mode: 'no-cors',
@@ -171,6 +184,7 @@ async function enviarBorrador(pagina, obtenerDatos) {
         console.log(`✅ Borrador guardado - ${new Date().toLocaleTimeString()}`);
 
     } catch (error) {
+        ultimoBorradorEnviado = '';
         console.error('❌ Error guardando borrador:', error);
     }
 }
