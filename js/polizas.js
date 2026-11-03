@@ -3231,7 +3231,6 @@ function actualizarTextoVentaRealizadaPor() {
         texto.style.color = '#6366f1';
     }
     guardarFiltrosEnStorage();
-    restaurarFiltrosDesdeStorage();
     aplicarFiltros();
 }
 
