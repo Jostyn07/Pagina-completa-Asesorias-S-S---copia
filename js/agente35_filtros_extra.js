@@ -1,34 +1,28 @@
-/* ============================================================================
- * Ruta en el repo: js/agente35_filtros_extra.js
- * Agente 3.5: filtros por Portal y por Operador, junto a "Todos los estados".
- *   - Al activar "Renovación" aparecen tres opciones al lado:
- *     Todos · Completados · En proceso (borrador sin terminar).
- *   - Cada filtro aparece SOLO si el usuario puede ver más de un portal / más
- *     de un operador (según sus permisos y carteras; lo calcula la base con
- *     agente35_opciones()). Un operador que solo ve lo suyo no ve el filtro.
- *   - Se aplican a la tabla, al resumen por estado y a Exportar.
- *   - "Limpiar" también los reinicia.
- * Requiere sql/agente35_filtro_portal_operador.sql. Sin él, no aparece nada.
- * Se carga DESPUÉS de agente35.js.
- * ==========================================================================*/
 (function () {
   'use strict';
   const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const $ = (id) => document.getElementById(id);
-  const filtro = { portal: [], operador: [], renov: '' };
+  const filtro = { portal: [], operador: [], estado: [], renov: '' };
+  let ultimasFilas = [];
 
   function envolverRpc() {
     const sb = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
     if (!sb || sb.__a35Filtros) return;
     const original = sb.rpc.bind(sb);
     sb.rpc = function (fn, args, opts) {
-      if (fn === 'agente35_listar' && (filtro.portal.length || filtro.operador.length || filtro.renov)) {
+      if (fn === 'agente35_listar' && (filtro.portal.length || filtro.operador.length || filtro.estado.length || filtro.renov)) {
         args = Object.assign({}, args || {});
         if (filtro.portal.length) args.p_portales = filtro.portal.slice();
         if (filtro.operador.length) args.p_operadores = filtro.operador.slice();
+        if (filtro.estado.length) args.p_estados = filtro.estado.slice();
         if (filtro.renov) args.p_renov = filtro.renov;
       }
-      return original(fn, args, opts);
+      const r = original(fn, args, opts);
+      // la tabla: guardar las filas de la página para la columna Estado US
+      if (fn === 'agente35_listar' && !(args && args.p_limit === 200)) {
+        Promise.resolve(r).then((x) => { if (x && x.data && Array.isArray(x.data.filas)) ultimasFilas = x.data.filas; }).catch(() => {});
+      }
+      return r;
     };
     sb.__a35Filtros = true;
   }
@@ -71,6 +65,33 @@
     caja.__limpiar = () => { panel.querySelectorAll('input').forEach((c) => { c.checked = false; }); texto(); };
     texto();
     return caja;
+  }
+
+  // ---- Columna "Estado US" después de Cliente
+  function columnaEstado() {
+    const tbody = $('a35Tbody');
+    const thead = tbody?.closest('table')?.querySelector('thead tr');
+    if (!tbody || !thead) return;
+    if (!thead.querySelector('.a35-th-estado')) {
+      const th = document.createElement('th');
+      th.className = 'a35-th-estado';
+      th.textContent = 'Estado US';
+      const ref = thead.children[2];
+      if (ref) ref.insertAdjacentElement('afterend', th); else thead.appendChild(th);
+    }
+    const pintar = () => {
+      [...tbody.rows].forEach((tr, i) => {
+        if (tr.querySelector('.a35-vacio')) { tr.cells[0]?.setAttribute('colspan', String(thead.children.length)); return; }
+        if (tr.querySelector('.a35-td-estado')) return;
+        const td = document.createElement('td');
+        td.className = 'a35-td-estado';
+        td.textContent = ultimasFilas[i]?.estado_usa || '';
+        const ref = tr.cells[2];
+        if (ref) ref.insertAdjacentElement('afterend', td);
+      });
+    };
+    new MutationObserver(pintar).observe(tbody, { childList: true });
+    pintar();
   }
 
   // ---- Renovación: Todos / Completados / En proceso
@@ -127,9 +148,15 @@
       }).observe(tipos, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
       pintarRenov();
     }
+    const estados = op.estados || [];
+    if (estados.length > 1) {
+      const s = crearMulti('a35EstadoUs', 'Estados', 'estados', estados, 'estado');
+      est.insertAdjacentElement('afterend', s);
+    }
+    columnaEstado();
     const portales = op.portales || [];
     const operadores = op.operadores || [];
-    let ref = est;
+    let ref = $('a35EstadoUs') || est;
     if (portales.length > 1) {
       const s = crearMulti('a35Portal', 'Todos los portales', 'portales', portales, 'portal');
       ref.insertAdjacentElement('afterend', s); ref = s;
@@ -140,7 +167,8 @@
     }
 
     $('a35Limpiar')?.addEventListener('click', () => {
-      filtro.portal = []; filtro.operador = []; filtro.renov = '';
+      filtro.portal = []; filtro.operador = []; filtro.estado = []; filtro.renov = '';
+      $('a35EstadoUs')?.__limpiar?.();
       $('a35Portal')?.__limpiar?.();
       $('a35Operador')?.__limpiar?.();
     }, true);   // antes que el limpiar de agente35.js, para que recargue ya sin filtros
@@ -167,6 +195,7 @@
     .a35-multi-acc { display:flex; gap:6px; padding:2px 4px 6px; border-bottom:1px solid var(--a35-borde, #e2e8f0); margin-bottom:4px; }
     .a35-multi-acc button { border:0; background:transparent; color:var(--a35-acento, #6366f1); font:inherit; font-size:.78rem; font-weight:600; cursor:pointer; padding:2px 4px; }
     [data-theme="dark"] .a35-multi-panel { background:#1a1a24; border-color:#2e2e3e; }
+    .a35-td-estado { font-weight:600; white-space:nowrap; }
     .a35-renov-op.activo { background:var(--a35-acento, #6366f1); color:#fff; font-weight:600; }`;
   document.head.appendChild(css);
 })();
