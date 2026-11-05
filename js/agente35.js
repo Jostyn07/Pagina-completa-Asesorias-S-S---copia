@@ -197,6 +197,13 @@
           .eq('estado', 'en_proceso').in('poliza_destino_id', ids.slice(i, i + 300));
         (data || []).forEach((x) => sube.set(String(x.poliza_destino_id), x.operador_nombre || ''));
       }
+      // Agente de la póliza y del cliente (no vienen en agente35_listar)
+      const agentes = new Map();
+      for (let i = 0; i < ids.length; i += 300) {
+        const { data } = await supabaseClient.from('polizas').select('id, agente_nombre, cliente:clientes(agente_nombre)')
+          .in('id', ids.slice(i, i + 300));
+        (data || []).forEach((x) => agentes.set(String(x.id), { pol: x.agente_nombre || '', cli: x.cliente?.agente_nombre || '' }));
+      }
 
       const wb = new ExcelJS.Workbook();
       const ws = wb.addWorksheet('Agente 3.5');
@@ -206,9 +213,11 @@
         { header: 'Origen', key: 'origen', width: 16 },
         { header: 'Cliente', key: 'cliente', width: 32 },
         { header: 'Teléfono', key: 'tel', width: 15 },
+        { header: 'Estado US', key: 'estadoUs', width: 11 },
         { header: 'Compañía', key: 'compania', width: 24 },
         { header: 'Póliza', key: 'poliza', width: 16 },
         { header: 'Operador', key: 'operador', width: 22 },
+        { header: 'Agente', key: 'agente', width: 28 },
         { header: 'Estado', key: 'estado', width: 18 },
         { header: 'Observación', key: 'obs', width: 40 },
         { header: 'Subiendo renovada por', key: 'sube', width: 22 },
@@ -219,15 +228,17 @@
         fecha: fecha(r.created_at),
         accion: r.tipo === 'Nuevo' ? 'Nueva' : r.tipo,
         origen: r.origen && r.origen !== r.tipo ? r.origen : '',
-        cliente: r.cliente_nombre || '', tel: r.cliente_telefono || '', compania: r.compania || '',
-        poliza: r.numero_poliza || '', operador: r.operador_nombre || '', estado: r.agente35_estado || '',
+        cliente: r.cliente_nombre || '', tel: r.cliente_telefono || '', estadoUs: r.estado_usa || '', compania: r.compania || '',
+        poliza: r.numero_poliza || '', operador: r.operador_nombre || '',
+        agente: agentes.get(String(r.poliza_id))?.pol || agentes.get(String(r.poliza_id))?.cli || '',
+        estado: r.agente35_estado || '',
         obs: r.agente35_notas || '', sube: sube.get(String(r.poliza_id)) || '',
         por: r.agente35_actualizado_por || '', cuando: fecha(r.agente35_fecha_actualizacion),
       }));
       ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
       ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6366F1' } };
       ws.views = [{ state: 'frozen', ySplit: 1 }];
-      ws.autoFilter = { from: 'A1', to: 'M1' };
+      ws.autoFilter = { from: 'A1', to: 'O1' };
 
       const buf = await wb.xlsx.writeBuffer();
       const hoy = new Date();
