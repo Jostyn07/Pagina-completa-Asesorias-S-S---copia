@@ -28,6 +28,7 @@
       const { data, error } = await sb().rpc('atencion_polizas', { p_tipo: tipoAtencion });
       if (error) throw error;
       idsAtencion = new Set((data || []).map(String));
+      await traerFaltantes();
     } catch (e) {
       console.warn('[atención] sin filtro:', e);
       idsAtencion = null;
@@ -35,10 +36,50 @@
     pintarAviso();
   }
 
+  // Lo que cuenta el Inicio y no está en la lista cargada (p. ej. cliente archivado)
+  // se trae aparte, para que al dar clic salgan exactamente los mismos clientes.
+  const COLUMNAS = `id, numero_poliza, operador_nombre, estado_mercado, fecha_revision_mercado, documentos_pendientes,
+    agente35_estado, compania, fecha_revision_compania, plan, prima, agente_nombre, fecha_efectividad,
+    fecha_inicial_cobertura, fecha_final_cobertura, created_at, updated_at, estado_documentos, tipo_venta,
+    estado_compania, pagado_hasta, fecha_plazo_documentos, nombre_agente_mercado, modificado_por_nombre,
+    modificado_por_email, clave_seguridad, member_id, aplicantes,
+    cliente:clientes ( id, nombres, apellidos, fecha_nacimiento, telefono1, telefono2, email, direccion, ciudad,
+      estado, codigo_postal, estado_migratorio, ssn, ocupacion, tipo_registro, tipo_modificacion, operador_nombre,
+      tiene_social, archivado, venta_realizada_por, portal, agente_nombre,
+      metodos_pago ( tiene_metodo_pago, tiene_pago_automatico, activo ),
+      pagos_mensuales_cliente ( anio, enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre ) ),
+    seguimientos ( fecha_seguimiento, seguimiento_efectivo, medio_comunicacion, observacion )`;
+  let extras = [];   // pólizas del Inicio que no venían en la lista
+
+  async function traerFaltantes() {
+    extras = [];
+    try {
+      if (!Array.isArray(todasLasPolizas)) return;
+      const cargadas = new Set(todasLasPolizas.map((p) => String(p.id)));
+      const faltan = [...idsAtencion].filter((id) => !cargadas.has(id));
+      for (let i = 0; i < faltan.length; i += 100) {
+        const { data, error } = await sb().from('polizas').select(COLUMNAS).in('id', faltan.slice(i, i + 100));
+        if (error) throw error;
+        extras.push(...(data || []));
+      }
+      if (extras.length) {
+        todasLasPolizas.push(...extras);   // para que abran sus detalles
+        if (typeof window.calcularFactoresTodasLasPolizas === 'function') setTimeout(() => window.calcularFactoresTodasLasPolizas(), 50);
+      }
+    } catch (e) {
+      console.warn('[atención] no se pudieron traer las faltantes:', e);
+    }
+  }
+
   function pintarAviso() { /* sin aviso aparte: lo muestra el contador de abajo a la derecha */ }
 
   function quitarAtencion() {
     tipoAtencion = null; idsAtencion = null;
+    if (extras.length && Array.isArray(todasLasPolizas)) {
+      const fuera = new Set(extras.map((p) => String(p.id)));
+      todasLasPolizas = todasLasPolizas.filter((p) => !fuera.has(String(p.id)));
+    }
+    extras = [];
     history.replaceState(null, '', location.pathname);
   }
 
@@ -57,7 +98,9 @@
       if (idsAtencion) {
         try {
           const base = Array.isArray(polizasFiltradas) ? polizasFiltradas : [];
-          polizasFiltradas = base.filter((p) => idsAtencion.has(String(p.id)));
+          const filtradas = base.filter((p) => idsAtencion.has(String(p.id)));
+          const ya = new Set(filtradas.map((p) => String(p.id)));
+          polizasFiltradas = filtradas.concat(extras.filter((p) => !ya.has(String(p.id))));
         } catch (e) {}
       }
       const r = render.apply(this, arguments);

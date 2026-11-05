@@ -1445,7 +1445,8 @@ async function exportarExcel() {
                 poliza.agente35_estado || '',
                 poliza.nombre_agente_mercado || '',
                 poliza.member_id || '',
-                poliza.portal_npn || '',
+                poliza.agente_nombre || cliente.agente_nombre || '',
+                cliente.agente_nombre || '',
                 poliza.clave_seguridad || '',
                 poliza.fecha_efectividad ? formatoUS(poliza.fecha_efectividad) : '',
                 poliza.fecha_inicial_cobertura ? formatoUS(poliza.fecha_inicial_cobertura) : '',
@@ -1467,7 +1468,7 @@ async function exportarExcel() {
             'Operador', 'Compañía', 'Plan', 'Prima', 'Crédito Fiscal',
             'Estado Mercado', 'Estado Compañía', 'Estado Documentos',
             'Documentos Pendientes', 'Agente 3.5', 'Agente Mercado',
-            'Member ID', 'Portal NPN', 'Clave Seguridad',
+            'Member ID', 'Agente', 'Portal NPN', 'Clave Seguridad',
             'Fecha Efectividad', 'Fecha Inicial Cobertura', 'Fecha Final Cobertura',
             'Pagado Hasta', 'Revisión Mercado', 'Revisión Compañía',
             'Plazo Documentos', 'Enlace Póliza', 'Observaciones', 'Fecha de seguimiento', 'Fecha Creación'
