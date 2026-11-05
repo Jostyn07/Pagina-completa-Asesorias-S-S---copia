@@ -1,3 +1,17 @@
+/* ============================================================================
+ * Ruta en el repo: js/polizas_extras.js
+ * Pólizas:
+ *   1. (quitado) el nombre del cliente vuelve a abrir en la misma pestaña.
+ *   2. Filtro desde el Inicio → Atención operativa (polizas.html?atencion=...):
+ *        pagos | seguimiento | plazo. Muestra solo esas pólizas; el contador
+ *        de abajo a la derecha lo refleja y su "Limpiar" lo quita.
+ *   3. Botón Recargar junto a "Descargar Excel". Cada 60 s (solo con la pestaña
+ *      a la vista) cuenta los cambios hechos desde la última carga y los
+ *      muestra al lado. Recarga la lista sin recargar la página y sin perder
+ *      los filtros.
+ * Requiere sql/atencion_polizas.sql para el punto 2.
+ * Se carga DESPUÉS de polizas.js y de los demás archivos de Pólizas.
+ * ==========================================================================*/
 (function () {
   'use strict';
   const sb = () => (typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient);
@@ -7,15 +21,6 @@
     seguimiento: 'Pólizas sin seguimiento hace más de 30 días',
     plazo: 'Pólizas con plazo Mercado en 30 días',
   };
-
-  // ------------------------------------------------------------ 1. nombre → pestaña nueva
-  document.addEventListener('click', (e) => {
-    const a = e.target.closest && e.target.closest('a[href*="cliente_editar.html"]');
-    if (!a || e.ctrlKey || e.metaKey || e.shiftKey) return;
-    e.preventDefault();
-    e.stopPropagation();
-    window.open(a.href, '_blank');
-  }, true);
 
   // ------------------------------------------------------------ 2. filtro de Atención operativa
   let tipoAtencion = new URLSearchParams(location.search).get('atencion');
