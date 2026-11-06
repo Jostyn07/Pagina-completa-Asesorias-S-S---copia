@@ -4,7 +4,7 @@
 // ============================================
 
 const INACTIVIDAD_MINUTOS = 5;
-const INTERVALO_PING_MS   = 30 * 1000;  // actualizar cada 30 seg
+const INTERVALO_PING_MS   = 60 * 1000;  // actualizar cada 60 seg (antes 30), solo desde la pestaña visible
 const INTERVALO_CHECK_MS  = 60 * 1000;  // verificar inactividad cada 1 min
 
 let actividadUsuarioId   = null;
@@ -93,6 +93,7 @@ function registrarAccion() {
 
 async function pingActividad() {
     if (!actividadUsuarioId) return;
+    if (document.hidden) return;   // pestañas en segundo plano no escriben (ya se marcan inactivas al ocultarse)
 
     const minutosInactivo = (Date.now() - actividadUltimaAccion) / 60000;
     const nuevoEstado = minutosInactivo >= INACTIVIDAD_MINUTOS ? 'inactivo' : 'activo';

@@ -74,8 +74,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     inyectarDrawer();
     await cargarRecordatorios();
     verificarNotificaciones();
+    // Los avisos se revisan cada minuto con lo ya cargado; la lista se vuelve a pedir
+    // cada 5 min y solo con la pestaña visible (los cambios llegan en vivo por tiempo real).
+    let vueltas = 0;
     intervaloVerificacion = setInterval(async () => {
-        await cargarRecordatorios();
+        vueltas++;
+        if (vueltas % 5 === 0 && !document.hidden) await cargarRecordatorios();
         verificarNotificaciones();
     }, 60 * 1000);
     suscribirRecordatoriosEnVivo();

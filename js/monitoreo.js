@@ -31,7 +31,11 @@ function iniciales(nombre) {
 document.addEventListener('DOMContentLoaded', async () => {
     await verificarAcceso();
     await cargarSesiones();
-    suscribirRealtime();
+    // Sin tiempo real: actividad_sesiones se escribe muy seguido y saturaba la base.
+    // La lista se vuelve a pedir cada 30 s (solo con la pestaña visible).
+    setInterval(() => {
+        if (!document.hidden) cargarSesiones();
+    }, 30 * 1000);
 
     setInterval(() => {
         renderizarSesiones();
