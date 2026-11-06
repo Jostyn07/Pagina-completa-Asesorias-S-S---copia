@@ -1,17 +1,3 @@
-/* ============================================================================
- * Ruta en el repo: js/polizas_extras.js
- * Pólizas:
- *   1. (quitado) el nombre del cliente vuelve a abrir en la misma pestaña.
- *   2. Filtro desde el Inicio → Atención operativa (polizas.html?atencion=...):
- *        pagos | seguimiento | plazo. Muestra solo esas pólizas; el contador
- *        de abajo a la derecha lo refleja y su "Limpiar" lo quita.
- *   3. Botón Recargar junto a "Descargar Excel". Cada 60 s (solo con la pestaña
- *      a la vista) cuenta los cambios hechos desde la última carga y los
- *      muestra al lado. Recarga la lista sin recargar la página y sin perder
- *      los filtros.
- * Requiere sql/atencion_polizas.sql para el punto 2.
- * Se carga DESPUÉS de polizas.js y de los demás archivos de Pólizas.
- * ==========================================================================*/
 (function () {
   'use strict';
   const sb = () => (typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient);
@@ -30,7 +16,20 @@
   async function cargarAtencion() {
     if (!tipoAtencion) return;
     try {
-      const { data, error } = await sb().rpc('atencion_polizas', { p_tipo: tipoAtencion });
+      // Mismos filtros con los que contó el Inicio (año, compañía, operador…)
+      const u = new URLSearchParams(location.search);
+      const params = { p_tipo: tipoAtencion };
+      if (u.get('anio')) params.p_anio_ef = Number(u.get('anio'));
+      if (u.get('compania')) params.p_compania = u.get('compania');
+      if (u.get('operador')) params.p_operador = u.get('operador');
+      if (u.get('registro')) params.p_registro = u.get('registro');
+      if (u.get('portal')) params.p_portal = u.get('portal');
+      if (u.get('sin_cancelado')) params.p_excluir_cancelado = true;
+      if (u.get('sin_cancelado_pc')) params.p_excluir_cancelado_pc = true;
+      let { data, error } = await sb().rpc('atencion_polizas', params);
+      if (error && Object.keys(params).length > 1) {   // base sin sql/inicio_por_anio.sql
+        ({ data, error } = await sb().rpc('atencion_polizas', { p_tipo: tipoAtencion }));
+      }
       if (error) throw error;
       idsAtencion = new Set((data || []).map(String));
       await traerFaltantes();

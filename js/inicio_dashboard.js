@@ -1,12 +1,3 @@
-/* ============================================================================
- * Ruta en el repo: js/inicio_dashboard.js
- * Nuevo Inicio (diseño Figma "Tablero"). Todo se calcula en la base con
- * una sola llamada: supabase.rpc('dashboard_inicio').
- *
- * Seguridad de producción: si la RPC falla o no existe, se elimina el panel
- * nuevo y se vuelve a mostrar el Inicio anterior (home.js sigue cargado).
- * Se carga DESPUÉS de home.js.
- * ==========================================================================*/
 (function () {
   'use strict';
 
@@ -79,7 +70,7 @@
     VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'Virginia Occidental',WI:'Wisconsin',WY:'Wyoming' };
 
   const st = {
-    pNuevas: 'mes', pRenovadas: 'mes', pRanking: 'mes', desde: isoHoy().slice(0, 8) + '01', hasta: isoHoy(), anio: new Date().getFullYear(),
+    pNuevas: 'mes', pRenovadas: 'mes', pRanking: 'mes', desde: isoHoy().slice(0, 8) + '01', hasta: isoHoy(), anio: new Date().getFullYear(), anioEf: new Date().getFullYear(),
     compania: '', operador: '', registro: '', portal: '', sinCancelado: false, sinCanceladoPc: false, vista: 'polizas', estadoSel: null, zoomEstado: null, datos: null, cargando: false,
   };
   let raiz, ocultos = [];
@@ -143,12 +134,19 @@
     raiz.classList.add('idash-ocupado');
     if (!st.datos) raiz.innerHTML = esqueleto();
     try {
-      const { data, error } = await sb().rpc('dashboard_inicio', {
+      window.__idashFiltros = st;   // inicio_atencion_links.js lo lleva a Pólizas
+      const params = {
         p_periodo_nuevas: st.pNuevas, p_periodo_renovadas: st.pRenovadas, p_periodo_ranking: st.pRanking,
         p_anio: st.anio, p_compania: st.compania || null, p_operador: st.operador || null, p_registro: st.registro || null,
         p_desde: st.pRanking === 'rango' ? st.desde : null, p_hasta: st.pRanking === 'rango' ? st.hasta : null,
-        p_portal: st.portal || null, p_excluir_cancelado: st.sinCancelado, p_excluir_cancelado_pc: st.sinCanceladoPc,
-      });
+        p_portal: st.portal || null, p_excluir_cancelado: st.sinCancelado, p_excluir_cancelado_pc: st.sinCanceladoPc, p_anio_ef: st.anioEf || null,
+      };
+      let { data, error } = await sb().rpc('dashboard_inicio', params);
+      if (error && st.anioEf) {   // la base aún sin sql/inicio_por_anio.sql: se muestra como antes
+        console.warn('[inicio] sin filtro por año:', error.message);
+        delete params.p_anio_ef;
+        ({ data, error } = await sb().rpc('dashboard_inicio', params));
+      }
       if (error) throw error;
       if (!data || !data.kpis) throw new Error('Respuesta vacía de dashboard_inicio');
       st.datos = data;
@@ -170,12 +168,16 @@
     const o = d.opciones || {};
     const anioActual = new Date().getFullYear();
     const anios = [];
-    for (let a = anioActual; a >= anioActual - 3; a--) anios.push([String(a), String(a)]);
+    for (let a = anioActual + 1; a >= anioActual - 3; a--) anios.push([String(a), String(a)]);
+    const aniosEf = [];
+    for (let a = anioActual + 1; a >= anioActual - 1; a--) aniosEf.push([String(a), 'Año: ' + a]);
 
     raiz.innerHTML = `
       <div class="idash-toolbar">
         <span class="idash-eyebrow">Vista general</span>
         <div class="idash-filtros">
+          <label class="idash-sel"><span class="material-symbols-rounded">calendar_month</span>
+            <select data-f="anioEf">${opts(aniosEf, String(st.anioEf))}</select></label>
           <label class="idash-sel"><span class="material-symbols-rounded">schedule</span>
             <select data-f="pRanking">${opts(PERIODOS_RANKING.map(([v, t]) => [v, 'Periodo: ' + t]), st.pRanking)}</select></label>
           <label class="idash-sel"><select data-f="compania">${opts([['', 'Compañía: Todas'], ...(o.companias || []).map((c) => [c, c])], st.compania)}</select></label>
@@ -450,9 +452,9 @@
     refrescarEstado();
     try {
       if (!condadosCache[c]) {
-        const { data, error } = await sb().rpc('dashboard_condados', {
-          p_estado: c, p_compania: st.compania || null, p_operador: st.operador || null, p_registro: st.registro || null,
-        });
+        const pc = { p_estado: c, p_compania: st.compania || null, p_operador: st.operador || null, p_registro: st.registro || null, p_anio_ef: st.anioEf || null };
+        let { data, error } = await sb().rpc('dashboard_condados', pc);
+        if (error && pc.p_anio_ef) { delete pc.p_anio_ef; ({ data, error } = await sb().rpc('dashboard_condados', pc)); }
         if (error) throw error;
         condadosCache[c] = data || [];
       }
@@ -676,7 +678,7 @@
       const f = e.target.dataset.f;
       if (!f) return;
       if ((f === 'desde' || f === 'hasta') && !e.target.value) return;     // fecha incompleta: no recarga
-      st[f] = e.target.type === 'checkbox' ? e.target.checked : (f === 'anio' ? Number(e.target.value) : e.target.value);
+      st[f] = e.target.type === 'checkbox' ? e.target.checked : ((f === 'anio' || f === 'anioEf') ? Number(e.target.value) : e.target.value);
       if (st.desde > st.hasta) { if (f === 'desde') st.hasta = st.desde; else st.desde = st.hasta; }
       cargar();
     });
