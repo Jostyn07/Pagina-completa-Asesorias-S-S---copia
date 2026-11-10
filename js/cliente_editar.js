@@ -2078,6 +2078,7 @@ async function actualizarCliente(id, formData) {
         ciudad: formData.ciudad,
         estado: formData.estado,
         codigo_postal: formData.codigoPostal,
+        portal: formData.portalCliente || undefined,
         operador_nombre: formData.operadorNombre || null,
         venta_realizada_por: formData.ventaRealizadaPor || null,
         agente_nombre: formData.agenteNombre || null,
