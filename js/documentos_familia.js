@@ -924,12 +924,17 @@
     const t = e.target.closest('[data-docf-int],[data-docf-subir],[data-docf-ver],[data-docf-menu],[data-docf-sol],[data-docf-sol-nuevo],[data-docf-ia],[data-docf-ext],[data-docf-verif]');
     if (!t) return;
     e.preventDefault();
-    const doc = (id) => S.documentos.find((d) => d.id === id);
+    // Busca también en los pendientes por subir. Si la lista se está recargando
+    // (p. ej. justo después de "No aplica" o "Eliminar") el documento puede ya no
+    // estar: se vuelve a pintar en vez de fallar.
+    const doc = (id) => S.documentos.find((d) => String(d.id) === String(id))
+      || (S.pendientes || []).find((d) => String(d.id) === String(id));
+    const conDoc = (fn, id) => { const d = doc(id); if (!d) { render(); return; } return fn(d); };
     if (t.dataset.docfInt) { S.seleccionado = t.dataset.docfInt; return render(); }
     if (t.dataset.docfSubir) return document.querySelector('#documentosContainer .docf-drop input')?.click();
-    if (t.dataset.docfVer) return ver(doc(t.dataset.docfVer));
-    if (t.dataset.docfVerif) return verificar(doc(t.dataset.docfVerif));
-    if (t.dataset.docfMenu) return menu(doc(t.dataset.docfMenu));
+    if (t.dataset.docfVer) return conDoc(ver, t.dataset.docfVer);
+    if (t.dataset.docfVerif) return conDoc(verificar, t.dataset.docfVerif);
+    if (t.dataset.docfMenu) return conDoc(menu, t.dataset.docfMenu);
     if (t.dataset.docfSol) return menuSolicitado(S.solicitados.find((s) => s.id === t.dataset.docfSol));
     if (t.dataset.docfSolNuevo) return nuevoSolicitado();
     if (t.dataset.docfIa) {
