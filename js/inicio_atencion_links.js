@@ -23,6 +23,9 @@
     if (f.portal) q.set('portal', f.portal);
     if (f.sinCancelado) q.set('sin_cancelado', '1');
     if (f.sinCanceladoPc) q.set('sin_cancelado_pc', '1');
+    if (f.estadoF) q.set('estado_us', f.estadoF);
+    if (f.doc) q.set('doc', f.doc);
+    if (f.soloNuevas) q.set('solo_nuevas', '1');
     location.href = `polizas.html?${q}`;
   }, true);
 })();

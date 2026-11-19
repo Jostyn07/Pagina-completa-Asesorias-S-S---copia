@@ -24,6 +24,9 @@
       if (u.get('operador')) params.p_operador = u.get('operador');
       if (u.get('registro')) params.p_registro = u.get('registro');
       if (u.get('portal')) params.p_portal = u.get('portal');
+      if (u.get('estado_us')) params.p_estado = u.get('estado_us');
+      if (u.get('doc')) params.p_doc = u.get('doc');
+      if (u.get('solo_nuevas')) params.p_solo_nuevas = true;
       if (u.get('sin_cancelado')) params.p_excluir_cancelado = true;
       if (u.get('sin_cancelado_pc')) params.p_excluir_cancelado_pc = true;
       let { data, error } = await sb().rpc('atencion_polizas', params);

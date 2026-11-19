@@ -71,7 +71,7 @@
 
   const st = {
     pNuevas: 'mes', pRenovadas: 'mes', pRanking: 'mes', desde: isoHoy().slice(0, 8) + '01', hasta: isoHoy(), anio: new Date().getFullYear(), anioEf: new Date().getFullYear(),
-    compania: '', operador: '', registro: '', portal: '', sinCancelado: false, sinCanceladoPc: false, vista: 'polizas', estadoSel: null, zoomEstado: null, datos: null, cargando: false,
+    compania: '', operador: '', registro: '', portal: '', estadoF: null, doc: null, soloNuevas: false, sinCancelado: false, sinCanceladoPc: false, vista: 'polizas', estadoSel: null, zoomEstado: null, datos: null, cargando: false,
   };
   let raiz, ocultos = [];
   let mapa = null, mapaDiv = null, marcadores = {}, usarMosaico = false, promesaGoogle = null;
@@ -85,6 +85,7 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
   const fmt = (n) => Number(n || 0).toLocaleString('es-CO');
   const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  const conValor = (lista, v) => { const l = (lista || []).slice(); if (v && !l.includes(v)) l.unshift(v); return l; };
   const opts = (lista, sel) => lista.map(([v, t]) => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(t)}</option>`).join('');
 
   // ---------------------------------------------------------------- montaje
@@ -140,8 +141,14 @@
         p_anio: st.anio, p_compania: st.compania || null, p_operador: st.operador || null, p_registro: st.registro || null,
         p_desde: st.pRanking === 'rango' ? st.desde : null, p_hasta: st.pRanking === 'rango' ? st.hasta : null,
         p_portal: st.portal || null, p_excluir_cancelado: st.sinCancelado, p_excluir_cancelado_pc: st.sinCanceladoPc, p_anio_ef: st.anioEf || null,
+        p_estado: st.estadoF || null, p_doc: st.doc || null, p_solo_nuevas: !!st.soloNuevas,
       };
       let { data, error } = await sb().rpc('dashboard_inicio', params);
+      if (error) {   // la base aún sin sql/inicio_filtros_cruzados.sql: sin los filtros por clic
+        console.warn('[inicio] sin filtros cruzados:', error.message);
+        delete params.p_estado; delete params.p_doc; delete params.p_solo_nuevas;
+        ({ data, error } = await sb().rpc('dashboard_inicio', params));
+      }
       if (error && st.anioEf) {   // la base aún sin sql/inicio_por_anio.sql: se muestra como antes
         console.warn('[inicio] sin filtro por año:', error.message);
         delete params.p_anio_ef;
@@ -180,20 +187,21 @@
             <select data-f="anioEf">${opts(aniosEf, String(st.anioEf))}</select></label>
           <label class="idash-sel"><span class="material-symbols-rounded">schedule</span>
             <select data-f="pRanking">${opts(PERIODOS_RANKING.map(([v, t]) => [v, 'Periodo: ' + t]), st.pRanking)}</select></label>
-          <label class="idash-sel"><select data-f="compania">${opts([['', 'Compañía: Todas'], ...(o.companias || []).map((c) => [c, c])], st.compania)}</select></label>
-          <label class="idash-sel"><select data-f="operador">${opts([['', 'Operador: Todos'], ...(o.operadores || []).map((c) => [c, c])], st.operador)}</select></label>
+          <label class="idash-sel${st.compania ? ' idash-activo' : ''}"><select data-f="compania">${opts([['', 'Compañía: Todas'], ...conValor(o.companias, st.compania).map((c) => [c, c])], st.compania)}</select></label>
+          <label class="idash-sel${st.operador ? ' idash-activo' : ''}"><select data-f="operador">${opts([['', 'Operador: Todos'], ...conValor(o.operadores, st.operador).map((c) => [c, c])], st.operador)}</select></label>
           <label class="idash-sel"><select data-f="registro">${opts([['', 'Registro: Todos'], ...(o.registros || []).map((c) => [c, c])], st.registro)}</select></label>
           ${(o.portales || []).length ? `<label class="idash-sel"><select data-f="portal">${opts([['', 'Portal: Todos'], ...o.portales.map((c) => [c, c])], st.portal)}</select></label>` : ''}
           <label class="idash-check"><input type="checkbox" data-f="sinCancelado" ${st.sinCancelado ? 'checked' : ''}>Excluir Cancelado</label>
           <label class="idash-check"><input type="checkbox" data-f="sinCanceladoPc" ${st.sinCanceladoPc ? 'checked' : ''}>Excluir Cancelado a P.C</label>
           <button class="idash-btn-prim" data-acc="exportar"><span class="material-symbols-rounded">download</span>Exportar resumen</button>
         </div>
+        ${chips()}
       </div>
 
       <div class="idash-kpis">
         ${kpi('description', 'v1', 'Total de pólizas', d.kpis.total_polizas, 'Cartera registrada')}
         ${kpi('group', 'v2', 'Total de miembros', d.kpis.total_miembros, 'Titulares y dependientes que aplican')}
-        ${kpi('trending_up', 'v3', 'Nuevas', d.kpis.nuevas, 'Periodo: ' + TXT_PERIODO[st.pNuevas], 'pNuevas')}
+        ${kpi('trending_up', 'v3', 'Nuevas', d.kpis.nuevas, 'Periodo: ' + TXT_PERIODO[st.pNuevas], 'pNuevas', 'nuevas')}
         ${kpi('autorenew', 'v4', 'Renovadas', d.kpis.renovadas, 'Periodo: ' + TXT_PERIODO[st.pRenovadas], 'pRenovadas')}
       </div>
 
@@ -265,8 +273,20 @@
     if (st.zoomEstado) { const z = st.zoomEstado; st.zoomEstado = null; seleccionarEstado(z); }
   }
 
-  function kpi(icono, color, titulo, valor, pie, selector) {
-    return `<div class="idash-card idash-kpi">
+  // Filtros activados con clic en las gráficas (los de compañía y operador se ven en su selector)
+  function chips() {
+    const c = [];
+    if (st.estadoF) c.push(['estadoF', NOMBRES[st.estadoF] || st.estadoF]);
+    if (st.doc) c.push(['doc', st.doc]);
+    if (st.soloNuevas) c.push(['soloNuevas', 'Solo nuevas']);
+    if (!c.length) return '';
+    return `<div class="idash-chips">${c.map(([k, t]) => `<button type="button" class="idash-chip" data-quitar="${k}">${esc(t)}<span class="material-symbols-rounded">close</span></button>`).join('')}
+      ${c.length > 1 ? '<button type="button" class="idash-chip idash-chip-limpiar" data-quitar="todo">Quitar todos</button>' : ''}</div>`;
+  }
+
+  function kpi(icono, color, titulo, valor, pie, selector, cruz) {
+    const act = cruz === 'nuevas' && st.soloNuevas;
+    return `<div class="idash-card idash-kpi${cruz ? ' idash-clic' : ''}${act ? ' idash-cruz-sel' : ''}"${cruz ? ` data-cruz="${cruz}" title="Filtrar todo el Inicio"` : ''}>
       <div class="idash-kpi-top">
         <span class="idash-ico ${color}"><span class="material-symbols-rounded">${icono}</span></span>
         <span class="idash-kpi-t">${esc(titulo)}</span>
@@ -341,7 +361,7 @@
     if (!lista.length) return '<p class="idash-vacio">Sin actividad en el periodo.</p>';
     return `<div class="idash-tabla-wrap"><table class="idash-tabla">
       <thead><tr><th>Operador</th><th>Total</th><th>Nuevas</th><th>Renovadas</th>${completa ? '<th>Recuperadas</th><th>Activos</th>' : ''}<th>% del total</th></tr></thead>
-      <tbody>${lista.map((r, i) => `<tr>
+      <tbody>${lista.map((r, i) => `<tr class="idash-clic${st.operador ? (st.operador === r.operador ? ' idash-cruz-sel' : ' idash-dim') : ''}" data-cruz="op" data-v="${esc(r.operador)}">
         <td><span class="idash-pos">${String(i + 1).padStart(2, '0')}</span>${esc(r.operador)}</td>
         <td><span class="idash-pill">${fmt(r.total)}</span></td><td>${fmt(r.nuevas)}</td><td>${fmt(r.renovadas)}</td>
         ${completa ? `<td>${fmt(r.recuperadas)}</td><td>${fmt(r.activos)}</td>` : ''}
@@ -435,7 +455,7 @@
         zIndex: sel ? 1000 : Math.round(v),
         visible: st.zoomEstado !== e.codigo,          // al acercar, el estado se muestra por condados
       });
-      m.addListener('click', () => seleccionarEstado(e.codigo));
+      m.addListener('click', () => filtrarEstado(e.codigo));
       marcadores[e.codigo] = m;
     });
   }
@@ -452,8 +472,10 @@
     refrescarEstado();
     try {
       if (!condadosCache[c]) {
-        const pc = { p_estado: c, p_compania: st.compania || null, p_operador: st.operador || null, p_registro: st.registro || null, p_anio_ef: st.anioEf || null };
+        const pc = { p_estado: c, p_compania: st.compania || null, p_operador: st.operador || null, p_registro: st.registro || null, p_anio_ef: st.anioEf || null,
+          p_doc: st.doc || null, p_solo_nuevas: !!st.soloNuevas };
         let { data, error } = await sb().rpc('dashboard_condados', pc);
+        if (error) { delete pc.p_doc; delete pc.p_solo_nuevas; ({ data, error } = await sb().rpc('dashboard_condados', pc)); }
         if (error && pc.p_anio_ef) { delete pc.p_anio_ef; ({ data, error } = await sb().rpc('dashboard_condados', pc)); }
         if (error) throw error;
         condadosCache[c] = data || [];
@@ -465,6 +487,13 @@
     if (st.zoomEstado !== c) return;                 // el usuario ya eligió otro estado
     refrescarEstado();
     pintarCondadosEnMapa(c);
+  }
+
+  // Clic en un estado: filtra todo el Inicio (otro clic sobre el mismo lo quita)
+  function filtrarEstado(c) {
+    if (st.estadoF === c) { st.estadoF = null; verTodoUSA(); }
+    else { st.estadoF = c; st.estadoSel = c; st.zoomEstado = c; }
+    cargar();
   }
 
   function verTodoUSA() {
@@ -537,7 +566,7 @@
     const arcos = orden.map((k) => {
       const v = d[k] || 0;
       const largo = (v / total) * C;
-      const arco = v ? `<circle r="${R}" cx="80" cy="80" fill="none" stroke="${COLORES_DOC[k]}" stroke-width="26"
+      const arco = v ? `<circle class="idash-clic${st.doc && st.doc !== k ? ' idash-dim' : ''}" data-cruz="doc" data-v="${k}" r="${R}" cx="80" cy="80" fill="none" stroke="${COLORES_DOC[k]}" stroke-width="26"
         stroke-dasharray="${largo} ${C - largo}" stroke-dashoffset="${-acum}" transform="rotate(-90 80 80)"><title>${k}: ${fmt(v)}</title></circle>` : '';
       acum += largo;
       return arco;
@@ -546,7 +575,7 @@
       <svg viewBox="0 0 160 160" role="img" aria-label="Tipos de documento">${arcos}
         <text x="80" y="76" text-anchor="middle" class="idash-dona-num">${fmt(total)}</text>
         <text x="80" y="94" text-anchor="middle" class="idash-dona-txt">titulares</text></svg>
-      <ul>${orden.map((k) => `<li><i style="background:${COLORES_DOC[k]}"></i><span>${k}</span>
+      <ul>${orden.map((k) => `<li class="idash-clic${st.doc ? (st.doc === k ? ' idash-cruz-sel' : ' idash-dim') : ''}" data-cruz="doc" data-v="${k}"><i style="background:${COLORES_DOC[k]}"></i><span>${k}</span>
         <b>${fmt(d[k] || 0)}</b><small>${(((d[k] || 0) / total) * 100).toFixed(1).replace('.', ',')}%</small></li>`).join('')}</ul>
     </div>`;
   }
@@ -609,7 +638,8 @@
     return `<div class="idash-arbol">${rects.map((r, i) => {
       const pct = ((r.clientes / total) * 100).toFixed(1).replace('.', ',');
       const grande = r.w > 14 && r.h > 9;
-      return `<div class="idash-hoja t${Math.min(i, 7)}" style="left:${r.x / W * 100}%;top:${r.y / H * 100}%;width:${r.w / W * 100}%;height:${r.h / H * 100}%"
+      const marca = st.compania ? (norm(st.compania) === norm(r.nombre) ? ' idash-cruz-sel' : ' idash-dim') : '';
+      return `<div class="idash-hoja t${Math.min(i, 7)} idash-clic${marca}" data-cruz="comp" data-v="${esc(r.nombre)}" style="left:${r.x / W * 100}%;top:${r.y / H * 100}%;width:${r.w / W * 100}%;height:${r.h / H * 100}%"
         title="${esc(r.nombre)}: ${fmt(r.clientes)} clientes (${pct}%)">
         ${r.w > 6 && r.h > 5 ? `<span>${esc(r.nombre)}</span>` : ''}${grande ? `<small>${fmt(r.clientes)} · ${pct}%</small>` : ''}</div>`;
     }).join('')}</div>`;
@@ -683,14 +713,50 @@
       cargar();
     });
     raiz.addEventListener('click', (e) => {
+      if (e.target.closest('select,input,label.idash-sel')) return;
+      const q = e.target.closest('[data-quitar]');
+      if (q) {
+        const k = q.dataset.quitar;
+        if (k === 'todo' || k === 'estadoF') { st.estadoF = null; verTodoUSA(); }
+        if (k === 'todo' || k === 'doc') st.doc = null;
+        if (k === 'todo' || k === 'soloNuevas') st.soloNuevas = false;
+        return cargar();
+      }
+      const x = e.target.closest('[data-cruz]');
+      if (x) {
+        const v = x.dataset.v;
+        if (x.dataset.cruz === 'doc') st.doc = st.doc === v ? null : v;
+        else if (x.dataset.cruz === 'comp') st.compania = norm(st.compania) === norm(v) ? '' : v;
+        else if (x.dataset.cruz === 'op') st.operador = st.operador === v ? '' : v;
+        else if (x.dataset.cruz === 'nuevas') st.soloNuevas = !st.soloNuevas;
+        return cargar();
+      }
       const t = e.target.closest('[data-estado],[data-acc]');
       if (!t) return;
-      if (t.dataset.estado) seleccionarEstado(t.dataset.estado);
-      else if (t.dataset.acc === 'usa') verTodoUSA();
+      if (t.dataset.estado) filtrarEstado(t.dataset.estado);
+      else if (t.dataset.acc === 'usa') { verTodoUSA(); if (st.estadoF) { st.estadoF = null; cargar(); } }
       else if (t.dataset.acc === 'ranking') { e.preventDefault(); modalRanking(); }
       else if (t.dataset.acc === 'exportar') exportar();
     });
   }
+
+  const cssCruz = document.createElement('style');
+  cssCruz.textContent = `
+    .idash .idash-clic { cursor: pointer; }
+    .idash .idash-dim { opacity: .35; transition: opacity .15s; }
+    .idash .idash-dim:hover { opacity: .7; }
+    .idash li.idash-cruz-sel, .idash tr.idash-cruz-sel td { font-weight: 700; }
+    .idash tr.idash-cruz-sel td { background: rgba(124,92,245,.10); }
+    .idash .idash-hoja.idash-cruz-sel { outline: 3px solid #7c5cf5; outline-offset: -3px; z-index: 2; }
+    .idash .idash-kpi.idash-cruz-sel { outline: 2px solid #7c5cf5; }
+    .idash .idash-sel.idash-activo { border-color: #7c5cf5; box-shadow: 0 0 0 1px #7c5cf5; }
+    .idash .idash-sel.idash-activo select { color: #7c5cf5; font-weight: 600; }
+    .idash-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; width: 100%; }
+    .idash-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 6px 4px 12px; border-radius: 999px;
+      border: 1px solid #7c5cf5; background: rgba(124,92,245,.10); color: #6d4ce8; font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer; }
+    .idash-chip .material-symbols-rounded { font-size: 16px; }
+    .idash-chip-limpiar { border-color: transparent; background: transparent; color: #64748b; padding-right: 12px; }`;
+  document.head.appendChild(cssCruz);
 
   let intentos = 0;
   function iniciar() {
