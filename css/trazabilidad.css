@@ -1,0 +1,57 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--background-page, #f1f5f9); color: var(--text-color, #1e293b); }
+.main-content { margin-left: 260px; padding: 28px; min-height: 100vh; transition: margin-left .3s; }
+.sidebar-unified.collapsed ~ .main-content { margin-left: 70px; }
+@media (max-width: 900px) { .main-content { margin-left: 0; padding: 16px; } }
+
+.tz-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.tz-titulo { display: flex; align-items: center; gap: 10px; }
+.tz-titulo .material-symbols-rounded { font-size: 30px; color: #6366f1; }
+.tz-titulo h1 { margin: 0; font-size: 1.6rem; }
+.tz-filtros, .tz-acciones { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tz-filtros select, .tz-filtros input, .tz-card-head select, .tz-acciones input, .tz-campo input, .tz-campo select {
+  height: 38px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; color: inherit; font: inherit; font-size: .88rem; }
+.tz-fecha { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: #64748b; }
+
+.tz-card { background: var(--card-bg, #fff); border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 18px; }
+.tz-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.tz-card-head h2 { margin: 0; font-size: 1.08rem; }
+.tz-sub { font-size: .8rem; color: #64748b; }
+
+.tz-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.tz-kpi { border: 1px solid #eef2f7; border-radius: 12px; padding: 14px; }
+.tz-kpi-t { font-size: .78rem; color: #64748b; }
+.tz-kpi-v { font-size: 1.5rem; font-weight: 700; margin: 4px 0; }
+.tz-kpi-d { font-size: .8rem; font-weight: 700; }
+.tz-kpi-d.sube-bien, .tz-kpi-d.baja-bien { color: #16a34a; }
+.tz-kpi-d.sube-mal, .tz-kpi-d.baja-mal { color: #dc2626; }
+.tz-kpi-d.igual { color: #94a3b8; }
+.tz-kpi-a { font-size: .74rem; color: #94a3b8; }
+.tz-vacio { color: #94a3b8; font-size: .9rem; padding: 12px 0; }
+
+.tz-grafica { position: relative; height: 320px; margin-top: 10px; }
+
+.tz-tabla-wrap { overflow-x: auto; }
+.tz-tabla { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.tz-tabla th, .tz-tabla td { padding: 8px 10px; border-bottom: 1px solid #eef2f7; text-align: right; white-space: nowrap; }
+.tz-tabla th:first-child, .tz-tabla td:first-child { text-align: left; }
+.tz-tabla th { font-size: .74rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+.tz-cel-c { color: #dc2626; font-weight: 600; }
+
+.tz-btn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid #e2e8f0;
+  background: #fff; color: inherit; font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer; }
+.tz-btn .material-symbols-rounded { font-size: 18px; }
+.tz-btn-prim { background: #6366f1; border-color: #6366f1; color: #fff; }
+
+.tz-modal-fondo { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.tz-modal-fondo[hidden] { display: none; }
+.tz-modal { background: var(--card-bg, #fff); border-radius: 16px; padding: 20px; width: min(420px, 92vw); }
+.tz-campo { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-size: .8rem; color: #64748b; }
+.tz-modal-pie { display: flex; justify-content: flex-end; }
+.tz-x { border: 0; background: transparent; cursor: pointer; color: #64748b; }
+
+[data-theme="dark"] .tz-card, [data-theme="dark"] .tz-modal { background: #1a1a24; border-color: #2e2e3e; }
+[data-theme="dark"] .tz-kpi, [data-theme="dark"] .tz-tabla th, [data-theme="dark"] .tz-tabla td { border-color: #2e2e3e; }
+[data-theme="dark"] .tz-filtros select, [data-theme="dark"] .tz-filtros input, [data-theme="dark"] .tz-card-head select,
+[data-theme="dark"] .tz-acciones input, [data-theme="dark"] .tz-campo input, [data-theme="dark"] .tz-campo select,
+[data-theme="dark"] .tz-btn:not(.tz-btn-prim) { background: #12121a; border-color: #2e2e3e; color: #e2e8f0; }
