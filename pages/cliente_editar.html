@@ -33,6 +33,18 @@
 
     <!-- For Apple Devices (iOS) -->
     <link rel="apple-touch-icon" href="../images/Logo.png">
+    <style>
+        .seg-efectivo-opciones { display: flex; gap: 10px; }
+        .seg-efectivo-op { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border: 1px solid #e2e8f0;
+            border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .seg-efectivo-op:has(input:checked) { border-color: #6366f1; background: rgba(99,102,241,.08); color: #4f46e5; }
+        .seg-efectivo-badge { display: inline-flex; align-items: center; gap: 4px; margin: 6px 0 2px; padding: 3px 10px;
+            border-radius: 999px; font-size: .78rem; font-weight: 600; }
+        .seg-efectivo-badge .material-symbols-rounded { font-size: 16px; }
+        .seg-efectivo-badge.si { background: #dcfce7; color: #15803d; }
+        .seg-efectivo-badge.no { background: #fee2e2; color: #b91c1c; }
+        [data-theme="dark"] .seg-efectivo-op { border-color: #2e2e3e; }
+    </style>
 </head>
 <body>
     <!-- SIDEBAR UNIFICADO -->
@@ -1095,10 +1107,6 @@
                                     <span class="material-symbols-rounded">track_changes</span>
                                     <h2>Seguimiento</h2>
                                 </div>
-                                <div>
-                                    <input type="checkbox" name="seguimientoEfectivo" id="seguimientoEfectivo" style="text-align: center;">
-                                    <p style="font-size: 10px;">Comunicación efectiva</p>
-                                </div>
                                 
                             </div>
                         </div>
@@ -1732,6 +1740,16 @@
                             <label>Observación <span class="required">*</span></label>
                             <textarea id="modal_seg_observacion" rows="4" required
                                     placeholder="Descripción detallada del seguimiento..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label>Seguimiento efectivo <span class="required">*</span></label>
+                            <div class="seg-efectivo-opciones">
+                                <label class="seg-efectivo-op"><input type="radio" name="modal_seg_efectivo" value="Si" required> Sí</label>
+                                <label class="seg-efectivo-op"><input type="radio" name="modal_seg_efectivo" value="No" required> No</label>
+                            </div>
                         </div>
                     </div>
                 </form>

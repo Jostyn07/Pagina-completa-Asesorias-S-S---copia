@@ -3194,6 +3194,11 @@ function renderSeguimientoCard(seg) {
                 </div>
                 ${botonesAccion}
             </div>
+            ${seg.seguimiento_efectivo === 'Si' || seg.seguimiento_efectivo === 'No' ? `
+                <span class="seg-efectivo-badge ${seg.seguimiento_efectivo === 'Si' ? 'si' : 'no'}">
+                    <span class="material-symbols-rounded">${seg.seguimiento_efectivo === 'Si' ? 'check_circle' : 'cancel'}</span>
+                    ${seg.seguimiento_efectivo === 'Si' ? 'Efectivo' : 'No efectivo'}
+                </span>` : ''}
             <div class="seguimiento-observacion">
                 ${seg.observacion}
             </div>
@@ -3258,8 +3263,14 @@ async function guardarSeguimientoModal() {
     const textoOriginal = btnGuardar.innerHTML
     btnGuardar.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span> Guardando...'
 
-    const checkboxSeguimientoEfectivo = document.getElementById("seguimientoEfectivo");
-    const seguimientoEfectivo = checkboxSeguimientoEfectivo && checkboxSeguimientoEfectivo.checked ? "Si" : "No";
+    // Obligatorio en el modal: ¿se pudo comunicar con el cliente en esta ocasión?
+    const seguimientoEfectivo = document.querySelector('input[name="modal_seg_efectivo"]:checked')?.value;
+    if (!seguimientoEfectivo) {
+        alert('Indica si el seguimiento fue efectivo (Sí o No)');
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = textoOriginal;
+        return;
+    }
 
     const segId = document.getElementById('modal_seg_id').value;
     const seguimiento = {
@@ -3358,6 +3369,7 @@ async function editarSeguimiento(segId) {
         document.getElementById('modal_seg_fecha').value = formatoISO(seg.fecha_seguimiento);
         document.getElementById('modal_seg_medio').value = seg.medio_comunicacion;
         document.getElementById('modal_seg_observacion').value = seg.observacion;
+        document.querySelectorAll('input[name="modal_seg_efectivo"]').forEach((r) => { r.checked = r.value === seg.seguimiento_efectivo; });
         
         // Cambiar título
         document.getElementById('modalSeguimientoTitulo').textContent = 'Editar Seguimiento';
