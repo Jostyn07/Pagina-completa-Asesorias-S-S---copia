@@ -16,16 +16,19 @@
     ['pagos_pendientes', 'Pagos pendientes', false], ['sin_seguimiento', 'Sin seguimiento +30 días', false],
   ];
 
-  const st = { dimension: 'total', valor: 'Todas', fechas: [], puedeMeta: false, operadores: [] };
+  const st = { anio: String(new Date().getFullYear()), dimension: 'total', valor: 'Todas', fechas: [], puedeMeta: false, operadores: [] };
   let chEvo = null, chVentas = null;
 
   function avisar(msg) { (window.notyf?.error?.(msg)) || console.warn(msg); }
 
   // ---------------------------------------------------------------- comparativo
   async function cargarFechas() {
-    const { data, error } = await sb().from('foto_diaria').select('fecha').eq('dimension', 'total').order('fecha', { ascending: false }).limit(400);
+    const { data, error } = await sb().from('foto_diaria').select('fecha, anio_ef').eq('dimension', 'total').order('fecha', { ascending: false }).limit(2000);
     if (error) throw error;
-    st.fechas = (data || []).map((x) => x.fecha);
+    st.fechas = [...new Set((data || []).map((x) => x.fecha))];
+    const anios = [...new Set((data || []).map((x) => x.anio_ef))].filter((a) => /^\d{4}$/.test(a)).sort().reverse();
+    if (!anios.includes(st.anio) && anios.length) st.anio = anios.find((a) => a <= st.anio) || anios[0];
+    $('tzAnio').innerHTML = anios.map((a) => `<option value="${a}"${a === st.anio ? ' selected' : ''}>Año ${a}</option>`).join('');
     const b = st.fechas[0] || iso(new Date());
     const a = st.fechas[1] || b;
     $('tzFechaB').value = b;
@@ -36,7 +39,7 @@
     const sel = $('tzValor');
     if (st.dimension === 'total') { sel.hidden = true; st.valor = 'Todas'; return; }
     const ult = st.fechas[0];
-    const { data } = await sb().from('foto_diaria').select('valor, polizas').eq('dimension', st.dimension).eq('fecha', ult).order('polizas', { ascending: false });
+    const { data } = await sb().from('foto_diaria').select('valor, polizas').eq('anio_ef', st.anio).eq('dimension', st.dimension).eq('fecha', ult).order('polizas', { ascending: false });
     const lista = (data || []).map((x) => x.valor);
     sel.innerHTML = lista.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
     sel.hidden = !lista.length;
@@ -50,7 +53,7 @@
     const fa = fotoEnOAntes($('tzFechaA').value), fb = fotoEnOAntes($('tzFechaB').value);
     const cont = $('tzKpis');
     if (!fa || !fb) { cont.innerHTML = '<p class="tz-vacio">Todavía no hay fotos para esas fechas.</p>'; $('tzComparaFechas').textContent = ''; return; }
-    const { data, error } = await sb().from('foto_diaria').select('*').eq('dimension', st.dimension).eq('valor', st.valor).in('fecha', [fa, fb]);
+    const { data, error } = await sb().from('foto_diaria').select('*').eq('anio_ef', st.anio).eq('dimension', st.dimension).eq('valor', st.valor).in('fecha', [fa, fb]);
     if (error) { avisar('No se pudo cargar el comparativo'); return; }
     const A = (data || []).find((x) => x.fecha === fa) || {};
     const B = (data || []).find((x) => x.fecha === fb) || {};
@@ -70,7 +73,7 @@
     const desde = new Date(); desde.setDate(desde.getDate() - dias);
     const { data, error } = await sb().from('foto_diaria')
       .select('fecha, polizas, activas_mercado, activas_compania, canceladas')
-      .eq('dimension', st.dimension).eq('valor', st.valor).gte('fecha', iso(desde)).order('fecha');
+      .eq('anio_ef', st.anio).eq('dimension', st.dimension).eq('valor', st.valor).gte('fecha', iso(desde)).order('fecha');
     if (error) { avisar('No se pudo cargar la evolución'); return; }
     const filas = data || [];
     const series = [['polizas', 'Pólizas', '#6366f1'], ['activas_mercado', 'Activas (Mercado)', '#22c55e'],
@@ -140,7 +143,7 @@
   // ---------------------------------------------------------------- cohortes
   async function cohortes() {
     const hasta = new Date(), desde = new Date(hasta.getFullYear(), hasta.getMonth() - 11, 1);
-    const { data, error } = await sb().rpc('trazabilidad_cohortes', { p_desde: iso(desde), p_hasta: iso(hasta) });
+    const { data, error } = await sb().rpc('trazabilidad_cohortes', { p_desde: iso(desde), p_hasta: iso(hasta), p_anio_ef: Number(st.anio) || null });
     const cont = $('tzCohortes');
     if (error) { cont.innerHTML = '<p class="tz-vacio">No se pudieron cargar las cohortes.</p>'; return; }
     const filas = data || [];
@@ -198,9 +201,10 @@
     try {
       await cargarFechas();
       const { data: ops } = await sb().from('foto_diaria').select('valor').eq('dimension', 'operador').eq('fecha', st.fechas[0] || iso(hoy));
-      st.operadores = (ops || []).map((x) => x.valor).filter((v) => v !== 'Sin operador').sort();
+      st.operadores = [...new Set((ops || []).map((x) => x.valor))].filter((v) => v !== 'Sin operador').sort();
     } catch (e) { avisar('Falta crear la foto diaria (sql/foto_diaria.sql)'); }
 
+    $('tzAnio').addEventListener('change', async (e) => { st.anio = e.target.value; await cargarValores(); recargarTodo(); cohortes(); });
     $('tzDimension').addEventListener('change', async (e) => { st.dimension = e.target.value; await cargarValores(); recargarTodo(); });
     $('tzValor').addEventListener('change', (e) => { st.valor = e.target.value; recargarTodo(); });
     $('tzFechaA').addEventListener('change', comparativo);
