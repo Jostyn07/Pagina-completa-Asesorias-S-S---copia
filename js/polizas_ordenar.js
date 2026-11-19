@@ -43,7 +43,7 @@
     updated_at:             ['fecha', (p) => p.updated_at],
     modificado_por_nombre:  ['texto', (p) => p.modificado_por_nombre],
     ultimo_seguimiento:     ['fecha', (p) => ultimoSeg(p)?.fecha_seguimiento],
-    seguimiento_efectivo:   ['texto', (p) => ultimoSeg(p)?.seguimiento_efectivo],
+    seguimiento_efectivo:   ['texto', (p) => (typeof seguimientoEfectivo120 === 'function' ? seguimientoEfectivo120(p) : ultimoSeg(p)?.seguimiento_efectivo)],
   };
 
   // Encabezados que no se podían ordenar: texto del encabezado → columna

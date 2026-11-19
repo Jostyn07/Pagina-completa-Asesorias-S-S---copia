@@ -427,10 +427,7 @@ function restaurarFiltrosDesdeStorage() {
 
             if (filtrosActivos.seguimientoEfectivo) {
                 if (!poliza.seguimientos || poliza.seguimientos.length === 0) return false;
-                const ultimoSeg = [...poliza.seguimientos].sort((a, b) =>
-                    new Date(b.fecha_seguimiento) - new Date(a.fecha_seguimiento)
-                )[0];
-                if ((ultimoSeg?.seguimiento_efectivo || '') !== filtrosActivos.seguimientoEfectivo) return false;
+                if (seguimientoEfectivo120(poliza) !== filtrosActivos.seguimientoEfectivo) return false;
             }
 
             if (!filtrarPorRangoFecha(poliza.created_at, filtrosActivos.fechaRegistroDesde, filtrosActivos.fechaRegistroHasta)) return false;
@@ -750,9 +747,7 @@ function renderizarTabla() {
                 return fechaSeg.getTime() === fechaMayor.getTime();
             });
             
-            if (ultimoSeg) {
-                seguimientoEfectivo = ultimoSeg.seguimiento_efectivo || '-';
-            }
+            seguimientoEfectivo = seguimientoEfectivo120(poliza) || '-';
         }
 
         const tr = document.createElement('tr');
@@ -2899,12 +2894,7 @@ function aplicarFiltrosAvanzados() {
                 return false;
             }
 
-            const seguimientoOrdenado = [...poliza.seguimientos].sort((a, b) => 
-                new Date(b.fecha_seguimiento) - new Date(a.fecha_seguimiento)
-            );
-            
-            const ultimoSeg = seguimientoOrdenado[0];
-            const seguimientoEfectivoPoliza = ultimoSeg?.seguimiento_efectivo || '';
+            const seguimientoEfectivoPoliza = seguimientoEfectivo120(poliza);
 
             if (seguimientoEfectivoPoliza !== filtrosActivos.seguimientoEfectivo) {
                 return false;
@@ -3522,6 +3512,20 @@ window.seleccionarOperador    = seleccionarOperador;
 window.filtrarOpcionesSelectorOperador = filtrarOpcionesSelectorOperador;
 
 // Helpers
+// Seguimiento efectivo: "Si" si en los últimos 120 días hubo AL MENOS un seguimiento
+// efectivo; si no, lo que diga el último seguimiento ("No" o vacío).
+function seguimientoEfectivo120(poliza) {
+    const segs = (poliza?.seguimientos || []).filter(s => s.fecha_seguimiento);
+    if (!segs.length) return '';
+    const limite = new Date();
+    limite.setHours(0, 0, 0, 0);
+    limite.setDate(limite.getDate() - 120);
+    const fecha = (s) => new Date(String(s.fecha_seguimiento).slice(0, 10) + 'T00:00:00');
+    if (segs.some(s => s.seguimiento_efectivo === 'Si' && fecha(s) >= limite)) return 'Si';
+    const ultimo = segs.reduce((a, b) => (fecha(b) > fecha(a) ? b : a));
+    return ultimo.seguimiento_efectivo || '';
+}
+
 function obtenerMetodoPrincipal(cliente) {
     const metodos = cliente?.metodos_pago;
     if (!metodos || metodos.length === 0) return null;
