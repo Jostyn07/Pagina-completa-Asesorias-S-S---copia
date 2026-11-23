@@ -242,6 +242,7 @@ function crearGraficoLineas(datosPorMes) {
         }
     };
 
+    if (typeof ApexCharts === 'undefined') return;   // la librería de gráficas no cargó: se omite la gráfica
     const chart = new ApexCharts(document.querySelector("#chartLineas"), options);
     chartActual = chart;
     chartActual.render();
@@ -280,6 +281,7 @@ function crearGraficoTorta(datosPorOperador) {
         }
     };
 
+    if (typeof ApexCharts === 'undefined') return;   // la librería de gráficas no cargó: se omite la gráfica
     const chart = new ApexCharts(document.querySelector("#chartLineas"), options);
     chartActual = chart;
     chartActual.render();
@@ -332,6 +334,7 @@ function renderizarGraficaSupervisores() {
     const labels = Object.keys(conteo);
     const valores = Object.values(conteo);
 
+    if (typeof ApexCharts === 'undefined') return;   // la librería de gráficas no cargó: se omite la gráfica
     if (chartSupervisores) chartSupervisores.destroy();
 
     chartSupervisores = new ApexCharts(contenedor, {
@@ -379,6 +382,7 @@ function drillDownOperadores(nombreSupervisor) {
     const labels = Object.keys(conteo);
     const valores = Object.values(conteo);
 
+    if (typeof ApexCharts === 'undefined') return;   // la librería de gráficas no cargó: se omite la gráfica
     if (chartSupervisores) chartSupervisores.destroy();
 
     chartSupervisores = new ApexCharts(

@@ -5,7 +5,7 @@
   sb.__polCargaCompleta = true;
 
   const TAM = 1000;
-  const PARALELO = 4;
+  const PARALELO = 2;   // 2 a la vez para no cargar de más la base
   const fromPrevio = sb.from.bind(sb);   // respeta lo que ya envolvió polizas_carga_liviana.js
 
   const esCargaPrincipal = (cols, opts) =>
