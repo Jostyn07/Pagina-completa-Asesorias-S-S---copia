@@ -106,7 +106,7 @@
 
     const { data: poliza, error } = await cliente
       .from('polizas')
-      .select('id, cliente_id, numero_poliza, estado_renovacion, poliza_renovada_id, cliente_renovado_id, poliza_origen_id')
+      .select('id, cliente_id, numero_poliza, estado_renovacion, poliza_renovada_id, cliente_renovado_id, poliza_origen_id, fecha_efectividad')
       .eq('id', pid)
       .single();
     if (error || !poliza) {
@@ -123,6 +123,14 @@
       return;
     }
 
+    // Una póliza solo se puede renovar a partir del 20 de octubre de su año de
+    // efectividad (las de 2026 ya pueden; las de 2027, desde el 20/10/2027).
+    // Las renovaciones ya iniciadas ("En proceso") siempre se pueden continuar.
+    if (poliza.estado_renovacion !== 'En proceso' && !renovacionHabilitada(poliza.fecha_efectividad)) {
+      console.info('[renovación] póliza', poliza.numero_poliza, '| efectividad', poliza.fecha_efectividad, '| aún no se puede renovar');
+      return;
+    }
+
     const { data: permitido, error: errPermiso } = await cliente.rpc('tiene_permiso', { p_clave: 'renovar_poliza' });
     if (errPermiso) {
       console.warn('[renovación] no se pudo validar el permiso:', errPermiso.message);
@@ -130,6 +138,16 @@
     }
     console.info('[renovación] póliza', poliza.numero_poliza, '| estado:', poliza.estado_renovacion, '| permiso renovar:', permitido);
     if (permitido) mostrarBoton(poliza.estado_renovacion === 'En proceso');
+  }
+
+  // Mes (0-11) y día desde los que se abre la renovación dentro del año de efectividad
+  const APERTURA_RENOVACION = { mes: 9, dia: 20 }; // 20 de octubre
+
+  function renovacionHabilitada(fechaEfectividad) {
+    const m = String(fechaEfectividad || '').match(/^(\d{4})-/);
+    if (!m) return true; // sin fecha válida: no se bloquea (comportamiento anterior)
+    const apertura = new Date(Number(m[1]), APERTURA_RENOVACION.mes, APERTURA_RENOVACION.dia);
+    return new Date() >= apertura;
   }
 
   // ---------- Avisos de origen / destino
