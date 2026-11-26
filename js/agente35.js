@@ -213,7 +213,7 @@
         { header: 'Origen', key: 'origen', width: 16 },
         { header: 'Cliente', key: 'cliente', width: 32 },
         { header: 'Teléfono', key: 'tel', width: 15 },
-        { header: 'Estado US', key: 'estadoUs', width: 11 },
+        { header: 'Estado', key: 'estadoUs', width: 11 },
         { header: 'Compañía', key: 'compania', width: 24 },
         { header: 'Póliza', key: 'poliza', width: 16 },
         { header: 'Operador', key: 'operador', width: 22 },

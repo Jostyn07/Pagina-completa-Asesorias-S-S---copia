@@ -1390,6 +1390,25 @@ function actualizarIndicadoresOrden() {
 // ============================================
 // EXPORTAR A EXCEL
 // ============================================
+// Estado de EE. UU. del cliente como código de 2 letras (FL, TX, AZ...). Mismo criterio que estado_usa_codigo en SQL.
+const _ESTADOS_US_VARIANTES = { arkanzas:'AR', 'carolina del sur':'SC', 'carolina del norte':'NC', pensilvania:'PA', luisiana:'LA',
+    'nueva jersey':'NJ', 'nueva york':'NY', 'nuevo mexico':'NM', 'dakota del norte':'ND', 'dakota del sur':'SD',
+    'virginia occidental':'WV', hawai:'HI', 'washington dc':'DC', 'district of columbia':'DC', 'distrito de columbia':'DC',
+    alabama:'AL',alaska:'AK',arizona:'AZ',arkansas:'AR',california:'CA',colorado:'CO',connecticut:'CT',delaware:'DE',
+    florida:'FL',georgia:'GA',hawaii:'HI',idaho:'ID',illinois:'IL',indiana:'IN',iowa:'IA',kansas:'KS',kentucky:'KY',
+    louisiana:'LA',maine:'ME',maryland:'MD',massachusetts:'MA',michigan:'MI',minnesota:'MN',mississippi:'MS',misisipi:'MS',
+    missouri:'MO',misuri:'MO',montana:'MT',nebraska:'NE',nevada:'NV','new hampshire':'NH','nuevo hampshire':'NH',
+    'new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND',ohio:'OH',oklahoma:'OK',
+    oregon:'OR',pennsylvania:'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD',tennessee:'TN',texas:'TX',
+    utah:'UT',vermont:'VT',virginia:'VA',washington:'WA','west virginia':'WV',wisconsin:'WI',wyoming:'WY' };
+function estadoUsCodigo(valor) {
+    const texto = String(valor || '').trim();
+    if (!texto) return '';
+    const n = texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
+    if (/^[a-z]{2}$/.test(n)) return n.toUpperCase();
+    return _ESTADOS_US_VARIANTES[n] || texto;   // si no se reconoce, se deja como está escrito
+}
+
 async function exportarExcel() {
 
     try {
@@ -1426,6 +1445,7 @@ async function exportarExcel() {
                 cliente.telefono1 || '',
                 cliente.telefono2 || '',
                 cliente.email || '',
+                estadoUsCodigo(cliente.estado),
                 cliente.estado_migratorio || '',
                 cliente.ssn || '',
                 poliza.operador_nombre || '',
@@ -1441,7 +1461,6 @@ async function exportarExcel() {
                 poliza.nombre_agente_mercado || '',
                 poliza.member_id || '',
                 poliza.agente_nombre || cliente.agente_nombre || '',
-                cliente.agente_nombre || '',
                 poliza.clave_seguridad || '',
                 poliza.fecha_efectividad ? formatoUS(poliza.fecha_efectividad) : '',
                 poliza.fecha_inicial_cobertura ? formatoUS(poliza.fecha_inicial_cobertura) : '',
@@ -1459,11 +1478,11 @@ async function exportarExcel() {
 
         const headers = [
             'N° Póliza', 'Tipo Registro', 'Tipo Modificación', 'Cliente',
-            'Teléfono 1', 'Teléfono 2', 'Email', 'Estado Migratorio', 'SSN',
+            'Teléfono 1', 'Teléfono 2', 'Email', 'Estado', 'Estado Migratorio', 'SSN',
             'Operador', 'Compañía', 'Plan', 'Prima', 'Crédito Fiscal',
             'Estado Mercado', 'Estado Compañía', 'Estado Documentos',
             'Documentos Pendientes', 'Agente 3.5', 'Agente Mercado',
-            'Member ID', 'Agente', 'Portal NPN', 'Clave Seguridad',
+            'Member ID', 'Agente', 'Clave Seguridad',
             'Fecha Efectividad', 'Fecha Inicial Cobertura', 'Fecha Final Cobertura',
             'Pagado Hasta', 'Revisión Mercado', 'Revisión Compañía',
             'Plazo Documentos', 'Enlace Póliza', 'Observaciones', 'Fecha de seguimiento', 'Fecha Creación'
@@ -3055,8 +3074,7 @@ function aplicarFiltrosAvanzados() {
     //  Actualizar indicador visual
     actualizarIndicadorFiltros();
     
-    // Cerrar modal
-    cerrarModalFiltros();
+    // El modal solo se cierra con el botón "Aplicar" (ver pages/polizas.html)
 
     // Guardar filtros en localStorage para persistirlos
     guardarFiltrosEnStorage();
