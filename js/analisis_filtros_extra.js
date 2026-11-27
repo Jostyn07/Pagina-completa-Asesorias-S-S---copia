@@ -33,7 +33,7 @@
     try {
       if (!maestro) maestro = todasLasPolizasAnalisis.slice();
       todasLasPolizasAnalisis = maestro.filter(cumple);
-    } catch (e) { console.warn('[filtros extra] sin efecto:', e); }
+    } catch (e) { dbg.warn('[filtros extra] sin efecto:', e); }
     return aplicarOriginal.apply(this, arguments);
   };
 
@@ -42,7 +42,7 @@
   window.cargarDatosAnalisis = async function () {
     maestro = null;
     const r = await cargarOriginal.apply(this, arguments);
-    try { await cargarPortales(); } catch (e) { console.warn('[filtros extra] portales:', e); }
+    try { await cargarPortales(); } catch (e) { dbg.warn('[filtros extra] portales:', e); }
     return r;
   };
 

@@ -156,7 +156,7 @@ async function enviarEvaluacion() {
         }
         
     } catch (error) {
-        console.error('❌ Error al guardar evaluación:', error);
+        console.error('❌ Error al guardar evaluación:', error?.message);
         mostrarCargando(false);
         mostrarNotificacion('❌ Error al guardar: ' + error.message, 'error');
     }
@@ -349,7 +349,7 @@ function cargarBorrador() {
         mostrarNotificacion('📋 Borrador cargado exitosamente', 'success');
         
     } catch (error) {
-        console.error('Error al cargar borrador:', error);
+        console.error('Error al cargar borrador:', error?.message);
         localStorage.removeItem('qualityControl_draft');
     }
 }

@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     .upload(path, file, { cacheControl: '3600', upsert: false });
 
                 if (error) {
-                    console.error('Error subiendo imagen:', error);
+                    console.error('Error subiendo imagen:', error?.message);
                     continue;
                 }
 
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }, 200)
         } 
     } catch (error) {
-        console.error('❌ Error al cargar datos:', error);
+        console.error('❌ Error al cargar datos:', error?.message);
     }
     
     document.getElementById('clienteForm').addEventListener('submit', handleSubmit);
@@ -300,7 +300,7 @@ async function subirImagenQuill(file) {
         }
 
     } catch (error) {
-        console.error('Error al subir imagen:', error)
+        console.error('Error al subir imagen:', error?.message)
         mostrarNotificacion('Error al subir imagen', 'error')
     }
 }
@@ -411,7 +411,7 @@ async function cargarDatosCliente(id) {
             .select('*')
             .eq('cliente_id', id);
         
-        if (polizasError) console.warn('⚠️ Error al cargar pólizas:', polizasError);
+        if (polizasError) dbg.warn('⚠️ Error al cargar pólizas:', polizasError);
         
         const polizaData = polizasData && polizasData.length > 0 ? polizasData[0] : null;
         if (polizaData) {
@@ -427,7 +427,7 @@ async function cargarDatosCliente(id) {
             .eq('cliente_id', id)
             .order('created_at', { ascending: true });
         
-        if (dependientesError) console.warn('⚠️ Error al cargar dependientes:', dependientesError);
+        if (dependientesError) dbg.warn('⚠️ Error al cargar dependientes:', dependientesError);
         
         // Cargar notas
         const { data: notasData, error: notasError } = await supabaseClient
@@ -436,7 +436,7 @@ async function cargarDatosCliente(id) {
             .eq('cliente_id', id)
             .order('created_at', { ascending: false });
         
-        if (notasError) console.warn('⚠️ Error al cargar notas:', notasError);
+        if (notasError) dbg.warn('⚠️ Error al cargar notas:', notasError);
         
         // En la sección donde cargas los datos de la póliza
 
@@ -473,7 +473,7 @@ async function cargarDatosCliente(id) {
 
         
     } catch (error) {
-        console.error('❌ Error al cargar cliente:', error);
+        console.error('❌ Error al cargar cliente:', error?.message);
         alert(`Error al cargar los datos: ${error.message}`);
     }
 }
@@ -882,7 +882,7 @@ async function eliminarDependienteCard(count, depId) {
         }
         
     } catch (error) {
-        console.error('❌ Error al eliminar dependiente:', error);
+        console.error('❌ Error al eliminar dependiente:', error?.message);
         alert('Error al eliminar: ' + error.message);
     }
 }
@@ -963,7 +963,7 @@ async function cargarDocumentos(clienteId) {
         });
                 
     } catch (error) {
-        console.error('❌ Error al cargar documentos:', error);
+        console.error('❌ Error al cargar documentos:', error?.message);
     }
 }
 
@@ -991,7 +991,7 @@ async function confirmarEliminarDocumento(docId) {
             .from('documentos')
             .remove([storagePath]);
         
-        if (storageError) console.warn('Error al eliminar de Storage:', storageError);
+        if (storageError) dbg.warn('Error al eliminar de Storage:', storageError);
         
         // 4. Eliminar de BD
         const { error: dbError } = await supabaseClient
@@ -1023,7 +1023,7 @@ async function confirmarEliminarDocumento(docId) {
         }
                 
     } catch (error) {
-        console.error('Error al eliminar documento:', error);
+        console.error('Error al eliminar documento:', error?.message);
         alert('Error al eliminar el documento: ' + error.message);
     }
 }
@@ -1182,7 +1182,7 @@ async function cargarNotas(clienteId) {
         actualizarContadorNotas();
         
     } catch (error) {
-        console.error('❌ Error al cargar notas:', error);
+        console.error('❌ Error al cargar notas:', error?.message);
     }
 }
 
@@ -1254,7 +1254,7 @@ async function agregarNota(clienteId) {
         const nuevaCard = thread.querySelector('.nota-card');
         procesarImagenesEnNotas(nuevaCard);
     } catch (error) {
-        console.error('❌ Error al agregar nota:', error);
+        console.error('❌ Error al agregar nota:', error?.message);
         mostrarNotificacion('❌ Error al agregar nota: ' + error.message, 'error');
     }
 }
@@ -1311,7 +1311,7 @@ async function confirmarEliminarNota(notaId) {
         actualizarContadorNotas();
         
     } catch (error) {
-        console.error('Error al eliminar nota:', error);
+        console.error('Error al eliminar nota:', error?.message);
         alert('Error al eliminar nota: ' + error.message);
     }
 }
@@ -1825,7 +1825,7 @@ function guardarBorradorSilencioso() {
         const formData = obtenerDatosFormulario();
         localStorage.setItem(`borrador_cliente_${clienteId}`, JSON.stringify(formData));
     } catch (error) {
-        console.error('Error al guardar borrador:', error);
+        console.error('Error al guardar borrador:', error?.message);
     }
 }
 
@@ -1987,7 +1987,7 @@ async function handleSubmit(event) {
         window.location.href = './polizas.html';
         
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
         alert(`Error al actualizar: ${error.message}`);
         desbloquearBoton(btnSubmit, textoOriginal);
     }
@@ -2280,7 +2280,7 @@ async function cargarMesesPagados(clienteId, anio) {
         sincronizarBadgesMeses();
 
     } catch (error) {
-        console.error('❌ Error al cargar meses pagados:', error);
+        console.error('❌ Error al cargar meses pagados:', error?.message);
     }
 }
 
@@ -2311,7 +2311,7 @@ async function guardarMesesPagados(clienteId) {
         return true;
 
     } catch (error) {
-        console.error('❌ Error al guardar meses pagados:', error);
+        console.error('❌ Error al guardar meses pagados:', error?.message);
         return false;
     }
 }
@@ -2361,7 +2361,7 @@ async function cargarMetodoPago(clienteId) {
         renderizarListaMetodosPago();
 
     } catch (error) {
-        console.error('❌ Error al cargar métodos de pago:', error);
+        console.error('❌ Error al cargar métodos de pago:', error?.message);
     }
 }
 
@@ -2424,7 +2424,7 @@ async function guardarMetodoPago(clienteId) {
 
         return true;
     } catch (error) {
-        console.error('Error al guardar métodos de pago:', error);
+        console.error('Error al guardar métodos de pago:', error?.message);
         return false;
     }
 }
@@ -2455,7 +2455,7 @@ async function eliminarMetodoPago(clienteId) {
         alert('Método de pago eliminado correctamente');
         
     } catch (error) {
-        console.error('❌ Error al eliminar método de pago:', error);
+        console.error('❌ Error al eliminar método de pago:', error?.message);
         alert('Error al eliminar el método de pago');
     }
 }
@@ -2499,7 +2499,7 @@ async function guardarDocumentosNuevos(clienteId) {
                 });
             
             if (uploadError) {
-                console.error('Error al subir archivo:', uploadError);
+                console.error('Error al subir archivo:', uploadError?.message);
                 continue;
             }
             
@@ -2518,7 +2518,7 @@ async function guardarDocumentosNuevos(clienteId) {
             });
             
         } catch (error) {
-            console.error(`Error procesando documento ${i}:`, error);
+            console.error(`Error procesando documento ${i}:`, error?.message);
         }
     }
     
@@ -2585,7 +2585,7 @@ async function generarNumeroPoliza() {
         
         return `POL-${anio}-${String(siguiente).padStart(4, '0')}`;
     } catch (error) {
-        console.error('Error al generar número:', error);
+        console.error('Error al generar número:', error?.message);
         return `POL-${anio}-${Date.now().toString().slice(-4)}`;
     }
 }
@@ -2690,7 +2690,7 @@ async function cerrarSesion() {
         window.location.href = '../index.html';
         
     } catch (error) {
-        console.error('Error al cerrar sesión:', error);
+        console.error('Error al cerrar sesión:', error?.message);
         alert('Error al cerrar sesión: ' + error.message);
     }
 }
@@ -2704,7 +2704,7 @@ async function cargarInfoUsuario() {
         if (error) throw error;
         
         if (!user) {
-            console.warn('⚠️ No hay usuario autenticado');
+            dbg.warn('⚠️ No hay usuario autenticado');
             // Redirigir al login si no hay usuario
             window.location.href = '../index.html';
             return;
@@ -2754,7 +2754,7 @@ async function cargarInfoUsuario() {
         
         
     } catch (error) {
-        console.error('❌ Error al cargar info de usuario:', error);
+        console.error('❌ Error al cargar info de usuario:', error?.message);
         // No redirigir si es solo un error de carga
     }
 }
@@ -2886,7 +2886,7 @@ async function cargarEstadoSeguimiento(polizaId) {
         await cargarHistorialEstados(polizaId);
         
     } catch (error) {
-        console.error('❌ Error al cargar estado:', error);
+        console.error('❌ Error al cargar estado:', error?.message);
     }
 }
 
@@ -2987,7 +2987,7 @@ async function actualizarComunicacionEfectiva(esEfectivo) {
         
         
     } catch (error) {
-        console.error('❌ Error al actualizar comunicación efectiva:', error);
+        console.error('❌ Error al actualizar comunicación efectiva:', error?.message);
         alert('Error al actualizar: ' + error.message);
         // Revertir el checkbox en caso de error
         await cargarSeguimientos(polizaId);
@@ -3049,7 +3049,7 @@ async function guardarEstadoSeguimiento(polizaId, formData) {
         }
 
     } catch (error) {
-        console.error('❌ Error al guardar estado:', error);
+        console.error('❌ Error al guardar estado:', error?.message);
         throw error;
     }
 }
@@ -3082,7 +3082,7 @@ async function registrarParaRevisar(clienteId, polizaId, formData, estadoData) {
         if (error) throw error;
 
     } catch (error) {
-        console.error('Error al registrar en Para revisar:', error);
+        console.error('Error al registrar en Para revisar:', error?.message);
     }
 }
 
@@ -3099,7 +3099,7 @@ async function obtenerUltimaNota(clienteId) {
         if (error) throw error;
         return data?.mensaje || null;
     } catch (error) {
-        console.error('Error al obtener última nota:', error);
+        console.error('Error al obtener última nota:', error?.message);
         return null
     }
 }
@@ -3121,7 +3121,7 @@ async function cargarSeguimientos(polizaId) {
             .order('fecha_seguimiento', { ascending: false });
         
         if (error && error.code !== 'PGRST116') {
-            console.warn('⚠️ Error al cargar seguimientos:', error);
+            dbg.warn('⚠️ Error al cargar seguimientos:', error);
             return;
         }
         
@@ -3155,7 +3155,7 @@ async function cargarSeguimientos(polizaId) {
         seguimientosData = seguimientos;
         
     } catch (error) {
-        console.error('Error al cargar seguimientos:', error);
+        console.error('Error al cargar seguimientos:', error?.message);
     }
 }
 
@@ -3329,7 +3329,7 @@ async function guardarSeguimientoModal() {
                         cliente_telefono: polizaData?.cliente.telefono1?.replace(/\D/g, '') || '',
                     });
                 })
-                .catch(e => console.warn('Error registrando movimiento de seguimiento', e));
+                .catch(e => dbg.warn('Error registrando movimiento de seguimiento', e));
         }
 
         // Registrar en movimientos
@@ -3341,7 +3341,7 @@ async function guardarSeguimientoModal() {
         cerrarModalSeguimiento();
         
     } catch (error) {
-        console.error('Error al guardar seguimiento:', error);
+        console.error('Error al guardar seguimiento:', error?.message);
         alert('Error al guardar el seguimiento: ' + error.message);
     } finally {
         btnGuardar.disabled = false;
@@ -3378,7 +3378,7 @@ async function editarSeguimiento(segId) {
         document.getElementById('modalSeguimiento').classList.add('active');
         
     } catch (error) {
-        console.error('Error al cargar seguimiento:', error);
+        console.error('Error al cargar seguimiento:', error?.message);
         alert('Error al cargar el seguimiento');
     }
 }
@@ -3426,7 +3426,7 @@ async function eliminarSeguimiento(segId) {
         }
         
     } catch (error) {
-        console.error('Error al eliminar seguimiento:', error);
+        console.error('Error al eliminar seguimiento:', error?.message);
         alert('Error al eliminar el seguimiento');
     }
 }
@@ -3444,7 +3444,7 @@ async function cargarHistorialEstados(polizaId) {
             .order('created_at', { ascending: false });
         
         if (error && error.code !== 'PGRST116') {
-            console.warn('⚠️ Tabla historial_estados no existe o sin datos');
+            dbg.warn('⚠️ Tabla historial_estados no existe o sin datos');
             return;
         }
         
@@ -3487,7 +3487,7 @@ async function cargarHistorialEstados(polizaId) {
         `).join('');
         
     } catch (error) {
-        console.error('Error al cargar historial:', error);
+        console.error('Error al cargar historial:', error?.message);
     }
 }
 
@@ -3560,12 +3560,12 @@ async function registrarHistorialEstados(clienteId, estadoData) {
                 .insert(cambios);
             
             if (error && error.code !== '42P01') {
-                console.warn('⚠️ No se pudo guardar historial:', error);
+                dbg.warn('⚠️ No se pudo guardar historial:', error);
             }
         }
         
     } catch (error) {
-        console.warn('⚠️ Error al registrar historial:', error);
+        dbg.warn('⚠️ Error al registrar historial:', error);
     }
 }
 
@@ -3653,7 +3653,7 @@ async function ejecutarArchivarCliente() {
         window.location.href = './polizas.html';
         
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
         alert('Error al archivar cliente: ' + error.message);
     }
 }
@@ -3785,7 +3785,7 @@ function formatearFechaHora(fecha) {
         
         return `${mes}/${dia}/${anio} ${hora}:${minutos}`;
     } catch (error) {
-        console.error('Error al formatear fecha:', error);
+        console.error('Error al formatear fecha:', error?.message);
         return '-';
     }
 }
@@ -3973,7 +3973,7 @@ async function registrarCambio(clienteId, tipoCambio, seccion, cambios) {
         const { data: { user } } = await supabaseClient.auth.getUser();
         
         if (!user) {
-            console.warn('⚠️ Usuario no autenticado, no se puede registrar cambio');
+            dbg.warn('⚠️ Usuario no autenticado, no se puede registrar cambio');
             return;
         }
         
@@ -4006,11 +4006,7 @@ async function registrarCambio(clienteId, tipoCambio, seccion, cambios) {
         
         if (error) {
             if (error.code === '23503') {
-                console.error('CLIENTE_ID INVÁLIDO DETECTADO:', {
-                    clienteId,
-                    urlActual: window.location.href,
-                    errorCompleto: error
-                });
+                console.error('CLIENTE_ID INVÁLIDO DETECTADO:', error?.code);
                 alert(`⚠️ No se pudo guardar el historial: el cliente con ID "${clienteId}" ya no existe en la base de datos.\n\n` +
                     `Copia este ID y repórtalo (Envialo a Jostyn por Bitrix): ${clienteId}\n\n` +
                     `URL: ${window.location.href}`
@@ -4025,7 +4021,7 @@ async function registrarCambio(clienteId, tipoCambio, seccion, cambios) {
         }
         
     } catch (error) {
-        console.error('❌ Error al registrar cambio en historial:', error);
+        console.error('❌ Error al registrar cambio en historial:', error?.message);
     }
 }
 
@@ -4202,7 +4198,7 @@ async function registrarNotaAgregada(clienteId, mensaje) {
             });
         
     } catch (error) {
-        console.error('❌ Error al registrar nota en historial:', error);
+        console.error('❌ Error al registrar nota en historial:', error?.message);
     }
 }
 
@@ -4232,7 +4228,7 @@ async function registrarNotaEliminada(clienteId, notaId) {
             }]);
         
     } catch (error) {
-        console.error('❌ Error al registrar eliminación en historial:', error);
+        console.error('❌ Error al registrar eliminación en historial:', error?.message);
     }
 }
 
@@ -4319,7 +4315,7 @@ async function cargarHistorial(clienteId, pagina = 1) {
         
         
     } catch (error) {
-        console.error('❌ Error al cargar historial:', error);
+        console.error('❌ Error al cargar historial:', error?.message);
         const timeline = document.getElementById('historialTimeline');
         if (timeline) {
             timeline.innerHTML = `
@@ -4367,7 +4363,7 @@ async function registrarMovimientos({ clienteId, polizaId, tipo, detalle, observ
             cliente_telefono: clienteTelefono,
         });
     } catch (e) {
-        console.warn('Error registrando movimento:', e);
+        dbg.warn('Error registrando movimento:', e);
     }
 }
 
@@ -4697,7 +4693,7 @@ async function aplicarFiltrosHistorial() {
         mostrarNotificacion(`🔍 ${cambios.length} resultado(s) encontrado(s)`, 'info');
         
     } catch (error) {
-        console.error('❌ Error al filtrar historial:', error);
+        console.error('❌ Error al filtrar historial:', error?.message);
         mostrarNotificacion('❌ Error al filtrar', 'error');
     }
 }
@@ -4760,7 +4756,7 @@ async function exportarHistorial() {
         mostrarNotificacion('✅ Historial exportado correctamente', 'success');
         
     } catch (error) {
-        console.error('❌ Error al exportar historial:', error);
+        console.error('❌ Error al exportar historial:', error?.message);
         mostrarNotificacion('❌ Error al exportar', 'error');
     }
 }
@@ -4782,7 +4778,7 @@ function formatoUS(fecha) {
         }
         return '';
     } catch (error) {
-        console.error('Error al formatear fecha:', error);
+        console.error('Error al formatear fecha:', error?.message);
         return '';
     }
 }
@@ -4922,7 +4918,7 @@ async function verificarCambiosPendientes(clienteId) {
             .eq('estado', 'pendiente')
             .order('fecha_efectividad', { ascending: true});
         if (error) {
-            console.error('Error verificando cambios pendientes: ', error);
+            console.error('Error verificando cambios pendientes: ', error?.message);
             return
         }
 
@@ -4949,7 +4945,7 @@ async function verificarCambiosPendientes(clienteId) {
         // Renderizar los cambios en el contenedor
         mostrarCambiosPendientes(data);
     } catch (error) {
-        console.error('Error en VerificarCambiosPendientes:', error)
+        console.error('Error en VerificarCambiosPendientes:', error?.message)
     }
 }
 
@@ -5131,7 +5127,7 @@ async function aplicarCambioAhora(cambioId, boton) {
 
         window.location.href = "../pages/polizas.html"
     } catch (error) {
-        console.error('Error al aplicar cambio:', error);
+        console.error('Error al aplicar cambio:', error?.message);
         alert(`❌ Error al aplicar el cambio:\n\n${error.message}`);
         boton.disabled = false;
         boton.innerHTML = btnOriginal;
@@ -5174,7 +5170,7 @@ async function borrarCambioProgramado(cambioId, boton) {
             await verificarCambiosPendientes(clienteId);
         }
     } catch (error) {
-        console.error('Error al borrar cambio programado:', error);
+        console.error('Error al borrar cambio programado:', error?.message);
         alert(`Error al borrar el cambio: \n\n${error.message}`);
         boton.disabled = false;
         boton.innerHTML = btnOriginal;
@@ -5192,7 +5188,7 @@ async function verDetallesCambio(cambioId) {
         if (error) throw error;
         mostrarModalDetallesCambio(cambio);
     } catch (error) {
-        console.error('Error cargando detalles del cambio:', error);
+        console.error('Error cargando detalles del cambio:', error?.message);
         alert('Error al cargar los detalles del cambio')
     }
 }
@@ -5200,7 +5196,6 @@ async function verDetallesCambio(cambioId) {
 function mostrarModalDetallesCambio(cambio) {
     const fechaEfectiva = formatearFechaSinZonaHoraria(cambio.fecha_efectividad, 'largo');
 
-    console.log('Datos del cambio:', cambio)
 
     const tipoCambio = cambio.tipo_cambio === 'recuperado' ? 'Recuperado' : 'cambio de vida'
 
@@ -5708,7 +5703,7 @@ async function descargarArchivo(url, nombreArchivo) {
 
         setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
     } catch (error) {
-        console.error('Error al descargar:', error);
+        console.error('Error al descargar:', error?.message);
         alert('No se pudo descargar el archivo');
     }
 }

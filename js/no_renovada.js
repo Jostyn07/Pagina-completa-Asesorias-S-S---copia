@@ -128,7 +128,7 @@
         campo_modificado: f.campo, valor_anterior: f.antes || null, valor_nuevo: f.despues || null,
         usuario_nombre: u.nombre, usuario_email: u.email, created_at: ahora,
       })));
-    } catch (e) { console.warn('[no renovada] historial:', e); }
+    } catch (e) { dbg.warn('[no renovada] historial:', e); }
   }
 
   async function cambiarEstado(nuevo) {

@@ -12,7 +12,7 @@ async function cargarOperadoresPorPortal(portal, selectIds = ["operadorNombre"])
 
     const { data, error } = await query;
     if (error) {
-        console.error("Error cargando operadores:", error);
+        console.error("Error cargando operadores:", error?.message);
         return;
     }
 

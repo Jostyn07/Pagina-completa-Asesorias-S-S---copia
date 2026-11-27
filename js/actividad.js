@@ -83,7 +83,7 @@ async function inicializarActividad() {
         window.addEventListener('beforeunload', limpiarSesionActividad);
 
     } catch (error) {
-        console.warn('⚠️ Error inicializando actividad:', error);
+        dbg.warn('⚠️ Error inicializando actividad:', error);
     }
 }
 
@@ -113,7 +113,7 @@ async function pingActividad() {
             .update(updateData)
             .eq('usuario_id', actividadUsuarioId);
     } catch (error) {
-        console.warn('⚠️ Error en ping actividad:', error);
+        dbg.warn('⚠️ Error en ping actividad:', error);
     }
 }
 
@@ -129,7 +129,7 @@ async function verificarInactividad() {
                 .update({ estado: 'inactivo' })
                 .eq('usuario_id', actividadUsuarioId);
         } catch (error) {
-            console.warn('⚠️ Error marcando inactivo:', error);
+            dbg.warn('⚠️ Error marcando inactivo:', error);
         }
     }
 }

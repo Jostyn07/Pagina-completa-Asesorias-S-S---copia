@@ -9,7 +9,7 @@ function inicializarPegarImagenes() {
     const textarea = document.getElementById('nuevaNota');
     
     if (!textarea) {
-        console.warn('⚠️ Textarea de notas no encontrado');
+        dbg.warn('⚠️ Textarea de notas no encontrado');
         return;
     }
     
@@ -85,7 +85,7 @@ async function procesarImagenPegada(blob) {
         };
         
         reader.onerror = function(error) {
-            console.error('Error al procesar imagen:', error);
+            console.error('Error al procesar imagen:', error?.message);
             if (typeof mostrarNotificacion === 'function') {
             }
             reject(error);

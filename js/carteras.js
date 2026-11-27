@@ -154,7 +154,7 @@
       .from('usuarios')
       .select('id, nombre, email, rol, portales, es_supervisor, supervisor_id, activo')
       .order('nombre');
-    if (error) { console.warn('[carteras] usuarios:', error.message); return; }
+    if (error) { dbg.warn('[carteras] usuarios:', error.message); return; }
     usuarios = (data || []).filter((u) => u.activo !== false);
     porId = Object.fromEntries((data || []).map((u) => [u.id, u]));
     llenarSelectUsuarios();
@@ -295,7 +295,7 @@
     const cliente = sb();
     if (!cliente) return;
     const { data: puede, error } = await cliente.rpc('tiene_permiso', { p_clave: 'gestionar_carteras' });
-    if (error) { console.warn('[carteras] permiso:', error.message); return; }
+    if (error) { dbg.warn('[carteras] permiso:', error.message); return; }
     if (!puede) return;
     estilos();
     if (!montar()) return;

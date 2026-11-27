@@ -13,7 +13,7 @@ function urlBase64ToUnit8Array(base64String) {
 
 async function inicializarNotificacionesPush() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.warn('Este navegador no soporta notificaciones')
+        dbg.warn('Este navegador no soporta notificaciones')
         return;
     }
 
@@ -24,7 +24,7 @@ async function inicializarNotificacionesPush() {
             await suscribirsePush(registration);
         }
     } catch (error) {
-        console.error('Error registrando service worker:', error);
+        console.error('Error registrando service worker:', error?.message);
     }
 }
 
@@ -66,9 +66,9 @@ async function suscribirsePush(registration) {
         });
             
         
-        if (error) console.error('Error guardando suscripcion push: ', error)
+        if (error) console.error('Error guardando suscripcion push: ', error?.message)
     } catch (error) {
-        console.error('Error suscribiendo a push', error);
+        console.error('Error suscribiendo a push', error?.message);
     }
 }
 

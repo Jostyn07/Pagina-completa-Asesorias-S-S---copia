@@ -41,7 +41,7 @@
     let renov = [];
     try { renov = await renovadasPorOperador(f.fechaDesde, f.fechaHasta); }
     catch (e) {
-      console.warn('Renovadas no disponibles, se muestran solo ventas nuevas:', e);
+      dbg.warn('Renovadas no disponibles, se muestran solo ventas nuevas:', e);
       if (miTurno === turno) original(tab);
       return;
     }

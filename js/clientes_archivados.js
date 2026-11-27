@@ -39,7 +39,7 @@ async function cargarClientesArchivados() {
         
         
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
         alert('Error al cargar clientes archivados');
     }
 }
@@ -140,7 +140,7 @@ async function restaurarCliente(clienteId) {
         cargarClientesArchivados();
         
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
         alert('Error al restaurar cliente');
     }
 }

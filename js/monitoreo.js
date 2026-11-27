@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderizarSesiones();
     }, 10 * 1000);
 
-    console.log(canalRealtime?.state);
 });
 
 async function verificarAcceso() {
@@ -53,7 +52,7 @@ async function verificarAcceso() {
             window.location.href = '../pages/home.html';
         }
     } catch (error) {
-        console.error('Error verificando acceso:', error);
+        console.error('Error verificando acceso:', error?.message);
         window.location.href = '../pages/home.html';
     }
 }
@@ -95,7 +94,7 @@ async function cargarSesiones() {
         renderizarSesiones();
 
     } catch (error) {
-        console.error('❌ Error cargando sesiones:', error);
+        console.error('❌ Error cargando sesiones:', error?.message);
     }
 }
 

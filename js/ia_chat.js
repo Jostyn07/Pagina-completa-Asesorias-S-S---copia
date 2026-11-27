@@ -175,7 +175,7 @@ async function cargarContextoIA() {
             verificarAlertasProactivasIA();
         }
     } catch (e) {
-        console.error('❌ Contexto IA:', e);
+        console.error('❌ Contexto IA:', e?.message);
         iaContextoCache = null;
     } finally {
         if (bar) bar.style.display = 'none';
@@ -219,7 +219,7 @@ async function verificarAlertasProactivasIA() {
 
         actualizarBadgeAlertasIA(alertas);
     } catch (e) {
-        console.error('❌ Alertas IA:', e);
+        console.error('❌ Alertas IA:', e?.message);
     }
 }
 
@@ -305,7 +305,7 @@ async function enviarMensajeIA(textoForzado) {
             } else {
                 agregarMensajeIADOM('error', `❌ Error: ${detalle}`);
             }
-            console.error('❌ IA proxy:', response.status, err);
+            console.error('❌ IA proxy:', response.status, err?.message);
             iaChatHistorial.pop();
             return;
         }
@@ -382,7 +382,7 @@ async function enviarMensajeIA(textoForzado) {
         typingEl?.remove();
         agregarMensajeIADOM('error', `❌ Error de red: ${error.message}`);
         iaChatHistorial.pop();
-        console.error('❌ Fetch IA:', error);
+        console.error('❌ Fetch IA:', error?.message);
     } finally {
         iaTyping = false;
         actualizarBtnSendIA(false);
@@ -429,7 +429,7 @@ async function enviarFeedbackIA(feedbackId, valor) {
             await supabaseClient.from('ia_uso').update({ feedback: valor }).eq('id', data.id);
         }
     } catch (e) {
-        console.warn('⚠️ Feedback IA:', e);
+        dbg.warn('⚠️ Feedback IA:', e);
     }
 }
 
@@ -456,7 +456,7 @@ async function registrarUsoIA(tokensEntrada = 0, tokensSalida = 0, pregunta = ''
             mensaje_usuario: pregunta.slice(0, 500)
         });
     } catch (e) {
-        console.warn('⚠️ No se pudo registrar uso IA:', e);
+        dbg.warn('⚠️ No se pudo registrar uso IA:', e);
     }
 }
 
@@ -491,7 +491,7 @@ function renderizarClientesIA(jsonStr) {
 
         return `<div class="ia-clientes-lista">${items}</div>`;
     } catch (e) {
-        console.warn('⚠️ IA bloque <clientes>:', e);
+        dbg.warn('⚠️ IA bloque <clientes>:', e);
         return '';
     }
 }

@@ -27,7 +27,7 @@ function sanitizarParaIA(obj) {
 function limitarRegistros(datos, rol) {
     const max = MAX_REGISTROS_IA[rol] || 50;
     if (Array.isArray(datos) && datos.length > max) {
-        console.warn(`⚠️ IA: datos truncados a ${max} (rol: ${rol})`);
+        dbg.warn(`⚠️ IA: datos truncados a ${max} (rol: ${rol})`);
         return datos.slice(0, max);
     }
     return datos;
@@ -90,7 +90,7 @@ async function obtenerPolizasParaIA(limite) {
         return sanitizarParaIA(limitarRegistros(resultado, nivel.rol));
 
     } catch (e) {
-        console.error('❌ IA polizas:', e);
+        console.error('❌ IA polizas:', e?.message);
         return [];
     }
 }
@@ -215,7 +215,7 @@ async function obtenerEstadisticasCompletasParaIA() {
         };
 
     } catch (e) {
-        console.error('❌ IA stats completas:', e);
+        console.error('❌ IA stats completas:', e?.message);
         return {};
     }
 }
@@ -241,7 +241,7 @@ async function obtenerRecordatoriosParaIA() {
         return sanitizarParaIA(data || []);
 
     } catch (e) {
-        console.error('❌ IA recordatorios:', e);
+        console.error('❌ IA recordatorios:', e?.message);
         return [];
     }
 }

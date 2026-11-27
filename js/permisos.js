@@ -14,7 +14,7 @@ async function cargarRolUsuario() {
         const usuarioData = localStorage.getItem('usuario');
         
         if (!usuarioData) {
-            console.warn('⚠️ No hay sesión en localStorage');
+            dbg.warn('⚠️ No hay sesión en localStorage');
             window.location.href = './login.html';
             return null;
         }
@@ -38,7 +38,7 @@ async function cargarRolUsuario() {
             .single();
         
         if (dbError || !usuarioDB) {
-            console.error('Usuario no encontrado en BD:', dbError);
+            console.error('Usuario no encontrado en BD:', dbError?.message);
             window.location.href = '../index.html'
             return null
         }
@@ -53,7 +53,7 @@ async function cargarRolUsuario() {
         return rolUsuario
         
     } catch (error) {
-        console.error('❌ Error al cargar rol:', error);
+        console.error('❌ Error al cargar rol:', error?.message);
         return 'operador';
     }
 }

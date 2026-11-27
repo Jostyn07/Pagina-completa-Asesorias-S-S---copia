@@ -33,7 +33,7 @@ async function obtenerUsuarioActualRecordatorio() {
         .eq('id', user.id)
         .single();
     if (error) {
-        console.error('Error obteniendo usuario actual:', error);
+        console.error('Error obteniendo usuario actual:', error?.message);
         return null
     }
     usuarioActualCache = data;
@@ -61,7 +61,7 @@ async function sincronizarRecordatoriosVencidos(recordatorios) {
         .in('id', idsVencidos);
 
     if (error) {
-        console.error('Error buscando cliente:', error);
+        console.error('Error buscando cliente:', error?.message);
     }
 
     return (recordatorios || []).map(r =>
@@ -101,7 +101,7 @@ function suscribirRecordatoriosEnVivo() {
             })
             .subscribe();
     } catch (e) {
-        console.warn('Recordatorios en vivo no disponibles:', e);
+        dbg.warn('Recordatorios en vivo no disponibles:', e);
     }
 }
 
@@ -278,7 +278,7 @@ async function cargarRecordatorios() {
         renderizarRecordatorios(estadoFiltroActual);
 
     } catch (error) {
-        console.error('❌ Error cargando recordatorios:', error);
+        console.error('❌ Error cargando recordatorios:', error?.message);
     }
 }
 
@@ -585,7 +585,7 @@ async function guardarRecordatorio() {
         await cargarRecordatorios();
 
     } catch (error) {
-        console.error('❌ Error guardando recordatorio:', error);
+        console.error('❌ Error guardando recordatorio:', error?.message);
         alert('Error al guardar: ' + error.message);
     }
 }
@@ -642,7 +642,7 @@ async function cambiarEstadoRecordatorio(id, nuevoEstado) {
         await cargarRecordatorios();
         renderizarRecordatorios(estadoFiltroActual);
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
     }
 }
 async function guardarRespuesta(id, tipo, valor) {
@@ -670,7 +670,7 @@ async function guardarRespuesta(id, tipo, valor) {
             r[campoFecha] = valor ? new Date().toISOString() : null;
         }
     } catch (error) {
-        console.error('❌ Error guardando respuesta:', error);
+        console.error('❌ Error guardando respuesta:', error?.message);
         alert('No se pudo guardar la respuesta: ' + error.message);
     }
 }
@@ -694,7 +694,7 @@ async function eliminarRecordatorio(id) {
         }
         await cargarRecordatorios();
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
     }
 }
 
@@ -731,7 +731,7 @@ async function buscarClienteRecordatorio(texto) {
         }
         const { data, error } = await consulta
         if (error) {
-            console.error('âŒ Error buscando cliente:', error);
+            console.error('âŒ Error buscando cliente:', error?.message);
             sugerencias.innerHTML = '<div class="dr-sug-item dr-sug-empty">Error buscando clientes</div>';
             sugerencias.style.display = 'block';
             return;
@@ -868,6 +868,6 @@ async function sincronizarGoogleCalendar (accion, datos) {
             body: JSON.stringify({ accion, ...datos })
         });
     } catch (error) {
-        console.error('Error sincronizando con Google Calendar:', error);
+        console.error('Error sincronizando con Google Calendar:', error?.message);
     }
 }

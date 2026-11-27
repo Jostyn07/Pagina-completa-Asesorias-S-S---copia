@@ -92,7 +92,7 @@
     const original = window.rellenarFormulario;
     window.rellenarFormulario = async function (cliente, poliza) {
       const r = await original.apply(this, arguments);
-      try { aplicarPoliza(poliza); } catch (e) { console.warn('[agente35_ui]', e); }
+      try { aplicarPoliza(poliza); } catch (e) { dbg.warn('[agente35_ui]', e); }
       return r;
     };
 
@@ -140,7 +140,7 @@
         });
         const el = document.getElementById('cardNuevas');
         if (el) el.textContent = unicas.size;
-      } catch (e) { console.warn('[agente35_ui] cards', e); }
+      } catch (e) { dbg.warn('[agente35_ui] cards', e); }
       return r;
     };
   }

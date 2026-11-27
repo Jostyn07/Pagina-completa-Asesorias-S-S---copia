@@ -48,7 +48,7 @@ async function cargarRegistros() {
         actualizarContadores();
 
     } catch (error) {
-        console.error('❌ Error al cargar registros:', error);
+        console.error('❌ Error al cargar registros:', error?.message);
         mostrarMensajeVacio('Error al cargar datos. Intenta recargar la página.');
     } finally {
         mostrarCarga(false);
@@ -326,7 +326,7 @@ async function ciclarRecuperado(id, valorActual) {
         actualizarContadores();
 
     } catch (error) {
-        console.error('❌ Error al actualizar recuperado:', error);
+        console.error('❌ Error al actualizar recuperado:', error?.message);
         alert('No se pudo actualizar el estado. Intenta de nuevo.');
     }
 }
@@ -885,7 +885,7 @@ function buscarClientesFiltroRev(valor) {
             const resultados = await buscarClientes(valor.trim());
             renderAutocompleteFiltroRev(resultados || []);
         } catch (error) {
-            console.error('Error buscando clientes:', error);
+            console.error('Error buscando clientes:', error?.message);
         }
     }, 300);
 }

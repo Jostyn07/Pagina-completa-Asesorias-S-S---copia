@@ -86,7 +86,7 @@ async function cargarOperadoresFiltro() {
         });
         
     } catch (error) {
-        console.error('Error al cargar operadores:', error);
+        console.error('Error al cargar operadores:', error?.message);
     }
 }
 
@@ -102,7 +102,7 @@ async function adjuntarClientes(evaluaciones) {
         .select('id, nombres, apellidos, telefono1')
         .in('id', ids);
     if (error) {
-        console.warn('No se pudieron cargar los clientes evaluados:', error);
+        dbg.warn('No se pudieron cargar los clientes evaluados:', error);
         return;
     }
     const mapa = Object.fromEntries((data || []).map(c => [c.id, c]));
@@ -138,7 +138,7 @@ async function cargarEvaluaciones() {
         const { data, error } = await query;
         
         if (error) {
-            console.warn('⚠️ Error al cargar evaluaciones:', error);
+            dbg.warn('⚠️ Error al cargar evaluaciones:', error);
             // Usar datos de ejemplo si hay error
             todasEvaluaciones = obtenerEvaluacionesEjemplo();
         } else {
@@ -157,7 +157,7 @@ async function cargarEvaluaciones() {
         actualizarEstadisticas();
         
     } catch (error) {
-        console.error('❌ Error al cargar evaluaciones:', error);
+        console.error('❌ Error al cargar evaluaciones:', error?.message);
         // Usar datos de ejemplo en caso de error
         todasEvaluaciones = obtenerEvaluacionesEjemplo();
         evaluacionesFiltradas = [...todasEvaluaciones];

@@ -19,7 +19,7 @@
   const st = { anio: String(new Date().getFullYear()), dimension: 'total', valor: 'Todas', fechas: [], puedeMeta: false, operadores: [] };
   let chEvo = null, chVentas = null;
 
-  function avisar(msg) { (window.notyf?.error?.(msg)) || console.warn(msg); }
+  function avisar(msg) { (window.notyf?.error?.(msg)) || dbg.warn(msg); }
 
   // ---------------------------------------------------------------- comparativo
   async function cargarFechas() {

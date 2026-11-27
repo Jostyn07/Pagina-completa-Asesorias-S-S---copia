@@ -42,7 +42,7 @@ function guardarMinimizadosLS() {
 
         localStorage.setItem(BANNER_LS_KEY, JSON.stringify(existing));
     } catch (e) {
-        console.warn('No se pudo guardar estado de banners en localStorage:', e);
+        dbg.warn('No se pudo guardar estado de banners en localStorage:', e);
     }
 }
 
@@ -74,7 +74,7 @@ function cargarMinimizadosLS() {
             localStorage.setItem(BANNER_LS_KEY, JSON.stringify(stored));
         }
     } catch (e) {
-        console.warn('No se pudo leer estado de banners desde localStorage:', e);
+        dbg.warn('No se pudo leer estado de banners desde localStorage:', e);
         bannersMinimizados = new Set();
     }
 }
@@ -89,7 +89,7 @@ function eliminarMinimizadoLS(id) {
         delete stored[id];
         localStorage.setItem(BANNER_LS_KEY, JSON.stringify(stored));
     } catch (e) {
-        console.warn('Error limpiando localStorage de banner:', e);
+        dbg.warn('Error limpiando localStorage de banner:', e);
     }
 }
 
@@ -128,7 +128,7 @@ async function cargarBannerActivo() {
         renderizarBanners();
         actualizarBadgeBanners(bannersActivos.length);
     } catch (err) {
-        console.error('Error cargando banners: ', err);
+        console.error('Error cargando banners: ', err?.message);
     }
 }
 
@@ -252,7 +252,7 @@ function reproducirSonidoBanner() {
         osc2.stop(ctx.currentTime + 0.55);
 
     } catch (err) {
-        console.warn('No se pudo reproducir sonido:', err);
+        dbg.warn('No se pudo reproducir sonido:', err);
     }
 }
 
@@ -296,7 +296,7 @@ async function  eliminarBanner(id) {
         renderizarBanners();
         actualizarBadgeBanners(bannersActivos.length);
     } catch (err) {
-        console.error('Error eliminando banner', err);
+        console.error('Error eliminando banner', err?.message);
     }
 }
 
@@ -629,7 +629,7 @@ async function verificarBannerGlobalActivo() {
             </div>
         `;
     } catch (err) {
-        console.error('Error verificando banner global: ', err);
+        console.error('Error verificando banner global: ', err?.message);
     }
 }
 
@@ -713,7 +713,7 @@ async function publicarBanner() {
         cerrarGestorBanners();
         await cargarBannerActivo();
     } catch (err) {
-        console.error('Error publicando banner: ', err);
+        console.error('Error publicando banner: ', err?.message);
         btnPublicar.disabled = false;
         btnPublicar.innerHTML = `
             <span class="material-symbols-rounded" style="font-family:'Material Symbols Rounded'">send</span>
@@ -744,7 +744,7 @@ async function cargarOperadoresParaBanner() {
         if (error) throw error;
         todosLosOperadores = data || [];
     } catch (err) {
-        console.error('Error cargando operadores: ', err);
+        console.error('Error cargando operadores: ', err?.message);
         todosLosOperadores = [];
     }
 }

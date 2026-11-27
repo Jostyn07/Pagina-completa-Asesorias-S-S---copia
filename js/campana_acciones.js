@@ -25,7 +25,7 @@
     };
     let { data, error } = await q(conBorrado);
     if (error && conBorrado) { conBorrado = false; ({ data, error } = await q(false)); }
-    if (error) { console.error('Error cargando notificaciones', error); return; }
+    if (error) { console.error('Error cargando notificaciones', error?.message); return; }
     notificacionesCampana = data || [];
     renderizarCampana();
     actualizarBadgeCampana();
@@ -69,7 +69,7 @@
       renderizarCampana();
       actualizarBadgeCampana();
     } catch (e) {
-      console.error('No se pudieron marcar como leídas:', e);
+      console.error('No se pudieron marcar como leídas:', e?.message);
     } finally { btn.disabled = false; }
   }
 
@@ -81,7 +81,7 @@
     actualizarBadgeCampana();
     const { error } = await sb().from('notificaciones_app').update({ borrada_en: new Date().toISOString() }).eq('id', id);
     if (error) {
-      console.error('No se pudo borrar la notificación:', error);
+      console.error('No se pudo borrar la notificación:', error?.message);
       notificacionesCampana.splice(i, 0, quitada);
       renderizarCampana();
       actualizarBadgeCampana();

@@ -29,7 +29,7 @@
   const adelantadas = {};
   function adelantar(nombre, id) {
     if (typeof original[nombre] !== 'function') return;
-    adelantadas[nombre] = { id, promesa: Promise.resolve().then(() => original[nombre](id)).catch((e) => console.error(nombre, e)) };
+    adelantadas[nombre] = { id, promesa: Promise.resolve().then(() => original[nombre](id)).catch((e) => console.error(nombre, e?.message)) };
   }
   ['cargarDocumentos', 'cargarNotas', 'verificarCambiosPendientes'].forEach((nombre) => {
     if (typeof original[nombre] !== 'function') return;
@@ -70,8 +70,8 @@
       if (cliRes.error) throw cliRes.error;
       const clienteData = cliRes.data;
       if (!clienteData) throw new Error('Cliente no encontrado');
-      if (polRes.error) console.warn('⚠️ Error al cargar pólizas:', polRes.error);
-      if (depRes.error) console.warn('⚠️ Error al cargar dependientes:', depRes.error);
+      if (polRes.error) dbg.warn('⚠️ Error al cargar pólizas:', polRes.error);
+      if (depRes.error) dbg.warn('⚠️ Error al cargar dependientes:', depRes.error);
 
       const polizaData = polRes.data && polRes.data.length ? polRes.data[0] : null;
       if (polizaData) polizaId = polizaData.id;   // variable global de cliente_editar.js
@@ -96,10 +96,10 @@
       if (document.querySelector('#tab-historial.active') && typeof cargarHistorial === 'function') await cargarHistorial(id);
       if (typeof sincronizarBadgesMeses === 'function') sincronizarBadgesMeses();
 
-      console.info(`⚡ Cliente cargado en ${Math.round(performance.now() - t0)} ms (carga en paralelo)`);
+      dbg.info(`⚡ Cliente cargado en ${Math.round(performance.now() - t0)} ms (carga en paralelo)`);
     } catch (error) {
       // Plan B: la carga original, para no dejar la pantalla vacía
-      console.error('Carga rápida falló, se usa la original:', error);
+      console.error('Carga rápida falló, se usa la original:', error?.message);
       Object.keys(adelantadas).forEach((k) => delete adelantadas[k]);
       if (btnSubmit) { btnSubmit.innerHTML = textoOriginal; btnSubmit.disabled = false; }
       return original.cargarDatosCliente(id);

@@ -54,9 +54,9 @@
         p_detalle: datos.detalle ?? {},
         p_metodo: datos.metodo ?? 'ui',
       });
-      if (error) console.warn('[auditoría]', accion, error.message);
+      if (error) dbg.warn('[auditoría]', accion, error.message);
     } catch (e) {
-      console.warn('[auditoría]', accion, e?.message || e);
+      dbg.warn('[auditoría]', accion, e?.message || e);
     }
   }
 

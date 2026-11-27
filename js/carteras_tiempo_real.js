@@ -21,7 +21,7 @@
   function avisar(msg) {
     if (typeof mostrarNotificacion === 'function') return mostrarNotificacion(msg, 'info');
     if (window.Notyf) return new Notyf({ duration: 4000 }).success(msg);
-    console.info(msg);
+    dbg.info(msg);
   }
 
   // Varios cambios seguidos (p. ej. 10 carteras concedidas a la vez) → una sola recarga
@@ -34,7 +34,7 @@
       try {
         if (typeof cargarPolizas === 'function') await cargarPolizas();
       } catch (e) {
-        console.warn('[carteras] no se pudo recargar:', e?.message || e);
+        dbg.warn('[carteras] no se pudo recargar:', e?.message || e);
       }
     }, 800);
   }
@@ -52,8 +52,7 @@
         { event: '*', schema: 'public', table: 'permisos_cartera', filter: `beneficiario_id=eq.${uid}` },
         recargar)
       .subscribe((estado) => {
-        if (estado === 'SUBSCRIBED') console.info('[carteras] escuchando cambios de acceso en tiempo real');
-        if (estado === 'CHANNEL_ERROR' || estado === 'TIMED_OUT') console.warn('[carteras] tiempo real no disponible:', estado);
+        if (estado === 'CHANNEL_ERROR' || estado === 'TIMED_OUT') dbg.warn('[carteras] tiempo real no disponible:', estado);
       });
 
     window.addEventListener('beforeunload', () => { if (canal) cliente.removeChannel(canal); });

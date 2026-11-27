@@ -38,7 +38,7 @@
       })));
       if (error) throw error;
       if (document.querySelector('#tab-historial.active')) await cargarHistorial(clienteId);
-    } catch (e) { console.warn('[historial] no se registró:', e); }
+    } catch (e) { dbg.warn('[historial] no se registró:', e); }
   }
 
   function diff(antes, despues, etiquetas) {
@@ -100,7 +100,7 @@
           if (obs && obs !== n(originales?.observacion_mercado)) nuevos.observacion_mercado = obs;
         }
       }
-    } catch (e) { console.warn('[historial] comparación extra omitida:', e); }
+    } catch (e) { dbg.warn('[historial] comparación extra omitida:', e); }
     return compararOriginal.call(this, originales, nuevos, seccion);
   };
 
@@ -161,7 +161,7 @@
           });
         });
         await registrar('dependiente_editado', 'Dependientes', cambios);
-      } catch (e) { console.warn('[historial] dependientes:', e); }
+      } catch (e) { dbg.warn('[historial] dependientes:', e); }
     }
     return r;
   };
@@ -252,7 +252,7 @@
         if (n(pA.tiene_metodo_pago) !== n(pD.tiene_metodo_pago)) cambios.push({ campo: 'Tiene método de pago', antes: pA.tiene_metodo_pago || '(vacío)', despues: pD.tiene_metodo_pago || '(vacío)' });
         if (n(pA.tiene_pago_automatico) !== n(pD.tiene_pago_automatico)) cambios.push({ campo: 'Pago automático', antes: pA.tiene_pago_automatico || '(vacío)', despues: pD.tiene_pago_automatico || '(vacío)' });
         await registrar('metodo_pago_editado', 'Método de pago', cambios);
-      } catch (e) { console.warn('[historial] métodos de pago:', e); }
+      } catch (e) { dbg.warn('[historial] métodos de pago:', e); }
     }
     return r;
   };
@@ -276,7 +276,7 @@
         diff(antes, despues, { estado_pago: 'Estado de pago', fecha_pago: 'Fecha de pago' })
           .forEach((c) => cambios.push({ campo: `${c.campo} ${anio}`, antes: c.antes, despues: c.despues }));
         await registrar('pagos_editados', 'Pagos', cambios);
-      } catch (e) { console.warn('[historial] meses pagados:', e); }
+      } catch (e) { dbg.warn('[historial] meses pagados:', e); }
     }
     return r;
   };
@@ -295,7 +295,7 @@
           const cambios = diff(antes, despues, { fecha_seguimiento: 'Fecha', medio_comunicacion: 'Medio', observacion: 'Observación', seguimiento_efectivo: 'Efectivo' });
           await registrar('seguimiento_editado', 'Seguimientos', cambios);
         }
-      } catch (e) { console.warn('[historial] seguimiento:', e); }
+      } catch (e) { dbg.warn('[historial] seguimiento:', e); }
     }
     return r;
   };

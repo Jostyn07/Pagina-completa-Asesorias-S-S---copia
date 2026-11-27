@@ -1,5 +1,7 @@
 (function () {
   'use strict';
+  // polizas.js ya descarga por bloques en paralelo (cargarPolizas); este envoltorio queda desactivado
+  if (window.__polizasCargaPropia) return;
   const sb = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
   if (!sb || sb.__polCargaCompleta) return;
   sb.__polCargaCompleta = true;
@@ -33,7 +35,7 @@
         }
         return { data: filas, error: null, count: total, status: 200, statusText: 'OK' };
       } catch (e) {
-        console.warn('[pólizas] carga por partes falló, se usa la consulta normal:', e);
+        dbg.warn('[pólizas] carga por partes falló, se usa la consulta normal:', e);
         let q = fromPrevio(tabla).select(cols, opts);
         pasos.forEach(([m, a]) => { q = q[m](...a); });
         return await q;

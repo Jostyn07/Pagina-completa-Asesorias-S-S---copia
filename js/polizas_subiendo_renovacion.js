@@ -50,7 +50,7 @@
   window.cargarPolizas = async function () {
     const [r] = await Promise.all([
       cargarOriginal.apply(this, arguments),
-      cargarEnCurso().catch((e) => console.warn('[subiendo renovada] sin datos:', e)),
+      cargarEnCurso().catch((e) => dbg.warn('[subiendo renovada] sin datos:', e)),
     ]);
     try {
       quitarBorradores();

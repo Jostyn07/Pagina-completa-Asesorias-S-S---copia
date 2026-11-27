@@ -63,7 +63,7 @@
       const { error } = await sb().from('preferencias_usuario')
         .upsert({ usuario_id: uid, menu_orden: orden, actualizado_en: new Date().toISOString() }, { onConflict: 'usuario_id' });
       if (error) throw error;
-    } catch (e) { console.warn('[menu_orden] no se guardó en el perfil:', e); }
+    } catch (e) { dbg.warn('[menu_orden] no se guardó en el perfil:', e); }
   }
 
   // id del usuario sin esperar a la red (lo guarda el login en localStorage)
@@ -97,7 +97,7 @@
         guardar();   // había orden local y aún no estaba en el perfil
       }
       try { sessionStorage.setItem(marca, '1'); } catch (e) {}
-    } catch (e) { console.warn('[menu_orden] usando orden local:', e); }
+    } catch (e) { dbg.warn('[menu_orden] usando orden local:', e); }
   }
 
   // ------------------------------------------------------------ edición

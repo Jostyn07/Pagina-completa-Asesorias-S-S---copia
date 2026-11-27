@@ -107,7 +107,7 @@
   function aviso(msg, tipo) {
     if (typeof window.mostrarNotificacion === 'function') return window.mostrarNotificacion(msg, tipo || 'info');
     if (window.Notyf) { const n = new window.Notyf(); return tipo === 'error' ? n.error(msg) : n.success(msg); }
-    console.log(msg);
+    dbg.log(msg);
   }
   async function usuarioId() {
     try { const { data } = await sb().auth.getUser(); return data?.user?.id || null; } catch { return null; }
@@ -119,7 +119,7 @@
         documento_id: documentoId, accion, campo: campo || null,
         antes: antes == null ? null : String(antes), despues: despues == null ? null : String(despues), usuario_id: uid
       });
-    } catch (e) { console.warn('historial documentos:', e); }
+    } catch (e) { dbg.warn('historial documentos:', e); }
   }
 
   function rolDeRelacion(rel) {
@@ -454,7 +454,7 @@
           aviso(files.length > 1 ? `${files.length} documentos subidos` : 'Documento subido', 'success');
           await recargar();
         } catch (err) {
-          console.error(err);
+          console.error('Error:', err?.message);
           aviso('No se pudo subir: ' + (err.message || err), 'error');
           btn.disabled = false; btn.textContent = 'Subir';
         }
@@ -538,7 +538,7 @@
       for (let i = 0; i < files.length; i++) {
         if (zona) zona.querySelector('.docf-drop-txt').textContent = `Subiendo ${i + 1} de ${files.length}…`;
         try { const id = await subirArchivo(files[i], { integrante: 'titular', categoria: 'sin_clasificar', subtipo: null, anio: null, auto: true }); if (id) ids.push(id); }
-        catch (e) { console.error(e); aviso(`No se pudo subir ${files[i].name}: ${e.message || e}`, 'error'); }
+        catch (e) { console.error('Error:', e?.message); aviso(`No se pudo subir ${files[i].name}: ${e.message || e}`, 'error'); }
       }
     } finally {
       zona?.classList.remove('subiendo');
@@ -697,7 +697,7 @@
       cerrarModal(); return recargar();
     }
     const { error } = await sb().from('documentos').update(cambios).eq('id', d.id);
-    if (error) { console.error(error); return aviso('No se pudo guardar: ' + error.message, 'error'); }
+    if (error) { console.error('Error:', error?.message); return aviso('No se pudo guardar: ' + error.message, 'error'); }
     await historial(d.id, accion, null, antes ?? null, despues ?? null);
     cerrarModal();
     aviso('Cambios guardados', 'success');
@@ -765,7 +765,7 @@
       aviso(`Analizando ${ids.length} documento(s)…`, 'info');
       for (let i = 0; i < ids.length; i += 5) {
         const { data, error } = await sb().functions.invoke('clasificar-documento', { body: { documento_ids: ids.slice(i, i + 5) } });
-        if (error) { errores += Math.min(5, ids.length - i); console.error('IA:', error); continue; }
+        if (error) { errores += Math.min(5, ids.length - i); console.error('IA:', error?.message); continue; }
         (data?.resultados || []).forEach((r) => { if (r.estado === 'procesado') ok++; else if (r.estado === 'no_compatible') noComp++; else errores++; });
       }
       aviso(`IA: ${ok} procesado(s)${noComp ? `, ${noComp} no compatible(s)` : ''}${errores ? `, ${errores} con error` : ''}. Revisa los datos antes de confirmar.`, errores ? 'warning' : 'success');
@@ -956,7 +956,7 @@
       if (S.modo === 'pendiente') cargarPendiente(); else await cargarTodo(S.clienteId);
       render();
     }
-    catch (err) { console.error('documentos:', err); }
+    catch (err) { console.error('documentos:', err?.message); }
   }
 
   // ---------------------------------------------------- reemplazo de la pestaña
@@ -969,7 +969,7 @@
       render();
     } catch (err) {
       // Si algo falla (p. ej. falta la migración), se usa la vista anterior: producción no se detiene
-      console.error('Vista nueva de documentos no disponible, se usa la anterior:', err);
+      console.error('Vista nueva de documentos no disponible, se usa la anterior:', err?.message);
       if (typeof cargarOriginal === 'function') return cargarOriginal(clienteId);
     }
   };
@@ -986,7 +986,7 @@
       return;
     }
     try { S.modo = 'bd'; await cargarTodo(id); render(); }
-    catch (err) { console.error('documentos:', err); }
+    catch (err) { console.error('documentos:', err?.message); }
   }
 
   // El botón "Agregar Archivo" de las 3 pantallas abre el flujo nuevo
@@ -1032,17 +1032,17 @@
         try {
           const nuevo = await subirArchivo(d._file, { integrante: clave, categoria: d.categoria, subtipo: d.subtipo, anio: d.anio_fiscal, auto: d._auto });
           if (d._auto && nuevo && !String(d.tipo_archivo || '').startsWith('audio/')) paraIA.push(nuevo);
-        } catch (err) { console.error('No se pudo subir', d.nombre_archivo, err); fallidos.push(d.nombre_archivo); }
+        } catch (err) { console.error('No se pudo subir', d.nombre_archivo, err?.message); fallidos.push(d.nombre_archivo); }
       }
     } catch (err) {
-      console.error('Documentos pendientes:', err);
+      console.error('Documentos pendientes:', err?.message);
       fallidos.push(...pendientes.map((d) => d.nombre_archivo));
     }
     S.pendientes = [];
     // Análisis IA de lo que se subió sin datos (espera máx. 20 s para no frenar el guardado del cliente)
     if (paraIA.length) {
       const ia = (async () => { for (let i = 0; i < paraIA.length; i += 5) await sb().functions.invoke('clasificar-documento', { body: { documento_ids: paraIA.slice(i, i + 5) } }); })();
-      await Promise.race([ia.catch((e) => console.warn('IA:', e)), new Promise((r) => setTimeout(r, 20000))]);
+      await Promise.race([ia.catch((e) => dbg.warn('IA:', e)), new Promise((r) => setTimeout(r, 20000))]);
     }
     if (fallidos.length) alert('El cliente se guardó, pero estos archivos no se pudieron subir. Súbelos desde Editar cliente > Documentos:\n\n' + fallidos.join('\n'));
   }

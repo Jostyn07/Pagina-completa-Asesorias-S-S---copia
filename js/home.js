@@ -63,7 +63,7 @@ async function cargarPolizasParaGrafico() {
         return aplicarFiltros();
         
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
         return [];
     }
 }
@@ -298,7 +298,7 @@ async function cargarUsuariosParaGrafica() {
         .eq('activo', true);
 
     if (error) {
-        console.error('Error cargando usuarios:', error);
+        console.error('Error cargando usuarios:', error?.message);
         return
     }
     usuariosGlobal = data || []
@@ -615,7 +615,7 @@ function formatoUS(fecha) {
         
         return '';
     } catch (error) {
-        console.error('Error al formatear fecha:', error);
+        console.error('Error al formatear fecha:', error?.message);
         return '';
     }
 }
@@ -642,7 +642,7 @@ function formatoISO(fecha) {
         
         return '';
     } catch (error) {
-        console.error('Error al formatear fecha:', error);
+        console.error('Error al formatear fecha:', error?.message);
         return '';
     }
 }

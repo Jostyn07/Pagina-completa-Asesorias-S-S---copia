@@ -248,7 +248,7 @@ async function cargarMovimientos() {
         aplicarFiltros();
 
     } catch (e) {
-        console.error('❌ Error cargando movimientos:', e);
+        console.error('❌ Error cargando movimientos:', e?.message);
         mostrarError('No se pudieron cargar los movimientos. Intenta recargar la página.');
         mostrarCargando(false);
     }
@@ -578,7 +578,7 @@ async function guardarObservacion(btnEl) {
         cancelarObservacion(btnEl);
 
     } catch (e) {
-        console.error('❌ Error guardando observación:', e);
+        console.error('❌ Error guardando observación:', e?.message);
         alert('Error al guardar la observación');
     }
 }

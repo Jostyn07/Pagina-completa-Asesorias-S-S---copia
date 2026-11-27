@@ -38,7 +38,7 @@ async function cargarUsuarios() {
         renderizarTabla();
         
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
         alert('Error al cargar usuarios: ' + error.message);
     }
 }
@@ -260,7 +260,7 @@ async function guardarUsuario(event) {
         cargarUsuarios();
         
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
         alert('Error al guardar usuario: ' + error.message);
     }
 }
@@ -283,7 +283,7 @@ async function eliminarUsuario(id, nombre) {
         cargarUsuarios();
         
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
         alert('Error al eliminar usuario: ' + error.message);
     }
 }
@@ -378,10 +378,7 @@ async function cargarSupervisores() {
         .eq('es_supervisor', true)
         .order('nombre');
 
-    console.log('Supervisores encontrados:', data);
-    console.log('Error:', error);
     const select = document.getElementById('supervisorId');
-    console.log('supervisor_id a guardar:', document.getElementById('supervisorId').value);
     select.innerHTML = '<option value="">Sin supervisor</option>';
     (data || []).forEach(s => {
         select.innerHTML += `<option value="${s.id}">${s.nombre}</option>`

@@ -31,7 +31,7 @@ async function cargarEstadoCalendario() {
             document.getElementById('calCorreoGoogle').value = data.calendar_id;
         }
     } catch (error) {
-        console.error('Error cargando estado de calendario:', error);
+        console.error('Error cargando estado de calendario:', error?.message);
         renderizarEstado(null, true);
     }
 }
@@ -147,7 +147,7 @@ async function guardarYVerificarCalendario() {
         await inicializarCalendarioVisual();
 
     } catch (error) {
-        console.error('Error guardando calendario:', error);
+        console.error('Error guardando calendario:', error?.message);
         alert('Error al guardar: ' + error.message);
     } finally {
         btn.disabled = false;
@@ -209,7 +209,7 @@ function inicializarCalendarioVisual(usuarioIdObjetivo = null) {
 
                 successCallback(eventosFormateados);
             } catch (error) {
-                console.error('Error cargando eventos del calendario:', error);
+                console.error('Error cargando eventos del calendario:', error?.message);
                 failureCallBack(error);
             }
         }

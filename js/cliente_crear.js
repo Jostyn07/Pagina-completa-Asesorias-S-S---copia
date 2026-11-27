@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     .upload(path, file, { cacheControl: '3600', upsert: false });
 
                 if (error) {
-                    console.error('Error subiendo imagen:', error);
+                    console.error('Error subiendo imagen:', error?.message);
                     continue;
                 }
 
@@ -153,7 +153,7 @@ async function subirImagenQuill(file) {
         }
 
     } catch (error) {
-        console.error('Error al subir imagen:', error)
+        console.error('Error al subir imagen:', error?.message)
     }
 }
 
@@ -894,7 +894,7 @@ async function guardarMetodoPago(clienteId) {
         if (error) throw error;
 
     } catch (error) {
-        console.error('Error al guardar métodos de pago:', error);
+        console.error('Error al guardar métodos de pago:', error?.message);
     }
 }
 
@@ -1309,7 +1309,7 @@ async function agregarNota(clienteId) {
         
         
     } catch (error) {
-        console.error('❌ Error al agregar nota:', error);
+        console.error('❌ Error al agregar nota:', error?.message);
         mostrarNotificacion('❌ Error al agregar nota: ' + error.message, 'error');
     }
 }
@@ -1375,7 +1375,7 @@ function cargarBorradorAutomatico() {
             rellenarFormularioDesdeObj(datos);
             ;
         } catch (error) {
-            console.error('Error al cargar borrador:', error);
+            console.error('Error al cargar borrador:', error?.message);
         }
     }
 }
@@ -1423,7 +1423,7 @@ async function handleSubmit(event) {
         const formData = obtenerDatosFormulario();
         await crearCliente(formData);
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error:', error?.message);
         alert(`Error al guardar: ${error.message}`);
         desbloquearBoton(btnSubmit, textoOriginal)
     }
@@ -1620,7 +1620,7 @@ async function crearCliente(formData) {
                     });
                 
                 if (uploadError) {
-                    console.error('Error al subir archivo:', uploadError);
+                    console.error('Error al subir archivo:', uploadError?.message);
                     continue;
                 }
                 
@@ -1642,7 +1642,7 @@ async function crearCliente(formData) {
                 });
                 
             } catch (error) {
-                console.error(`Error procesando documento ${i}:`, error);
+                console.error(`Error procesando documento ${i}:`, error?.message);
             }
         }
         
@@ -1733,7 +1733,7 @@ async function crearCliente(formData) {
         });
         ;
     } catch (errorSheets) {
-        console.error('⚠️ Error al enviar a Google Sheets:', errorSheets);
+        console.error('⚠️ Error al enviar a Google Sheets:', errorSheets?.message);
     }
 
     try {
@@ -1750,7 +1750,7 @@ async function crearCliente(formData) {
             cliente_telefono: formData.telefono1?.replace(/\D/g, '') || '',
         });
     } catch (e) {
-        console.warn('Error registrando movimiento:', e)
+        dbg.warn('Error registrando movimiento:', e)
     }
     
     localStorage.removeItem('borrador_cliente');
@@ -1812,7 +1812,7 @@ async function generarNumeroPoliza() {
         
         return `POL-${anio}-${String(siguiente).padStart(4, '0')}`;
     } catch (error) {
-        console.error('Error al generar número:', error);
+        console.error('Error al generar número:', error?.message);
         return `POL-${anio}-${Date.now().toString().slice(-4)}`;
     }
 }
@@ -1871,7 +1871,7 @@ async function cerrarSesion() {
         window.location.href = '../index.html';
         
     } catch (error) {
-        console.error('Error al cerrar sesión:', error);
+        console.error('Error al cerrar sesión:', error?.message);
         alert('Error al cerrar sesión: ' + error.message);
     }
 }
@@ -1882,7 +1882,7 @@ async function cargarInfoUsuario() {
         // Obtener usuario autenticado
         const { data: { user }, error } = await supabaseClient.auth.getUser();
         if (!user) {
-        console.warn('⚠️ No hay usuario autenticado');
+        dbg.warn('⚠️ No hay usuario autenticado');
         // Redirigir al login si no hay usuario
         window.location.href = '../index.html';
         return;
@@ -1934,7 +1934,7 @@ async function cargarInfoUsuario() {
         ;
         
     } catch (error) {
-        console.error('❌ Error al cargar info de usuario:', error);
+        console.error('❌ Error al cargar info de usuario:', error?.message);
         // No redirigir si es solo un error de carga
     }
 }
@@ -2025,7 +2025,7 @@ function formatoUS(fecha) {
         }
         return '';
     } catch (error) {
-        console.error('Error al formatear fecha:', error);
+        console.error('Error al formatear fecha:', error?.message);
         return '';
     }
 }

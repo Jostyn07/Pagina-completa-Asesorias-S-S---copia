@@ -88,7 +88,7 @@ async function enviarAGoogleSheets(datosFormulario) {
         const url = obtenerUrlGoogleSheets(datosFormulario.portal);
 
         if (!url) {
-            console.warn('Borrador no guradado: portal seleccionado todavía.')
+            dbg.warn('Borrador no guradado: portal seleccionado todavía.')
             return;
         }
 
@@ -105,7 +105,7 @@ async function enviarAGoogleSheets(datosFormulario) {
         return { success: true, message: 'Datos enviados correctamente' };
 
     } catch (error) {
-        console.error('❌ Error al enviar a Google Sheets:', error);
+        console.error('❌ Error al enviar a Google Sheets:', error?.message);
         return { success: false, message: error.message };
     }
 }
@@ -169,7 +169,7 @@ async function enviarBorrador(pagina, obtenerDatos) {
         const url = obtenerUrlGoogleSheets(datos.portalCliente);
 
         if (!url) {
-            console.warn('Borrador no guradado: portal seleccionado todavía.')
+            dbg.warn('Borrador no guradado: portal seleccionado todavía.')
             return;
         }
 
@@ -181,11 +181,10 @@ async function enviarBorrador(pagina, obtenerDatos) {
             body: JSON.stringify(payload)
         });
 
-        console.log(`✅ Borrador guardado - ${new Date().toLocaleTimeString()}`);
 
     } catch (error) {
         ultimoBorradorEnviado = '';
-        console.error('❌ Error guardando borrador:', error);
+        console.error('❌ Error guardando borrador:', error?.message);
     }
 }
 

@@ -162,7 +162,7 @@
             });
 
         } catch (error) {
-            console.error('Error inicializando Google Places:', error);
+            console.error('Error inicializando Google Places:', error?.message);
         }
     }
 

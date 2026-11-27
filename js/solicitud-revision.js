@@ -46,7 +46,7 @@ async function cargarRegistrosSR() {
         aplicarFiltrosSR();
 
     } catch (error) {
-        console.error('❌ Error al cargar solicitudes:', error);
+        console.error('❌ Error al cargar solicitudes:', error?.message);
         mostrarMensajeVacioSR('Error al cargar datos. Intenta recargar la página.');
     } finally {
         mostrarCargaSR(false);
@@ -200,7 +200,7 @@ async function ciclarActualizadoDesdeBtn(btn) {
         renderTablaSR();
 
     } catch (error) {
-        console.error('❌ Error actualizando:', error);
+        console.error('❌ Error actualizando:', error?.message);
         alert('Error al actualizar.');
     }
 }
@@ -234,7 +234,7 @@ async function ciclarActualizado(id, valorActual) {
         aplicarFiltrosSR();
 
     } catch (error) {
-        console.error('❌ Error al actualizar estado:', error);
+        console.error('❌ Error al actualizar estado:', error?.message);
         alert('No se pudo actualizar el estado. Intenta de nuevo.');
     }
 }
@@ -320,7 +320,7 @@ async function guardarNuevoSR() {
         aplicarFiltrosSR();
 
     } catch (error) {
-        console.error('❌ Error al guardar solicitud:', error);
+        console.error('❌ Error al guardar solicitud:', error?.message);
         alert('Error al guardar. Intenta de nuevo.');
     } finally {
         btn.disabled = false;
@@ -353,7 +353,7 @@ function buscarClientesSR(valor) {
             const resultados = await buscarClientes(valor.trim());
             renderAutocompleteSR(resultados || []);
         } catch (error) {
-            console.error('Error buscando clientes:', error);
+            console.error('Error buscando clientes:', error?.message);
         }
     }, 300);
 }
@@ -449,7 +449,7 @@ async function guardarModalTextoSR() {
         aplicarFiltrosSR();
 
     } catch (error) {
-        console.error('❌ Error al guardar texto:', error);
+        console.error('❌ Error al guardar texto:', error?.message);
         alert('Error al guardar. Intenta de nuevo.');
     } finally {
         btn.disabled    = false;
@@ -717,7 +717,7 @@ async function poblarSelectRevisorAsignado() {
             select.appendChild(opt);
         });
     } catch (error) {
-        console.error('Error cargando revisores:', error);
+        console.error('Error cargando revisores:', error?.message);
     }
 }
 

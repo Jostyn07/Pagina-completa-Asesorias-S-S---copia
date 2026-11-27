@@ -1386,3 +1386,87 @@ tbody td {
     border-color: #7c3aed;
     color: white;
 }
+
+/* ============================================
+   Carga de pólizas: aparición en cascada, skeleton con onda lavanda
+   e icono discreto de "actualizando" (js/polizas.js)
+   ============================================ */
+
+/* Filas nuevas: entran escalonadas (--i la fija polizas.js, máx. 15 pasos) */
+#tabla-polizas tr.fila-entra {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: filaEntra 280ms cubic-bezier(.2, .8, .2, 1) forwards;
+    animation-delay: calc(var(--i, 0) * 35ms);
+}
+
+@keyframes filaEntra {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Skeleton mientras llega el primer bloque: fondo lavanda con onda violeta suave */
+#tabla-polizas tr.skeleton-fila td {
+    padding: 10px 16px;
+    border: 0;
+}
+
+.skeleton-barra {
+    position: relative;
+    height: 30px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #F5F3FF;
+}
+
+.skeleton-barra::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 0%, #DDD6FE 40%, #C4B5FD 50%, #DDD6FE 60%, transparent 100%);
+    opacity: .6;
+    transform: translateX(-100%);
+    animation: skeletonOnda 1.6s ease-in-out infinite;
+}
+
+#tabla-polizas tr.skeleton-fila:nth-child(2) .skeleton-barra::after { animation-delay: .1s; }
+#tabla-polizas tr.skeleton-fila:nth-child(3) .skeleton-barra::after { animation-delay: .2s; }
+#tabla-polizas tr.skeleton-fila:nth-child(4) .skeleton-barra::after { animation-delay: .3s; }
+#tabla-polizas tr.skeleton-fila:nth-child(5) .skeleton-barra::after { animation-delay: .4s; }
+#tabla-polizas tr.skeleton-fila:nth-child(6) .skeleton-barra::after { animation-delay: .5s; }
+#tabla-polizas tr.skeleton-fila:nth-child(7) .skeleton-barra::after { animation-delay: .6s; }
+#tabla-polizas tr.skeleton-fila:nth-child(8) .skeleton-barra::after { animation-delay: .7s; }
+
+@keyframes skeletonOnda {
+    to { transform: translateX(100%); }
+}
+
+[data-theme="dark"] .skeleton-barra { background: #1f1b33; }
+[data-theme="dark"] .skeleton-barra::after {
+    background: linear-gradient(100deg, transparent 0%, #3b2f66 45%, #4c3d85 50%, #3b2f66 55%, transparent 100%);
+}
+
+/* Icono pequeño junto al contador mientras se refresca la lista en segundo plano */
+.pol-actualizando {
+    display: none;
+    vertical-align: middle;
+    margin-left: 6px;
+    font-size: 16px !important;
+    color: #8b5cf6;
+    animation: polActualizandoGira 1s linear infinite;
+}
+
+.pol-actualizando.visible { display: inline-block; }
+
+@keyframes polActualizandoGira {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #tabla-polizas tr.fila-entra {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
+    .skeleton-barra::after { animation: none; opacity: .35; transform: none; }
+    .pol-actualizando { animation: none; }
+}

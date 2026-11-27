@@ -24,7 +24,7 @@
         const c = document.getElementById('contadorCumpleanos');
         if (c) c.textContent = calcularCumpleanosEnSemana().length;
       }
-    } catch (e) { console.error('No se pudo reactivar el Inicio anterior:', e); }
+    } catch (e) { console.error('No se pudo reactivar el Inicio anterior:', e?.message); }
   }
 
   const GOOGLE_API_KEY = 'AIzaSyCeugZ-srhj6GKF_6BNe9LLv26HvBL1qYQ';   // misma clave de autocompletado_direccion.js
@@ -121,7 +121,7 @@
   }
 
   function volverAlAnterior(error) {
-    console.error('Tablero nuevo no disponible, se muestra el Inicio anterior:', error);
+    console.error('Tablero nuevo no disponible, se muestra el Inicio anterior:', error?.message);
     ocultos.forEach((el) => { el.style.display = ''; delete el.dataset.idashOculto; });
     raiz?.remove();
     raiz = null;
@@ -145,12 +145,12 @@
       };
       let { data, error } = await sb().rpc('dashboard_inicio', params);
       if (error) {   // la base aún sin sql/inicio_filtros_cruzados.sql: sin los filtros por clic
-        console.warn('[inicio] sin filtros cruzados:', error.message);
+        dbg.warn('[inicio] sin filtros cruzados:', error.message);
         delete params.p_estado; delete params.p_doc; delete params.p_solo_nuevas;
         ({ data, error } = await sb().rpc('dashboard_inicio', params));
       }
       if (error && st.anioEf) {   // la base aún sin sql/inicio_por_anio.sql: se muestra como antes
-        console.warn('[inicio] sin filtro por año:', error.message);
+        dbg.warn('[inicio] sin filtro por año:', error.message);
         delete params.p_anio_ef;
         ({ data, error } = await sb().rpc('dashboard_inicio', params));
       }
@@ -162,7 +162,7 @@
       pintar();
     } catch (e) {
       if (!st.datos) volverAlAnterior(e);                       // primera carga: plan B
-      else (window.notyf?.error?.('No se pudo actualizar el tablero') || console.error(e));
+      else (window.notyf?.error?.('No se pudo actualizar el tablero') || console.error('Error:', e?.message));
     } finally {
       st.cargando = false;
       raiz?.classList.remove('idash-ocupado');
@@ -395,7 +395,7 @@
 
   function pasarAMosaico(e) {
     if (usarMosaico) return;
-    console.warn('Mapa real no disponible, se usa el mosaico:', e);
+    dbg.warn('Mapa real no disponible, se usa el mosaico:', e);
     usarMosaico = true;
     if (st.datos) pintar();
   }
@@ -481,7 +481,7 @@
         condadosCache[c] = data || [];
       }
     } catch (e) {
-      console.warn('No se pudieron cargar los condados:', e);
+      dbg.warn('No se pudieron cargar los condados:', e);
       condadosCache[c] = [];
     }
     if (st.zoomEstado !== c) return;                 // el usuario ya eligió otro estado
@@ -664,7 +664,7 @@
     try {
       const { data: ok } = await sb().rpc('tiene_permiso', { p_clave: 'exportar_inicio' });
       if (!ok) { (window.notyf?.error?.('No tienes permiso para exportar el resumen') || alert('No tienes permiso para exportar el resumen')); return; }
-    } catch (e) { console.warn('No se pudo validar el permiso', e); return; }
+    } catch (e) { dbg.warn('No se pudo validar el permiso', e); return; }
     const d = st.datos;
     const L = [];
     const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;

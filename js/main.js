@@ -53,7 +53,7 @@ async function handleLogin(event) {
         });
         
         if (authError) {
-            // console.error('❌ Error de autenticación:', authError);
+            // console.error('❌ Error de autenticación:', authError?.message);
             throw new Error('Credenciales incorrectas');
         }
         
@@ -69,7 +69,7 @@ async function handleLogin(event) {
             .single();
         
         if (userError || !userData) {
-            // console.error('❌ Usuario no encontrado en BD:', userError);
+            // console.error('❌ Usuario no encontrado en BD:', userError?.message);
             throw new Error('Usuario no encontrado en el sistema');
         }
 
@@ -105,7 +105,7 @@ async function handleLogin(event) {
         }, 500);
         
     } catch (error) {
-        // console.error('❌ Error en login:', error);
+        // console.error('❌ Error en login:', error?.message);
         alert(`Error al iniciar sesión: ${error.message}`);
         
         // Rehabilitar botón
@@ -172,7 +172,7 @@ async function verificarAutenticacion() {
         
         
     } catch (error) {
-        // console.error('❌ Error al verificar autenticación:', error);
+        // console.error('❌ Error al verificar autenticación:', error?.message);
         redirigirALogin();
     }
 }
@@ -207,7 +207,7 @@ async function refrescarToken() {
         }
         
     } catch (error) {
-        // console.error('❌ Error al refrescar token:', error);
+        // console.error('❌ Error al refrescar token:', error?.message);
         redirigirALogin();
     }
 }
@@ -535,7 +535,7 @@ async function inicializarMenuAdmin() {
     }
 
     if (typeof verificarNotificacionesCalidad === 'function') {
-        try { await verificarNotificacionesCalidad(); } catch (e) { console.warn('[calidad] notificaciones:', e); }
+        try { await verificarNotificacionesCalidad(); } catch (e) { dbg.warn('[calidad] notificaciones:', e); }
     }
 }
 document.addEventListener('DOMContentLoaded', inicializarMenuAdmin);
@@ -558,7 +558,7 @@ async function cerrarSesion() {
         window.location.href = '../index.html';
         
     } catch (error) {
-        // console.error('Error al cerrar sesión:', error);
+        // console.error('Error al cerrar sesión:', error?.message);
         alert('Error al cerrar sesión: ' + error.message);
     }
 }
@@ -572,7 +572,7 @@ async function cargarInfoUsuario() {
         if (error) throw error;
         
         if (!user) {
-            // console.warn('⚠️ No hay usuario autenticado');
+            // dbg.warn('⚠️ No hay usuario autenticado');
             // Redirigir al login si no hay usuario
             window.location.href = '../index.html';
             return;
@@ -624,7 +624,7 @@ async function cargarInfoUsuario() {
         // ;
         
     } catch (error) {
-        // console.error('❌ Error al cargar info de usuario:', error);
+        // console.error('❌ Error al cargar info de usuario:', error?.message);
         // No redirigir si es solo un error de carga
     }
 }

@@ -73,7 +73,7 @@
       pintarResumen(data?.resumen || {});
     } catch (e) {
       if (mia !== solicitud) return;
-      console.error('[agente35]', e);
+      console.error('[agente35]', e?.message);
       tbody.innerHTML = `<tr><td colspan="9" class="a35-vacio">No se pudo cargar la información</td></tr>`;
     } finally {
       if (mia === solicitud) tbody.style.opacity = '';
@@ -250,7 +250,7 @@
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       toast(`${filas.length.toLocaleString('es-CO')} filas exportadas`);
     } catch (e) {
-      console.error('[agente35] exportar', e);
+      console.error('[agente35] exportar', e?.message);
       toast('No se pudo exportar: ' + (e.message || e), 'error');
     } finally {
       btn.disabled = false;
@@ -371,7 +371,7 @@
       toast('Guardado');
       return true;
     } catch (e) {
-      console.error('[agente35] guardar', e);
+      console.error('[agente35] guardar', e?.message);
       toast('No se pudo guardar: ' + (e.message || e), 'error');
       return false;
     }

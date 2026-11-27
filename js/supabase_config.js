@@ -16,15 +16,24 @@ let supabaseClient = null;
         
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (error) {
-        console.error('❌ Error al inicializar Supabase:', error);
+        console.error('❌ Error al inicializar Supabase:', error?.message);
     }
 })();
+
+// Al cerrar sesión (desde cualquier página) se borra la caché local de pólizas (IndexedDB)
+try {
+    if (supabaseClient) {
+        supabaseClient.auth.onAuthStateChange((evento) => {
+            if (evento === 'SIGNED_OUT') { try { indexedDB.deleteDatabase('ss_polizas_cache'); } catch (e) {} }
+        });
+    }
+} catch (e) { /* sin caché que borrar */ }
 
 // =============================================
 // HELPER: Manejar errores
 // =============================================
 function handleSupabaseError(error) {
-    console.error('❌ Error de Supabase:', error);
+    console.error('❌ Error de Supabase:', error?.message);
     alert('Error: ' + error.message);
     return null;
 }
@@ -38,7 +47,7 @@ async function getCurrentUser() {
         if (error) return handleSupabaseError(error);
         return user;
     } catch (error) {
-        console.error('❌ Error al obtener usuario:', error);
+        console.error('❌ Error al obtener usuario:', error?.message);
         return null;
     }
 }
@@ -124,7 +133,7 @@ async function guardarClienteEnSupabase(formData) {
         return { cliente, poliza };
 
     } catch (error) {
-        console.error('❌ Error al guardar:', error);
+        console.error('❌ Error al guardar:', error?.message);
         throw error;
     }
 }
@@ -155,7 +164,7 @@ async function obtenerCliente(clienteId) {
         return data;
 
     } catch (error) {
-        console.error('❌ Error al obtener cliente:', error);
+        console.error('❌ Error al obtener cliente:', error?.message);
         throw error;
     }
 }
@@ -177,7 +186,7 @@ async function actualizarCliente(clienteId, datosActualizados) {
         return data;
 
     } catch (error) {
-        console.error('❌ Error al actualizar:', error);
+        console.error('❌ Error al actualizar:', error?.message);
         throw error;
     }
 }
@@ -230,7 +239,7 @@ async function listarPolizas(filtros = {}) {
         return data;
 
     } catch (error) {
-        console.error('❌ Error al listar pólizas:', error);
+        console.error('❌ Error al listar pólizas:', error?.message);
         throw error;
     }
 }
@@ -260,7 +269,7 @@ async function agregarDependiente(clienteId, dependienteData) {
         return data;
 
     } catch (error) {
-        console.error('❌ Error al agregar dependiente:', error);
+        console.error('❌ Error al agregar dependiente:', error?.message);
         throw error;
     }
 }
@@ -322,7 +331,7 @@ async function guardarMetodoPago(clienteId, metodoPago) {
         return data;
 
     } catch (error) {
-        console.error('❌ Error al guardar método de pago:', error);
+        console.error('❌ Error al guardar método de pago:', error?.message);
         throw error;
     }
 }
@@ -365,7 +374,7 @@ async function subirDocumento(clienteId, archivo, nombrePersonalizado) {
         return documento;
 
     } catch (error) {
-        console.error('❌ Error al subir documento:', error);
+        console.error('❌ Error al subir documento:', error?.message);
         throw error;
     }
 }
@@ -384,7 +393,7 @@ async function obtenerUrlDocumento(rutaStorage) {
         return data.signedUrl;
 
     } catch (error) {
-        console.error('❌ Error al obtener URL:', error);
+        console.error('❌ Error al obtener URL:', error?.message);
         throw error;
     }
 }
@@ -433,7 +442,7 @@ async function agregarNota(clienteId, contenido, imagenes = []) {
         return data;
 
     } catch (error) {
-        console.error('❌ Error al agregar nota:', error);
+        console.error('❌ Error al agregar nota:', error?.message);
         throw error;
     }
 }
@@ -458,7 +467,7 @@ async function buscarClientes(termino) {
         return data;
 
     } catch (error) {
-        console.error('❌ Error en búsqueda:', error);
+        console.error('❌ Error en búsqueda:', error?.message);
         throw error;
     }
 }
@@ -479,6 +488,6 @@ async function buscarClientes(termino) {
         s.defer = true;
         document.head.appendChild(s);
     } catch (error) {
-        console.warn('No se pudo cargar la auditoría:', error);
+        dbg.warn('No se pudo cargar la auditoría:', error);
     }
 })();

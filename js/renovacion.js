@@ -110,7 +110,7 @@
       .eq('id', pid)
       .single();
     if (error || !poliza) {
-      console.warn('[renovación] no se pudo leer la póliza:', error?.message);
+      dbg.warn('[renovación] no se pudo leer la póliza:', error?.message);
       return;
     }
     polizaActual = poliza;
@@ -127,16 +127,14 @@
     // efectividad (las de 2026 ya pueden; las de 2027, desde el 20/10/2027).
     // Las renovaciones ya iniciadas ("En proceso") siempre se pueden continuar.
     if (poliza.estado_renovacion !== 'En proceso' && !renovacionHabilitada(poliza.fecha_efectividad)) {
-      console.info('[renovación] póliza', poliza.numero_poliza, '| efectividad', poliza.fecha_efectividad, '| aún no se puede renovar');
       return;
     }
 
     const { data: permitido, error: errPermiso } = await cliente.rpc('tiene_permiso', { p_clave: 'renovar_poliza' });
     if (errPermiso) {
-      console.warn('[renovación] no se pudo validar el permiso:', errPermiso.message);
+      dbg.warn('[renovación] no se pudo validar el permiso:', errPermiso.message);
       return;
     }
-    console.info('[renovación] póliza', poliza.numero_poliza, '| estado:', poliza.estado_renovacion, '| permiso renovar:', permitido);
     if (permitido) mostrarBoton(poliza.estado_renovacion === 'En proceso');
   }
 
@@ -338,7 +336,7 @@
     const r = { total: 0, copiados: 0, fallidos: 0 };
     const cliente = sb();
     const { data: docs, error } = await cliente.from('documentos').select('*').eq('cliente_id', clienteOrigen);
-    if (error) { console.warn('[renovación] no se pudieron leer los documentos:', error.message); return r; }
+    if (error) { dbg.warn('[renovación] no se pudieron leer los documentos:', error.message); return r; }
     r.total = (docs || []).length;
 
     for (const doc of docs || []) {
@@ -362,7 +360,7 @@
         r.copiados++;
       } catch (e) {
         r.fallidos++;
-        console.warn('[renovación] documento no copiado:', doc.nombre_archivo, e?.message || e);
+        dbg.warn('[renovación] documento no copiado:', doc.nombre_archivo, e?.message || e);
       }
     }
     return r;
@@ -498,8 +496,7 @@
       // link allí, la renovación también lo toma. Las de aquí son solo respaldo.
       const url = (typeof obtenerUrlGoogleSheets === 'function' && obtenerUrlGoogleSheets(portal))
         || SHEETS_RENOVACION[portal];
-      console.info('[renovación] enviando a Google Sheets · portal:', portal || '(vacío)', '· url:', url || '(ninguna)');
-      if (!url) { console.info('[renovación] portal sin hoja de Google Sheets:', portal); return; }
+      if (!url) return;
 
       const dependientes = [];
       for (let i = 1; i <= 50; i++) {
@@ -567,11 +564,10 @@
 
       // Sin esperar respuesta: keepalive deja que el envío termine aunque la página se recargue.
       fetch(url, { method: 'POST', mode: 'no-cors', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(datos) })
-        .catch((e) => console.warn('[renovación] no se pudo enviar a Google Sheets:', e?.message || e));
-      console.info('[renovación] enviada a Google Sheets →', datos.hoja, '·', portal);
+        .catch((e) => dbg.warn('[renovación] no se pudo enviar a Google Sheets:', e?.message || e));
     } catch (e) {
       // Nunca bloquea la renovación: ya quedó guardada en la base de datos
-      console.warn('[renovación] no se pudo enviar a Google Sheets:', e?.message || e);
+      dbg.warn('[renovación] no se pudo enviar a Google Sheets:', e?.message || e);
     }
   }
 
@@ -623,7 +619,6 @@
 
   // ---------- Espera a que cliente_editar.js cargue la póliza
   function iniciar() {
-    console.info('[renovación] script cargado');
     if (new URLSearchParams(location.search).get('modo') === 'ver') return; // solo lectura
     estilos();
     let intentos = 0;
@@ -635,7 +630,6 @@
         cargar(pid);
       } else if (intentos > 40) {
         clearInterval(espera); // ~20 s: el cliente no tiene póliza
-        console.info('[renovación] no se encontró una póliza cargada en la ficha');
       }
     }, 500);
   }

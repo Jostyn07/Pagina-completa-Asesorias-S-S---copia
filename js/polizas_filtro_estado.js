@@ -89,7 +89,7 @@
       actualizarPaginacion();
       barra(lista.length);
     } catch (e) {
-      console.error('No se pudo aplicar el filtro por estado; se muestran todas las pólizas:', e);
+      console.error('No se pudo aplicar el filtro por estado; se muestran todas las pólizas:', e?.message);
     }
   }
 

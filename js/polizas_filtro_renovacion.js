@@ -70,9 +70,9 @@
   }
 
   async function aplicar() {
-    try { await asegurarDatos(); } catch (e) { console.warn('[filtro renovación] sin estado de renovación:', e); }
-    try { await asegurarFirma(); } catch (e) { console.warn('[filtro firma] sin datos de firma:', e); }
-    try { posfiltro(); } catch (e) { console.warn('[filtro año/renovación] sin efecto:', e); }
+    try { await asegurarDatos(); } catch (e) { dbg.warn('[filtro renovación] sin estado de renovación:', e); }
+    try { await asegurarFirma(); } catch (e) { dbg.warn('[filtro firma] sin datos de firma:', e); }
+    try { posfiltro(); } catch (e) { dbg.warn('[filtro año/renovación] sin efecto:', e); }
   }
 
   // ---- control dentro del modal de filtros avanzados
@@ -119,7 +119,7 @@
     try { filtroAnioActivado = false; } catch (e) {}   // el año lo aplica posfiltro()
     let r;
     try { r = aplicarOriginal.apply(this, arguments); }
-    catch (e) { console.warn('[filtros] error en los filtros base, se continúa:', e); }
+    catch (e) { dbg.warn('[filtros] error en los filtros base, se continúa:', e); }
     try { if (valor || firma) hayFiltrosActivos = true; } catch (e) {}
     try { posfiltro(); } catch (e) {}
     if (valor || firma) Promise.resolve(r).catch(() => {}).then(aplicar);

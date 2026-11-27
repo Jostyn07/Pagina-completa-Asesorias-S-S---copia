@@ -37,7 +37,7 @@
       idsAtencion = new Set((data || []).map(String));
       await traerFaltantes();
     } catch (e) {
-      console.warn('[atención] sin filtro:', e);
+      dbg.warn('[atención] sin filtro:', e);
       idsAtencion = null;
     }
     pintarAviso();
@@ -74,7 +74,7 @@
         if (typeof window.calcularFactoresTodasLasPolizas === 'function') setTimeout(() => window.calcularFactoresTodasLasPolizas(), 50);
       }
     } catch (e) {
-      console.warn('[atención] no se pudieron traer las faltantes:', e);
+      dbg.warn('[atención] no se pudieron traer las faltantes:', e);
     }
   }
 
@@ -204,7 +204,7 @@
       if (typeof window.aplicarFiltrosAvanzados === 'function') window.aplicarFiltrosAvanzados();
       await marcarLinea();
     } catch (e) {
-      console.warn('[recargar pólizas]', e);
+      dbg.warn('[recargar pólizas]', e);
     } finally {
       btn?.classList.remove('girando');
       recargando = false;

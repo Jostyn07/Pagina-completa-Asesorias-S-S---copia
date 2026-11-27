@@ -97,7 +97,7 @@ async function cargarTablero() {
         renderizarTabla();
         mostrarGuardado();
     } catch (err) {
-        console.error('Error cargando tablero: ', err);
+        console.error('Error cargando tablero: ', err?.message);
         document.getElementById('tableroTableWrap').innerHTML =
             `<div style="padding: 40px; text-align:center; color: #e44;">
                 <span class="material-symbols-rounded" style="font-size: 40px; display: block;">error</span>
@@ -703,7 +703,7 @@ async function ejecutarGuardado() {
         if (error) throw error;
         mostrarGuardado();
     } catch (err) {
-        console.error('Error guardando celdas: ', err);
+        console.error('Error guardando celdas: ', err?.message);
         mostrarGuardado('Error al guardar');
     }
 }
@@ -730,7 +730,7 @@ async function guardarCabecera(col, el) {
         if (error) throw error;
         mostrarGuardado();
     } catch (err) {
-        console.error('Error guardando cabecera:', err);
+        console.error('Error guardando cabecera:', err?.message);
     }
 }
 
@@ -791,7 +791,7 @@ async function eliminarFila(fila) {
         renderizarTabla();
         mostrarGuardado();
     } catch (err) {
-        console.error('Error eliminando fila: ', err);
+        console.error('Error eliminando fila: ', err?.message);
         mostrarGuardado('Error');
     }
 }
@@ -836,7 +836,7 @@ async function eliminarColumna(col) {
         renderizarTabla();
         mostrarGuardado();
     } catch (err) {
-        console.error('Error eliminando columna: ', err);
+        console.error('Error eliminando columna: ', err?.message);
         mostrarGuardado('Error');
     }
 }
@@ -854,7 +854,7 @@ async function guardarConfigEstructura() {
         })
         .eq('id', tableroConfig.id);
 
-    if (error) console.error('Error guardando config:', error);
+    if (error) console.error('Error guardando config:', error?.message);
 }
 
 // ============================================

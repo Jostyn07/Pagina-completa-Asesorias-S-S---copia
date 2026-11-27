@@ -65,7 +65,7 @@ async function buscarClientes(termino) {
             select.disabled = false;
 
         } catch (error) {
-            console.error('Error buscando clientes:', error);
+            console.error('Error buscando clientes:', error?.message);
             mostrarNotificacion('Error al buscar clientes', 'error');
         }
     }, 400);
@@ -135,7 +135,7 @@ async function seleccionarCliente(clienteId) {
         mostrarNotificacion('Cliente cargado correctamente', 'success');
 
     } catch (error) {
-        console.error('Error al cargar cliente:', error);
+        console.error('Error al cargar cliente:', error?.message);
         mostrarNotificacion('Error al cargar cliente: ' + error.message, 'error');
     }
 }
@@ -228,7 +228,7 @@ async function cargarDependientes(clienteId) {
         data.forEach(dep => agregarDependienteExistente(dep));
 
     } catch (error) {
-        console.warn('Error cargando dependientes:', error);
+        dbg.warn('Error cargando dependientes:', error);
     }
 }
 
@@ -786,7 +786,7 @@ async function subirDocumentos() {
                 });
 
             if (error) {
-                console.error('Error subiendo documento:', error);
+                console.error('Error subiendo documento:', error?.message);
                 mostrarNotificacion(`Error al subir ${file.name}`, 'error');
                 continue;
             }
@@ -804,7 +804,7 @@ async function subirDocumentos() {
             });
 
         } catch (error) {
-            console.error('Error procesando documento:', error);
+            console.error('Error procesando documento:', error?.message);
             mostrarNotificacion(`Error al procesar ${file.name}`, 'error');
         }
     }
@@ -961,7 +961,7 @@ async function guardarYEnviar(e) {
                 cliente_telefono: (formData.telefono1 || '').replace(/\D/g, ''),
             });
         } catch (e) {
-            console.warn('Error registrando movimientos', e);
+            dbg.warn('Error registrando movimientos', e);
         }
 
         localStorage.removeItem('borrador_recuperado');
@@ -972,7 +972,7 @@ async function guardarYEnviar(e) {
         }, 2000);
 
     } catch (error) {
-        console.error('Error al guardar:', error);
+        console.error('Error al guardar:', error?.message);
         mostrarNotificacion('Error: ' + error.message, 'error');
         if (btnSubmit) desbloquearBoton(btnSubmit, textoOriginal);
     }
@@ -1165,7 +1165,7 @@ async function agregarNota() {
         mostrarNotificacion('Nota guardada', 'success');
 
     } catch (error) {
-        console.error('Error al guardar nota:', error);
+        console.error('Error al guardar nota:', error?.message);
         mostrarNotificacion('Error al guardar nota', 'error');
     }
 }
@@ -1205,7 +1205,7 @@ async function cargarNotas(clienteId) {
         actualizarContadorNotas();
 
     } catch (error) {
-        console.warn('Error cargando notas:', error);
+        dbg.warn('Error cargando notas:', error);
     }
 }
 
@@ -1675,7 +1675,7 @@ function formatoUS(fecha) {
         }
         return '';
     } catch (error) {
-        console.error('Error al formatear fecha:', error);
+        console.error('Error al formatear fecha:', error?.message);
         return '';
     }
 }
@@ -1985,7 +1985,7 @@ async function cargarDocumentos(clienteId) {
         if (contador) contador.textContent = `(${documentos.length})`;
 
     } catch (error) {
-        console.error('❌ Error al cargar documentos:', error);
+        console.error('❌ Error al cargar documentos:', error?.message);
     }
 }
 

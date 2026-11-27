@@ -100,7 +100,7 @@
     // Respaldo visible: si la pantalla animada no carga en 4 s, la pestaña nunca queda en negro
     setTimeout(() => {
       if (cargada || salio || tab.closed) return;
-      console.warn('[Ir a Xiris] la pantalla animada no cargó desde', `${CONEXION_BASE}index.html`,
+      dbg.warn('[Ir a Xiris] la pantalla animada no cargó desde', `${CONEXION_BASE}index.html`,
         '— revisa que la carpeta /conexion esté publicada junto a /js y /pages');
       try {
         tab.document.title = 'Conectando con Xiris';
@@ -120,14 +120,12 @@
         if (!client) throw new Error('No se encontró la sesión de Asesorías.');
         const limite = new Promise((_, no) =>
           setTimeout(() => no(new Error('Xiris está tardando en responder. Vuelve a intentarlo.')), LIMITE_MS));
-        console.info('[Ir a Xiris] pidiendo acceso');
         const { data, error } = await Promise.race([
           client.functions.invoke('ir-a-xiris', { body: { redirect: XIRIS_REDIRECT } }),
           limite,
         ]);
         if (error || !data?.url) throw new Error(await mensajeDeError(error, data));
 
-        console.info('[Ir a Xiris] acceso recibido, pasando a Xiris');
         setTimeout(() => ir(data.url), Math.max(0, MINIMO_MS - (Date.now() - inicio)));
       } catch (e) {
         console.error('[Ir a Xiris]', e.message);

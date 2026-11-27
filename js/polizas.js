@@ -13,6 +13,16 @@ let filtrosActivos= null;
 let hayFiltrosActivos = false;
 let filtroAnioActivado = false;
 let factoresPolizaCache = {}
+// Carga/búsqueda (ver cargarPolizas y buscarPolizas)
+let cargaPolizasEnCurso = false;      // hay una descarga de pólizas en marcha
+let datosPolizasListos = false;       // ya hay una lista completa (caché o red) sobre la que filtrar
+let terminoServidorActivo = false;    // se está mostrando/esperando una búsqueda dirigida al servidor
+let busquedaPendiente = false;        // el usuario escribió/pulsó Enter antes de que hubiera datos
+let filtrosRestaurados = false;       // restaurarFiltrosDesdeStorage ya se ejecutó en esta página
+let idsCumpleanosActivos = null;      // filtro de cumpleaños llegado desde el inicio (se reaplica tras refrescar)
+let aplicandoSoloBusqueda = false;    // aplicarFiltrosAvanzados invocado desde el buscador (no mostrar "Ver gráfica")
+// Marca para polizas_carga_completa.js: esta página ya descarga por bloques (ver cargarPolizas)
+window.__polizasCargaPropia = true;
 
 
 // ============================================
@@ -95,7 +105,7 @@ function guardarFiltrosEnStorage() {
 
         localStorage.setItem(FILTROS_STORAGE_KEY, JSON.stringify(datos));
     } catch (error) {
-        console.warn('⚠️ No se pudieron guardar los filtros en localStorage:', error);
+        dbg.warn('⚠️ No se pudieron guardar los filtros en localStorage:', error);
     }
 }
 
@@ -103,7 +113,7 @@ function eliminarFiltrosDeStorage() {
     try {
         localStorage.removeItem(FILTROS_STORAGE_KEY);
     } catch (error) {
-        console.warn('⚠️ No se pudo limpiar filtros de localStorage:', error);
+        dbg.warn('⚠️ No se pudo limpiar filtros de localStorage:', error);
     }
 }
 
@@ -117,7 +127,7 @@ function restaurarFiltrosDesdeStorage() {
         datos = JSON.parse(raw);
     } catch (error) {
         // JSON corrupto: borrarlo y salir sin romper nada
-        console.warn('⚠️ Filtros en localStorage corruptos, se borrarán:', error);
+        dbg.warn('⚠️ Filtros en localStorage corruptos, se borrarán:', error);
         eliminarFiltrosDeStorage();
         return;
     }
@@ -133,7 +143,8 @@ function restaurarFiltrosDesdeStorage() {
     };
 
     // Buscador y paginación
-    set('searchInput', datos.busqueda);
+    // Si el usuario ya escribió en el buscador mientras cargaban las pólizas, se respeta lo escrito
+    if (!busquedaPendiente) set('searchInput', datos.busqueda);
     set('polizasPorPagina', datos.porPagina);
     if (datos.porPagina) polizasPorPagina = parseInt(datos.porPagina, 10);
 
@@ -282,41 +293,18 @@ function restaurarFiltrosDesdeStorage() {
     // 4. Determinar si hay filtros activos realmente (para el indicador visual)
     const hayAvanzados = Object.values(filtrosActivos).some(v => v !== '');
     const hayAnios = datos.anio2025 || datos.anio2026 || datos.anio2027;
-    const hayBusqueda = !!datos.busqueda;
+    const textoBusqueda = document.getElementById('searchInput')?.value || '';
+    const hayBusqueda = !!textoBusqueda.trim();
     hayFiltrosActivos = hayAvanzados || hayBusqueda;
 
     let resultado = [...todasLasPolizas];
 
-    // Filtro de buscador rápido
-    if (datos.busqueda) {
-        const termino = datos.busqueda.toLowerCase();
+    // Filtro de buscador rápido (misma lógica que el buscador: sin acentos, teléfonos solo dígitos)
+    const tokensBusqueda = prepararBusqueda(textoBusqueda);
+    if (tokensBusqueda) {
         resultado = resultado.filter(poliza => {
             if (poliza.cliente?.archivado === true) return false;
-            const cliente = poliza.cliente || poliza.clientes || {};
-            const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.toLowerCase();
-            const telefono = cliente.telefono1 || '';
-            const numeroPoliza = poliza.numero_poliza || '';
-            const compania = poliza.compania || '';
-            const plan = poliza.plan || '';
-            const estadoMercado = poliza.estado_mercado || '';
-            const operadorNombre = poliza.operador_nombre || '';
-            const agente35Estado = poliza.agente35_estado || '';
-            const tipoRegistro = cliente.tipo_registro || '';
-
-            const palabras = termino.split(/\s+/).filter(Boolean);
-            const camposBusqueda = [
-                nombreCompleto,
-                telefono.toLowerCase(),
-                numeroPoliza.toLowerCase(),
-                compania.toLowerCase(),
-                plan.toLowerCase(),
-                estadoMercado.toLowerCase(),
-                operadorNombre.toLowerCase(),
-                agente35Estado.toLowerCase(),
-                tipoRegistro.toLowerCase()
-            ].join(' ');
-
-            return palabras.every(palabra => camposBusqueda.includes(palabra));
+            return coincideBusqueda(poliza, tokensBusqueda);
         });
     }
 
@@ -485,197 +473,543 @@ function restaurarFiltrosDesdeStorage() {
     ;
 }
 
-async function cargarPolizas() {
-    try {
-        mostrarIndicadorCarga(true);
-        
-        rolUsuario = datosUsuario?.rol || 'operador';
-        const nombreOperador = datosUsuario?.nombre;
+// ============================================
+// CARGA DE PÓLIZAS
+// ============================================
+const POLIZAS_BLOQUE = 1000;                         // filas por petición (.range)
+const POLIZAS_PARALELO = 4;                          // peticiones simultáneas
+const POLIZAS_CACHE_DB = 'ss_polizas_cache';         // borrada al cerrar sesión (supabase_config.js)
+const POLIZAS_CACHE_STORE = 'listas';
+const POLIZAS_CACHE_VERSION = 1;                     // subir si cambia la forma de los datos guardados
+const POLIZAS_CACHE_MAX_EDAD_MS = 24 * 60 * 60 * 1000;   // más vieja que esto: se ignora
+const POLIZAS_DELTA_MAX_EDAD_MS = 12 * 60 * 60 * 1000;   // más vieja que esto: recarga completa, no delta
+const POLIZAS_DELTA_MARGEN_MS = 2 * 60 * 1000;           // margen restado a la última marca para no perder cambios
 
+// Select mínimo de la LISTA: solo lo que usan la tabla, los filtros, la búsqueda, la ordenación,
+// los factores de riesgo y la exportación a Excel. Lo que solo muestra el modal de detalle
+// (dirección, ciudad, código postal, medio de comunicación y observaciones de seguimientos)
+// se pide al abrir el detalle (cargarDetallePoliza).
+const POLIZAS_SELECT_LISTA = `
+    id, numero_poliza, operador_nombre, estado_mercado, fecha_revision_mercado, documentos_pendientes,
+    agente35_estado, compania, fecha_revision_compania, plan, estado_renovacion, poliza_origen_id, prima,
+    agente_nombre, fecha_efectividad, fecha_inicial_cobertura, fecha_final_cobertura, created_at, updated_at,
+    estado_documentos, estado_compania, pagado_hasta, fecha_plazo_documentos, nombre_agente_mercado,
+    modificado_por_nombre, clave_seguridad, member_id, aplicantes,
+    cliente:clientes (
+        id, nombres, apellidos, fecha_nacimiento, telefono1, telefono2, email, estado, estado_migratorio, ssn,
+        tipo_registro, tipo_modificacion, operador_nombre, tiene_social, archivado, venta_realizada_por,
+        portal, nacionalidad, agente_nombre,
+        metodos_pago ( tiene_metodo_pago, tiene_pago_automatico, activo ),
+        pagos_mensuales_cliente ( anio, enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre )
+    ),
+    seguimientos ( fecha_seguimiento, seguimiento_efectivo )
+`;
+
+const _pausa = (ms) => new Promise(r => setTimeout(r, ms));
+const _ahora = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+const _enReposo = (fn) => (typeof requestIdleCallback === 'function' ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 200));
+
+let _primeraCargaPolizas = true;
+let _msFactoresRender = 0;           // tiempo acumulado calculando factores en el último render
+let polizasBusquedaServidor = new Map();   // resultados de la búsqueda dirigida al servidor (para abrir su detalle)
+let busquedaServidorId = 0;          // identifica la búsqueda vigente; las respuestas de otras se ignoran
+
+// ---------- Caché local (IndexedDB) ----------
+function claveCachePolizas() {
+    const id = (typeof datosUsuario !== 'undefined' && datosUsuario) ? datosUsuario.id : null;
+    return id ? `u:${id}` : null;
+}
+
+function abrirCachePolizas() {
+    return new Promise((resolve) => {
+        try {
+            if (typeof indexedDB === 'undefined') return resolve(null);
+            const req = indexedDB.open(POLIZAS_CACHE_DB, 1);
+            req.onupgradeneeded = () => req.result.createObjectStore(POLIZAS_CACHE_STORE, { keyPath: 'clave' });
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => resolve(null);
+            req.onblocked = () => resolve(null);
+        } catch (e) { resolve(null); }
+    });
+}
+
+async function leerCachePolizas(clave) {
+    const db = await abrirCachePolizas();
+    if (!db) return null;
+    try {
+        const registro = await new Promise((resolve) => {
+            const r = db.transaction(POLIZAS_CACHE_STORE, 'readonly').objectStore(POLIZAS_CACHE_STORE).get(clave);
+            r.onsuccess = () => resolve(r.result || null);
+            r.onerror = () => resolve(null);
+        });
+        if (!registro || registro.version !== POLIZAS_CACHE_VERSION || !Array.isArray(registro.filas)) return null;
+        if (Date.now() - registro.guardadoEn > POLIZAS_CACHE_MAX_EDAD_MS) return null;
+        return registro;
+    } catch (e) { return null; }
+    finally { db.close(); }
+}
+
+async function guardarCachePolizas(registro) {
+    const db = await abrirCachePolizas();
+    if (!db) return;
+    try {
+        await new Promise((resolve) => {
+            const tx = db.transaction(POLIZAS_CACHE_STORE, 'readwrite');
+            const st = tx.objectStore(POLIZAS_CACHE_STORE);
+            st.put(registro);
+            // La caché de otro usuario del mismo navegador no se conserva
+            const ks = st.getAllKeys();
+            ks.onsuccess = () => (ks.result || []).filter(k => k !== registro.clave).forEach(k => st.delete(k));
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => resolve();
+            tx.onabort = () => resolve();
+        });
+    } catch (e) { /* sin caché: todo sigue funcionando */ }
+    finally { db.close(); }
+}
+
+function borrarCachePolizas() {
+    try { indexedDB.deleteDatabase(POLIZAS_CACHE_DB); } catch (e) { /* nada */ }
+}
+
+// ---------- Descarga por bloques en paralelo ----------
+async function pedirBloquePolizas(desde, gteUpdatedAt) {
+    for (let intento = 0; ; intento++) {
+        let q = supabaseClient.from('polizas').select(POLIZAS_SELECT_LISTA)
+            .order('updated_at', { ascending: false })
+            .order('id', { ascending: true });     // desempate estable entre bloques
+        if (gteUpdatedAt) q = q.gte('updated_at', gteUpdatedAt);
+        const { data, error } = await q.range(desde, desde + POLIZAS_BLOQUE - 1);
+        if (!error) return data || [];
+        if (intento >= 1) throw error;
+        await _pausa(1500);                         // un reintento, como antes
+    }
+}
+
+async function contarPolizas(gteUpdatedAt) {
+    let q = supabaseClient.from('polizas').select('id', { count: 'exact', head: true });
+    if (gteUpdatedAt) q = q.gte('updated_at', gteUpdatedAt);
+    const { count, error } = await q;
+    if (error) throw error;
+    return count ?? 0;
+}
+
+// ---------- Descarga con una sola consulta (RPC polizas_lista, sql/rendimiento/01_polizas_lista.sql) ----------
+let _rpcPolizasListaNoExiste = false;    // si la función no existe en la BD, no se reintenta en esta página
+
+function _esErrorRpcInexistente(error) {
+    if (!error) return false;
+    const msg = String(error.message || '');
+    return error.code === 'PGRST202' || error.code === '42883' || error.status === 404 || error.statusCode === 404 ||
+        /could not find the function|function .* does not exist/i.test(msg);
+}
+
+// Devuelve el array de filas, o null si la RPC no existe (usar el respaldo por bloques)
+async function descargarPolizasRpc(gteUpdatedAt) {
+    if (_rpcPolizasListaNoExiste) return null;
+    const { data, error } = await supabaseClient.rpc('polizas_lista', { p_desde: gteUpdatedAt || null });
+    if (error) {
+        if (_esErrorRpcInexistente(error)) {
+            _rpcPolizasListaNoExiste = true;
+            dbg.info('[pólizas] RPC polizas_lista no existe; se usa la carga por bloques');
+            return null;
+        }
+        const msg = String(error.message || '');
+        const esAuth = error.status === 401 || error.status === 403 || error.code === 'PGRST301' ||
+            error.code === '42501' || /jwt/i.test(msg);
+        if (esAuth) throw error;
+        // Timeout (57014), 5xx o red: respaldo por bloques en esta carga, sin marcar la RPC como inexistente
+        dbg.warn('[pólizas] RPC polizas_lista falló (' + (error.code || error.status || 'sin código') + '); se usa la carga por bloques:', msg);
+        return null;
+    }
+    return Array.isArray(data) ? data : [];
+}
+
+// Devuelve { filas, total, metodo }. Primero intenta la RPC; si no existe, carga por bloques.
+// onBloque(filasContiguas, total) se llama cada vez que crece el tramo contiguo desde el primer
+// bloque (solo en el método por bloques; con la RPC llega todo de una vez y se pinta al final).
+async function descargarPolizas({ gteUpdatedAt = null, onBloque = null } = {}) {
+    const filasRpc = await descargarPolizasRpc(gteUpdatedAt);
+    if (filasRpc) return { filas: filasRpc, total: filasRpc.length, metodo: 'rpc' };
+    const r = await descargarPolizasPorBloques({ gteUpdatedAt, onBloque });
+    r.metodo = 'bloques';
+    return r;
+}
+
+// Respaldo: count (head) + .range() por bloques en paralelo
+async function descargarPolizasPorBloques({ gteUpdatedAt = null, onBloque = null } = {}) {
+    const pTotal = contarPolizas(gteUpdatedAt);
+    pTotal.catch(() => {});                          // evita "unhandled" si falla antes de esperarla
+    const bloques = [];
+    bloques[0] = await pedirBloquePolizas(0, gteUpdatedAt);
+    if (onBloque) onBloque(bloques[0], null);
+    const total = await pTotal;
+
+    const desdes = [];
+    for (let d = POLIZAS_BLOQUE; d < total; d += POLIZAS_BLOQUE) desdes.push(d);
+    let siguiente = 0;
+    const trabajador = async () => {
+        while (siguiente < desdes.length) {
+            const d = desdes[siguiente++];
+            bloques[d / POLIZAS_BLOQUE] = await pedirBloquePolizas(d, gteUpdatedAt);
+            if (onBloque) {
+                let n = 0;
+                while (bloques[n]) n++;
+                onBloque([].concat(...bloques.slice(0, n)), total);
+            }
+        }
+    };
+    await Promise.all(Array.from({ length: Math.min(POLIZAS_PARALELO, desdes.length) }, trabajador));
+
+    // Sin duplicados (si alguien editó durante la descarga un bloque pudo solaparse con otro)
+    const vistos = new Map();
+    for (const b of bloques) for (const p of (b || [])) if (!vistos.has(p.id)) vistos.set(p.id, p);
+    return { filas: [...vistos.values()], total };
+}
+
+function _compararPolizas(a, b) {
+    if (a.updated_at !== b.updated_at) return (a.updated_at || '') < (b.updated_at || '') ? 1 : -1;
+    return a.id < b.id ? -1 : 1;
+}
+
+function _maxUpdatedAt(filas) {
+    let max = null;
+    for (const p of filas) if (p.updated_at && (!max || p.updated_at > max)) max = p.updated_at;
+    return max;
+}
+
+// ---------- Instalar datos en pantalla ----------
+function mostrarGiroCarga(visible) {
+    let el = document.getElementById('polActualizando');
+    if (!el && visible) {
+        const info = document.getElementById('infoPaginacion');
+        if (!info) return;
+        el = document.createElement('span');
+        el.id = 'polActualizando';
+        el.className = 'material-symbols-rounded pol-actualizando';
+        el.title = 'Actualizando…';
+        el.textContent = 'sync';
+        info.insertAdjacentElement('afterend', el);
+    }
+    if (el) el.classList.toggle('visible', !!visible);
+}
+
+// Vuelve a aplicar lo que el usuario tiene puesto (buscador, avanzados, año…) sobre datos nuevos
+function reaplicarFiltrosVigentes() {
+    const hayTexto = !!(document.getElementById('searchInput')?.value || '').trim();
+    const hayAnios = ['2025', '2026', '2027'].some(a => document.getElementById(a)?.checked);
+    if ((hayFiltrosActivos || hayTexto || hayAnios) && typeof window.aplicarFiltrosAvanzados === 'function') {
+        aplicandoSoloBusqueda = true;      // no tocar el botón "Ver gráfica"
+        try { window.aplicarFiltrosAvanzados(); } finally { aplicandoSoloBusqueda = false; }
+    }
+}
+
+// Filtros que llegan desde el inicio (operador, cumpleaños). Se consumen una sola vez.
+function aplicarFiltrosDeInicio() {
+    const filtroOperadorHome = sessionStorage.getItem('filtro_operador');
+    if (filtroOperadorHome) {
+        sessionStorage.removeItem('filtro_operador');
+        const checkbox = document.querySelector(`#panelOperadores input[value="${filtroOperadorHome}"]`);
+        if (checkbox) {
+            document.querySelectorAll('#panelOperadores input').forEach(cb => cb.checked = false);
+            checkbox.checked = true;
+            actualizarTextoOperadores();
+            aplicarFiltrosAvanzados();
+
+            requestAnimationFrame(() => {
+                renderizarTabla();
+                actualizarPaginacion()
+            })
+        }
+    }
+
+    const filtroCumpleanos = localStorage.getItem('filtro_cumpleanos');
+    if (filtroCumpleanos) {
+        localStorage.removeItem('filtro_cumpleanos');
+        idsCumpleanosActivos = JSON.parse(filtroCumpleanos);
+    }
+    if (idsCumpleanosActivos) {
+        polizasFiltradas = todasLasPolizas.filter(p => idsCumpleanosActivos.includes(p.cliente?.id));
+        hayFiltrosActivos = true;
+        renderizarTabla();
+        actualizarPaginacion();
+        actualizarIndicadorFiltros();
+    }
+}
+
+// modo: 'parcial' (bloques que van llegando, solo primera página), 'cache' (pintado desde IndexedDB)
+// o 'final' (lista completa de red). 'cache' y 'final' hacen el trabajo completo.
+function instalarPolizas(crudas, modo) {
+    // Los borradores de renovación no se listan: se abren desde la póliza original ("Continuar renovación")
+    const lista = crudas.filter(p => !p.cliente?.archivado && p.estado_renovacion !== 'Borrador');
+
+    if (modo === 'parcial') {
+        if (!todasLasPolizas.length) paginaActual = 1;
+        todasLasPolizas = lista;
+        if (terminoServidorActivo) return;      // manda la búsqueda dirigida al servidor
+        polizasFiltradas = lista.slice();
+        renderizarTabla();
+        actualizarPaginacion();
+        return;
+    }
+
+    const paginaPrevia = paginaActual;
+    factoresPolizaCache = {};                    // los datos cambiaron: factores a recalcular (solo la página visible)
+    todasLasPolizas = lista;
+    polizasFiltradas = lista.slice();
+    paginaActual = 1;
+
+    const estadisticas = calcularEstadisticas(todasLasPolizas);
+    filtroModificadoPor.recargarOpciones();
+    filtroPortalAvanzado.recargarOpciones();
+    filtroNacionalidad.recargarOpciones();
+    filtroAgenteCliente.recargarOpciones();
+    actualizarTarjetas(estadisticas);
+    actualizarIndicadoresRol();
+
+    datosPolizasListos = true;
+    busquedaServidorId++;                        // cualquier búsqueda al servidor en vuelo queda obsoleta
+    terminoServidorActivo = false;
+
+    if (!filtrosRestaurados) {
+        // Si hay filtros guardados en localStorage, los restaura y reemplaza polizasFiltradas
+        restaurarFiltrosDesdeStorage();
+        filtrosRestaurados = true;
+    } else {
+        reaplicarFiltrosVigentes();
+        // mantener la página donde estaba el usuario
+        const totalPaginas = Math.max(1, Math.ceil(polizasFiltradas.length / polizasPorPagina));
+        paginaActual = Math.min(paginaPrevia, totalPaginas);
+    }
+
+    if (busquedaPendiente) {
+        // Búsqueda hecha antes de tener datos: se recalcula ahora con todos los datos
+        busquedaPendiente = false;
+        buscarPolizas(document.getElementById('searchInput')?.value || '');
+    }
+
+    renderizarTabla();
+    actualizarPaginacion();
+    aplicarFiltrosDeInicio();
+}
+
+/*
+ * cargarPolizas — rendimiento, fase 1 (el usuario ve lo mismo que antes, más rápido).
+ *
+ * Qué cambió y por qué:
+ *  - Instrumentación: dbg.info('[pólizas] tiempos (ms)', …) con consulta, procesado, factores y
+ *    render, para comparar antes/después.
+ *  - Select mínimo (POLIZAS_SELECT_LISTA): solo columnas de tabla, filtros, búsqueda, orden, factores
+ *    y exportación. Dirección/ciudad/código postal y las notas de seguimiento (medio, observación)
+ *    se piden al abrir el detalle (cargarDetallePoliza). Se quitaron además columnas que ya no usaba
+ *    nadie (tipo_venta, modificado_por_email, ocupacion y los pago_* de metodos_pago).
+ *  - Carga por bloques: count (head) + .range() de 1.000 filas, hasta 4 en paralelo; el primer
+ *    bloque se pinta en cuanto llega. Orden estable (updated_at desc, id asc). Esto sustituye al
+ *    envoltorio de polizas_carga_completa.js (que se desactiva con window.__polizasCargaPropia).
+ *  - Caché en IndexedDB por usuario: al entrar se pinta al instante desde la caché y se refresca en
+ *    segundo plano pidiendo solo las filas con updated_at >= última marca - 2 min (fusión por id; vía
+ *    RPC polizas_lista, con respaldo por bloques si no existe). Si la caché
+ *    tiene más de 12 h, no hay updated_at o el total no cuadra (altas/bajas), se hace recarga
+ *    completa. Se borra al cerrar sesión. Las recargas posteriores (botón, carteras en tiempo
+ *    real) son siempre completas.
+ *  - Búsqueda prioritaria: si se busca antes de que termine la carga, se consulta el servidor
+ *    (límite 50) y al terminar la carga se recalcula localmente.
+ *  - Factores de riesgo: se calculan solo para las filas de la página visible (en renderizarTabla),
+ *    sin repintar la tabla entera al terminar.
+ *  - Render: filas en un solo innerHTML, permisos fuera del bucle, un único listener delegado en el
+ *    tbody y animación de entrada solo en filas nuevas.
+ *  Sigue sin haber paginación ni filtrado en servidor (fase 2).
+ */
+async function cargarPolizas() {
+    const tiempos = {};
+    const t0 = _ahora();
+    cargaPolizasEnCurso = true;
+    mostrarGiroCarga(true);
+    let hayDatosEnPantalla = todasLasPolizas.length > 0;
+
+    try {
+        rolUsuario = datosUsuario?.rol || 'operador';
         const esAdmin = tienePermiso('ver_todos_clientes');
-        
-        let query = supabaseClient
-            .from('polizas')
-            .select(`
-                id,
-                numero_poliza,
-                operador_nombre,
-                estado_mercado,
-                fecha_revision_mercado,
-                documentos_pendientes,
-                agente35_estado,
-                compania,
-                fecha_revision_compania,
-                plan,
-                estado_renovacion,
-                poliza_origen_id,
-                prima,
-                agente_nombre,
-                fecha_efectividad,
-                fecha_inicial_cobertura,
-                fecha_final_cobertura,
-                created_at,
-                updated_at,
-                estado_documentos,
-                tipo_venta,
-                estado_compania,
-                fecha_revision_mercado,
-                fecha_revision_compania,
-                pagado_hasta,
-                fecha_plazo_documentos,
-                nombre_agente_mercado,
-                modificado_por_nombre,
-                modificado_por_email,
-                clave_seguridad,
-                member_id,
-                aplicantes,
-                cliente:clientes (
-                    id,
-                    nombres,
-                    apellidos,
-                    fecha_nacimiento,
-                    telefono1,
-                    telefono2,
-                    email,
-                    direccion,
-                    ciudad,
-                    estado,
-                    codigo_postal,
-                    estado_migratorio,
-                    ssn,
-                    ocupacion,
-                    tipo_registro,
-                    tipo_modificacion,
-                    operador_nombre,
-                    tiene_social,
-                    archivado,
-                    venta_realizada_por,
-                    portal,
-                    nacionalidad,
-                    agente_nombre,
-                    metodos_pago (
-                        tiene_metodo_pago,
-                        tiene_pago_automatico,
-                        activo,
-                        pago_enero,
-                        pago_febrero,
-                        pago_marzo,
-                        pago_abril,
-                        pago_mayo,
-                        pago_junio,
-                        pago_julio,
-                        pago_agosto,
-                        pago_septiembre,
-                        pago_octubre,
-                        pago_noviembre,
-                        pago_diciembre
-                    ),
-                    pagos_mensuales_cliente (
-                        anio,
-                        enero,
-                        febrero,
-                        marzo,
-                        abril,
-                        mayo,
-                        junio,
-                        julio,
-                        agosto,
-                        septiembre,
-                        octubre,
-                        noviembre,
-                        diciembre
-                    )
-                ),
-                seguimientos (
-                    fecha_seguimiento,
-                    seguimiento_efectivo,
-                    medio_comunicacion,
-                    observacion
-                )
-            `)
-            .order('updated_at', { ascending: false });
-        
-        // Fase 3: qué pólizas ve cada usuario lo decide la base de datos (RLS de carteras):
-        // su cartera + su equipo + las carteras concedidas en Usuarios → Carteras.
-        // Por eso ya no se filtra aquí por operador_nombre.
 
         const btnExportar = document.getElementById('btnExportar');
         if (btnExportar && esAdmin) {
             btnExportar.style.display = 'inline-flex';
         }
-        
-        let { data, error } = await query;
 
-        if (error) {
-            console.error('❌ Error:', error);
-            // Si es error 500, reintentar una vez después de 2 seg
-            if (error.code === 'PGRST' || error.message?.includes('500')) {
-                await new Promise(r => setTimeout(r, 2000));
-                const { data: data2, error: error2 } = await query;
-                if (error2) throw error2;
-                data = data2;
-            } else {
-                throw error;
-            }
+        // Fase 3: qué pólizas ve cada usuario lo decide la base de datos (RLS de carteras):
+        // su cartera + su equipo + las carteras concedidas en Usuarios → Carteras.
+        // Por eso ya no se filtra aquí por operador_nombre.
+
+        const esPrimera = _primeraCargaPolizas;
+        _primeraCargaPolizas = false;
+        const clave = claveCachePolizas();
+        // Con filtros llegados por URL (estado/atención) no se pinta la caché: evita ver la lista sin filtrar
+        const urlConFiltro = /[?&](estado|atencion|condado)=/.test(location.search);
+
+        let cache = null;
+        if (esPrimera && clave && !urlConFiltro) {
+            const tc = _ahora();
+            cache = await leerCachePolizas(clave);
+            tiempos.lecturaCache = Math.round(_ahora() - tc);
         }
-        
-        ;
 
-        // Los borradores de renovación no se listan: se abren desde la póliza original ("Continuar renovación")
-        todasLasPolizas = (data || []).filter(p => !p.cliente?.archivado && p.estado_renovacion !== 'Borrador');
-        polizasFiltradas = (data || []).filter(p => !p.cliente?.archivado && p.estado_renovacion !== 'Borrador');
-        paginaActual = 1;
+        if (cache) {
+            const tp = _ahora();
+            instalarPolizas(cache.filas, 'cache');
+            hayDatosEnPantalla = true;
+            tiempos.pintadoDesdeCache = Math.round(_ahora() - tp);
+        } else if (!hayDatosEnPantalla) {
+            mostrarIndicadorCarga(true);
+        }
 
-        const estadisticas = calcularEstadisticas(todasLasPolizas);
-        filtroModificadoPor.recargarOpciones();
-        filtroPortalAvanzado.recargarOpciones();
-        filtroNacionalidad.recargarOpciones();
-        filtroAgenteCliente.recargarOpciones();
-        actualizarTarjetas(estadisticas);
-        actualizarIndicadoresRol();
+        // --- Consulta ---
+        const tq = _ahora();
+        let crudas = null;
+        let cargaCompletaEn = Date.now();
+        let modoCarga = 'completa';
+        let metodoCarga = null;
 
-        // Si hay filtros guardados en localStorage, los restaura y reemplaza polizasFiltradas
-        restaurarFiltrosDesdeStorage();
-        
-        renderizarTabla();
-        actualizarPaginacion();
-        
-        mostrarIndicadorCarga(false);
-
-        setTimeout(() => calcularFactoresTodasLasPolizas(), 50)
-
-        const filtroOperadorHome = sessionStorage.getItem('filtro_operador');
-        if (filtroOperadorHome) {
-            sessionStorage.removeItem('filtro_operador');
-            const checkbox = document.querySelector(`#panelOperadores input[value="${filtroOperadorHome}"]`);
-            if (checkbox) {
-                document.querySelectorAll('#panelOperadores input').forEach(cb => cb.checked = false);
-                checkbox.checked = true;
-                actualizarTextoOperadores();
-                aplicarFiltrosAvanzados();
-
-                requestAnimationFrame(() => {
-                    renderizarTabla();
-                    actualizarPaginacion()
-                })
+        if (cache && cache.ultimoUpdatedAt && (Date.now() - cache.cargaCompletaEn) < POLIZAS_DELTA_MAX_EDAD_MS) {
+            try {
+                const desdeDelta = new Date(new Date(cache.ultimoUpdatedAt).getTime() - POLIZAS_DELTA_MARGEN_MS).toISOString();
+                const [cambios, totalActual] = await Promise.all([
+                    descargarPolizas({ gteUpdatedAt: desdeDelta }),
+                    contarPolizas(null)
+                ]);
+                const mapa = new Map(cache.filas.map(p => [p.id, p]));
+                cambios.filas.forEach(p => mapa.set(p.id, p));
+                const fusion = [...mapa.values()].sort(_compararPolizas);
+                if (fusion.length !== totalActual) throw new Error(`el total no cuadra (${fusion.length} vs ${totalActual})`);
+                crudas = fusion;
+                cargaCompletaEn = cache.cargaCompletaEn;
+                modoCarga = `delta (${cambios.filas.length} filas)`;
+                metodoCarga = cambios.metodo;
+            } catch (e) {
+                dbg.info('[pólizas] delta descartado, recarga completa:', e?.message || e);
             }
         }
 
-        const filtroCumpleanos = localStorage.getItem('filtro_cumpleanos');
-        if (filtroCumpleanos) {
-            localStorage.removeItem('filtro_cumpleanos');
-            const ids = JSON.parse(filtroCumpleanos);
-            polizasFiltradas = todasLasPolizas.filter(p => ids.includes(p.cliente?.id));
-            hayFiltrosActivos = true;
+        if (!crudas) {
+            const parcial = !hayDatosEnPantalla;
+            const resultado = await descargarPolizas({
+                onBloque: parcial ? (filas) => instalarPolizas(filas, 'parcial') : null
+            });
+            crudas = resultado.filas.sort(_compararPolizas);
+            metodoCarga = resultado.metodo;
+        }
+        tiempos.consulta = Math.round(_ahora() - tq);
+        tiempos.modo = modoCarga;
+        tiempos.metodo = metodoCarga;
+        tiempos.filas = crudas.length;
+
+        // --- Procesado (filtrar, estadísticas, restaurar filtros) + render ---
+        const tpr = _ahora();
+        _msFactoresRender = 0;
+        instalarPolizas(crudas, 'final');
+        const tFin = _ahora();
+        tiempos.procesadoYRender = Math.round(tFin - tpr);
+        tiempos.factores = Math.round(_msFactoresRender);
+
+        // Guardar en la caché cuando el navegador esté en reposo
+        if (clave) {
+            const registro = {
+                clave, version: POLIZAS_CACHE_VERSION, guardadoEn: Date.now(), cargaCompletaEn,
+                ultimoUpdatedAt: _maxUpdatedAt(crudas), filas: crudas
+            };
+            _enReposo(() => guardarCachePolizas(registro));
+        }
+
+        tiempos.total = Math.round(_ahora() - t0);
+        dbg.info('[pólizas] tiempos (ms)', tiempos);
+
+    } catch (error) {
+        console.error('❌ Error al cargar pólizas:', error?.message);
+        if (hayDatosEnPantalla && todasLasPolizas.length) {
+            // Había algo pintado (caché): se conserva y solo se avisa en consola
+            dbg.warn('[pólizas] no se pudo refrescar; se muestran los datos guardados');
+            datosPolizasListos = true;
+        } else {
+            mostrarIndicadorCarga(false);
+            mostrarError('Error al cargar las pólizas: ' + error.message);
+        }
+    } finally {
+        cargaPolizasEnCurso = false;
+        mostrarGiroCarga(false);
+    }
+}
+
+// ---------- Búsqueda prioritaria en el servidor (mientras la carga completa sigue en segundo plano) ----------
+// Quita lo que rompe un filtro .or de PostgREST (comas, paréntesis, comodines, comillas, barras)
+function escaparTerminoOr(valor) {
+    return String(valor ?? '').replace(/[,()%*_\\"'`]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+async function buscarPolizasEnServidor(termino) {
+    const id = ++busquedaServidorId;
+    const tokens = prepararBusqueda(termino);
+
+    // Término vacío: volver a lo que hubiera cargado hasta ahora
+    if (!tokens) {
+        if (todasLasPolizas.length) {
+            polizasFiltradas = todasLasPolizas.slice();
+            paginaActual = 1;
             renderizarTabla();
             actualizarPaginacion();
-            actualizarIndicadorFiltros();
         }
-        
-    } catch (error) {
-        console.error('❌ Error al cargar pólizas:', error);
-        mostrarIndicadorCarga(false);
-        mostrarError('Error al cargar las pólizas: ' + error.message);
+        return;
+    }
+
+    // Se consulta por la palabra más larga; después se exigen todas las palabras en local
+    const crudo = escaparTerminoOr(termino).split(' ').filter(Boolean).sort((a, b) => b.length - a.length)[0];
+    if (!crudo) return;
+    const digitos = _soloDigitos(crudo);
+    // Teléfonos guardados con formato: 302434 → *3*0*2*4*3*4* (se verifica después en local)
+    const patronTel = digitos.length >= 3 && /^[\d()+.\-]+$/.test(crudo) ? `*${digitos.split('').join('*')}*` : null;
+
+    const filtroPoliza = [`numero_poliza.ilike.*${crudo}*`, `member_id.ilike.*${crudo}*`].join(',');
+    const filtroCliente = [
+        `nombres.ilike.*${crudo}*`, `apellidos.ilike.*${crudo}*`, `email.ilike.*${crudo}*`,
+        `telefono1.ilike.*${crudo}*`, `telefono2.ilike.*${crudo}*`,
+        ...(patronTel ? [`telefono1.ilike.${patronTel}`, `telefono2.ilike.${patronTel}`] : [])
+    ].join(',');
+
+    const base = () => supabaseClient.from('polizas').select(POLIZAS_SELECT_LISTA)
+        .order('updated_at', { ascending: false }).limit(50);
+
+    try {
+        const [porPoliza, porCliente] = await Promise.all([
+            base().or(filtroPoliza),
+            (async () => {
+                const { data, error } = await supabaseClient.from('clientes').select('id').or(filtroCliente).limit(100);
+                if (error) return { error };
+                const ids = (data || []).map(c => c.id);
+                return ids.length ? await base().in('cliente_id', ids) : { data: [] };
+            })()
+        ]);
+        if (id !== busquedaServidorId || datosPolizasListos) return;     // obsoleta, o ya hay datos completos
+        if (porPoliza.error || porCliente.error) {
+            dbg.warn('[pólizas] búsqueda en servidor falló; se espera a la carga completa:', porPoliza.error || porCliente.error);
+            return;
+        }
+
+        const anios = ['2025', '2026', '2027'].filter(a => document.getElementById(a)?.checked);
+        const vistos = new Map();
+        [...(porPoliza.data || []), ...(porCliente.data || [])].forEach(p => {
+            if (vistos.has(p.id)) return;
+            if (p.cliente?.archivado || p.estado_renovacion === 'Borrador') return;
+            if (anios.length && !anios.includes(String(p.fecha_efectividad || '').slice(0, 4))) return;
+            if (!coincideBusqueda(p, tokens)) return;
+            vistos.set(p.id, p);
+        });
+        const resultados = [...vistos.values()].sort(_compararPolizas).slice(0, 50);
+        resultados.forEach(p => polizasBusquedaServidor.set(String(p.id), p));
+
+        polizasFiltradas = resultados;
+        paginaActual = 1;
+        renderizarTabla();
+        actualizarPaginacion();
+    } catch (e) {
+        dbg.warn('[pólizas] búsqueda en servidor falló; se espera a la carga completa:', e);
     }
 }
 
@@ -705,17 +1039,32 @@ function celdaRenovacion(poliza) {
     return chip + origen;
 }
 
+// Filas de la página pintada (id → póliza) y conjunto de ids, para el clic delegado y la animación
+let _filasPaginaActual = new Map();
+let _idsPaginaPintada = new Set();
+
 function renderizarTabla() {
     const tbody = document.getElementById('tabla-polizas');
-    
+
     if (!tbody) {
         console.error('❌ No se encontró el elemento tabla-polizas');
         return;
     }
-    
-    tbody.innerHTML = '';
-    
+
+    // Un único listener para todas las filas (antes: un onclick por fila)
+    if (!tbody.__clicDelegado) {
+        tbody.__clicDelegado = true;
+        tbody.addEventListener('click', (e) => {
+            const tr = e.target.closest('tr[data-poliza-id]');
+            if (!tr || !tbody.contains(tr)) return;
+            const poliza = _filasPaginaActual.get(tr.dataset.polizaId);
+            if (poliza) abrirDetalles(poliza.id);
+        });
+    }
+
     if (polizasFiltradas.length === 0) {
+        _filasPaginaActual = new Map();
+        _idsPaginaPintada = new Set();
         tbody.innerHTML = `
             <tr>
                 <td colspan="32" style="text-align: center; padding: 40px; color: #94a3b8;">
@@ -734,92 +1083,107 @@ function renderizarTabla() {
     const fin = inicio + polizasPorPagina;
     const polizasPagina = polizasFiltradas.slice(inicio, fin);
 
-    polizasPagina.forEach(poliza => {
+    // Permiso calculado una vez, no por fila
+    const puedeReasignar = tienePermiso('reasignar_operador');
+    const esc = (v) => escapeHtml(v ?? '');
+
+    // Factores de riesgo: solo para las filas visibles (se cachean por póliza)
+    const tf = _ahora();
+    polizasPagina.forEach(p => obtenerFactoresPoliza(p));
+    _msFactoresRender += _ahora() - tf;
+
+    const filas = polizasPagina.map(poliza => {
         const cliente = poliza.cliente;
-        const seguimiento = poliza.seguimiento;
-        const metodos_pago = poliza.cliente?.metodos_pago;
 
         let ultimoSeguimiento = '';
         let seguimientoEfectivo = '-';
-        
+
         if (poliza.seguimientos && poliza.seguimientos.length > 0) {
             // Calcular último seguimiento (fecha más reciente)
             const fechas = poliza.seguimientos.map(seg => new Date(formatoUS(seg.fecha_seguimiento)));
             const fechaMayor = new Date(Math.max(...fechas));
             ultimoSeguimiento = formatoUS(fechaMayor);
-            
-            // Obtener el seguimiento efectivo del último seguimiento
-            const ultimoSeg = poliza.seguimientos.find(seg => {
-                const fechaSeg = new Date(formatoUS(seg.fecha_seguimiento));
-                return fechaSeg.getTime() === fechaMayor.getTime();
-            });
-            
             seguimientoEfectivo = seguimientoEfectivo120(poliza) || '-';
         }
 
-        const tr = document.createElement('tr');
-        tr.onclick = () => abrirDetalles(poliza.id);
-        tr.style.cursor = 'pointer';
-        
-        tr.innerHTML = `
-            <td data-label="Portal">${cliente?.portal || '-'}</td>
+        const operadorTexto = esc(cliente?.operador_nombre || poliza?.operador_nombre || '-');
+
+        return `
+        <tr data-poliza-id="${esc(poliza.id)}" style="cursor: pointer;">
+            <td data-label="Portal">${esc(cliente?.portal || '-')}</td>
             <td data-label="Factores">${renderCeldaFactores(poliza.id)}</td>
-            <td data-label="Tipo de registro">${cliente?.tipo_registro || '-'}</td>
-            <td data-label="Tipo de modificación">${cliente?.tipo_modificacion || '-'}</td>
-            <td data-label="Agente (Mercado)">${poliza.nombre_agente_mercado || '-'}</td>
+            <td data-label="Tipo de registro">${esc(cliente?.tipo_registro || '-')}</td>
+            <td data-label="Tipo de modificación">${esc(cliente?.tipo_modificacion || '-')}</td>
+            <td data-label="Agente (Mercado)">${esc(poliza.nombre_agente_mercado || '-')}</td>
             <td data-label="Operador">
-                ${tienePermiso('reasignar_operador') ? `
-                    <div class="operador-editable" 
+                ${puedeReasignar ? `
+                    <div class="operador-editable"
                         title="Click para cambiar operador"
                         onclick="abrirSelectorOperador(event, '${cliente?.id || ''}', '${cliente?.operador_nombre || ''}')"
                     >
-                        <span class="operador-nombre">${cliente?.operador_nombre || poliza?.operador_nombre || '-'}</span>
+                        <span class="operador-nombre">${operadorTexto}</span>
                         <span class="material-symbols-rounded operador-edit-icon">edit</span>
                     </div>
                 ` : `
-                    ${cliente?.operador_nombre || poliza?.operador_nombre || '-'}
+                    ${operadorTexto}
                 `}
             </td>
             <td class="td1" data-label="Cliente">
                 <div class="td1__flex">
-                    <a href="./cliente_editar.html?id=${cliente?.id || ''}" onclick="event.stopPropagation()">
-                        ${cliente?.nombres || ''} ${cliente?.apellidos || ''}
+                    <a href="./cliente_editar.html?id=${esc(cliente?.id || '')}" onclick="event.stopPropagation()">
+                        ${esc(cliente?.nombres || '')} ${esc(cliente?.apellidos || '')}
                     </a>
                 </div>
             </td>
-            <td data-label="Aplicantes">${poliza.aplicantes || '-'}</td>
-            <td data-label="Teléfono">${cliente?.telefono1 || '-'}</td>
-            <td data-label="Estado migratorio">${cliente?.estado_migratorio || '-'}</td>
-            <td data-label="SSN">${cliente?.ssn || 'No'}</td>
-            <td data-label="Estado (Mercado)">  
-                <span class="badge-estado ${poliza.estado_mercado || 'pendiente'}">
-                    ${poliza.estado_mercado || 'Pendiente'}
+            <td data-label="Aplicantes">${esc(poliza.aplicantes || '-')}</td>
+            <td data-label="Teléfono">${esc(cliente?.telefono1 || '-')}</td>
+            <td data-label="Estado migratorio">${esc(cliente?.estado_migratorio || '-')}</td>
+            <td data-label="SSN">${esc(cliente?.ssn || 'No')}</td>
+            <td data-label="Estado (Mercado)">
+                <span class="badge-estado ${esc(poliza.estado_mercado || 'pendiente')}">
+                    ${esc(poliza.estado_mercado || 'Pendiente')}
                 </span>
             </td>
             <td data-label="Fecha de revisión (Mercado)">${formatoUS(poliza.fecha_revision_mercado)}</td>
-            <td data-label="Documentos">${poliza.documentos_pendientes}</td>
-            <td data-label="Estado documentos">${poliza.estado_documentos || 'Pendiente información'} </td>
+            <td data-label="Documentos">${esc(poliza.documentos_pendientes)}</td>
+            <td data-label="Estado documentos">${esc(poliza.estado_documentos || 'Pendiente información')} </td>
             <td data-label="Fecha del plazo de documentos">${formatoUS(poliza.fecha_plazo_documentos) || 'Pendiente información'} </td>
             <td data-label="Agente 3.5">${obtenerBadgeAgente35(poliza.agente35_estado)}</td>
-            <td data-label="Compañía">${poliza.compania || '-'}</td>
-            <td data-label="Estado en compañia">${poliza.estado_compania || '-'}</td>
+            <td data-label="Compañía">${esc(poliza.compania || '-')}</td>
+            <td data-label="Estado en compañia">${esc(poliza.estado_compania || '-')}</td>
             <td data-label="Fecha de revision en compañia">${formatoUS(poliza.fecha_revision_compania) || '-'}</td>
-            <td data-label="Plan">${poliza.plan || '-'}</td>
-            <td data-label="Prima">$${poliza.prima || '0.00'}</td>
+            <td data-label="Plan">${esc(poliza.plan || '-')}</td>
+            <td data-label="Prima">$${esc(poliza.prima || '0.00')}</td>
             <td data-label="Pagado hasta">${formatoUS(poliza.pagado_hasta) || '-'}</td>
-            <td data-label="¿Tiene metodo de pago?">${obtenerMetodoPrincipal(poliza.cliente)?.tiene_metodo_pago || '-'}</td>
-            <td data-label="Agente">${poliza.agente_nombre || '-'}</td>
+            <td data-label="¿Tiene metodo de pago?">${esc(obtenerMetodoPrincipal(poliza.cliente)?.tiene_metodo_pago || '-')}</td>
+            <td data-label="Agente">${esc(poliza.agente_nombre || '-')}</td>
             <td data-label="Efectividad">${formatoUS(poliza.fecha_efectividad)}</td>
             <td data-label="Creación">${formatoUS(poliza.created_at)}</td>
             <td data-label="Modificación">${formatearFechaHora(poliza.updated_at)}</td>
-            <td data-label="Modificación realizada por">${poliza.modificado_por_nombre || '-'}</td>
+            <td data-label="Modificación realizada por">${esc(poliza.modificado_por_nombre || '-')}</td>
             <td data-label="Último seguimiento">${ultimoSeguimiento}</td>
-            <td data-label="Seguimiento efectivo">${seguimientoEfectivo}</td>
+            <td data-label="Seguimiento efectivo">${esc(seguimientoEfectivo)}</td>
             <td data-label="Renovación">${celdaRenovacion(poliza)}</td>
-        `;
-        
-        tbody.appendChild(tr);
+        </tr>`;
     });
+
+    // Cascada de entrada solo si la página trae filas distintas a las ya pintadas
+    // (reordenar o refiltrar la misma página no repite la animación)
+    const idsNuevos = new Set(polizasPagina.map(p => String(p.id)));
+    let animar = idsNuevos.size !== _idsPaginaPintada.size;
+    if (!animar) for (const id of idsNuevos) { if (!_idsPaginaPintada.has(id)) { animar = true; break; } }
+
+    _filasPaginaActual = new Map(polizasPagina.map(p => [String(p.id), p]));
+    _idsPaginaPintada = idsNuevos;
+
+    tbody.innerHTML = filas.join('');
+
+    if (animar) {
+        Array.from(tbody.rows).forEach((tr, i) => {
+            tr.style.setProperty('--i', Math.min(i, 15));
+            tr.classList.add('fila-entra');
+        });
+    }
 }
 
 function formatearSSN(valor) {
@@ -898,15 +1262,37 @@ function configurarModal() {
     });
 }
 
-function calcularFactoresTodasLasPolizas() {
-    todasLasPolizas.forEach(p => {
-        const info = calcularScoringCartera(p);
-        factoresPolizaCache[p.id] = {
-            ...info,
-            principal: obtenerFactorPrincipalCartera(info.factores, info.metricas.mesesPagoPendiente)
+// Factores de riesgo de UNA póliza, con caché por id. Se calcula bajo demanda (filas visibles).
+function obtenerFactoresPoliza(poliza) {
+    let info = factoresPolizaCache[poliza.id];
+    if (info) return info;
+    try {
+        const calculo = calcularScoringCartera(poliza);
+        info = {
+            ...calculo,
+            principal: obtenerFactorPrincipalCartera(calculo.factores, calculo.metricas.mesesPagoPendiente)
         };
+        factoresPolizaCache[poliza.id] = info;
+    } catch (e) {
+        dbg.warn('[pólizas] no se pudieron calcular los factores de', poliza.id, e);
+    }
+    return info || null;
+}
+
+// Compatibilidad (polizas_extras.js la llama tras añadir pólizas): descarta lo calculado y
+// refresca SOLO las celdas de factores de la página visible, sin reconstruir la tabla.
+function calcularFactoresTodasLasPolizas() {
+    factoresPolizaCache = {};
+    const tbody = document.getElementById('tabla-polizas');
+    if (!tbody) return;
+    tbody.querySelectorAll('tr[data-poliza-id]').forEach(tr => {
+        const poliza = _filasPaginaActual.get(tr.dataset.polizaId);
+        const celda = tr.querySelector('td[data-label="Factores"]');
+        if (poliza && celda) {
+            obtenerFactoresPoliza(poliza);
+            celda.innerHTML = renderCeldaFactores(poliza.id);
+        }
     });
-    renderizarTabla()
 }
 
 function renderCeldaFactores(polizaId) {
@@ -991,13 +1377,45 @@ function cerrarModalFactores() {
     document.body.style.overflow = 'auto';
 }
 
+// Datos que solo usa el modal de detalle (se quitaron del select de la lista).
+// Si falla, el modal se abre igualmente con lo que ya hay (esos campos saldrán como N/A).
+async function cargarDetallePoliza(poliza) {
+    if (poliza.__detalleCargado) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('polizas')
+            .select(`
+                id,
+                cliente:clientes ( id, direccion, ciudad, codigo_postal ),
+                seguimientos ( fecha_seguimiento, seguimiento_efectivo, medio_comunicacion, observacion )
+            `)
+            .eq('id', poliza.id)
+            .maybeSingle();
+        if (error) throw error;
+        if (!data) return;
+        if (data.cliente) {
+            poliza.cliente = poliza.cliente || {};
+            poliza.cliente.direccion = data.cliente.direccion;
+            poliza.cliente.ciudad = data.cliente.ciudad;
+            poliza.cliente.codigo_postal = data.cliente.codigo_postal;
+        }
+        if (Array.isArray(data.seguimientos)) poliza.seguimientos = data.seguimientos;
+        poliza.__detalleCargado = true;
+    } catch (e) {
+        dbg.warn('[pólizas] no se pudo cargar el detalle de la póliza', poliza.id, e);
+    }
+}
+
 async function abrirDetalles(polizaId) {
     try {
         // Buscar póliza en datos locales
-        const poliza = todasLasPolizas.find(p => p.id === polizaId);
+        const poliza = todasLasPolizas.find(p => p.id === polizaId) || polizasBusquedaServidor.get(String(polizaId));
         if (!poliza) {
             throw new Error('Póliza no encontrada');
         }
+
+        // La lista ya no trae dirección ni notas de seguimiento: se piden aquí, por id
+        await cargarDetallePoliza(poliza);
 
 
         
@@ -1244,7 +1662,7 @@ async function abrirDetalles(polizaId) {
         document.body.style.overflow = 'hidden';
         
     } catch (error) {
-        console.error('❌ Error al abrir detalles:', error);
+        console.error('❌ Error al abrir detalles:', error?.message);
         alert('Error al cargar detalles: ' + error.message);
     }
 }
@@ -1539,7 +1957,7 @@ async function exportarExcel() {
         mostrarNotificacion(`Excel exportado: ${datos.length} pólizas`, 'success');
 
     } catch (error) {
-        console.error('❌ Error al exportar:', error);
+        console.error('❌ Error al exportar:', error?.message);
         mostrarNotificacion('Error al exportar: ' + error.message, 'error');
     }
 }
@@ -1547,59 +1965,119 @@ async function exportarExcel() {
 // ============================================
 // BÚSQUEDA
 // ============================================
-function configurarBusqueda() {
-    const inputBusqueda = document.getElementById('searchInput');
-    
-    if (!inputBusqueda) {
-        console.warn('⚠️ Input de búsqueda no encontrado');
-        return;
-    }
-    
-    inputBusqueda.addEventListener('input', function(e) {
-        const termino = e.target.value.toLowerCase().trim();
-        buscarPolizas(termino);
-        guardarFiltrosEnStorage();
+// --- Normalización: texto sin acentos y en minúsculas; teléfonos/números solo dígitos ---
+function _normalizarTexto(valor) {
+    return String(valor ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+function _soloDigitos(valor) {
+    return String(valor ?? '').replace(/\D/g, '');
+}
+
+// Índice de búsqueda por póliza (se calcula una sola vez y se descarta con la póliza).
+// WeakMap: no se guarda dentro del objeto, así no acaba en la caché de IndexedDB.
+const _indiceBusqueda = new WeakMap();
+function indiceBusquedaPoliza(poliza) {
+    let ix = _indiceBusqueda.get(poliza);
+    if (ix) return ix;
+    const c = poliza.cliente || poliza.clientes || {};
+    const nombres = c.nombres || '';
+    const apellidos = c.apellidos || '';
+    const campos = [
+        poliza.numero_poliza,
+        nombres,
+        apellidos,
+        `${nombres} ${apellidos}`,
+        c.telefono1,
+        c.telefono2,
+        c.email,
+        poliza.member_id,
+        poliza.operador_nombre,
+        c.operador_nombre,
+        poliza.aplicantes,
+        poliza.compania,
+        poliza.plan,
+        poliza.estado_mercado,
+        poliza.agente35_estado,
+        c.tipo_registro
+    ];
+    ix = {
+        texto: _normalizarTexto(campos.map(v => v ?? '').join(' ')),
+        // Dígitos por campo (separados por espacio para no mezclar campos distintos)
+        digitos: [poliza.numero_poliza, c.telefono1, c.telefono2, poliza.member_id]
+            .map(_soloDigitos).filter(Boolean).join(' ')
+    };
+    _indiceBusqueda.set(poliza, ix);
+    return ix;
+}
+
+// Devuelve null si no hay término; si no, la lista de palabras ya normalizadas.
+// Una palabra "numérica" (solo dígitos y separadores de teléfono) también se compara solo con dígitos.
+function prepararBusqueda(termino) {
+    const t = _normalizarTexto(termino);
+    if (!t) return null;
+    return t.split(/\s+/).filter(Boolean).map(tok => {
+        const d = _soloDigitos(tok);
+        return { tok, digitos: (d && /^[\d()+.\-]+$/.test(tok)) ? d : '' };
     });
 }
 
-function buscarPolizas(termino) {
-    if (termino === '') {
-        polizasFiltradas = todasLasPolizas;
-    } else {
-        polizasFiltradas = todasLasPolizas.filter(poliza => {
-            if (poliza.cliente?.archivado === true) return false;
-            const cliente = poliza.cliente || {};
-            const nombreCompleto = `${cliente.nombres || ''} ${cliente.apellidos || ''}`.toLowerCase();
-            const telefono = cliente.telefono1 || '';
-            const numeroPoliza = poliza.numero_poliza || '';
-            const tipoRegistro = cliente.tipo_registro || '';
-            const compania = poliza.compania || '';
-            const plan = poliza.plan || '';
-            const estadoMercado = poliza.estado_mercado || '';
-            const operadorNombre = poliza.operador_nombre || '';
-            const agente35Estado = poliza.agente35_estado || '';
-            
-            const palabras = termino.split(/\s+/).filter(Boolean);
-            const camposBusqueda = [
-                nombreCompleto,
-                telefono.toLowerCase(),
-                numeroPoliza.toLowerCase(),
-                compania.toLowerCase(),
-                plan.toLowerCase(),
-                estadoMercado.toLowerCase(),
-                operadorNombre.toLowerCase(),
-                agente35Estado.toLowerCase(),
-                tipoRegistro.toLowerCase()
-            ].join(' ');
-            return palabras.every(palabra => camposBusqueda.includes(palabra));
-        });
-    }
-    
-    paginaActual = 1;
-    renderizarTabla();
-    actualizarPaginacion();
-    guardarFiltrosEnStorage();
+function coincideBusqueda(poliza, tokens) {
+    if (!tokens) return true;
+    const ix = indiceBusquedaPoliza(poliza);
+    return tokens.every(t => ix.texto.includes(t.tok) || (t.digitos !== '' && ix.digitos.includes(t.digitos)));
+}
 
+let _temporizadorBusqueda = null;
+
+function configurarBusqueda() {
+    const inputBusqueda = document.getElementById('searchInput');
+
+    if (!inputBusqueda) {
+        dbg.warn('⚠️ Input de búsqueda no encontrado');
+        return;
+    }
+
+    const ejecutar = () => {
+        clearTimeout(_temporizadorBusqueda);
+        _temporizadorBusqueda = null;
+        // Aún no hay datos: se aplicará al terminar la carga (ver cargarPolizas)
+        // Aún no hay lista completa: búsqueda prioritaria en el servidor (límite 50) y, al terminar
+        // la carga, se recalcula en local (ver cargarPolizas / instalarPolizas)
+        if (!datosPolizasListos) {
+            busquedaPendiente = true;
+            terminoServidorActivo = !!inputBusqueda.value.trim();
+            buscarPolizasEnServidor(inputBusqueda.value);
+            return;
+        }
+        buscarPolizas(inputBusqueda.value);
+    };
+
+    // Mientras se escribe: debounce de 250 ms para no refiltrar 14.000 filas por tecla
+    inputBusqueda.addEventListener('input', function() {
+        if (!datosPolizasListos) busquedaPendiente = true;
+        clearTimeout(_temporizadorBusqueda);
+        _temporizadorBusqueda = setTimeout(ejecutar, 250);
+    });
+
+    // Enter: aplica la búsqueda ya, sin esperar el debounce, y evita enviar formularios
+    inputBusqueda.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        if (!datosPolizasListos) busquedaPendiente = true;
+        ejecutar();
+    });
+}
+
+// La búsqueda es un filtro más de aplicarFiltrosAvanzados: así se combina con
+// los avanzados y con año/renovación/firma (polizas_filtro_renovacion.js).
+// El término se lee del input (#searchInput); el parámetro se conserva por compatibilidad.
+function buscarPolizas(termino) {
+    paginaActual = 1;
+    if (typeof window.aplicarFiltrosAvanzados === 'function') {
+        aplicandoSoloBusqueda = true;
+        try { window.aplicarFiltrosAvanzados(); } finally { aplicandoSoloBusqueda = false; }
+    }
+    guardarFiltrosEnStorage();
 }
 
 
@@ -1647,7 +2125,7 @@ function aplicarFiltros() {
     const checkbox2026 = document.getElementById('2026');
     
     if (!checkbox2025 || !checkbox2026) {
-        console.warn('⚠️ Checkboxes de filtro no encontrados');
+        dbg.warn('⚠️ Checkboxes de filtro no encontrados');
         return;
     }
     
@@ -1832,21 +2310,21 @@ function actualizarTarjetas(estadisticas) {
     if (elActivas) {
         elActivas.textContent = estadisticas.activas;
     } else {
-        console.warn('⚠️ Elemento polizasActivas no encontrado');
+        dbg.warn('⚠️ Elemento polizasActivas no encontrado');
     }
     
     const elCanceladas = document.getElementById('polizasCanceladas');
     if (elCanceladas) {
         elCanceladas.textContent = estadisticas.canceladas;
     } else {
-        console.warn('⚠️ Elemento polizasCanceladas no encontrado');
+        dbg.warn('⚠️ Elemento polizasCanceladas no encontrado');
     }
     
     const elProximas = document.getElementById('polizasProximas');
     if (elProximas) {
         elProximas.textContent = estadisticas.proximas;
     } else {
-        console.warn('⚠️ Elemento polizasProximas no encontrado');
+        dbg.warn('⚠️ Elemento polizasProximas no encontrado');
     }
     
     ;
@@ -1934,7 +2412,7 @@ function formatoUS(fecha) {
         
         return '';
     } catch (error) {
-        console.error('Error al formatear fecha:', error);
+        console.error('Error al formatear fecha:', error?.message);
         return '';
     }
 }
@@ -1970,7 +2448,7 @@ function formatoISO(fecha) {
         
         return '';
     } catch (error) {
-        console.error('Error al formatear fecha:', error);
+        console.error('Error al formatear fecha:', error?.message);
         return '';
     }
 }
@@ -1987,21 +2465,19 @@ function obtenerBadgeEstado(estado) {
     return estados[estado.toLowerCase()] || '<span class="badge-estado">Sin estado</span>';
 }
 
+// Skeleton con onda lavanda mientras llega el primer bloque (estilos en css/polizas.css)
 function mostrarIndicadorCarga(mostrar) {
     const tbody = document.getElementById('tabla-polizas');
     if (!tbody) return;
     
     if (mostrar) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="23" style="text-align: center; padding: 40px;">
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
-                        <div style="width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                        <p style="color: #64748b; margin: 0;">Cargando pólizas...</p>
-                    </div>
-                </td>
+        _filasPaginaActual = new Map();
+        _idsPaginaPintada = new Set();
+        tbody.innerHTML = Array.from({ length: 8 }, () => `
+            <tr class="skeleton-fila">
+                <td colspan="32"><div class="skeleton-barra"></div></td>
             </tr>
-        `;
+        `).join('');
     }
 }
 
@@ -2313,6 +2789,9 @@ async function cerrarSesion() {
         
         if (error) throw error;
         
+        // Invalidar la caché local de pólizas (IndexedDB)
+        borrarCachePolizas();
+
         // Limpiar localStorage
         localStorage.clear();
         
@@ -2320,7 +2799,7 @@ async function cerrarSesion() {
         window.location.href = '../index.html';
         
     } catch (error) {
-        console.error('Error al cerrar sesión:', error);
+        console.error('Error al cerrar sesión:', error?.message);
         alert('Error al cerrar sesión: ' + error.message);
     }
 }
@@ -2333,7 +2812,7 @@ async function cargarInfoUsuario() {
         const user = session?.user;
                 
         if (!user) {
-            console.warn('⚠️ No hay usuario autenticado');
+            dbg.warn('⚠️ No hay usuario autenticado');
             // Redirigir al login si no hay usuario
             window.location.href = '../index.html';
             return;
@@ -2385,7 +2864,7 @@ async function cargarInfoUsuario() {
         ;
         
     } catch (error) {
-        console.error('❌ Error al cargar info de usuario:', error);
+        console.error('❌ Error al cargar info de usuario:', error?.message);
         // No redirigir si es solo un error de carga
     }
 }
@@ -2471,8 +2950,9 @@ function limpiarFiltros() {
     filtrosActivos = null;
     hayFiltrosActivos = false;
     filtroAnioActivado = false;
+    idsCumpleanosActivos = null;
 
-    
+
     // Limpiar todos los campos
     document.getElementById('filtroNombre').value = '';
     document.getElementById('filtroApellido').value = '';
@@ -2842,9 +3322,13 @@ function aplicarFiltrosAvanzados() {
     //  Verificar si hay algún filtro activo
     hayFiltrosActivos = Object.values(filtrosActivos).some(valor => valor !== '' && valor !== null);
     
+    // Búsqueda rápida (#searchInput): se combina con el resto de filtros
+    const tokensBusqueda = prepararBusqueda(document.getElementById('searchInput')?.value);
+
     // Filtrar pólizas
     polizasFiltradas = todasLasPolizas.filter(poliza => {
         if (poliza.cliente?.archivado === true) return false;
+        if (!coincideBusqueda(poliza, tokensBusqueda)) return false;
         const cliente = poliza.cliente || {};
         
         // Filtro por nombre
@@ -3093,10 +3577,12 @@ function aplicarFiltrosAvanzados() {
     // Guardar filtros en localStorage para persistirlos
     guardarFiltrosEnStorage();
 
-    // Guardar datos filtrados para gráficas
-    try { sessionStorage.removeItem('graficas_data'); } catch (e) {}
-    // Mostrar botón "Ver gráfica"
-    document.getElementById('btnVerGrafica')?.style.setProperty('display', 'inline-flex');
+    // Guardar datos filtrados para gráficas (no al buscar: el buscador no es un filtro avanzado)
+    if (!aplicandoSoloBusqueda) {
+        try { sessionStorage.removeItem('graficas_data'); } catch (e) {}
+        // Mostrar botón "Ver gráfica"
+        document.getElementById('btnVerGrafica')?.style.setProperty('display', 'inline-flex');
+    }
     
 }
 
@@ -3295,7 +3781,6 @@ document.addEventListener('click', function(event) {
 const null1 = document.getElementById("nullPlazoDocumentos")
 
 document.getElementById('nullPlazoDocumentos').addEventListener("click", function() {
-    console.log(null1.checked)
 })
 
 function abirModalTipoRegistro() {
@@ -3416,6 +3901,7 @@ async function seleccionarOperador(clienteId, nuevoOperador, itemEl) {
         // Actualizar en memoria
         const poliza = todasLasPolizas.find(p => p.cliente?.id === clienteId);
         if (poliza?.cliente) poliza.cliente.operador_nombre = nuevoOperador;
+        if (poliza) _indiceBusqueda.delete(poliza);   // el índice de búsqueda incluye el operador
 
         // Actualizar en la tabla sin re-renderizar todo
         const td = document.querySelector(`[onclick*="${clienteId}"]`)?.closest('td');
@@ -3426,7 +3912,7 @@ async function seleccionarOperador(clienteId, nuevoOperador, itemEl) {
         cerrarSelectorOperador();
 
     } catch (error) {
-        console.error('Error cambiando operador:', error);
+        console.error('Error cambiando operador:', error?.message);
         alert('Error al cambiar el operador');
     }
 }

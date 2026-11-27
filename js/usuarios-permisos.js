@@ -44,7 +44,7 @@ async function cargarCatalogoPermisos() {
         .order('categoria', {ascending: true});
 
     if (error) {
-        console.error('Error cargando catálogo de permisos:', error);
+        console.error('Error cargando catálogo de permisos:', error?.message);
         return;
     }
     catalogoPermisos = data || [];
@@ -57,7 +57,7 @@ async function cargarUsuariosParaSelector() {
         .order('nombre', { ascending: true });
 
     if (error) {
-        console.error('Error cargando usuarios: ', error);
+        console.error('Error cargando usuarios: ', error?.message);
         return;
     }
     usuariosParaSelector = data || [];
@@ -115,7 +115,7 @@ async function cargarMatrizRol() {
         .eq('portal', portal);
 
     if (error) {
-        console.error('Error cargando permisos_rol', error);
+        console.error('Error cargando permisos_rol', error?.message);
         return
     }
 

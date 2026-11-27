@@ -200,7 +200,7 @@ async function cargarDatosAnalisis() {
         }
 
         if (revisionError) {
-            console.error('Error cargando revision_mercado:', revisionError);
+            console.error('Error cargando revision_mercado:', revisionError?.message);
         } else {
             todaLaRevisionMercado = revisionData || [];
         }
@@ -213,7 +213,7 @@ async function cargarDatosAnalisis() {
         aplicarFiltroOperador();
 
     } catch (err) {
-        console.error('Error cargando análisis:', err);
+        console.error('Error cargando análisis:', err?.message);
         document.getElementById('analisisTbody').innerHTML = `
             <tr>
                 <td colspan="9" class="analisis-tabla-vacia">
@@ -944,7 +944,7 @@ ${segs || 'Sin notas disponibles'}`
         }
 
     } catch (err) {
-        console.error('Error generando plan:', err);
+        console.error('Error generando plan:', err?.message);
         if (btn)    btn.style.display    = 'flex';
         if (loader) loader.style.display = 'none';
     }
@@ -1008,7 +1008,7 @@ async function ejecutarEscaneoIA() {
                     scoringCache[poliza.id].nivel = s >= 61 ? 'rojo' : s >= 26 ? 'amarillo' : 'verde';
                 }
             } catch (e) {
-                console.warn(`Error IA ${nombre}:`, e);
+                dbg.warn(`Error IA ${nombre}:`, e);
             }
 
             completados++;
@@ -1196,7 +1196,7 @@ async function cargarDepartamentosEspecifico() {
         .order('nombre');
 
     if (error) {
-        console.error('Error cargando usuarios:', error);
+        console.error('Error cargando usuarios:', error?.message);
         usuariosEspecifico = [];
     } else {
         usuariosEspecifico = (data || []).filter(u => !EXCLUIR_VENDEDORES.includes(u.nombre));
@@ -1263,7 +1263,7 @@ async function cargarRendimientoEspecifico() {
         .lt('created_at', inicioSig.toISOString());
 
     if (error) {
-        console.error('Error cargando rendimiento:', error);
+        console.error('Error cargando rendimiento:', error?.message);
         document.getElementById('rendVentasRealizadas').textContent = '—';
         return;
     }

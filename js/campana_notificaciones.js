@@ -66,7 +66,7 @@ async function cargarNotificacionesCampana() {
         .limit(20);
 
     if (error) {
-        console.error('Error cargando notificaciones', error);
+        console.error('Error cargando notificaciones', error?.message);
         return
     }
 
@@ -199,7 +199,7 @@ function reproducirSonidoNotificacion() {
             oscilador.stop(ahora + nota.inicio + nota.duracion);
         });
     } catch (e) {
-        console.error('No se pudo reproducir el sonido de notificación:', e)
+        console.error('No se pudo reproducir el sonido de notificación:', e?.message)
     }
 }
 
@@ -244,7 +244,7 @@ async function clickNotificacion(id) {
             .eq('id', id);
 
         if (error) {
-            console.error('Error marcando notificacion como leída:', error);
+            console.error('Error marcando notificacion como leída:', error?.message);
         } else {
             notificacion.leida = true;
             renderizarCampana();
