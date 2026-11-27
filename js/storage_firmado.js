@@ -148,6 +148,13 @@
     });
   }
 
+  // Reescribe en un HTML las URLs firmadas del bucket (.../object/sign/documentos/<ruta>?token=...)
+  // a la forma canónica pública sin token (.../object/public/documentos/<ruta>), para que lo guardado no caduque.
+  function canonizarHtml(html) {
+    if (!html || typeof html !== 'string') return html;
+    return html.replace(/(\/storage\/v1\/object\/)sign(\/documentos\/[^"'\s?#<>]*)(?:\?[^"'\s<>]*)?/g, '$1public$2');
+  }
+
   // Abre el archivo en una pestaña nueva (se abre antes para no perder el gesto del usuario)
   async function abrir(url) {
     const w = window.open('', '_blank');
@@ -176,5 +183,5 @@
     }
   }
 
-  window.storageFirmado = { normalizarRuta, rutaDesdeUrl, firmar, urlFirmada, resolverEn, abrir, descargar };
+  window.storageFirmado = { normalizarRuta, rutaDesdeUrl, firmar, urlFirmada, resolverEn, canonizarHtml, abrir, descargar };
 })();

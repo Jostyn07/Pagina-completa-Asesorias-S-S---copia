@@ -78,12 +78,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     continue;
                 }
 
-                const { data: urlData } = supabaseClient.storage
-                    .from('documentos')
-                    .getPublicUrl(path);
-
-                // Reemplazar base64 por URL pública
-                img.setAttribute('src', urlData.publicUrl);
+                // Reemplazar base64 por URL firmada (se canoniza al guardar)
+                img.setAttribute('src', await storageFirmado.urlFirmada(path));
             }
         });
     }
@@ -134,10 +130,9 @@ async function subirImagenQuill(file) {
             .upload(path, file, { cacheControl: '3600', upsert: false});
         if (uploadError) throw uploadError;
 
-        // Obtener URL pública
-        const { data: urlData} = supabaseClient.storage
-            .from('documentos')
-            .getPublicUrl(path)
+        // Obtener URL firmada (el bucket es privado); al guardar se canoniza a pública sin token
+        const urlFirmadaImg = await storageFirmado.urlFirmada(path);
+        const urlData = { publicUrl: urlFirmadaImg };
         // Insertar imagen en el editor en la posición actual del cursor
 
         // Si hay contenido antes, insertar salto de línea previo
@@ -1233,7 +1228,7 @@ let notasTemporales = [];
 
 async function agregarNota(clienteId) {
     // Leer contenido de Quill
-    const contenidoQuill = quillNota ? quillNota.root.innerHTML : '';
+    const contenidoQuill = quillNota ? storageFirmado.canonizarHtml(quillNota.root.innerHTML) : '';
     const textoPlano = quillNota ? quillNota.getText().trim() : '';
     let mensaje = contenidoQuill === '<p><br></p>' ? '' : contenidoQuill;
 

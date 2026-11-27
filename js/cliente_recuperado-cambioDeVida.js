@@ -1118,7 +1118,7 @@ async function agregarNota() {
         return;
     }
 
-    const contenidoQuill = quillNota ? quillNota.root.innerHTML : '';
+    const contenidoQuill = quillNota ? storageFirmado.canonizarHtml(quillNota.root.innerHTML) : '';
     const textoPlano     = quillNota ? quillNota.getText().trim() : '';
     const mensaje        = contenidoQuill === '<p><br></p>' ? '' : contenidoQuill;
 
