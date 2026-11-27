@@ -52,7 +52,7 @@
     modificado_por_email, clave_seguridad, member_id, aplicantes,
     cliente:clientes ( id, nombres, apellidos, fecha_nacimiento, telefono1, telefono2, email, direccion, ciudad,
       estado, codigo_postal, estado_migratorio, ssn, ocupacion, tipo_registro, tipo_modificacion, operador_nombre,
-      tiene_social, archivado, venta_realizada_por, portal, agente_nombre,
+      tiene_social, archivado, venta_realizada_por, portal, nacionalidad, agente_nombre,
       metodos_pago ( tiene_metodo_pago, tiene_pago_automatico, activo ),
       pagos_mensuales_cliente ( anio, enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre ) ),
     seguimientos ( fecha_seguimiento, seguimiento_efectivo, medio_comunicacion, observacion )`;

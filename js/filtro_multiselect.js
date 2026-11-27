@@ -308,3 +308,36 @@ const filtroAgenteCliente = crearFiltroMultiSelect({
     textoVacio: 'Todos',
     onCambio: () => { guardarFiltrosEnStorage(); aplicarFiltros(); }
 });
+// Escapa texto para insertarlo como HTML (las opciones se pintan con innerHTML)
+function escaparOpcionNacionalidad(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Opciones = nacionalidades normalizadas de las pólizas cargadas, por cantidad desc
+// ("Sin especificar" al final). El value es el nombre canónico; el label lleva el conteo.
+const filtroNacionalidad = crearFiltroMultiSelect({
+    contenedorId: 'filtroNacionalidadGroup',
+    label: 'Nacionalidad',
+    idBase: 'filtroNacionalidad',
+    conBuscador: true,
+    fetchOpciones: () => {
+        const conteo = new Map();
+        (typeof todasLasPolizas !== 'undefined' ? todasLasPolizas : []).forEach(p => {
+            const n = normalizarNacionalidad(p.cliente?.nacionalidad);
+            conteo.set(n, (conteo.get(n) || 0) + 1);
+        });
+        const SIN = 'Sin especificar';
+        const fmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        const lista = [...conteo.entries()]
+            .filter(([n]) => n !== SIN)
+            .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'es'));
+        if (conteo.has(SIN)) lista.push([SIN, conteo.get(SIN)]);
+        return lista.map(([n, c]) => ({
+            value: escaparOpcionNacionalidad(n),
+            label: `${escaparOpcionNacionalidad(n)} (${fmt(c)})`
+        }));
+    },
+    textoVacio: 'Seleccionar nacionalidad...',
+    onCambio: () => { guardarFiltrosEnStorage(); aplicarFiltros(); }
+});

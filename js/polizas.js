@@ -55,6 +55,7 @@ function guardarFiltrosEnStorage() {
             documentos: filtroDocumentos.getSeleccionados(),
             modificadoPor: filtroModificadoPor.getSeleccionados(),
             portal: filtroPortalAvanzado.getSeleccionados(),
+            nacionalidad: filtroNacionalidad.getSeleccionados(),
             filtroAgenteCliente: filtroAgenteCliente.getSeleccionados(),
             seguimientoEfectivo: document.getElementById('filtroSeguimientoEfectivo')?.value || '',
             estadoRenovacion: document.getElementById('filtroEstadoRenovacion')?.value || '',
@@ -178,6 +179,7 @@ function restaurarFiltrosDesdeStorage() {
     filtroMesPagado.setSeleccionados(Array.isArray(datos.mesPagado) ? datos.mesPagado : []);
     filtroModificadoPor.setSeleccionados(Array.isArray(datos.modificadoPor) ? datos.modificadoPor : []);
     filtroPortalAvanzado.setSeleccionados(Array.isArray(datos.portal) ? datos.portal : []);
+    filtroNacionalidad.setSeleccionados(Array.isArray(datos.nacionalidad) ? datos.nacionalidad : []);
     filtroAgenteCliente.setSeleccionados(Array.isArray(datos.filtroAgenteCliente) ? datos.filtroAgenteCliente : []);
     set('filtroSeguimientoEfectivo', datos.seguimientoEfectivo);
     set('filtroEstadoRenovacion', datos.estadoRenovacion);
@@ -245,6 +247,7 @@ function restaurarFiltrosDesdeStorage() {
         documentos: Array.isArray(datos.documentos) ? datos.documentos : [],
         modificadoPor: Array.isArray(datos.modificadoPor) ? datos.modificadoPor : [],
         portal: Array.isArray(datos.portal) ? datos.portal : [],
+        nacionalidad: Array.isArray(datos.nacionalidad) ? datos.nacionalidad : [],
         filtroAgenteCliente: Array.isArray(datos.filtroAgenteCliente) ? datos.filtroAgenteCliente : [],
         seguimientoEfectivo: datos.seguimientoEfectivo || '',
         estadoRenovacion: datos.estadoRenovacion || '',
@@ -408,6 +411,8 @@ function restaurarFiltrosDesdeStorage() {
 
             if (filtrosActivos.portal?.length > 0 && !filtrosActivos.portal.includes(cliente.portal)) return false;
 
+            if (filtrosActivos.nacionalidad?.length > 0 && !filtrosActivos.nacionalidad.includes(normalizarNacionalidad(cliente.nacionalidad))) return false;
+
             if (filtrosActivos.filtroAgenteCliente?.length > 0) {
                 const esNull = filtrosActivos.filtroAgenteCliente.includes('__null__');
                 const estaVacio = !cliente.agente_nombre || cliente.agente_nombre === '';
@@ -546,6 +551,7 @@ async function cargarPolizas() {
                     archivado,
                     venta_realizada_por,
                     portal,
+                    nacionalidad,
                     agente_nombre,
                     metodos_pago (
                         tiene_metodo_pago,
@@ -623,6 +629,7 @@ async function cargarPolizas() {
         const estadisticas = calcularEstadisticas(todasLasPolizas);
         filtroModificadoPor.recargarOpciones();
         filtroPortalAvanzado.recargarOpciones();
+        filtroNacionalidad.recargarOpciones();
         filtroAgenteCliente.recargarOpciones();
         actualizarTarjetas(estadisticas);
         actualizarIndicadoresRol();
@@ -2489,6 +2496,7 @@ function limpiarFiltros() {
     filtroModificadoPor.limpiar();
     filtroAgenteMercado.limpiar();
     filtroPortalAvanzado.limpiar();
+    filtroNacionalidad.limpiar();
     filtroAgenteCliente.limpiar();
     filtroMesPagado.limpiar();
     limpiarEstadoMercado();
@@ -2796,6 +2804,7 @@ function aplicarFiltrosAvanzados() {
         documentos: filtroDocumentos.getSeleccionados(),
         filtroAgenteMercado: filtroAgenteMercado.getSeleccionados(),
         portal: filtroPortalAvanzado.getSeleccionados(),
+        nacionalidad: filtroNacionalidad.getSeleccionados(),
         filtroAgenteCliente: filtroAgenteCliente.getSeleccionados(),
         estadoMercado:  Array.from(document.querySelectorAll('#panelEstadoMercado input:checked')).map(cb => cb.value),
         estadoCompania: Array.from(document.querySelectorAll('#panelEstadoCompania input:checked')).map(cb => cb.value),
@@ -2980,6 +2989,11 @@ function aplicarFiltrosAvanzados() {
 
         // Filtro por portal
         if (filtrosActivos.portal?.length > 0 && !filtrosActivos.portal.includes(cliente.portal)) {
+            return false;
+        }
+
+        // Filtro por nacionalidad (normalizada a país)
+        if (filtrosActivos.nacionalidad?.length > 0 && !filtrosActivos.nacionalidad.includes(normalizarNacionalidad(cliente.nacionalidad))) {
             return false;
         }
 
