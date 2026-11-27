@@ -341,7 +341,7 @@
 
     for (const doc of docs || []) {
       try {
-        const origen = doc.storage_path || rutaStorage(doc.url_archivo);
+        const origen = (window.storageFirmado ? window.storageFirmado.normalizarRuta(doc.storage_path) : doc.storage_path) || rutaStorage(doc.url_archivo);
         if (!origen) throw new Error('URL de archivo no reconocida');
         const nombre = origen.split('/').pop();
         const destino = `${clienteNuevo}/${Date.now()}_ren_${nombre}`;

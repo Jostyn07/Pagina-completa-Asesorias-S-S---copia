@@ -979,7 +979,7 @@ async function confirmarEliminarDocumento(docId) {
         if (fetchError) throw fetchError;
         
         // 2. Extraer path del Storage
-        const storagePath = doc.storage_path || storageFirmado.rutaDesdeUrl(doc.url_archivo);
+        const storagePath = storageFirmado.normalizarRuta(doc.storage_path) || storageFirmado.rutaDesdeUrl(doc.url_archivo);
         
         // 3. Eliminar del Storage
         if (storagePath) {

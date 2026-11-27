@@ -17,6 +17,18 @@
 
   function log(...a) { if (window.dbg) window.dbg.warn(...a); }
 
+  // Normaliza una ruta de Storage: decodifica %XX (rutas guardadas URL-codificadas) y quita '/' inicial.
+  // Es idempotente salvo que el nombre real contenga un '%XX' literal (improbable).
+  function normalizarRuta(r) {
+    if (!r || typeof r !== 'string') return r || null;
+    let s = r.trim();
+    if (/%[0-9A-Fa-f]{2}/.test(s)) {
+      try { s = decodeURIComponent(s); } catch (e) { /* se deja igual */ }
+    }
+    s = s.replace(/^\/+/, '');
+    return s || null;
+  }
+
   // Extrae la ruta dentro del bucket desde una URL pública/firmada (o devuelve la ruta si ya lo es)
   function rutaDesdeUrl(url) {
     if (!url || typeof url !== 'string') return null;
@@ -27,13 +39,11 @@
     if (idx === -1) { idx = s.indexOf(MARCA_FIRMADA); largo = MARCA_FIRMADA.length; }
     if (idx === -1) {
       if (/^(https?:|data:|blob:)/i.test(s)) return null; // URL ajena al bucket
-      s = s.replace(/^\/+/, '');                          // ruta directa
-      s = s.split('?')[0].split('#')[0];
-      return s || null;
+      s = s.split('?')[0].split('#')[0];                  // ruta directa
+      return normalizarRuta(s);
     }
     s = s.slice(idx + largo).split('?')[0].split('#')[0];
-    try { s = decodeURIComponent(s); } catch (e) { /* se deja como está */ }
-    return s || null;
+    return normalizarRuta(s);
   }
 
   function urlPublica(ruta) {
@@ -70,7 +80,10 @@
           const { data, error } = await c.storage.from(BUCKET).createSignedUrls(grupo, segundos);
           if (error) throw error;
           const mapa = {};
-          (data || []).forEach(d => { if (d && d.signedUrl && !d.error) mapa[d.path] = d.signedUrl; });
+          (data || []).forEach(d => {
+            if (d && d.signedUrl && !d.error) mapa[d.path] = d.signedUrl;
+            else if (d) log('No se pudo firmar la ruta:', d.path, d.error); // fallback: URL pública original
+          });
           return mapa;
         } catch (e) {
           log('No se pudieron firmar URLs:', e && e.message);
@@ -97,7 +110,7 @@
     const ruta = rutaDesdeUrl(urlOruta);
     if (!ruta) return urlOruta;
     const mapa = await firmar([ruta]);
-    return mapa[ruta] || urlOruta;
+    return mapa[ruta] || (/^https?:/i.test(urlOruta) ? urlOruta : urlPublica(ruta));
   }
 
   // Reemplaza img/a del contenedor que apuntan al bucket por URLs firmadas
@@ -163,5 +176,5 @@
     }
   }
 
-  window.storageFirmado = { rutaDesdeUrl, firmar, urlFirmada, resolverEn, abrir, descargar };
+  window.storageFirmado = { normalizarRuta, rutaDesdeUrl, firmar, urlFirmada, resolverEn, abrir, descargar };
 })();

@@ -554,7 +554,8 @@
   async function urlDe(d) {
     if (d._file) return (d._url ||= URL.createObjectURL(d._file));
     // Usa storage_path o, si falta, la ruta derivada de url_archivo
-    const ruta = d.storage_path || window.storageFirmado?.rutaDesdeUrl(d.url_archivo);
+    const sf = window.storageFirmado;
+    const ruta = (d.storage_path && sf ? sf.normalizarRuta(d.storage_path) : d.storage_path) || sf?.rutaDesdeUrl(d.url_archivo);
     if (ruta && window.storageFirmado) return window.storageFirmado.urlFirmada(ruta);
     return d.url_archivo;
   }
