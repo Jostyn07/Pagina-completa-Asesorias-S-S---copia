@@ -173,17 +173,12 @@ function procesarImagenesEnNotas(contenedor) {
         img.style.cursor = 'pointer';
         img.style.margin = '4px';
 
-        // Recopilar todas las imagenes de esa nota
-        const notaCard = img.closest('.nota-card');
-        const todasLasImgs = Array.from(
-            notaCard.querySelectorAll('.nota-mensaje img')
-        ).map(i => i.src);
-
-        const index = todasLasImgs.indexOf(img.src);
-
-        // Click abre el visor
+        // Click abre el visor (las URLs se leen al hacer click: pueden haberse firmado después)
         img.addEventListener('click', function() {
-            abrirVisorImagenes(todasLasImgs, index); 
+            const notaCard = img.closest('.nota-card');
+            const imgsNota = Array.from(notaCard.querySelectorAll('.nota-mensaje img'));
+            const todasLasImgs = imgsNota.map(i => i.src);
+            abrirVisorImagenes(todasLasImgs, imgsNota.indexOf(img));
         });
     });
 }
@@ -1303,6 +1298,7 @@ async function agregarNota(clienteId) {
         if (emptyState) emptyState.remove();
         
         thread.insertAdjacentHTML('afterbegin', notaHTML);
+        if (window.storageFirmado) storageFirmado.resolverEn(thread.firstElementChild);
         
         // Limpiar Quill
         if (quillNota) quillNota.setText('');
@@ -1636,6 +1632,7 @@ async function crearCliente(formData) {
                     cliente_id: clienteId,
                     nombre_archivo: archivo.name,
                     url_archivo: urlArchivo,
+                    storage_path: nombreArchivo,
                     tipo_archivo: archivo.type,
                     tamanio: archivo.size,
                     notas: notas || null

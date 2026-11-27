@@ -799,6 +799,7 @@ async function subirDocumentos() {
             documentosSubidos.push({
                 nombre_archivo: file.name,
                 url_archivo: urlData.publicUrl,
+                storage_path: fileName,
                 tipo_archivo: file.type,
                 tamanio: Math.round(file.size / 1024), // KB como integer
             });
@@ -1159,7 +1160,10 @@ async function agregarNota() {
                 <div class="nota-mensaje">${mensaje}</div>
             </div>`;
 
-        if (thread) thread.insertAdjacentHTML('afterbegin', notaHTML);
+        if (thread) {
+            thread.insertAdjacentHTML('afterbegin', notaHTML);
+            if (window.storageFirmado) storageFirmado.resolverEn(thread.firstElementChild);
+        }
         if (quillNota) quillNota.setText('');
         actualizarContadorNotas();
         mostrarNotificacion('Nota guardada', 'success');
@@ -1202,6 +1206,7 @@ async function cargarNotas(clienteId) {
                     <div class="nota-mensaje">${nota.mensaje}</div>
                 </div>`);
         });
+        if (window.storageFirmado) storageFirmado.resolverEn(thread);
         actualizarContadorNotas();
 
     } catch (error) {
@@ -1979,6 +1984,9 @@ async function cargarDocumentos(clienteId) {
                 </div>
             `);
         });
+
+        // Firmar los enlaces "Ver" (bucket privado)
+        if (window.storageFirmado) storageFirmado.resolverEn(container);
 
         // Actualizar contador
         const contador = document.getElementById('documentosCounter');

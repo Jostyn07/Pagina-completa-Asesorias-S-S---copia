@@ -174,17 +174,12 @@ function procesarImagenesEnNotas(contenedor) {
         img.style.cursor = 'pointer';
         img.style.margin = '4px';
 
-        // Recopilar todas las imagenes de esa nota
-        const notaCard = img.closest('.nota-card');
-        const todasLasImgs = Array.from(
-            notaCard.querySelectorAll('.nota-mensaje img')
-        ).map(i => i.src);
-
-        const index = todasLasImgs.indexOf(img.src);
-
-        // Click abre el visor
+        // Click abre el visor (las URLs se leen al hacer click: pueden haberse firmado después)
         img.addEventListener('click', function() {
-            abrirVisorImagenes(todasLasImgs, index); 
+            const notaCard = img.closest('.nota-card');
+            const imgsNota = Array.from(notaCard.querySelectorAll('.nota-mensaje img'));
+            const todasLasImgs = imgsNota.map(i => i.src);
+            abrirVisorImagenes(todasLasImgs, imgsNota.indexOf(img));
         });
     });
 }
@@ -961,6 +956,9 @@ async function cargarDocumentos(clienteId) {
             `;
             container.insertAdjacentHTML('beforeend', docHTML);
         });
+
+        // Firmar los enlaces "Ver" (si el bucket es privado)
+        if (window.storageFirmado) storageFirmado.resolverEn(container);
                 
     } catch (error) {
         console.error('❌ Error al cargar documentos:', error?.message);
@@ -974,24 +972,25 @@ async function confirmarEliminarDocumento(docId) {
         // 1. Obtener info del documento
         const { data: doc, error: fetchError } = await supabaseClient
             .from('documentos')
-            .select('url_archivo')
+            .select('url_archivo, storage_path')
             .eq('id', docId)
             .single();
         
         if (fetchError) throw fetchError;
         
         // 2. Extraer path del Storage
-        const url = new URL(doc.url_archivo);
-        const pathParts = url.pathname.split('/');
-        const bucketIndex = pathParts.indexOf('documentos');
-        const storagePath = pathParts.slice(bucketIndex + 1).join('/');
+        const storagePath = doc.storage_path || storageFirmado.rutaDesdeUrl(doc.url_archivo);
         
         // 3. Eliminar del Storage
-        const { error: storageError } = await supabaseClient.storage
-            .from('documentos')
-            .remove([storagePath]);
-        
-        if (storageError) dbg.warn('Error al eliminar de Storage:', storageError);
+        if (storagePath) {
+            const { error: storageError } = await supabaseClient.storage
+                .from('documentos')
+                .remove([storagePath]);
+            
+            if (storageError) dbg.warn('Error al eliminar de Storage:', storageError);
+        } else {
+            dbg.warn('No se pudo determinar la ruta en Storage para el documento', docId);
+        }
         
         // 4. Eliminar de BD
         const { error: dbError } = await supabaseClient
@@ -1178,6 +1177,7 @@ async function cargarNotas(clienteId) {
         });
 
         procesarImagenesEnNotas(thread);
+        if (window.storageFirmado) storageFirmado.resolverEn(thread);
         
         actualizarContadorNotas();
         
@@ -1253,6 +1253,7 @@ async function agregarNota(clienteId) {
         mostrarNotificacion('✅ Nota agregada correctamente', 'success');
         const nuevaCard = thread.querySelector('.nota-card');
         procesarImagenesEnNotas(nuevaCard);
+        if (window.storageFirmado) storageFirmado.resolverEn(nuevaCard);
     } catch (error) {
         console.error('❌ Error al agregar nota:', error?.message);
         mostrarNotificacion('❌ Error al agregar nota: ' + error.message, 'error');
@@ -2512,6 +2513,7 @@ async function guardarDocumentosNuevos(clienteId) {
                 cliente_id: clienteId,
                 nombre_archivo: archivo.name,
                 url_archivo: urlData.publicUrl,
+                storage_path: nombreArchivo,
                 tipo_archivo: archivo.type,
                 tamanio: archivo.size,
                 notas: notas || null
@@ -3485,6 +3487,9 @@ async function cargarHistorialEstados(polizaId) {
                 </div>
             </div>
         `).join('');
+        
+        // Las notas de estado pueden traer <img> del bucket (privado)
+        if (window.storageFirmado) storageFirmado.resolverEn(container);
         
     } catch (error) {
         console.error('Error al cargar historial:', error?.message);
@@ -5650,6 +5655,8 @@ if (cambio.datos_anteriores && cambio.datos_nuevos) {
     
     // 6. Agregar modal al body
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+    // Firmar enlaces a documentos (bucket privado)
+    if (window.storageFirmado) storageFirmado.resolverEn(document.getElementById('modalDetallesCambio'));
 }
 
 function cerrarModalDetallesCambio(event) {
@@ -5689,23 +5696,8 @@ function sincronizarBadgesMeses() {
 }
 
 async function descargarArchivo(url, nombreArchivo) {
-    try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = nombreArchivo;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-    } catch (error) {
-        console.error('Error al descargar:', error?.message);
-        alert('No se pudo descargar el archivo');
-    }
+    // Firma la URL antes de descargar (storageFirmado ya maneja errores)
+    await storageFirmado.descargar(url, nombreArchivo);
 }
 
 function limpiarFecha(valor) {

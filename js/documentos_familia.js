@@ -553,12 +553,9 @@
   // Ver archivo (imagen, PDF, audio u otro)
   async function urlDe(d) {
     if (d._file) return (d._url ||= URL.createObjectURL(d._file));
-    if (d.storage_path) {
-      try {
-        const { data, error } = await sb().storage.from(BUCKET).createSignedUrl(d.storage_path, 600);
-        if (!error && data?.signedUrl) return data.signedUrl;
-      } catch { /* bucket público: se usa la URL guardada */ }
-    }
+    // Usa storage_path o, si falta, la ruta derivada de url_archivo
+    const ruta = d.storage_path || window.storageFirmado?.rutaDesdeUrl(d.url_archivo);
+    if (ruta && window.storageFirmado) return window.storageFirmado.urlFirmada(ruta);
     return d.url_archivo;
   }
   async function ver(d) {

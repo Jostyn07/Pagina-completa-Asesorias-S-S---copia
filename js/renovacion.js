@@ -341,7 +341,7 @@
 
     for (const doc of docs || []) {
       try {
-        const origen = rutaStorage(doc.url_archivo);
+        const origen = doc.storage_path || rutaStorage(doc.url_archivo);
         if (!origen) throw new Error('URL de archivo no reconocida');
         const nombre = origen.split('/').pop();
         const destino = `${clienteNuevo}/${Date.now()}_ren_${nombre}`;
@@ -351,6 +351,7 @@
         const { data: url } = cliente.storage.from('documentos').getPublicUrl(destino);
 
         const fila = { ...doc, cliente_id: clienteNuevo, url_archivo: url.publicUrl };
+        if ('storage_path' in doc) fila.storage_path = destino;
         delete fila.id; delete fila.created_at; delete fila.updated_at;
         const { error: errFila } = await cliente.from('documentos').insert(fila);
         if (errFila) {

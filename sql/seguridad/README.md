@@ -16,6 +16,7 @@ bloque de reversión comentado. Haz una copia/backup antes de empezar.
 | 6 | `06_search_path.sql` | Recorrido general; revisar funciones que usen extensiones (ver cabecera). |
 | 7 | `07_vista_security_invoker.sql` | Pantalla que usa `v_propietario_sin_cruce`. |
 | 8 | `08_renovar_poliza_fecha.sql` | Renovación: antes del 20 oct del año de efectividad debe dar error; después renueva; "Continuar renovación" sigue funcionando. |
+| 9 | `09_bucket_documentos_privado.sql` | Ejecutar SOLO tras probar la Fase 1 del frontend (URLs firmadas) en producción. Ver/Descargar documentos e imágenes de notas siguen funcionando; una URL `/object/public/documentos/...` en navegador privado da error. Reversión: `99b_restaurar_bucket_documentos.sql`. |
 
 Sugerencia: 1, 2, 5, 7 y 3 son de bajo riesgo; 4 y 6 afectan a muchas funciones,
 ejecútalos en un momento de poco uso y con la app abierta en otra pestaña para
@@ -23,7 +24,6 @@ probar enseguida.
 
 ## Fuera de alcance
 
-El bucket `documentos` de Storage es público y NO se cambia aquí: hacerlo privado
-exige cambiar el frontend para usar URLs firmadas (`createSignedUrl`), de lo
-contrario se romperían los enlaces a documentos existentes. Queda como tarea
-aparte.
+El bucket `documentos` se hace privado en el script 9, que requiere tener ya en
+producción la Fase 1 del frontend (`createSignedUrl`). Su reversión es
+`99b_restaurar_bucket_documentos.sql`.
