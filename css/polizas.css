@@ -1404,6 +1404,20 @@ tbody td {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Pólizas nuevas o actualizadas por el último refresco: resaltado lavanda que se desvanece */
+#tabla-polizas tr.fila-resaltada td {
+    animation: filaResaltada 3.5s ease-out 0.3s both;
+}
+
+@keyframes filaResaltada {
+    0%, 35% { background-color: #ede9fe; }
+    100% { background-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #tabla-polizas tr.fila-resaltada td { animation: none; }
+}
+
 /* Skeleton mientras llega el primer bloque: fondo lavanda con onda violeta suave */
 #tabla-polizas tr.skeleton-fila td {
     padding: 10px 16px;

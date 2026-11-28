@@ -6,6 +6,7 @@ let modoFiltroEstado = 'mercado';
 let polizasFiltradas = [];
 let paginaActual = 1;
 let polizasPorPagina = 10;
+let ordenManual = false;      // true cuando el usuario ordenó por un encabezado (se respeta ese orden)
 let ordenColumna = 'created_at';
 let ordenDireccion = 'desc';
 let polizaSeleccionada = null;
@@ -667,9 +668,68 @@ async function descargarPolizasPorBloques({ gteUpdatedAt = null, onBloque = null
     return { filas: [...vistos.values()], total };
 }
 
+// ---------- Consulta rápida de "recientes" (primer pintado ya ordenado, sin salto) ----------
+const POLIZAS_RECIENTES_TIMEOUT_MS = 2000;
+const POLIZAS_RECIENTES_LIMITE = 50;
+
+// Las 50 últimas modificadas y las 50 últimas creadas (por si una creación no trae updated_at), unidas por id.
+// Nunca rechaza: ante cualquier error devuelve [] y la carga normal sigue.
+async function pedirRecientesPolizas() {
+    const pedir = async (columna) => {
+        try {
+            const { data, error } = await supabaseClient.from('polizas').select(POLIZAS_SELECT_LISTA)
+                .order(columna, { ascending: false, nullsFirst: false })
+                .limit(POLIZAS_RECIENTES_LIMITE);
+            if (error) { dbg.warn('[pólizas] recientes (' + columna + ') falló:', error.message); return []; }
+            return data || [];
+        } catch (e) { return []; }
+    };
+    const [a, b] = await Promise.all([pedir('updated_at'), pedir('created_at')]);
+    const mapa = new Map();
+    for (const p of [...a, ...b]) if (!mapa.has(p.id)) mapa.set(p.id, p);
+    return _ordenarRecientes([...mapa.values()]);
+}
+
+// Recencia de una póliza: lo más reciente entre updated_at y created_at (ms; 0 si no hay fecha)
+function _msFecha(v) {
+    const t = v ? Date.parse(v) : NaN;
+    return isNaN(t) ? 0 : t;
+}
+function _recenciaPoliza(p) {
+    return Math.max(_msFecha(p.updated_at), _msFecha(p.created_at));
+}
+
+// Orden por defecto: más reciente primero (max(updated_at, created_at) desc; empate: created_at desc, id asc)
 function _compararPolizas(a, b) {
-    if (a.updated_at !== b.updated_at) return (a.updated_at || '') < (b.updated_at || '') ? 1 : -1;
-    return a.id < b.id ? -1 : 1;
+    const ra = _recenciaPoliza(a), rb = _recenciaPoliza(b);
+    if (ra !== rb) return rb - ra;
+    const ca = _msFecha(a.created_at), cb = _msFecha(b.created_at);
+    if (ca !== cb) return cb - ca;
+    return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+}
+
+// Igual que ordenar con _compararPolizas, pero calculando las fechas una sola vez por fila (listas grandes)
+function _ordenarRecientes(filas) {
+    const dec = filas.map(p => ({ p, r: _recenciaPoliza(p), c: _msFecha(p.created_at) }));
+    dec.sort((a, b) => {
+        if (a.r !== b.r) return b.r - a.r;
+        if (a.c !== b.c) return b.c - a.c;
+        return a.p.id < b.p.id ? -1 : (a.p.id > b.p.id ? 1 : 0);
+    });
+    return dec.map(x => x.p);
+}
+
+// Ids de pólizas nuevas o actualizadas respecto a lo que había en pantalla (resaltado lavanda breve)
+let _idsResaltar = new Set();
+function _calcularResaltadas(previas, nuevas) {
+    const antes = new Map(previas.map(p => [String(p.id), p.updated_at || '']));
+    const ids = new Set();
+    for (const p of nuevas) {
+        const k = String(p.id);
+        if (!antes.has(k) || antes.get(k) !== (p.updated_at || '')) ids.add(k);
+    }
+    // Si cambió casi todo no es una novedad útil de resaltar
+    return ids.size > 200 ? new Set() : ids;
 }
 
 function _maxUpdatedAt(filas) {
@@ -740,8 +800,20 @@ function aplicarFiltrosDeInicio() {
 // modo: 'parcial' (bloques que van llegando, solo primera página), 'cache' (pintado desde IndexedDB)
 // o 'final' (lista completa de red). 'cache' y 'final' hacen el trabajo completo.
 function instalarPolizas(crudas, modo) {
+    // Si ya hay algo pintado, las actualizaciones posteriores son "silenciosas": sin cascada ni salto
+    _renderSuave = (modo === 'final' || modo === 'parcial') && _idsPaginaPintada.size > 0;
+    try {
+        _instalarPolizasInterno(crudas, modo);
+    } finally {
+        _renderSuave = false;
+    }
+}
+
+function _instalarPolizasInterno(crudas, modo) {
     // Los borradores de renovación no se listan: se abren desde la póliza original ("Continuar renovación")
-    const lista = crudas.filter(p => !p.cliente?.archivado && p.estado_renovacion !== 'Borrador');
+    let lista = crudas.filter(p => !p.cliente?.archivado && p.estado_renovacion !== 'Borrador');
+    // Orden por defecto: lo último actualizado / ingresado primero (si el usuario eligió otro, se respeta)
+    if (!ordenManual) lista = _ordenarRecientes(lista);
 
     if (modo === 'parcial') {
         if (!todasLasPolizas.length) paginaActual = 1;
@@ -846,18 +918,44 @@ async function cargarPolizas() {
         // Con filtros llegados por URL (estado/atención) no se pinta la caché: evita ver la lista sin filtrar
         const urlConFiltro = /[?&](estado|atencion|condado)=/.test(location.search);
 
+        // Primer pintado único y ya correcto: caché + consulta rápida de "recientes" en paralelo
         let cache = null;
-        if (esPrimera && clave && !urlConFiltro) {
+        let recientes = [];
+        if (esPrimera && !urlConFiltro) {
+            if (!hayDatosEnPantalla) mostrarIndicadorCarga(true);
             const tc = _ahora();
-            cache = await leerCachePolizas(clave);
+            const pCache = clave ? leerCachePolizas(clave).catch(() => null) : Promise.resolve(null);
+            const pRecientes = pedirRecientesPolizas();
+            cache = await pCache;
             tiempos.lecturaCache = Math.round(_ahora() - tc);
+            // Máx. ~2 s desde el inicio de la consulta rápida; si vence se pinta solo la caché
+            recientes = await Promise.race([pRecientes, _pausa(POLIZAS_RECIENTES_TIMEOUT_MS).then(() => null)]);
+            if (recientes === null) dbg.info('[pólizas] consulta de recientes tardó demasiado; se usa solo la caché');
+            recientes = recientes || [];
+            tiempos.recientes = Math.round(_ahora() - tc);
         }
 
         if (cache) {
             const tp = _ahora();
-            instalarPolizas(cache.filas, 'cache');
+            // Recientes más nuevos que lo guardado en caché: entran ya arriba y con resaltado sutil
+            const porId = new Map(cache.filas.map(p => [p.id, p]));
+            const nuevosRec = new Set();
+            for (const p of recientes) {
+                const previa = porId.get(p.id);
+                if (!previa || _recenciaPoliza(p) >= _recenciaPoliza(previa)) {
+                    if (!previa || (previa.updated_at || '') !== (p.updated_at || '')) nuevosRec.add(String(p.id));
+                    porId.set(p.id, p);
+                }
+            }
+            _idsResaltar = nuevosRec.size && nuevosRec.size <= 10 ? nuevosRec : new Set();
+            if (_idsResaltar.size) setTimeout(() => { _idsResaltar = new Set(); }, 6000);
+            instalarPolizas([...porId.values()], 'cache');
             hayDatosEnPantalla = true;
             tiempos.pintadoDesdeCache = Math.round(_ahora() - tp);
+        } else if (recientes.length) {
+            // Sin caché: página 1 con los recientes; el resto llega por bloques y se fusiona en silencio
+            instalarPolizas(recientes, 'parcial');
+            tiempos.pintadoRecientes = Math.round(_ahora() - t0);
         } else if (!hayDatosEnPantalla) {
             mostrarIndicadorCarga(true);
         }
@@ -878,7 +976,7 @@ async function cargarPolizas() {
                 ]);
                 const mapa = new Map(cache.filas.map(p => [p.id, p]));
                 cambios.filas.forEach(p => mapa.set(p.id, p));
-                const fusion = [...mapa.values()].sort(_compararPolizas);
+                const fusion = _ordenarRecientes([...mapa.values()]);
                 if (fusion.length !== totalActual) throw new Error(`el total no cuadra (${fusion.length} vs ${totalActual})`);
                 crudas = fusion;
                 cargaCompletaEn = cache.cargaCompletaEn;
@@ -894,7 +992,7 @@ async function cargarPolizas() {
             const resultado = await descargarPolizas({
                 onBloque: parcial ? (filas) => instalarPolizas(filas, 'parcial') : null
             });
-            crudas = resultado.filas.sort(_compararPolizas);
+            crudas = _ordenarRecientes(resultado.filas);   // la RPC no garantiza orden: se ordena en cliente
             metodoCarga = resultado.metodo;
         }
         tiempos.consulta = Math.round(_ahora() - tq);
@@ -1042,6 +1140,8 @@ function celdaRenovacion(poliza) {
 // Filas de la página pintada (id → póliza) y conjunto de ids, para el clic delegado y la animación
 let _filasPaginaActual = new Map();
 let _idsPaginaPintada = new Set();
+let _htmlPaginaPintada = '';       // HTML de la última página pintada (para no tocar el DOM si no cambió nada)
+let _renderSuave = false;          // true durante una actualización silenciosa (sin cascada)
 
 function renderizarTabla() {
     const tbody = document.getElementById('tabla-polizas');
@@ -1065,6 +1165,7 @@ function renderizarTabla() {
     if (polizasFiltradas.length === 0) {
         _filasPaginaActual = new Map();
         _idsPaginaPintada = new Set();
+        _htmlPaginaPintada = '';
         tbody.innerHTML = `
             <tr>
                 <td colspan="32" style="text-align: center; padding: 40px; color: #94a3b8;">
@@ -1170,18 +1271,41 @@ function renderizarTabla() {
     // Cascada de entrada solo si la página trae filas distintas a las ya pintadas
     // (reordenar o refiltrar la misma página no repite la animación)
     const idsNuevos = new Set(polizasPagina.map(p => String(p.id)));
-    let animar = idsNuevos.size !== _idsPaginaPintada.size;
-    if (!animar) for (const id of idsNuevos) { if (!_idsPaginaPintada.has(id)) { animar = true; break; } }
+    const idsPrevios = _idsPaginaPintada;
+    let animar = idsNuevos.size !== idsPrevios.size;
+    if (!animar) for (const id of idsNuevos) { if (!idsPrevios.has(id)) { animar = true; break; } }
 
     _filasPaginaActual = new Map(polizasPagina.map(p => [String(p.id), p]));
     _idsPaginaPintada = idsNuevos;
 
-    tbody.innerHTML = filas.join('');
+    const html = filas.join('');
+    // Actualización silenciosa sin cambios visibles: no se toca el DOM (sin parpadeo ni animación)
+    if (_renderSuave && html === _htmlPaginaPintada && !tbody.querySelector('.skeleton-fila') &&
+        tbody.rows.length === filas.length) {
+        return;
+    }
+    _htmlPaginaPintada = html;
+    tbody.innerHTML = html;
 
-    if (animar) {
+    if (_renderSuave) {
+        // Solo las filas que no estaban en pantalla aparecen con un fade suave; el resto se actualiza en sitio
+        Array.from(tbody.rows).forEach(tr => {
+            if (!idsPrevios.has(tr.dataset.polizaId)) {
+                tr.style.setProperty('--i', 0);
+                tr.classList.add('fila-entra');
+            }
+        });
+    } else if (animar) {
         Array.from(tbody.rows).forEach((tr, i) => {
             tr.style.setProperty('--i', Math.min(i, 15));
             tr.classList.add('fila-entra');
+        });
+    }
+
+    // Resaltado lavanda breve de pólizas nuevas o actualizadas por el último refresco
+    if (_idsResaltar.size) {
+        Array.from(tbody.rows).forEach(tr => {
+            if (_idsResaltar.has(tr.dataset.polizaId)) tr.classList.add('fila-resaltada');
         });
     }
 }
@@ -1751,6 +1875,7 @@ function configurarOrdenamiento() {
 }
 
 function ordenarPor(columna) {
+    ordenManual = true;
     if (ordenColumna === columna) {
         // Cambiar dirección
         ordenDireccion = ordenDireccion === 'asc' ? 'desc' : 'asc';
@@ -2473,6 +2598,7 @@ function mostrarIndicadorCarga(mostrar) {
     if (mostrar) {
         _filasPaginaActual = new Map();
         _idsPaginaPintada = new Set();
+        _htmlPaginaPintada = '';
         tbody.innerHTML = Array.from({ length: 8 }, () => `
             <tr class="skeleton-fila">
                 <td colspan="32"><div class="skeleton-barra"></div></td>

@@ -71,6 +71,7 @@
   function ordenar(columna) {
     const def = COLUMNAS[columna];
     if (!def) return;
+    ordenManual = true;                                // el usuario eligió orden: ya no se reordena por recencia
     if (ordenColumna === columna) ordenDireccion = ordenDireccion === 'asc' ? 'desc' : 'asc';
     else { ordenColumna = columna; ordenDireccion = 'asc'; }
     const [tipo, leer] = def;
